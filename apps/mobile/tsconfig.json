@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "paths": {
+      "@quetes/shared": ["../../packages/shared/src"],
+      "@quetes/ui": ["../../packages/ui/src"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

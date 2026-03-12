@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "dom"],
+    "paths": {
+      "@quetes/shared": ["../shared/src"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

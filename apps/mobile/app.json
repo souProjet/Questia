@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Quêtes Secondaires",
+    "slug": "quetes-secondaires",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "quetes",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0a0a0f"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Quêtes Secondaires utilise ta localisation pour vérifier la sécurité de tes quêtes."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
