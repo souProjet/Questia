@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import type { QuestModel } from '@quetes/shared';
+import type { QuestModel } from '@dopamode/shared';
 
 interface QuestCardProps {
   quest: QuestModel;

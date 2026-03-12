@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Quêtes Secondaires",
-    "slug": "quetes-secondaires",
+    "name": "Dopamode",
+    "slug": "dopamode",
     "version": "0.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "quetes",
+    "scheme": "dopamode",
     "userInterfaceStyle": "dark",
     "splash": {
       "backgroundColor": "#0a0a0f"
@@ -15,7 +15,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Quêtes Secondaires utilise ta localisation pour vérifier la sécurité de tes quêtes."
+          "locationAlwaysAndWhenInUsePermission": "Dopamode utilise ta localisation pour vérifier la sécurité de tes quêtes."
         }
       ]
     ],

@@ -1,6 +1,6 @@
 'use server';
 
-import type { WeatherCheck } from '@quetes/shared';
+import type { WeatherCheck } from '@dopamode/shared';
 
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY ?? '';
 const OPENWEATHER_BASE = 'https://api.openweathermap.org/data/2.5';

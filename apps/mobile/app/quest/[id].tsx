@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { QuestDetailScreen } from '@quetes/ui';
+import { QuestDetailScreen } from '@dopamode/ui';
 
 export default function QuestScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

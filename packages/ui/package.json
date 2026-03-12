@@ -1,5 +1,5 @@
 {
-  "name": "@quetes/ui",
+  "name": "@dopamode/ui",
   "version": "0.0.1",
   "private": true,
   "main": "./src/index.ts",
@@ -9,7 +9,7 @@
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@quetes/shared": "*",
+    "@dopamode/shared": "*",
     "solito": "^4.3.0"
   },
   "peerDependencies": {

@@ -1,4 +1,4 @@
-# Quêtes Secondaires
+# Dopamode
 
 > Tu t'ennuies parce que t'as pas de quêtes secondaires. La vie c'est pas juste travailler + dormir.
 
@@ -9,15 +9,14 @@ Application de gamification de la vie réelle par génération de quêtes second
 Monorepo Turborepo avec partage de code TypeScript de bout en bout.
 
 ```
-quetes-secondaires/
+dopamode/
 ├── apps/
-│   ├── mobile/          # Expo + Expo Router (iOS/Android)
-│   └── web/             # Next.js 15 + App Router + Server Actions
+│   ├── mobile/              # Expo 53 + Expo Router (iOS/Android)
+│   └── web/                 # Next.js 15 + App Router + Server Actions
+│       └── prisma/          # Schéma Prisma (NeonDB PostgreSQL)
 ├── packages/
-│   ├── shared/          # Types, constantes, moteur psychologique
-│   └── ui/              # Composants partagés (Solito + NativeWind)
-├── supabase/
-│   └── schema.sql       # Schéma de la base de données
+│   ├── shared/              # Types, constantes, moteur psychologique
+│   └── ui/                  # Composants partagés (Solito + NativeWind)
 ├── turbo.json
 └── package.json
 ```
@@ -26,11 +25,11 @@ quetes-secondaires/
 
 | Couche | Technologie |
 |--------|-------------|
-| Mobile | Expo, Expo Router, React Native, NativeWind |
+| Mobile | Expo 53, Expo Router, React Native, NativeWind |
 | Web | Next.js 15, App Router, Server Actions |
 | Partage UI | Solito (navigation universelle), React Native Web |
 | Moteur | TypeScript (Delta de Congruence, escalade 3 phases) |
-| Backend | Next.js Server Actions, Supabase (PostgreSQL + Auth) |
+| Base de données | Prisma ORM + NeonDB (PostgreSQL serverless) |
 | IA Cloud | OpenAI GPT-4o-mini (narration personnalisée) |
 | API Sécurité | OpenWeatherMap (météo), Geofencing |
 
@@ -84,14 +83,20 @@ L'onboarding place l'utilisateur dans un **quadrant opérationnel** :
 # Installer les dépendances
 npm install
 
+# Générer le client Prisma
+npx turbo db:generate --filter=@dopamode/web
+
+# Pousser le schéma vers NeonDB
+npx turbo db:push --filter=@dopamode/web
+
 # Lancer en développement (web + mobile)
 npm run dev
 
 # Lancer uniquement le web
-npx turbo dev --filter=@quetes/web
+npx turbo dev --filter=@dopamode/web
 
 # Lancer uniquement le mobile
-npx turbo dev --filter=@quetes/mobile
+npx turbo dev --filter=@dopamode/mobile
 ```
 
 ## Configuration
@@ -99,10 +104,30 @@ npx turbo dev --filter=@quetes/mobile
 Copier `.env.example` dans `apps/web/.env.local` et renseigner :
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# NeonDB (Prisma)
+DATABASE_URL=postgresql://user:password@ep-xxx.region.neon.tech/dopamode?sslmode=require
+DIRECT_DATABASE_URL=postgresql://user:password@ep-xxx.region.neon.tech/dopamode?sslmode=require
+
+# OpenAI
 OPENAI_API_KEY=your_openai_api_key
+
+# OpenWeatherMap
 OPENWEATHER_API_KEY=your_openweather_api_key
+```
+
+## Base de Données (Prisma + NeonDB)
+
+Le schéma se trouve dans `apps/web/prisma/schema.prisma`. Commandes utiles :
+
+```bash
+# Ouvrir Prisma Studio (interface visuelle)
+cd apps/web && npx prisma studio
+
+# Créer une migration
+cd apps/web && npx prisma migrate dev --name init
+
+# Pousser le schéma (sans migration)
+cd apps/web && npx prisma db push
 ```
 
 ## Sécurité

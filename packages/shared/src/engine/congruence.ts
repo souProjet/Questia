@@ -1,4 +1,4 @@
-import { PersonalityVector, QuestLog, QuestModel } from '../types';
+import type { PersonalityVector, QuestLog, QuestModel } from '../types';
 import { ACTIVITY_PERSONALITY_CORRELATION, PERSONALITY_KEYS } from '../constants/personality';
 import { QUEST_TAXONOMY } from '../constants/quests';
 

@@ -8,8 +8,8 @@
     "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./src/*"],
-      "@quetes/shared": ["../../packages/shared/src"],
-      "@quetes/ui": ["../../packages/ui/src"]
+      "@dopamode/shared": ["../../packages/shared/src"],
+      "@dopamode/ui": ["../../packages/ui/src"]
     }
   },
   "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

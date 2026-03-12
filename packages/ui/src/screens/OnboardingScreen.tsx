@@ -1,8 +1,10 @@
+'use client';
+
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'solito/navigation';
-import type { ExplorerAxis, RiskAxis, OperationalQuadrant } from '@quetes/shared';
-import { QUADRANT_DEFAULTS } from '@quetes/shared';
+import type { ExplorerAxis, RiskAxis, OperationalQuadrant } from '@dopamode/shared';
+import { QUADRANT_DEFAULTS } from '@dopamode/shared';
 import { PersonalityQuadrantPicker } from '../components/PersonalityQuadrantPicker';
 
 type OnboardingStep = 'welcome' | 'question1' | 'question2' | 'complete';
@@ -18,7 +20,7 @@ export function OnboardingScreen() {
     const quadrant: OperationalQuadrant = { explorerAxis, riskAxis };
     const key = `${explorerAxis}_${riskAxis}` as keyof typeof QUADRANT_DEFAULTS;
     const personality = QUADRANT_DEFAULTS[key];
-    // In production, save to Supabase here
+    // In production, save to database here
     console.log('Profile created:', { quadrant, personality });
     router.push('/dashboard');
   };
@@ -28,7 +30,7 @@ export function OnboardingScreen() {
       {step === 'welcome' && (
         <View style={styles.content}>
           <Text style={styles.logo}>⚔️</Text>
-          <Text style={styles.title}>Quêtes Secondaires</Text>
+          <Text style={styles.title}>Dopamode</Text>
           <Text style={styles.subtitle}>
             Tu t'ennuies parce que t'as pas de quêtes secondaires.{'\n'}
             La vie c'est pas juste travailler + dormir.

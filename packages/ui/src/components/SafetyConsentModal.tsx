@@ -1,6 +1,8 @@
+'use client';
+
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal, ScrollView } from 'react-native';
-import type { QuestModel } from '@quetes/shared';
+import type { QuestModel } from '@dopamode/shared';
 
 interface SafetyConsentModalProps {
   visible: boolean;

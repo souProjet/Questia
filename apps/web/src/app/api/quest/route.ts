@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { selectQuest, computeExhibitedPersonality, computeCongruenceDelta, getEffectivePhase } from '@quetes/shared';
-import type { PersonalityVector, QuestLog } from '@quetes/shared';
+import { selectQuest, computeExhibitedPersonality, computeCongruenceDelta, getEffectivePhase } from '@dopamode/shared';
+import type { PersonalityVector, QuestLog } from '@dopamode/shared';
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       congruenceDelta: delta,
       exhibitedPersonality: exhibited,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to generate quest' },
       { status: 500 },

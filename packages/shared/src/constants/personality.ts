@@ -1,4 +1,4 @@
-import { PersonalityVector, OperationalQuadrant } from '../types';
+import type { PersonalityVector, OperationalQuadrant } from '../types';
 
 /**
  * Default personality vectors for each operational quadrant.

@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
-import { QUEST_TAXONOMY, DAILY_FREE_REROLLS, MAX_REROLLS_PER_DAY } from '@quetes/shared';
-import type { QuestModel, EscalationPhase } from '@quetes/shared';
+import { QUEST_TAXONOMY, DAILY_FREE_REROLLS, MAX_REROLLS_PER_DAY } from '@dopamode/shared';
+import type { QuestModel, EscalationPhase } from '@dopamode/shared';
 import { QuestCard } from '../components/QuestCard';
 import { SafetyConsentModal } from '../components/SafetyConsentModal';
 

@@ -1,4 +1,4 @@
-import { EscalationPhase, UserProfile, QuestLog } from '../types';
+import type { EscalationPhase, UserProfile, QuestLog } from '../types';
 
 /**
  * Phase boundaries (day numbers):

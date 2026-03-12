@@ -1,7 +1,7 @@
 'use server';
 
 import OpenAI from 'openai';
-import type { QuestNarrationRequest, QuestNarrationResponse } from '@quetes/shared';
+import type { QuestNarrationRequest, QuestNarrationResponse } from '@dopamode/shared';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY ?? '',

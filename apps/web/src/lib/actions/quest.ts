@@ -1,7 +1,7 @@
 'use server';
 
-import { selectQuest, getEffectivePhase, computeExhibitedPersonality, computeCongruenceDelta, FALLBACK_QUEST_ID, QUEST_TAXONOMY } from '@quetes/shared';
-import type { PersonalityVector, QuestLog, QuestModel } from '@quetes/shared';
+import { selectQuest, getEffectivePhase, computeExhibitedPersonality, computeCongruenceDelta, FALLBACK_QUEST_ID, QUEST_TAXONOMY } from '@dopamode/shared';
+import type { PersonalityVector, QuestLog, QuestModel } from '@dopamode/shared';
 import { checkWeatherSafety } from './weather';
 
 export interface AssignQuestInput {

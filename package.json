@@ -1,5 +1,5 @@
 {
-  "name": "quetes-secondaires",
+  "name": "dopamode",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -7,6 +7,8 @@
   ],
   "scripts": {
     "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=@dopamode/web",
+    "dev:mobile": "turbo dev --filter=@dopamode/mobile",
     "build": "turbo build",
     "lint": "turbo lint",
     "type-check": "turbo type-check",

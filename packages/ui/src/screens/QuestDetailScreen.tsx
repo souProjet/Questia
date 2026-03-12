@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
-import { QUEST_TAXONOMY } from '@quetes/shared';
+import { QUEST_TAXONOMY } from '@dopamode/shared';
 
 interface QuestDetailScreenProps {
   questId: number;
