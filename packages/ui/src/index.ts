@@ -4,3 +4,4 @@ export { QuestDetailScreen } from './screens/QuestDetailScreen';
 export { SafetyConsentModal } from './components/SafetyConsentModal';
 export { QuestCard } from './components/QuestCard';
 export { PersonalityQuadrantPicker } from './components/PersonalityQuadrantPicker';
+export { NarrationModal } from './components/NarrationModal';

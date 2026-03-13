@@ -34,6 +34,7 @@ enum QuestStatus {
 
 model Profile {
   id                    String          @id @default(cuid())
+  clerkId               String          @unique @map("clerk_id")
   explorerAxis          ExplorerAxis    @map("explorer_axis")
   riskAxis              RiskAxis        @map("risk_axis")
   declaredPersonality   Json            @map("declared_personality")
@@ -43,6 +44,7 @@ model Profile {
   congruenceDelta       Float           @default(0) @map("congruence_delta")
   streakCount           Int             @default(0) @map("streak_count")
   rerollsRemaining      Int             @default(1) @map("rerolls_remaining")
+  lastQuestDate         String?         @map("last_quest_date")
   createdAt             DateTime        @default(now()) @map("created_at")
   updatedAt             DateTime        @updatedAt @map("updated_at")
 
@@ -52,22 +54,44 @@ model Profile {
 }
 
 model QuestLog {
-  id                          String          @id @default(cuid())
-  userId                      String          @map("user_id")
-  questId                     Int             @map("quest_id")
-  assignedAt                  DateTime        @default(now()) @map("assigned_at")
-  status                      QuestStatus     @default(pending)
-  completedAt                 DateTime?       @map("completed_at")
-  congruenceDeltaAtAssignment Float           @default(0) @map("congruence_delta_at_assignment")
-  phaseAtAssignment           EscalationPhase @default(calibration) @map("phase_at_assignment")
-  wasRerolled                 Boolean         @default(false) @map("was_rerolled")
-  wasFallback                 Boolean         @default(false) @map("was_fallback")
-  safetyConsentGiven          Boolean         @default(false) @map("safety_consent_given")
+  id          String      @id @default(cuid())
+  profileId   String      @map("profile_id")
+  questDate   String      @map("quest_date") // YYYY-MM-DD
 
-  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Archetype reference
+  archetypeId Int         @default(1) @map("archetype_id")
 
-  @@index([userId])
-  @@index([assignedAt(sort: Desc)])
-  @@index([status])
+  // AI-generated content (unique per user per day)
+  generatedEmoji      String   @default("⚔️") @map("generated_emoji")
+  generatedTitle      String   @default("") @map("generated_title")
+  generatedMission    String   @default("") @map("generated_mission") @db.Text
+  generatedHook       String   @default("") @map("generated_hook")
+  generatedDuration   String   @default("") @map("generated_duration")
+  generatedSafetyNote String?  @map("generated_safety_note")
+  isOutdoor           Boolean  @default(false) @map("is_outdoor")
+
+  // Context at generation time
+  locationCity        String?  @map("location_city")
+  weatherDescription  String?  @map("weather_description")
+  weatherTemp         Float?   @map("weather_temp")
+
+  // Status
+  status            QuestStatus     @default(pending)
+  completedAt       DateTime?       @map("completed_at")
+  safetyConsentGiven Boolean        @default(false) @map("safety_consent_given")
+  wasRerolled       Boolean         @default(false) @map("was_rerolled")
+  wasFallback       Boolean         @default(false) @map("was_fallback")
+
+  // Snapshot of profile state at quest time
+  phaseAtAssignment     EscalationPhase @default(calibration) @map("phase_at_assignment")
+  congruenceDeltaAtTime Float           @default(0) @map("congruence_delta_at_time")
+
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, questDate])
+  @@index([profileId])
+  @@index([questDate])
   @@map("quest_logs")
 }

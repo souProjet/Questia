@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'solito/navigation';
 import type { ExplorerAxis, RiskAxis, OperationalQuadrant } from '@dopamode/shared';
 import { QUADRANT_DEFAULTS } from '@dopamode/shared';
@@ -9,97 +9,142 @@ import { PersonalityQuadrantPicker } from '../components/PersonalityQuadrantPick
 
 type OnboardingStep = 'welcome' | 'question1' | 'question2' | 'complete';
 
+const STEPS: OnboardingStep[] = ['welcome', 'question1', 'question2', 'complete'];
+const STEP_INDEX: Record<OnboardingStep, number> = { welcome: 0, question1: 1, question2: 2, complete: 3 };
+
 export function OnboardingScreen() {
   const router = useRouter();
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [explorerAxis, setExplorerAxis] = useState<ExplorerAxis | null>(null);
   const [riskAxis, setRiskAxis] = useState<RiskAxis | null>(null);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const goTo = (next: OnboardingStep) => {
+    Animated.timing(fadeAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => {
+      setStep(next);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+    });
+  };
 
   const handleComplete = () => {
     if (!explorerAxis || !riskAxis) return;
     const quadrant: OperationalQuadrant = { explorerAxis, riskAxis };
     const key = `${explorerAxis}_${riskAxis}` as keyof typeof QUADRANT_DEFAULTS;
     const personality = QUADRANT_DEFAULTS[key];
-    // In production, save to database here
     console.log('Profile created:', { quadrant, personality });
     router.push('/dashboard');
   };
 
+  const currentStepIndex = STEP_INDEX[step];
+
   return (
     <View style={styles.container}>
-      {step === 'welcome' && (
-        <View style={styles.content}>
-          <Text style={styles.logo}>⚔️</Text>
-          <Text style={styles.title}>Dopamode</Text>
-          <Text style={styles.subtitle}>
-            Tu t'ennuies parce que t'as pas de quêtes secondaires.{'\n'}
-            La vie c'est pas juste travailler + dormir.
-          </Text>
-          <Pressable style={styles.primaryButton} onPress={() => setStep('question1')}>
-            <Text style={styles.primaryButtonText}>Commencer l'aventure</Text>
-          </Pressable>
+
+      {/* Progress dots */}
+      {step !== 'welcome' && step !== 'complete' && (
+        <View style={styles.progressRow}>
+          {[1, 2].map((i) => (
+            <View
+              key={i}
+              style={[styles.dot, currentStepIndex >= i && styles.dotActive]}
+            />
+          ))}
         </View>
       )}
 
-      {step === 'question1' && (
-        <View style={styles.content}>
-          <Text style={styles.stepIndicator}>1 / 2</Text>
-          <Text style={styles.questionTitle}>Ton style d'aventure</Text>
-          <Text style={styles.questionText}>
-            Es-tu plutôt du genre casanier (soirée film) ou aimes-tu sortir sans savoir où la nuit te mènera ?
-          </Text>
-          <PersonalityQuadrantPicker
-            options={[
-              { value: 'homebody', label: '🏠 Casanier', description: 'Je préfère le confort de chez moi' },
-              { value: 'explorer', label: '🌍 Explorateur', description: 'J\'aime découvrir l\'inconnu' },
-            ]}
-            selected={explorerAxis}
-            onSelect={(val) => {
-              setExplorerAxis(val as ExplorerAxis);
-              setStep('question2');
-            }}
-          />
-        </View>
-      )}
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
 
-      {step === 'question2' && (
-        <View style={styles.content}>
-          <Text style={styles.stepIndicator}>2 / 2</Text>
-          <Text style={styles.questionTitle}>Ton rapport au risque</Text>
-          <Text style={styles.questionText}>
-            En vacances, préfères-tu le confort d'un hébergement planifié à l'avance, ou l'imprévu de devoir trouver un abri à la dernière minute ?
-          </Text>
-          <PersonalityQuadrantPicker
-            options={[
-              { value: 'cautious', label: '🛡️ Prudent', description: 'Je planifie et je sécurise' },
-              { value: 'risktaker', label: '🎲 Téméraire', description: 'J\'embrasse l\'imprévu' },
-            ]}
-            selected={riskAxis}
-            onSelect={(val) => {
-              setRiskAxis(val as RiskAxis);
-              setStep('complete');
-            }}
-          />
-        </View>
-      )}
+        {step === 'welcome' && (
+          <>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logoEmoji}>⚔️</Text>
+            </View>
+            <Text style={styles.appTitle}>DOPAMODE</Text>
+            <Text style={styles.tagline}>Tu t'ennuies parce que{'\n'}t'as pas de quêtes secondaires.</Text>
+            <Text style={styles.subTagline}>
+              La vie c'est pas juste travailler + dormir.
+            </Text>
+            <View style={styles.featureList}>
+              {['🎯  Quêtes quotidiennes personnalisées', '🧠  Algorithme psychologique adaptatif', '⚡  Système d\'escalade progressif'].map((f) => (
+                <View key={f} style={styles.featureItem}>
+                  <Text style={styles.featureText}>{f}</Text>
+                </View>
+              ))}
+            </View>
+            <Pressable style={styles.primaryButton} onPress={() => goTo('question1')}>
+              <Text style={styles.primaryButtonText}>Commencer l'aventure</Text>
+            </Pressable>
+          </>
+        )}
 
-      {step === 'complete' && (
-        <View style={styles.content}>
-          <Text style={styles.logo}>🎯</Text>
-          <Text style={styles.title}>Profil établi !</Text>
-          <Text style={styles.subtitle}>
-            {explorerAxis === 'explorer' ? 'Explorateur' : 'Casanier'} ×{' '}
-            {riskAxis === 'risktaker' ? 'Téméraire' : 'Prudent'}
-          </Text>
-          <Text style={styles.description}>
-            L'algorithme va maintenant calibrer tes premières quêtes sur 3 jours.
-            Elles seront proches de ta zone de confort pour créer l'habitude.
-          </Text>
-          <Pressable style={styles.primaryButton} onPress={handleComplete}>
-            <Text style={styles.primaryButtonText}>Recevoir ma première quête</Text>
-          </Pressable>
-        </View>
-      )}
+        {step === 'question1' && (
+          <>
+            <Text style={styles.questionStep}>Question 1 / 2</Text>
+            <Text style={styles.questionTitle}>Ton style d'aventure</Text>
+            <Text style={styles.questionText}>
+              Es-tu plutôt du genre casanier (soirée film) ou aimes-tu sortir sans savoir où la nuit te mènera ?
+            </Text>
+            <PersonalityQuadrantPicker
+              options={[
+                { value: 'homebody', label: '🏠  Casanier', description: 'Je préfère le confort et la sécurité de chez moi.' },
+                { value: 'explorer', label: '🌍  Explorateur', description: "J'aime partir à l'aventure et découvrir l'inconnu." },
+              ]}
+              selected={explorerAxis}
+              onSelect={(val) => {
+                setExplorerAxis(val as ExplorerAxis);
+                setTimeout(() => goTo('question2'), 200);
+              }}
+            />
+          </>
+        )}
+
+        {step === 'question2' && (
+          <>
+            <Text style={styles.questionStep}>Question 2 / 2</Text>
+            <Text style={styles.questionTitle}>Ton rapport au risque</Text>
+            <Text style={styles.questionText}>
+              En vacances, préfères-tu un hébergement planifié à l'avance ou l'imprévu de trouver un abri à la dernière minute ?
+            </Text>
+            <PersonalityQuadrantPicker
+              options={[
+                { value: 'cautious', label: '🛡️  Prudent', description: 'Je planifie, je sécurise, je prévois.' },
+                { value: 'risktaker', label: '🎲  Téméraire', description: "J'embrasse l'imprévu et le chaos contrôlé." },
+              ]}
+              selected={riskAxis}
+              onSelect={(val) => {
+                setRiskAxis(val as RiskAxis);
+                setTimeout(() => goTo('complete'), 200);
+              }}
+            />
+          </>
+        )}
+
+        {step === 'complete' && (
+          <>
+            <View style={styles.completeBadge}>
+              <Text style={styles.completeEmoji}>🎯</Text>
+            </View>
+            <Text style={styles.completeTitle}>Profil établi !</Text>
+            <View style={styles.quadrantCard}>
+              <Text style={styles.quadrantLabel}>Ton quadrant opérationnel</Text>
+              <Text style={styles.quadrantValue}>
+                {explorerAxis === 'explorer' ? '🌍 Explorateur' : '🏠 Casanier'}{' '}
+                ×{' '}
+                {riskAxis === 'risktaker' ? '🎲 Téméraire' : '🛡️ Prudent'}
+              </Text>
+            </View>
+            <Text style={styles.completeDesc}>
+              L'algorithme va calibrer tes{' '}
+              <Text style={styles.highlight}>3 premières quêtes</Text>{' '}
+              dans ta zone de confort pour créer l'habitude. Puis l'expansion commence.
+            </Text>
+            <Pressable style={styles.primaryButton} onPress={handleComplete}>
+              <Text style={styles.primaryButtonText}>Recevoir ma première quête ⚔️</Text>
+            </Pressable>
+          </>
+        )}
+
+      </Animated.View>
     </View>
   );
 }
@@ -112,67 +157,183 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
+
+  progressRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 32,
+    position: 'absolute',
+    top: 56,
+  },
+  dot: {
+    width: 32,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#1e1e2e',
+  },
+  dotActive: {
+    backgroundColor: '#7c3aed',
+  },
+
   content: {
     width: '100%',
     maxWidth: 440,
     alignItems: 'center',
   },
-  logo: {
-    fontSize: 64,
-    marginBottom: 16,
+
+  // Welcome
+  logoContainer: {
+    width: 88,
+    height: 88,
+    borderRadius: 24,
+    backgroundColor: 'rgba(124,58,237,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(124,58,237,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#e8e8f0',
-    textAlign: 'center',
+  logoEmoji: {
+    fontSize: 40,
+  },
+  appTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#f0f0f8',
+    letterSpacing: 4,
     marginBottom: 12,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#9090a8',
+  tagline: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#f0f0f8',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 28,
+    marginBottom: 8,
+  },
+  subTagline: {
+    fontSize: 15,
+    color: '#6b6b82',
+    textAlign: 'center',
     marginBottom: 32,
   },
-  description: {
-    fontSize: 14,
-    color: '#9090a8',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
+  featureList: {
+    width: '100%',
+    gap: 10,
+    marginBottom: 36,
   },
-  stepIndicator: {
+  featureItem: {
+    backgroundColor: '#111118',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#1e1e2e',
+  },
+  featureText: {
+    color: '#b0b0c8',
     fontSize: 14,
+    fontWeight: '500',
+  },
+
+  // Question
+  questionStep: {
+    fontSize: 12,
     color: '#7c3aed',
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 2,
     marginBottom: 16,
+    textTransform: 'uppercase',
   },
   questionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#e8e8f0',
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#f0f0f8',
     textAlign: 'center',
     marginBottom: 12,
   },
   questionText: {
     fontSize: 15,
-    color: '#9090a8',
+    color: '#6b6b82',
     textAlign: 'center',
     lineHeight: 23,
-    marginBottom: 32,
+    marginBottom: 28,
   },
-  primaryButton: {
-    backgroundColor: '#7c3aed',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
+
+  // Complete
+  completeBadge: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: 'rgba(124,58,237,0.15)',
+    borderWidth: 2,
+    borderColor: '#7c3aed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  completeEmoji: {
+    fontSize: 36,
+  },
+  completeTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#f0f0f8',
+    marginBottom: 20,
+  },
+  quadrantCard: {
+    backgroundColor: '#111118',
+    borderRadius: 16,
+    padding: 20,
     width: '100%',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#7c3aed',
+    marginBottom: 20,
+    gap: 8,
+  },
+  quadrantLabel: {
+    fontSize: 12,
+    color: '#6b6b82',
+    fontWeight: '600',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  quadrantValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#f0f0f8',
+  },
+  completeDesc: {
+    fontSize: 14,
+    color: '#6b6b82',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  highlight: {
+    color: '#a855f7',
+    fontWeight: '700',
+  },
+
+  // Common
+  primaryButton: {
+    backgroundColor: '#7c3aed',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#7c3aed',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
   },
   primaryButtonText: {
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
 });

@@ -3,28 +3,6 @@
 import { prisma } from '../db';
 import type { EscalationPhase } from '@dopamode/shared';
 
-export async function createQuestLog(data: {
-  userId: string;
-  questId: number;
-  congruenceDeltaAtAssignment: number;
-  phaseAtAssignment: EscalationPhase;
-  wasRerolled?: boolean;
-  wasFallback?: boolean;
-  safetyConsentGiven?: boolean;
-}) {
-  return prisma.questLog.create({
-    data: {
-      userId: data.userId,
-      questId: data.questId,
-      congruenceDeltaAtAssignment: data.congruenceDeltaAtAssignment,
-      phaseAtAssignment: data.phaseAtAssignment,
-      wasRerolled: data.wasRerolled ?? false,
-      wasFallback: data.wasFallback ?? false,
-      safetyConsentGiven: data.safetyConsentGiven ?? false,
-    },
-  });
-}
-
 export async function updateQuestLogStatus(
   logId: string,
   status: 'accepted' | 'completed' | 'rejected' | 'replaced',
@@ -38,10 +16,46 @@ export async function updateQuestLogStatus(
   });
 }
 
-export async function getRecentQuestLogs(userId: string, limit = 10) {
+export async function getRecentQuestLogs(profileId: string, limit = 10) {
   return prisma.questLog.findMany({
-    where: { userId },
+    where: { profileId },
     orderBy: { assignedAt: 'desc' },
     take: limit,
+    select: {
+      id: true,
+      questDate: true,
+      archetypeId: true,
+      generatedTitle: true,
+      generatedEmoji: true,
+      status: true,
+      assignedAt: true,
+      phaseAtAssignment: true,
+    },
+  });
+}
+
+// Legacy alias kept for backward compat
+export async function createQuestLog(data: {
+  profileId: string;
+  archetypeId?: number;
+  questDate?: string;
+  congruenceDeltaAtTime?: number;
+  phaseAtAssignment: EscalationPhase;
+  wasRerolled?: boolean;
+  wasFallback?: boolean;
+  safetyConsentGiven?: boolean;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  return prisma.questLog.create({
+    data: {
+      profileId:            data.profileId,
+      archetypeId:          data.archetypeId ?? 1,
+      questDate:            data.questDate ?? today,
+      congruenceDeltaAtTime: data.congruenceDeltaAtTime ?? 0,
+      phaseAtAssignment:    data.phaseAtAssignment,
+      wasRerolled:          data.wasRerolled ?? false,
+      wasFallback:          data.wasFallback ?? false,
+      safetyConsentGiven:   data.safetyConsentGiven ?? false,
+    },
   });
 }
