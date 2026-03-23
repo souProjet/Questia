@@ -70,6 +70,11 @@ model QuestLog {
   generatedSafetyNote String?  @map("generated_safety_note")
   isOutdoor           Boolean  @default(false) @map("is_outdoor")
 
+  // Lieu suggéré (extérieur) — géocodage au moment de la génération
+  destinationLabel    String?  @map("destination_label")
+  destinationLat        Float?   @map("destination_lat")
+  destinationLon      Float?   @map("destination_lon")
+
   // Context at generation time
   locationCity        String?  @map("location_city")
   weatherDescription  String?  @map("weather_description")

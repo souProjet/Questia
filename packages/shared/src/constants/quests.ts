@@ -1,4 +1,4 @@
-import { QuestModel } from '../types';
+import type { PsychologicalCategory, QuestModel } from '../types';
 
 export const QUEST_TAXONOMY: QuestModel[] = [
   {
@@ -160,3 +160,26 @@ export const INDOOR_QUEST_IDS = QUEST_TAXONOMY
   .map((q) => q.id);
 
 export const FALLBACK_QUEST_ID = 9;
+
+/** Famille de quête (moteur) — libellé court, distinct du titre généré par l’IA */
+export const QUEST_CATEGORY_LABEL_FR: Record<PsychologicalCategory, string> = {
+  spatial_adventure: 'Déplacement & exploration',
+  public_introspection: 'Présence en public',
+  sensory_deprivation: 'Immersion & calme',
+  exploratory_sociability: 'Rencontre & lieu',
+  physical_existential: 'Corps & perspective',
+  async_discipline: 'Discipline & rythme',
+  dopamine_detox: 'Rythme & écrans',
+  active_empathy: 'Connexion & écoute',
+  temporal_projection: 'Projection',
+  hostile_immersion: 'Immersion sociale',
+  spontaneous_altruism: 'Geste & chaleur',
+  relational_vulnerability: 'Liens proches',
+  unconditional_service: 'Don & partage',
+};
+
+export function questFamilyLabel(category: string | undefined | null): string | null {
+  if (!category) return null;
+  const k = category as PsychologicalCategory;
+  return k in QUEST_CATEGORY_LABEL_FR ? QUEST_CATEGORY_LABEL_FR[k] : null;
+}

@@ -12,6 +12,7 @@ import {
 import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@dopamode/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
 import { getQuestContext } from '@/lib/actions/weather';
+import { geocodeNominatim } from '@/lib/geocode';
 
 // ── Today's date in YYYY-MM-DD ─────────────────────────────────────────────────
 
@@ -112,6 +113,23 @@ export async function GET(request: NextRequest) {
     context,
   );
 
+  let destinationLabel: string | null = null;
+  let destinationLat: number | null = null;
+  let destinationLon: number | null = null;
+  if (generated.isOutdoor) {
+    const rawLabel = generated.destinationLabel?.trim() || null;
+    const area = [context.city, context.country].filter(Boolean).join(', ') || 'France';
+    const searchQuery =
+      generated.destinationQuery?.trim() ||
+      (rawLabel ? `${rawLabel}, ${area}` : area);
+    destinationLabel = rawLabel ?? (context.city !== 'ta ville' ? context.city : 'Lieu de la quête');
+    const geo = await geocodeNominatim(searchQuery);
+    if (geo) {
+      destinationLat = geo.lat;
+      destinationLon = geo.lon;
+    }
+  }
+
   // Compute updated day and phase progression
   const lastDate = profile.lastQuestDate;
   const yesterday = new Date();
@@ -137,6 +155,9 @@ export async function GET(request: NextRequest) {
         generatedDuration:  generated.duration,
         generatedSafetyNote: generated.safetyNote ?? undefined,
         isOutdoor:          generated.isOutdoor,
+        destinationLabel,
+        destinationLat,
+        destinationLon,
         locationCity:       context.city,
         weatherDescription: context.weatherDescription,
         weatherTemp:        context.temp,
@@ -270,12 +291,23 @@ function toQuestResponse(log: {
   generatedDuration: string;
   generatedSafetyNote: string | null;
   isOutdoor: boolean;
+  destinationLabel: string | null;
+  destinationLat: number | null;
+  destinationLon: number | null;
   locationCity: string | null;
   weatherDescription: string | null;
   weatherTemp: number | null;
   status: string;
 }) {
   const archetype = QUEST_TAXONOMY.find((q) => q.id === log.archetypeId);
+  const destination =
+    log.destinationLabel && log.isOutdoor
+      ? {
+          label: log.destinationLabel,
+          lat: log.destinationLat,
+          lon: log.destinationLon,
+        }
+      : null;
   return {
     questDate: log.questDate,
     archetypeId: log.archetypeId,
@@ -288,6 +320,7 @@ function toQuestResponse(log: {
     duration: log.generatedDuration,
     safetyNote: log.generatedSafetyNote,
     isOutdoor: log.isOutdoor,
+    destination,
     city: log.locationCity,
     weather: log.weatherDescription,
     weatherTemp: log.weatherTemp,

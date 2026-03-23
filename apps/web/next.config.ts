@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       'react-native$': 'react-native-web',
+      canvas: false,
     };
     config.resolve.extensions = [
       '.web.js', '.web.ts', '.web.tsx',

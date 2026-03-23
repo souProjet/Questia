@@ -1,11 +1,22 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useUser } from '@clerk/nextjs';
 import { Navbar } from '@/components/Navbar';
 import { Icon } from '@/components/Icons';
 import type { EscalationPhase } from '@dopamode/shared';
-import { questDisplayEmoji } from '@dopamode/shared';
+import { questDisplayEmoji, questFamilyLabel } from '@dopamode/shared';
+
+const QuestDestinationMap = dynamic(
+  () => import('@/components/QuestDestinationMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-56 animate-pulse rounded-2xl bg-gradient-to-br from-cyan-100/40 to-orange-50/50" />
+    ),
+  },
+);
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -13,6 +24,7 @@ interface DailyQuest {
   questDate: string;
   archetypeId: number;
   archetypeName: string;
+  archetypeCategory?: string;
   emoji: string;
   title: string;
   mission: string;
@@ -27,6 +39,11 @@ interface DailyQuest {
   day: number;
   streak: number;
   phase: EscalationPhase;
+  destination?: {
+    label: string;
+    lat: number | null;
+    lon: number | null;
+  } | null;
   context?: {
     weatherIcon: string;
     weatherDescription: string;
@@ -129,6 +146,7 @@ export default function AppPage() {
   const [showSafety, setShowSafety] = useState(false);
   const [rerolling, setRerolling] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
+  const [userPosition, setUserPosition] = useState<{ lat: number; lon: number } | null>(null);
 
   // ── Ensure profile exists (get-or-create from onboarding localStorage) ───────
 
@@ -201,6 +219,7 @@ export default function AppPage() {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           if (cancelled) return;
+          setUserPosition({ lat: pos.coords.latitude, lon: pos.coords.longitude });
           void loadQuest(pos.coords.latitude, pos.coords.longitude, { silent: true });
         },
         () => {},
@@ -301,6 +320,7 @@ export default function AppPage() {
 
   const phase = quest?.phase ?? 'calibration';
   const phaseInfo = PHASE_LABEL[phase];
+  const questFamily = quest ? questFamilyLabel(quest.archetypeCategory) : null;
 
   // ── Skeleton ──────────────────────────────────────────────────────────────
 
@@ -407,13 +427,24 @@ export default function AppPage() {
               {phaseInfo.text}
             </span>
             {(quest?.streak ?? 0) > 0 && (
-              <span className="streak-badge text-xs shadow-sm">
+              <span
+                className="streak-badge text-xs shadow-sm"
+                title="Nombre de jours calendaires d’affilée où tu as une quête Dopamode."
+              >
                 <span aria-hidden>🔥</span>
-                {quest?.streak} jour{quest?.streak !== 1 ? 's' : ''}
+                <span className="font-black">{quest?.streak}</span>
+                <span className="font-semibold">
+                  {' '}
+                  jour{quest?.streak !== 1 ? 's' : ''} de suite
+                </span>
               </span>
             )}
-            <span className="inline-flex items-center gap-1 rounded-full border border-cyan-300/50 bg-white/90 px-3 py-1 text-xs font-black text-cyan-950 shadow-sm">
-              <span aria-hidden>📍</span> Jour {quest?.day ?? 1}
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-cyan-300/50 bg-white/90 px-3 py-1 text-xs font-black text-cyan-950 shadow-sm"
+              title="Étape de ton parcours (calibration → expansion → rupture)."
+            >
+              <span aria-hidden>📍</span>
+              Parcours · jour {quest?.day ?? 1}
             </span>
           </div>
 
@@ -436,38 +467,13 @@ export default function AppPage() {
         {/* Carte quête — même ADN que QuestExamplesSlider (embedded) */}
         {quest && (
           <article
-            className={`quest-slider-embedded relative overflow-hidden ring-1 transition-shadow duration-300 ${
+            className={`quest-slider-embedded overflow-hidden ring-1 transition-shadow duration-300 ${
               isAccepted || isCompleted
                 ? 'ring-emerald-400/40 shadow-[0_12px_40px_-8px_rgba(16,185,129,.2)]'
                 : 'ring-orange-400/25'
             }`}
           >
-            <div
-              className="absolute top-3 right-3 z-10 flex max-w-[min(100%,12rem)] items-center justify-end gap-1 rounded-xl border border-orange-200/80 bg-white/90 px-2.5 py-1 text-[11px] font-black text-orange-950 shadow-md sm:px-3"
-              aria-label={
-                isCompleted ? 'Quête terminée' : isAccepted ? 'Quête en cours' : 'Date du jour'
-              }
-            >
-              {isCompleted ? (
-                <>
-                  <span aria-hidden>🏆</span> Terminée
-                </>
-              ) : isAccepted ? (
-                <>
-                  <span aria-hidden>✅</span> En cours
-                </>
-              ) : (
-                <time dateTime={quest.questDate} className="capitalize">
-                  {new Date(quest.questDate).toLocaleDateString('fr-FR', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                  })}
-                </time>
-              )}
-            </div>
-
-            <div className="px-4 pb-5 pt-10 sm:px-6 sm:pt-10">
+            <div className="px-4 pb-5 pt-5 sm:px-6 sm:pt-6">
               {/* Bloc 1 — mission : premier regard, plus gros que tout le reste */}
               <section
                 className="mb-6 rounded-2xl border-2 border-cyan-400/55 bg-gradient-to-br from-white via-cyan-50/50 to-white p-5 shadow-[0_8px_28px_-6px_rgba(34,211,238,0.22)] ring-1 ring-cyan-200/70 sm:p-6"
@@ -498,21 +504,43 @@ export default function AppPage() {
                 </div>
               </section>
 
+              {quest.isOutdoor && quest.destination ? (
+                <section
+                  className="mb-6 rounded-2xl border border-emerald-200/60 bg-gradient-to-br from-emerald-50/90 via-white to-cyan-50/40 p-5 shadow-sm ring-1 ring-emerald-100/80 sm:p-6"
+                  aria-labelledby="map-heading"
+                >
+                  <h3
+                    id="map-heading"
+                    className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-900"
+                  >
+                    <span aria-hidden>🗺️</span>
+                    Point de rendez-vous
+                  </h3>
+                  <p className="mb-4 text-sm text-slate-600">
+                    Lieu suggéré pour ta mission (public, accessible). L’itinéraire à pied apparaît si tu as autorisé la
+                    localisation.
+                  </p>
+                  <QuestDestinationMap destination={quest.destination} userPosition={userPosition} />
+                </section>
+              ) : null}
+
               {/* Bloc 2 — titre & contexte (secondaire) */}
               <div className="mb-5 flex items-start gap-3 border-b border-orange-200/40 pb-5">
                 <span className="text-3xl leading-none select-none sm:text-4xl" aria-hidden>
                   {questDisplayEmoji(quest.emoji)}
                 </span>
                 <div className="min-w-0 flex-1 pr-8">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-orange-800/90">Nom de la carte</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-orange-800/90">Titre</p>
                   <h2 className="font-display text-lg font-black leading-tight text-slate-800 sm:text-xl">
                     {quest.title}
                   </h2>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span className="rounded-full border border-slate-200/90 bg-white/90 px-2.5 py-0.5 font-semibold text-slate-600 shadow-sm">
-                      {quest.archetypeName}
-                    </span>
-                  </div>
+                  {questFamily ? (
+                    <p className="mt-2 text-[11px] text-slate-500">
+                      <span className="rounded-full border border-slate-200/90 bg-white/90 px-2.5 py-0.5 font-semibold text-slate-600 shadow-sm">
+                        {questFamily}
+                      </span>
+                    </p>
+                  ) : null}
                 </div>
               </div>
 

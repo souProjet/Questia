@@ -25,6 +25,10 @@ export interface GeneratedDailyQuest {
   isOutdoor: boolean;
   safetyNote: string | null;
   archetype: string;     // archetype name for display
+  /** Lieu public pour carte / itinéraire (null si intérieur) */
+  destinationLabel: string | null;
+  /** Recherche type Google Maps : lieu + ville + pays */
+  destinationQuery: string | null;
 }
 
 // ── Phase → human label ───────────────────────────────────────────────────────
@@ -79,6 +83,7 @@ RÈGLES ABSOLUES :
 4. Adapte la durée à la météo et à la ville
 5. Zéro jargon technique ou psychologique
 6. Commence la mission par un verbe d'action
+7. Si la quête est EN EXTÉRIEUR (isOutdoor true), propose UN lieu public réel et accessible à ${context.city} (parc, place, quai, jardin…). Remplis destinationLabel (nom court) et destinationQuery (phrase complète type recherche Google Maps : lieu + ville + pays). Si la quête est en intérieur (isOutdoor false), mets destinationLabel et destinationQuery à null.
 
 Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste (sans rien d'autre) : Swords, Camera, Coffee, Mic, Compass, Sparkles, TreePine, MapPin, Target, BookOpen, UtensilsCrossed, Drama, Leaf, Navigation, Flower.
 {
@@ -88,7 +93,9 @@ Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste (sans 
   "hook": "une phrase percutante et motivante (max 15 mots)",
   "duration": "durée réaliste (ex: 1h30, 45 min, toute la journée)",
   "isOutdoor": ${context.isOutdoorFriendly && archetype.requiresOutdoor},
-  "safetyNote": ${archetype.requiresOutdoor && context.isOutdoorFriendly ? '"une note de sécurité courte si nécessaire, sinon null"' : 'null'}
+  "safetyNote": ${archetype.requiresOutdoor && context.isOutdoorFriendly ? '"une note de sécurité courte si nécessaire, sinon null"' : 'null'},
+  "destinationLabel": ${context.isOutdoorFriendly && archetype.requiresOutdoor ? `"ex: Parc des Buttes-Chaumont"` : 'null'},
+  "destinationQuery": ${context.isOutdoorFriendly && archetype.requiresOutdoor ? `"ex: Parc des Buttes-Chaumont, ${context.city}, ${context.country}"` : 'null'}
 }`;
 
   try {
@@ -100,7 +107,7 @@ Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste (sans 
       ],
       response_format: { type: 'json_object' },
       temperature: 0.9,
-      max_tokens: 400,
+      max_tokens: 520,
     });
 
     const raw = completion.choices[0]?.message?.content;
@@ -108,7 +115,17 @@ Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste (sans 
 
     const parsed = JSON.parse(raw) as (GeneratedDailyQuest & { emoji?: string });
     const icon = parsed.icon ?? parsed.emoji ?? 'Target';
-    return { ...parsed, icon, archetype: archetype.title };
+    const destinationLabel =
+      typeof parsed.destinationLabel === 'string' ? parsed.destinationLabel.trim() || null : null;
+    const destinationQuery =
+      typeof parsed.destinationQuery === 'string' ? parsed.destinationQuery.trim() || null : null;
+    return {
+      ...parsed,
+      icon,
+      archetype: archetype.title,
+      destinationLabel,
+      destinationQuery,
+    };
   } catch {
     // Graceful fallback
     return {
@@ -120,6 +137,8 @@ Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste (sans 
       isOutdoor: archetype.requiresOutdoor && context.isOutdoorFriendly,
       safetyNote: archetype.requiresOutdoor ? 'Reste dans des zones sûres et éclairées.' : null,
       archetype: archetype.title,
+      destinationLabel: null,
+      destinationQuery: null,
     } as GeneratedDailyQuest;
   }
 }

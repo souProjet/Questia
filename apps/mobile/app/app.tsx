@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator, SafeAreaView,
+  View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator, SafeAreaView, Linking,
 } from 'react-native';
 import { useAuth, useUser } from '@clerk/expo';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { MAX_REROLLS_PER_DAY, questDisplayEmoji } from '@dopamode/shared';
+import { MAX_REROLLS_PER_DAY, questDisplayEmoji, questFamilyLabel } from '@dopamode/shared';
 import { DA } from '@dopamode/ui';
 import type { EscalationPhase } from '@dopamode/shared';
 
@@ -14,6 +14,7 @@ interface DailyQuest {
   questDate: string;
   archetypeId: number;
   archetypeName: string;
+  archetypeCategory?: string;
   emoji: string;
   title: string;
   mission: string;
@@ -29,6 +30,7 @@ interface DailyQuest {
   streak: number;
   phase: EscalationPhase;
   rerollsRemaining?: number;
+  destination?: { label: string; lat: number | null; lon: number | null } | null;
 }
 
 const PHASE_LABEL: Record<EscalationPhase, string> = {
@@ -268,6 +270,7 @@ export default function DashboardScreen() {
   const isPending = qs === 'pending';
   const isAccepted = qs === 'accepted';
   const isCompleted = qs === 'completed';
+  const questFamily = quest ? questFamilyLabel(quest.archetypeCategory) : null;
 
   if (loading && !quest) {
     return (
@@ -309,8 +312,8 @@ export default function DashboardScreen() {
         <View style={styles.statsRow}>
           {[
             { emoji: '🌱', value: PHASE_LABEL[quest?.phase ?? 'calibration'], label: 'Phase' },
-            { emoji: '📅', value: `Jour ${quest?.day ?? 1}`, label: 'Prog.' },
-            { emoji: '🎲', value: `${rerollsRemaining}/${MAX_REROLLS_PER_DAY}`, label: 'Rerolls' },
+            { emoji: '📍', value: `Jour ${quest?.day ?? 1}`, label: 'Parcours' },
+            { emoji: '🎲', value: `${rerollsRemaining}/${MAX_REROLLS_PER_DAY}`, label: 'Relances' },
           ].map((s) => (
             <View key={s.label} style={styles.statCard}>
               <Text style={styles.statEmoji}>{s.emoji}</Text>
@@ -319,6 +322,14 @@ export default function DashboardScreen() {
             </View>
           ))}
         </View>
+
+        {(quest?.streak ?? 0) > 0 && (
+          <View style={styles.streakHint}>
+            <Text style={styles.streakHintText}>
+              🔥 {quest?.streak} jour{quest?.streak !== 1 ? 's' : ''} de suite
+            </Text>
+          </View>
+        )}
 
         <Text style={styles.sectionLabel}>
           {isCompleted ? '🏆  Quête validée' : isAccepted ? '✅  En cours' : '⚔️  Quête du jour'}
@@ -343,14 +354,32 @@ export default function DashboardScreen() {
                 </View>
               </View>
 
+              {quest.isOutdoor && quest.destination ? (
+                <Pressable
+                  style={styles.mapCta}
+                  onPress={() => {
+                    const d = quest.destination!;
+                    const url =
+                      d.lat != null && d.lon != null
+                        ? `https://www.google.com/maps/search/?api=1&query=${d.lat},${d.lon}`
+                        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.label)}`;
+                    Linking.openURL(url);
+                  }}
+                >
+                  <Text style={styles.mapCtaLabel}>🗺️ Lieu suggéré</Text>
+                  <Text style={styles.mapCtaText}>{quest.destination.label}</Text>
+                  <Text style={styles.mapCtaHint}>Ouvre dans Plans / Google Maps</Text>
+                </Pressable>
+              ) : null}
+
               <View style={styles.titleBlock}>
                 <View style={styles.questIconBox}>
                   <Text style={styles.questIcon}>{questDisplayEmoji(quest.emoji)}</Text>
                 </View>
                 <View style={styles.titleBlockText}>
-                  <Text style={styles.cardNameLabel}>Nom de la carte</Text>
+                  <Text style={styles.cardNameLabel}>Titre</Text>
                   <Text style={styles.questTitle}>{quest.title}</Text>
-                  <Text style={styles.questCategory}>{quest.archetypeName}</Text>
+                  {questFamily ? <Text style={styles.questCategory}>{questFamily}</Text> : null}
                 </View>
               </View>
 
@@ -441,7 +470,17 @@ const styles = StyleSheet.create({
   greeting: { fontSize: 26, fontWeight: '900', color: C.text },
   signOutBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: DA.surface, borderWidth: 1, borderColor: DA.border },
   signOutText: { fontSize: 12, color: C.muted, fontWeight: '600' },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 28 },
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  streakHint: {
+    marginBottom: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(249,115,22,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(249,115,22,0.2)',
+  },
+  streakHintText: { fontSize: 12, fontWeight: '700', color: '#9a3412', textAlign: 'center' },
   statCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: C.border },
   statEmoji: { fontSize: 18, marginBottom: 4 },
   statValue: { fontSize: 13, fontWeight: '800', color: C.text, marginBottom: 2, textAlign: 'center' },
@@ -452,6 +491,17 @@ const styles = StyleSheet.create({
   questCardBar: { height: 4, backgroundColor: C.accent },
   questCardBarAccepted: { backgroundColor: C.success },
   questCardBody: { padding: 20 },
+  mapCta: {
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.35)',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 18,
+    backgroundColor: 'rgba(16,185,129,0.06)',
+  },
+  mapCtaLabel: { fontSize: 10, fontWeight: '900', color: '#047857', letterSpacing: 1, marginBottom: 6 },
+  mapCtaText: { fontSize: 15, fontWeight: '800', color: C.text },
+  mapCtaHint: { fontSize: 11, color: C.muted, marginTop: 6, fontWeight: '600' },
   missionBlock: {
     borderWidth: 2,
     borderColor: 'rgba(34,211,238,0.45)',
