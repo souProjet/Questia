@@ -6,6 +6,7 @@ import {
   ScrollView, Animated,
 } from 'react-native';
 import type { QuestNarrationResponse } from '@dopamode/shared';
+import { DA } from '../theme';
 
 interface NarrationModalProps {
   visible: boolean;
@@ -97,15 +98,15 @@ export function NarrationModal({ visible, narration, wasFallback, onConfirm, onC
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.92)',
+    backgroundColor: DA.overlay,
     justifyContent: 'flex-end',
   },
   container: {
-    backgroundColor: '#0f0f18',
+    backgroundColor: DA.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderTopWidth: 1,
-    borderColor: '#7c3aed',
+    borderColor: DA.borderCyan,
     maxHeight: '90%',
   },
   content: {
@@ -130,33 +131,33 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#7c3aed',
+    color: '#22d3ee',
     letterSpacing: 2,
     marginBottom: 10,
   },
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#f0f0f8',
+    color: DA.text,
     lineHeight: 34,
     marginBottom: 20,
   },
   divider: {
     height: 1,
-    backgroundColor: '#1e1e2e',
+    backgroundColor: DA.divider,
     marginBottom: 20,
   },
   narrative: {
     fontSize: 16,
-    color: '#b0b0c8',
+    color: DA.muted,
     lineHeight: 26,
     marginBottom: 24,
     fontStyle: 'italic',
   },
   hookContainer: {
-    backgroundColor: 'rgba(124,58,237,0.08)',
+    backgroundColor: 'rgba(249,115,22,0.08)',
     borderLeftWidth: 3,
-    borderLeftColor: '#7c3aed',
+    borderLeftColor: '#f97316',
     borderRadius: 4,
     padding: 16,
     marginBottom: 24,
@@ -166,14 +167,14 @@ const styles = StyleSheet.create({
   },
   hookQuote: {
     fontSize: 32,
-    color: '#7c3aed',
+    color: '#f97316',
     lineHeight: 32,
     fontWeight: '900',
   },
   hookText: {
     flex: 1,
     fontSize: 15,
-    color: '#a855f7',
+    color: '#2dd4bf',
     fontStyle: 'italic',
     fontWeight: '500',
     lineHeight: 22,
@@ -184,13 +185,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   metaItem: {
-    backgroundColor: '#111118',
+    backgroundColor: DA.surface,
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
     flex: 1,
     borderWidth: 1,
-    borderColor: '#1e1e2e',
+    borderColor: DA.border,
   },
   metaEmoji: {
     fontSize: 22,
@@ -199,12 +200,12 @@ const styles = StyleSheet.create({
   metaValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#f0f0f8',
+    color: DA.text,
     marginBottom: 2,
   },
   metaLabel: {
     fontSize: 11,
-    color: '#6b6b82',
+    color: DA.muted,
   },
   safetySection: {
     backgroundColor: 'rgba(239,68,68,0.06)',
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
   safetyText: {
     flex: 1,
     fontSize: 13,
-    color: '#9090a8',
+    color: DA.muted,
     lineHeight: 20,
   },
   actions: {
@@ -248,11 +249,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: DA.border,
     alignItems: 'center',
   },
   laterText: {
-    color: '#6b6b82',
+    color: DA.muted,
     fontWeight: '600',
     fontSize: 15,
   },
@@ -260,9 +261,9 @@ const styles = StyleSheet.create({
     flex: 2,
     paddingVertical: 16,
     borderRadius: 14,
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#f97316',
     alignItems: 'center',
-    shadowColor: '#7c3aed',
+    shadowColor: '#f97316',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,

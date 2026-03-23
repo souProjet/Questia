@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { DA } from '../theme';
 
 interface PickerOption {
   value: string;
@@ -50,15 +51,15 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   option: {
-    backgroundColor: '#111118',
+    backgroundColor: DA.card,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: '#1e1e2e',
+    borderColor: DA.border,
     overflow: 'hidden',
   },
   optionSelected: {
-    borderColor: '#7c3aed',
-    backgroundColor: 'rgba(124,58,237,0.08)',
+    borderColor: '#22d3ee',
+    backgroundColor: 'rgba(34,211,238,0.08)',
   },
   optionInner: {
     padding: 20,
@@ -72,14 +73,14 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#f0f0f8',
+    color: DA.text,
   },
   optionLabelSelected: {
-    color: '#a855f7',
+    color: '#22d3ee',
   },
   optionDescription: {
     fontSize: 14,
-    color: '#6b6b82',
+    color: DA.muted,
     lineHeight: 21,
   },
   radio: {
@@ -87,18 +88,18 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#2a2a3e',
+    borderColor: DA.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   radioSelected: {
-    borderColor: '#7c3aed',
-    backgroundColor: 'rgba(124,58,237,0.15)',
+    borderColor: '#22d3ee',
+    backgroundColor: 'rgba(34,211,238,0.15)',
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#22d3ee',
   },
 });

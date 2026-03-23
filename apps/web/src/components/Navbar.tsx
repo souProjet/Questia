@@ -7,29 +7,45 @@ import { useAuth, UserButton } from '@clerk/nextjs';
 export function Navbar() {
   const pathname = usePathname();
   const { isSignedIn } = useAuth();
-  const isDashboard = pathname?.startsWith('/dashboard');
+  const isAppRoute = pathname?.startsWith('/app');
+
+  const navShell = {
+    background: 'linear-gradient(145deg, rgba(255,255,255,0.93), rgba(236,253,255,0.9))',
+    borderColor: 'rgba(34,211,238,.35)',
+    boxShadow: '0 10px 30px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.7)',
+    backdropFilter: 'blur(14px)' as const,
+  };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
-      <div className="h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+    <header className="fixed top-0 left-0 right-0 z-50 px-3 pt-3">
       <nav
-        className="flex items-center justify-between px-6 py-4 mx-auto max-w-7xl"
-        style={{ background: 'linear-gradient(to bottom, rgba(5,5,10,0.96), rgba(5,5,10,0.8))', backdropFilter: 'blur(20px)' }}
+        className="flex items-center justify-between px-4 md:px-6 py-3 mx-auto max-w-6xl rounded-2xl border"
+        style={navShell}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-sm font-black shadow-glow-violet-sm group-hover:bg-violet-500 transition-colors">
+        <Link href={isSignedIn ? '/app' : '/'} className="flex items-center gap-3 group">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white group-hover:scale-105 transition-all"
+            style={{ background: 'linear-gradient(135deg, #f97316, #fbbf24)', boxShadow: '0 8px 20px rgba(249,115,22,.35)' }}
+          >
             ⚔
           </div>
-          <span className="font-display font-black text-lg tracking-tight">DOPAMODE</span>
+          <div className="leading-none">
+            <p className="font-display font-black text-lg tracking-tight text-slate-900">DOPAMODE</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-900">Daily Quest Game</p>
+          </div>
         </Link>
 
         {/* Nav links */}
-        {!isDashboard && (
-          <div className="hidden md:flex items-center gap-6 text-sm text-gray-400">
-            <a href="#features" className="hover:text-white transition-colors">Fonctionnalités</a>
-            <a href="#how" className="hover:text-white transition-colors">Comment ça marche</a>
-            <a href="#quests" className="hover:text-white transition-colors">Quêtes</a>
+        {!isAppRoute && (
+          <div className="hidden md:flex items-center gap-2 text-sm">
+            <a href="#hero-examples" className="px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all">🗺️ Exemples</a>
+            <a href="#how" className="px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-emerald-300/60 transition-all">⚡ Fonctionnement</a>
+            <a href="#telecharger" className="px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all">
+              📲 Télécharger
+            </a>
+            <a href="#testimonials" className="px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-orange-300/60 transition-all">💬 Avis</a>
+            <a href="#faq" className="px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-emerald-300/60 transition-all">❓ FAQ</a>
           </div>
         )}
 
@@ -37,24 +53,27 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {isSignedIn ? (
             <>
-              {!isDashboard && (
-                <Link href="/dashboard" className="btn-primary text-sm py-2 px-5">
-                  Mon Dashboard
+              {!isAppRoute && (
+                <Link href="/app" className="btn-primary text-sm py-2 px-5">
+                  Ouvrir l&apos;app
                 </Link>
               )}
               <UserButton
                 appearance={{
-                  variables: { colorPrimary: '#8b5cf6' },
+                  variables: { colorPrimary: '#f97316' },
                   elements: { avatarBox: 'w-8 h-8' },
                 }}
               />
             </>
           ) : (
             <>
-              <Link href="/sign-in" className="text-sm text-gray-400 hover:text-white transition-colors px-4 py-2">
+              <Link
+                href="/sign-in"
+                className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors px-3 py-2 rounded-xl hover:bg-white/70"
+              >
                 Connexion
               </Link>
-              <Link href="/sign-up" className="btn-primary text-sm py-2 px-5">
+              <Link href="/onboarding" className="btn-cta text-sm py-2 px-5">
                 Commencer
               </Link>
             </>

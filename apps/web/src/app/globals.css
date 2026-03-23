@@ -4,19 +4,19 @@
 
 @layer base {
   :root {
-    --bg:       #080811;
-    --surface:  #0f0e1a;
-    --card:     #161527;
+    --bg:       #e8f8ff;
+    --surface:  #f5fbff;
+    --card:     #ffffff;
     --border:   rgba(255,255,255,0.07);
     --border-m: rgba(255,255,255,0.12);
-    --violet:   #8b5cf6;
+    --violet:   #22d3ee;
     --orange:   #f97316;
     --gold:     #fbbf24;
     --green:    #10b981;
     --red:      #ef4444;
-    --text:     #f5f3ff;
-    --muted:    #9991b8;
-    --subtle:   #3d3b5a;
+    --text:     #13212d;
+    --muted:    #4d7187;
+    --subtle:   #8bb9d1;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,7 +28,7 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
-  ::selection { background: rgba(139,92,246,.3); color: #fff; }
+  ::selection { background: rgba(249,115,22,.3); color: #0b1320; }
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--subtle); border-radius: 3px; }
@@ -42,36 +42,125 @@
     background-size: 36px 36px;
   }
 
+  /* Alias : tout l’app utilise la même DA claire que la landing (doc direction-artistique) */
+  .bg-app {
+    @apply bg-adventure;
+  }
+
+  /* Landing — jeu / aventure (DA) : cyan · orange · vert */
+  .bg-adventure {
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(ellipse 78% 50% at 50% -22%, rgba(34, 211, 238, 0.38), transparent),
+      radial-gradient(ellipse 60% 42% at 100% 52%, rgba(249, 115, 22, 0.28), transparent),
+      radial-gradient(ellipse 55% 38% at 0% 80%, rgba(16, 185, 129, 0.22), transparent),
+      repeating-linear-gradient(
+        -18deg,
+        transparent,
+        transparent 48px,
+        rgba(34, 211, 238, 0.1) 48px,
+        rgba(34, 211, 238, 0.1) 49px
+      ),
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.42) 1px, transparent 0);
+    background-size: auto, auto, auto, auto, 32px 32px;
+  }
+
+  /* Bandes de section pour rythme visuel (jeu) */
+  .section-band-how {
+    background: linear-gradient(180deg, rgba(34, 211, 238, 0.06) 0%, transparent 45%, rgba(16, 185, 129, 0.05) 100%);
+  }
+  .section-band-social {
+    background: linear-gradient(180deg, rgba(249, 115, 22, 0.05) 0%, transparent 50%, rgba(34, 211, 238, 0.04) 100%);
+  }
+
+  /* CTA final — même famille que .quest-slider-embedded (carte quête / plateau) */
+  .section-band-cta {
+    background: linear-gradient(
+      180deg,
+      rgba(34, 211, 238, 0.05) 0%,
+      rgba(255, 247, 223, 0.45) 42%,
+      rgba(249, 115, 22, 0.04) 100%
+    );
+  }
+  .landing-cta-panel {
+    background: linear-gradient(165deg, #fff7df 0%, #fff3c6 42%, #d7f5f9 100%);
+    border: 2px solid rgba(249, 115, 22, 0.38);
+    box-shadow: 0 22px 42px rgba(249, 115, 22, 0.16), 0 6px 0 rgba(120, 53, 15, 0.12);
+    border-radius: 26px;
+  }
+  @media (min-width: 768px) {
+    .landing-cta-panel {
+      border-radius: 28px;
+    }
+  }
+
   /* ── Cards ── */
   .card {
-    background: var(--card);
-    border: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(245,251,255,.94));
+    border: 1px solid rgba(19,33,45,.12);
     border-radius: 20px;
   }
   .card-hover {
     transition: border-color .2s, background .2s, transform .2s;
   }
   .card-hover:hover {
-    border-color: rgba(139,92,246,.3);
-    background: #1c1a31;
+    border-color: rgba(34,211,238,.36);
+    background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(226,246,255,.95));
     transform: translateY(-2px);
   }
 
-  /* ── Glass ── */
+  /* ── Glass (sur fond clair) ── */
   .glass {
-    background: rgba(255,255,255,.03);
+    background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(16px);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(15, 23, 42, 0.08);
   }
 
-  /* ── Text gradients ── */
+  /* ── Text gradients : fonds clairs (landing, cartes crème) — stops foncés pour le contraste ── */
   .text-gradient {
-    background: linear-gradient(120deg, #c4b5fd 0%, #8b5cf6 50%, #a78bfa 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    color: #164e63;
+    background: linear-gradient(
+      118deg,
+      #164e63 0%,
+      #115e59 44%,
+      #7c2d12 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Accroches hero / CTA / app : même famille cyan → teal (DA), sans saut orange ni glow agressif */
+  .text-gradient-pop {
+    color: #0e7490;
+    display: inline-block;
+    background: linear-gradient(
+      118deg,
+      #0e7490 0%,
+      #0d9488 40%,
+      #0f766e 78%,
+      #115e59 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    /* léger relief sur fond clair, sans halos multiples */
+    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.85));
+  }
+  /* Alias historique : même rendu que .text-gradient (évite @apply sur composant custom) */
+  .text-gradient-on-dark {
+    color: #164e63;
+    background: linear-gradient(118deg, #164e63 0%, #115e59 44%, #7c2d12 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .text-warm {
-    background: linear-gradient(120deg, #fed7aa 0%, #f97316 50%, #fbbf24 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    color: #9a3412;
+    background: linear-gradient(120deg, #9a3412 0%, #c2410c 45%, #047857 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   /* ── Buttons ── */
@@ -83,10 +172,11 @@
   .btn-sm { @apply px-4 py-2 text-xs; }
 
   .btn-primary {
-    @apply btn bg-violet-600 text-white hover:bg-violet-500;
-    box-shadow: 0 4px 20px rgba(139,92,246,.3);
+    @apply btn text-white;
+    background: linear-gradient(135deg, #0891b2, #22d3ee);
+    box-shadow: 0 4px 20px rgba(34,211,238,.3);
   }
-  .btn-primary:hover { box-shadow: 0 6px 30px rgba(139,92,246,.45); transform: translateY(-1px); }
+  .btn-primary:hover { box-shadow: 0 6px 30px rgba(34,211,238,.45); transform: translateY(-1px); }
 
   .btn-cta {
     @apply btn text-white;
@@ -96,8 +186,9 @@
   .btn-cta:hover { box-shadow: 0 8px 32px rgba(249,115,22,.5); transform: translateY(-2px); }
 
   .btn-ghost {
-    @apply btn bg-white/5 text-white/70 hover:bg-white/10 hover:text-white;
-    border: 1px solid rgba(255,255,255,0.08);
+    @apply btn text-slate-700 hover:text-slate-900;
+    background: rgba(255,255,255,.65);
+    border: 1px solid rgba(15,23,42,0.14);
   }
 
   /* ── Phase pills ── */
@@ -107,7 +198,7 @@
   }
   .pill-expansion {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
-    background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.25); color: #a78bfa;
+    background: rgba(34,211,238,.12); border: 1px solid rgba(34,211,238,.35); color: #0e7490;
   }
   .pill-rupture {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
@@ -116,25 +207,183 @@
 
   /* ── Divider ── */
   .divider { height: 1px; background: var(--border); }
-  .divider-glow { height: 1px; background: linear-gradient(90deg, transparent, rgba(139,92,246,.4), transparent); }
+  .divider-glow { height: 1px; background: linear-gradient(90deg, transparent, rgba(34,211,238,.4), transparent); }
 
-  /* ── Section label ── */
-  .label { @apply text-xs font-bold tracking-widest uppercase text-violet-400; }
+  /* ── Section label (lisible sur fond clair) ── */
+  .label { @apply text-xs font-black tracking-widest uppercase text-orange-800; }
+
+  /* Alias : même rendu que .label */
+  .label-on-dark {
+    @apply text-xs font-black tracking-widest uppercase text-orange-800;
+  }
 
   /* ── Quest card highlight ── */
   .quest-glow {
-    box-shadow: 0 0 0 1px rgba(139,92,246,.2), 0 20px 60px rgba(139,92,246,.08);
+    box-shadow: 0 0 0 1px rgba(34,211,238,.24), 0 20px 60px rgba(34,211,238,.09);
   }
   .quest-glow-orange {
     box-shadow: 0 0 0 1px rgba(249,115,22,.2), 0 20px 60px rgba(249,115,22,.08);
   }
 
+  .quest-board {
+    background: linear-gradient(165deg, #fff7df, #fff3c6 40%, #fde68a 120%);
+    border: 2px solid rgba(249, 115, 22, 0.35);
+    box-shadow: 0 24px 40px rgba(249,115,22,.2), 0 6px 0 rgba(120,53,15,.16);
+  }
+
+  /* Page /app — carte quête : même ADN « plateau » mais plus aérée, moins de bordures qui rivalisent */
+  .app-quest-surface {
+    background: linear-gradient(165deg, #ffffff 0%, #fffbf5 45%, #fff3e0 100%);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 4px 6px -1px rgba(15, 23, 42, 0.05),
+      0 22px 44px -14px rgba(34, 211, 238, 0.14),
+      0 12px 28px -16px rgba(249, 115, 22, 0.1);
+    border-radius: 1.75rem;
+  }
+  .app-quest-surface--active {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 0 0 1px rgba(16, 185, 129, 0.22),
+      0 22px 44px -14px rgba(16, 185, 129, 0.12);
+  }
+  .app-hook-quote {
+    background: linear-gradient(105deg, rgba(224, 242, 254, 0.65) 0%, rgba(255, 247, 237, 0.9) 55%, rgba(254, 243, 199, 0.45) 100%);
+    border: 1px solid rgba(249, 115, 22, 0.12);
+    border-left-width: 4px;
+    border-left-color: rgba(249, 115, 22, 0.55);
+    border-radius: 1rem;
+  }
+
+  .quest-sticker {
+    background: linear-gradient(135deg, rgba(34,211,238,.2), rgba(16,185,129,.2));
+    border: 1px solid rgba(34,211,238,.35);
+    color: #0f3a45;
+  }
+
+  /* Slider hero — même famille que .quest-board ; ombres serrées = texte plus net (pas de gros blur) */
+  .quest-slider-embedded {
+    background: linear-gradient(165deg, #fff7df 0%, #fff3c6 42%, #d7f5f9 100%);
+    border: 2px solid rgba(249, 115, 22, 0.38);
+    box-shadow:
+      0 10px 22px rgba(249, 115, 22, 0.11),
+      0 6px 0 rgba(120, 53, 15, 0.12);
+    border-radius: 26px;
+  }
+
   /* ── Streak badge ── */
   .streak-badge {
-    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold text-amber-400;
-    background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.2);
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold text-amber-800;
+    background: rgba(251,191,36,.14); border: 1px solid rgba(217,119,6,.28);
   }
 
   /* ── Step animation ── */
   .animate-fadeIn { animation: fadeIn 0.35s ease-out; }
+
+  /* ── Clerk (sign-in / sign-up) — thème clair forcé (évite footer / zone dev noirs) ── */
+  .auth-clerk-root {
+    --clerk-color-primary: #f97316;
+    --clerk-color-background: #fffdf5;
+    --clerk-color-foreground: #13212d;
+    --clerk-color-text: #13212d;
+    --clerk-color-text-secondary: #4d7187;
+    --clerk-color-input-background: #ffffff;
+    --clerk-color-neutral: #fff7ed;
+    --clerk-color-shimmer: #e0f2fe;
+    color-scheme: light;
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Centrage horizontal du composant Clerk (root + carte) */
+  .auth-clerk-root .cl-rootBox {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .auth-clerk-root .cl-main {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box;
+  }
+
+  .auth-clerk-root .cl-footer,
+  .auth-clerk-root [class*='cl-footer'] {
+    background-color: #fffdf5 !important;
+    background-image: none !important;
+    color: var(--text) !important;
+    border-color: rgba(249, 115, 22, 0.2) !important;
+  }
+
+  .auth-clerk-root .cl-socialButtonsBlockButton {
+    overflow: visible !important;
+  }
+
+  /* Espace pour le pastille « dernière fois » au-dessus du bouton OAuth */
+  .auth-clerk-root .cl-socialButtonsRoot {
+    padding-top: 0.5rem !important;
+  }
+
+  .auth-clerk-root .cl-footerPages,
+  .auth-clerk-root [class*='FooterPages'] {
+    background-color: #fffdf5 !important;
+    color: var(--muted) !important;
+  }
+
+  /* Doublon « Créer un compte » : on garde le lien sous le panneau Dopamode uniquement */
+  .auth-clerk-root .cl-footerAction {
+    display: none !important;
+  }
+
+  .auth-clerk-root .cl-formButtonPrimary {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    background: linear-gradient(135deg, #f97316, #fbbf24) !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.38) !important;
+    text-transform: none !important;
+    border: none !important;
+  }
+  .auth-clerk-root .cl-formButtonPrimary:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+  }
+  .auth-clerk-root .cl-socialButtonsBlockButton {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    border-radius: 1rem !important;
+    border-width: 2px !important;
+    border-color: rgba(249, 115, 22, 0.28) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    font-weight: 700 !important;
+    color: var(--text) !important;
+  }
+  .auth-clerk-root .cl-socialButtonsBlockButton:hover {
+    background: rgba(224, 242, 254, 0.95) !important;
+    border-color: rgba(34, 211, 238, 0.45) !important;
+  }
+  .auth-clerk-root .cl-footerActionLink {
+    color: #0e7490 !important;
+    font-weight: 700 !important;
+  }
+  .auth-clerk-root .cl-footerActionLink:hover {
+    color: #ea580c !important;
+  }
+  .auth-clerk-root .cl-dividerLine {
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.4), transparent) !important;
+  }
 }

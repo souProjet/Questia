@@ -6,6 +6,7 @@ import { useRouter } from 'solito/navigation';
 import type { ExplorerAxis, RiskAxis, OperationalQuadrant } from '@dopamode/shared';
 import { QUADRANT_DEFAULTS } from '@dopamode/shared';
 import { PersonalityQuadrantPicker } from '../components/PersonalityQuadrantPicker';
+import { DA } from '../theme';
 
 type OnboardingStep = 'welcome' | 'question1' | 'question2' | 'complete';
 
@@ -32,7 +33,7 @@ export function OnboardingScreen() {
     const key = `${explorerAxis}_${riskAxis}` as keyof typeof QUADRANT_DEFAULTS;
     const personality = QUADRANT_DEFAULTS[key];
     console.log('Profile created:', { quadrant, personality });
-    router.push('/dashboard');
+    router.push('/app');
   };
 
   const currentStepIndex = STEP_INDEX[step];
@@ -152,7 +153,7 @@ export function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0f',
+    backgroundColor: DA.bg,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -169,10 +170,10 @@ const styles = StyleSheet.create({
     width: 32,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#1e1e2e',
+    backgroundColor: DA.trackMuted,
   },
   dotActive: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#22d3ee',
   },
 
   content: {
@@ -186,9 +187,9 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 24,
-    backgroundColor: 'rgba(124,58,237,0.15)',
+    backgroundColor: 'rgba(34,211,238,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(124,58,237,0.4)',
+    borderColor: 'rgba(249,115,22,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -199,21 +200,21 @@ const styles = StyleSheet.create({
   appTitle: {
     fontSize: 32,
     fontWeight: '900',
-    color: '#f0f0f8',
+    color: DA.text,
     letterSpacing: 4,
     marginBottom: 12,
   },
   tagline: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#f0f0f8',
+    color: DA.text,
     textAlign: 'center',
     lineHeight: 28,
     marginBottom: 8,
   },
   subTagline: {
     fontSize: 15,
-    color: '#6b6b82',
+    color: DA.muted,
     textAlign: 'center',
     marginBottom: 32,
   },
@@ -223,15 +224,15 @@ const styles = StyleSheet.create({
     marginBottom: 36,
   },
   featureItem: {
-    backgroundColor: '#111118',
+    backgroundColor: DA.card,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#1e1e2e',
+    borderColor: DA.border,
   },
   featureText: {
-    color: '#b0b0c8',
+    color: DA.text,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
   // Question
   questionStep: {
     fontSize: 12,
-    color: '#7c3aed',
+    color: '#22d3ee',
     fontWeight: '700',
     letterSpacing: 2,
     marginBottom: 16,
@@ -248,13 +249,13 @@ const styles = StyleSheet.create({
   questionTitle: {
     fontSize: 26,
     fontWeight: '900',
-    color: '#f0f0f8',
+    color: DA.text,
     textAlign: 'center',
     marginBottom: 12,
   },
   questionText: {
     fontSize: 15,
-    color: '#6b6b82',
+    color: DA.muted,
     textAlign: 'center',
     lineHeight: 23,
     marginBottom: 28,
@@ -265,9 +266,9 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: 'rgba(124,58,237,0.15)',
+    backgroundColor: 'rgba(34,211,238,0.1)',
     borderWidth: 2,
-    borderColor: '#7c3aed',
+    borderColor: '#f97316',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -278,23 +279,23 @@ const styles = StyleSheet.create({
   completeTitle: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#f0f0f8',
+    color: DA.text,
     marginBottom: 20,
   },
   quadrantCard: {
-    backgroundColor: '#111118',
+    backgroundColor: DA.card,
     borderRadius: 16,
     padding: 20,
     width: '100%',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#7c3aed',
+    borderColor: DA.borderCyan,
     marginBottom: 20,
     gap: 8,
   },
   quadrantLabel: {
     fontSize: 12,
-    color: '#6b6b82',
+    color: DA.muted,
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
@@ -302,29 +303,29 @@ const styles = StyleSheet.create({
   quadrantValue: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#f0f0f8',
+    color: DA.text,
   },
   completeDesc: {
     fontSize: 14,
-    color: '#6b6b82',
+    color: DA.muted,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 32,
   },
   highlight: {
-    color: '#a855f7',
+    color: '#fbbf24',
     fontWeight: '700',
   },
 
   // Common
   primaryButton: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#f97316',
     paddingVertical: 18,
     paddingHorizontal: 32,
     borderRadius: 16,
     width: '100%',
     alignItems: 'center',
-    shadowColor: '#7c3aed',
+    shadowColor: '#f97316',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 16,

@@ -13,6 +13,7 @@ import type {
 import { QuestCard } from '../components/QuestCard';
 import { SafetyConsentModal } from '../components/SafetyConsentModal';
 import { NarrationModal } from '../components/NarrationModal';
+import { DA } from '../theme';
 
 interface QuestDashboardProps {
   userId?: string;
@@ -26,9 +27,9 @@ interface QuestDashboardProps {
 }
 
 const PHASE_CONFIG = {
-  calibration: { label: 'Étalonnage', color: '#22c55e', emoji: '🌱', bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.3)' },
-  expansion:   { label: 'Expansion',  color: '#f59e0b', emoji: '🌙', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  rupture:     { label: 'Rupture',    color: '#ef4444', emoji: '⚡', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)' },
+  calibration: { label: 'Étalonnage', color: '#10b981', emoji: '🌱', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
+  expansion:   { label: 'Expansion',  color: '#22d3ee', emoji: '🌙', bg: 'rgba(34,211,238,0.12)', border: 'rgba(34,211,238,0.3)' },
+  rupture:     { label: 'Rupture',    color: '#f97316', emoji: '⚡', bg: 'rgba(249,115,22,0.12)',  border: 'rgba(249,115,22,0.3)' },
 };
 
 export function QuestDashboard({
@@ -152,7 +153,7 @@ export function QuestDashboard({
 
       {loading ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator size="large" color="#7c3aed" />
+          <ActivityIndicator size="large" color="#22d3ee" />
           <Text style={styles.loadingTitle}>Le Maître des Quêtes rédige ta narration…</Text>
           <Text style={styles.loadingSubtitle}>Préparation de ton aventure personnalisée</Text>
         </View>
@@ -215,7 +216,7 @@ export function QuestDashboard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0f',
+    backgroundColor: DA.bg,
   },
   scrollContent: {
     padding: 20,
@@ -233,14 +234,14 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#7c3aed',
+    color: '#22d3ee',
     letterSpacing: 3,
     marginBottom: 4,
   },
   dayLabel: {
     fontSize: 32,
     fontWeight: '900',
-    color: '#f0f0f8',
+    color: DA.text,
     lineHeight: 36,
   },
   phaseBadge: {
@@ -268,12 +269,12 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#111118',
+    backgroundColor: DA.card,
     borderRadius: 14,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1e1e2e',
+    borderColor: DA.borderCyan,
   },
   statEmoji: {
     fontSize: 20,
@@ -282,12 +283,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#f0f0f8',
+    color: DA.text,
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 11,
-    color: '#6b6b82',
+    color: DA.muted,
     fontWeight: '500',
   },
 
@@ -295,7 +296,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#6b6b82',
+    color: DA.muted,
     letterSpacing: 1.5,
     marginBottom: 14,
     textTransform: 'uppercase',
@@ -303,24 +304,24 @@ const styles = StyleSheet.create({
 
   // Loading
   loadingCard: {
-    backgroundColor: '#111118',
+    backgroundColor: DA.card,
     borderRadius: 20,
     padding: 40,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#7c3aed',
+    borderColor: DA.borderCyan,
     marginBottom: 16,
     gap: 16,
   },
   loadingTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#f0f0f8',
+    color: DA.text,
     textAlign: 'center',
   },
   loadingSubtitle: {
     fontSize: 13,
-    color: '#6b6b82',
+    color: DA.muted,
     textAlign: 'center',
   },
 
@@ -333,9 +334,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#111118',
+    backgroundColor: DA.surface,
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: DA.border,
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderRadius: 14,
@@ -344,17 +345,17 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   rerollText: {
-    color: '#a855f7',
+    color: '#22d3ee',
     fontWeight: '700',
     fontSize: 15,
   },
   rerollCount: {
-    color: '#6b6b82',
+    color: DA.muted,
     fontSize: 13,
     fontWeight: '500',
   },
   rerollTextDisabled: {
-    color: '#3d3d52',
+    color: 'rgba(19,33,45,0.35)',
   },
   buyButton: {
     backgroundColor: 'rgba(245,158,11,0.12)',
@@ -392,7 +393,7 @@ const styles = StyleSheet.create({
   },
   acceptedSubtitle: {
     fontSize: 14,
-    color: '#6b6b82',
+    color: DA.muted,
     textAlign: 'center',
     lineHeight: 20,
   },

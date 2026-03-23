@@ -3,6 +3,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { QUEST_TAXONOMY } from '@dopamode/shared';
+import { DA } from '../theme';
 
 interface QuestDetailScreenProps {
   questId: number;
@@ -70,7 +71,7 @@ export function QuestDetailScreen({ questId }: QuestDetailScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0f',
+    backgroundColor: DA.bg,
   },
   content: {
     padding: 24,
@@ -78,19 +79,19 @@ const styles = StyleSheet.create({
   },
   questNumber: {
     fontSize: 14,
-    color: '#7c3aed',
+    color: '#22d3ee',
     fontWeight: '600',
     marginBottom: 8,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#e8e8f0',
+    color: DA.text,
     marginBottom: 16,
   },
   description: {
     fontSize: 16,
-    color: '#9090a8',
+    color: DA.muted,
     lineHeight: 26,
     marginBottom: 32,
   },
@@ -101,19 +102,21 @@ const styles = StyleSheet.create({
   },
   metaItem: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: DA.card,
     padding: 16,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: DA.border,
   },
   metaLabel: {
     fontSize: 12,
-    color: '#9090a8',
+    color: DA.muted,
     marginBottom: 4,
   },
   metaValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#e8e8f0',
+    color: DA.text,
   },
   tags: {
     flexDirection: 'row',
@@ -121,20 +124,27 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   tag: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: DA.surface,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: DA.border,
   },
   tagText: {
     fontSize: 13,
-    color: '#9090a8',
+    color: DA.muted,
   },
   acceptButton: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#f97316',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
+    shadowColor: '#f97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
   acceptButtonText: {
     color: '#ffffff',

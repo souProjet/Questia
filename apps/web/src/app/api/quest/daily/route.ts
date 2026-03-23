@@ -1,48 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
-import { QUEST_TAXONOMY } from '@dopamode/shared';
-import type { EscalationPhase, ExplorerAxis, RiskAxis } from '@dopamode/shared';
+import {
+  QUEST_TAXONOMY,
+  selectQuest,
+  computeExhibitedPersonality,
+  computeCongruenceDelta,
+  getEffectivePhase,
+  FALLBACK_QUEST_ID,
+} from '@dopamode/shared';
+import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@dopamode/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
 import { getQuestContext } from '@/lib/actions/weather';
-
-// ── Archetype selection ────────────────────────────────────────────────────────
-
-function selectArchetype(
-  phase: EscalationPhase,
-  explorerAxis: ExplorerAxis,
-  riskAxis: RiskAxis,
-  isOutdoorFriendly: boolean,
-  recentArchetypeIds: number[],
-) {
-  // Filter by outdoor availability
-  let pool = isOutdoorFriendly
-    ? QUEST_TAXONOMY
-    : QUEST_TAXONOMY.filter((q) => !q.requiresOutdoor);
-
-  // Filter by phase → comfort level
-  const comfortByPhase: Record<EscalationPhase, string[]> = {
-    calibration: ['low', 'moderate'],
-    expansion:   ['moderate', 'high'],
-    rupture:     ['high', 'extreme'],
-  };
-  const allowed = comfortByPhase[phase];
-  pool = pool.filter((q) => allowed.includes(q.comfortLevel));
-
-  // Prefer quests not done in last 7 days
-  const fresh = pool.filter((q) => !recentArchetypeIds.includes(q.id));
-  if (fresh.length > 0) pool = fresh;
-
-  // Boost social quests for explorers, solo quests for homebodies
-  if (explorerAxis === 'explorer') {
-    const social = pool.filter((q) => q.requiresSocial);
-    if (social.length >= 2) pool = social;
-  }
-
-  if (pool.length === 0) pool = QUEST_TAXONOMY; // ultimate fallback
-
-  return pool[Math.floor(Math.random() * pool.length)];
-}
 
 // ── Today's date in YYYY-MM-DD ─────────────────────────────────────────────────
 
@@ -78,6 +47,7 @@ export async function GET(request: NextRequest) {
       day: profile.currentDay,
       streak: profile.streakCount,
       phase: profile.currentPhase,
+      rerollsRemaining: profile.rerollsRemaining,
     });
   }
 
@@ -86,23 +56,48 @@ export async function GET(request: NextRequest) {
   // Get weather + location context
   const context = await getQuestContext(lat, lon);
 
-  // Get recent archetype IDs (last 7 days) to avoid repetition
-  const recent = await prisma.questLog.findMany({
+  // Get recent logs for Delta de congruence
+  const recentLogs = await prisma.questLog.findMany({
     where: { profileId: profile.id },
     orderBy: { assignedAt: 'desc' },
-    take: 7,
-    select: { archetypeId: true },
+    take: 14,
+    select: { archetypeId: true, status: true },
   });
-  const recentIds = recent.map((r) => r.archetypeId);
 
-  // Select the best archetype
-  const archetype = selectArchetype(
-    profile.currentPhase as EscalationPhase,
-    profile.explorerAxis as ExplorerAxis,
-    profile.riskAxis as RiskAxis,
-    context.isOutdoorFriendly,
+  const engineLogs: QuestLog[] = recentLogs.map((r) => ({
+    id: '',
+    userId: profile.clerkId,
+    questId: r.archetypeId,
+    assignedAt: '',
+    status: r.status as QuestLog['status'],
+    congruenceDeltaAtAssignment: 0,
+    phaseAtAssignment: profile.currentPhase as EscalationPhase,
+    wasRerolled: false,
+    wasFallback: false,
+    safetyConsentGiven: false,
+  }));
+
+  const declaredPersonality = profile.declaredPersonality as unknown as PersonalityVector;
+  const exhibited = computeExhibitedPersonality(engineLogs);
+  const congruenceDelta = computeCongruenceDelta(declaredPersonality, exhibited);
+  const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs);
+  const recentIds = recentLogs.slice(0, 7).map((r) => r.archetypeId);
+
+  // Select archetype via moteur Delta de congruence
+  let archetype = selectQuest(
+    declaredPersonality,
+    effectivePhase,
     recentIds,
+    context.isOutdoorFriendly,
   );
+
+  // Fallback météo si quête extérieure non recommandée
+  if (archetype?.requiresOutdoor && !context.isOutdoorFriendly) {
+    archetype = QUEST_TAXONOMY.find((q) => q.id === (archetype!.fallbackQuestId ?? FALLBACK_QUEST_ID)) ?? archetype;
+  }
+  if (!archetype) {
+    archetype = QUEST_TAXONOMY.find((q) => q.id === FALLBACK_QUEST_ID) ?? QUEST_TAXONOMY[0];
+  }
 
   // Generate the quest via OpenAI
   const generated = await generateDailyQuest(
@@ -152,11 +147,12 @@ export async function GET(request: NextRequest) {
     prisma.profile.update({
       where: { id: profile.id },
       data: {
-        currentDay:    newDay,
-        currentPhase:  newPhase,
-        streakCount:   newStreak,
-        lastQuestDate: today,
-        rerollsRemaining: 1, // reset daily rerolls
+        currentDay:       newDay,
+        currentPhase:     newPhase,
+        streakCount:      newStreak,
+        lastQuestDate:    today,
+        rerollsRemaining: 1,
+        congruenceDelta:  congruenceDelta,
       },
     }),
   ]);
@@ -167,25 +163,90 @@ export async function GET(request: NextRequest) {
     day: newDay,
     streak: newStreak,
     phase: newPhase,
+    rerollsRemaining: 1,
     context,
   }, { status: 201 });
 }
 
-// ── POST: accept the quest (mark as accepted in DB) ───────────────────────────
+// ── POST: accept the quest OR reroll ───────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
-  const { questDate, safetyConsentGiven } = await request.json() as {
+  const body = await request.json().catch(() => ({})) as {
     questDate?: string;
     safetyConsentGiven?: boolean;
+    action?: 'reroll' | 'replace' | 'complete';
   };
 
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
   if (!profile) return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
 
-  const today = questDate ?? todayStr();
+  const today = body.questDate ?? todayStr();
+
+  // ── Reroll: delete today's quest and decrement rerolls ──────────────────────
+  if (body.action === 'reroll' || body.action === 'replace') {
+    if (profile.rerollsRemaining <= 0) {
+      return NextResponse.json({ error: 'Plus de relances disponibles aujourd\'hui.' }, { status: 400 });
+    }
+    const existing = await prisma.questLog.findUnique({
+      where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Aucune quête à relancer.' }, { status: 400 });
+    }
+    await prisma.$transaction([
+      prisma.questLog.delete({
+        where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+      }),
+      prisma.profile.update({
+        where: { id: profile.id },
+        data: { rerollsRemaining: Math.max(0, profile.rerollsRemaining - 1) },
+      }),
+    ]);
+    return NextResponse.json({ rerolled: true, rerollsRemaining: profile.rerollsRemaining - 1 });
+  }
+
+  // ── Complete: quête faite aujourd'hui (après acceptation) ───────────────────
+  if (body.action === 'complete') {
+    const existing = await prisma.questLog.findUnique({
+      where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Aucune quête pour cette date.' }, { status: 404 });
+    }
+    if (existing.status !== 'accepted') {
+      return NextResponse.json(
+        { error: existing.status === 'completed' ? 'Quête déjà validée.' : 'Accepte la quête avant de la valider.' },
+        { status: 400 },
+      );
+    }
+    const updated = await prisma.questLog.update({
+      where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+      data: {
+        status: 'completed',
+        completedAt: new Date(),
+      },
+    });
+    return NextResponse.json(toQuestResponse(updated));
+  }
+
+  // ── Accept: mark as accepted ─────────────────────────────────────────────────
+  const logForAccept = await prisma.questLog.findUnique({
+    where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+  });
+  if (!logForAccept) {
+    return NextResponse.json({ error: 'Aucune quête à accepter.' }, { status: 404 });
+  }
+  if (logForAccept.status === 'completed') {
+    return NextResponse.json({ error: 'Quête déjà validée.' }, { status: 400 });
+  }
+  if (logForAccept.status === 'accepted') {
+    return NextResponse.json(toQuestResponse(logForAccept));
+  }
+
+  const { safetyConsentGiven } = body;
   const updated = await prisma.questLog.update({
     where: { profileId_questDate: { profileId: profile.id, questDate: today } },
     data: {

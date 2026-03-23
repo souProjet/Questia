@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal, ScrollView } from 'react-native';
 import type { QuestModel } from '@dopamode/shared';
+import { DA } from '../theme';
 
 interface SafetyConsentModalProps {
   visible: boolean;
@@ -83,7 +84,9 @@ export function SafetyConsentModal({ visible, quest, onConfirm, onCancel }: Safe
                 onPress={() => { if (allChecked) { reset(); onConfirm(); } }}
                 disabled={!allChecked}
               >
-                <Text style={styles.confirmText}>J'accepte et je pars ⚔️</Text>
+                <Text style={[styles.confirmText, !allChecked && styles.confirmTextDisabled]}>
+                  J'accepte et je pars ⚔️
+                </Text>
               </Pressable>
             </View>
           </ScrollView>
@@ -96,24 +99,24 @@ export function SafetyConsentModal({ visible, quest, onConfirm, onCancel }: Safe
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: DA.overlay,
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#0f0f18',
+    backgroundColor: DA.cardCream,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
     paddingBottom: 40,
     maxHeight: '88%',
     borderTopWidth: 1,
-    borderColor: '#1e1e2e',
+    borderColor: DA.borderCyan,
   },
   handle: {
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#2a2a3e',
+    backgroundColor: DA.trackMuted,
     alignSelf: 'center',
     marginBottom: 24,
   },
@@ -135,19 +138,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#f0f0f8',
+    color: DA.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6b6b82',
+    color: DA.muted,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
   },
   questTitle: {
-    color: '#a855f7',
+    color: '#22d3ee',
     fontWeight: '600',
   },
   rules: {
@@ -159,9 +162,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#111118',
+    backgroundColor: DA.surface,
     borderWidth: 1,
-    borderColor: '#1e1e2e',
+    borderColor: DA.border,
     gap: 12,
   },
   ruleRowChecked: {
@@ -173,7 +176,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#2a2a3e',
+    borderColor: DA.border,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
@@ -190,16 +193,16 @@ const styles = StyleSheet.create({
   ruleText: {
     flex: 1,
     fontSize: 14,
-    color: '#6b6b82',
+    color: DA.muted,
     lineHeight: 20,
   },
   ruleTextChecked: {
-    color: '#b0b0c8',
+    color: DA.text,
   },
   hint: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#3d3d52',
+    color: 'rgba(19,33,45,0.45)',
     marginBottom: 20,
   },
   actions: {
@@ -212,28 +215,28 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#2a2a3e',
+    borderColor: DA.border,
     alignItems: 'center',
   },
   cancelText: {
-    color: '#6b6b82',
+    color: DA.muted,
     fontWeight: '600',
     fontSize: 15,
   },
   confirmButton: {
     flex: 2,
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#f97316',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
-    shadowColor: '#7c3aed',
+    shadowColor: '#f97316',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 8,
   },
   confirmButtonDisabled: {
-    backgroundColor: '#1e1e2e',
+    backgroundColor: 'rgba(19,33,45,0.12)',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -241,5 +244,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '800',
     fontSize: 15,
+  },
+  confirmTextDisabled: {
+    color: DA.muted,
   },
 });

@@ -70,29 +70,42 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-16 relative"
-      style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen bg-adventure flex items-center justify-center px-4 py-16 relative">
 
       {/* Ambient */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-10"
-          style={{ background: 'radial-gradient(ellipse,#8b5cf6,transparent 70%)' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-12"
+          style={{ background: 'radial-gradient(ellipse,rgba(34,211,238,0.35),transparent 70%)' }} />
+        <div className="absolute top-[12%] right-[9%] w-[260px] h-[220px] rounded-full opacity-15"
+          style={{ background: 'radial-gradient(ellipse,#f97316,transparent 70%)' }} />
+        <div className="absolute bottom-[10%] left-[8%] w-[260px] h-[220px] rounded-full opacity-15"
+          style={{ background: 'radial-gradient(ellipse,#22d3ee,transparent 70%)' }} />
+        <div className="absolute top-20 left-[12%] text-4xl opacity-10 animate-float select-none">🗺️</div>
+        <div className="absolute bottom-16 right-[10%] text-3xl opacity-10 animate-float select-none">🎲</div>
       </div>
 
       <div className="relative w-full max-w-md">
 
         {/* Logo */}
         <div className="text-center mb-10">
-          <span className="font-display font-black text-2xl text-white">dopa<span className="text-gradient">mode</span></span>
+          <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-black mb-4"
+            style={{
+              background: 'linear-gradient(135deg, rgba(251,191,36,.22), rgba(34,211,238,.12))',
+              border: '1px solid rgba(249,115,22,.28)',
+              color: '#fde68a',
+            }}>
+            <span aria-hidden>🧭</span> Calibration du profil
+          </p>
+          <span className="font-display font-black text-2xl text-[var(--text)]">dopa<span className="text-gradient">mode</span></span>
         </div>
 
         {/* Progress */}
         <div className="flex items-center gap-2 mb-10">
           {[0, 1].map((i) => (
             <div key={i} className="flex-1 h-1.5 rounded-full transition-all duration-500 overflow-hidden"
-              style={{ background: 'rgba(255,255,255,.07)' }}>
+              style={{ background: 'rgba(15,23,42,.08)' }}>
               <div className="h-full rounded-full transition-all duration-500"
-                style={{ width: step > i ? '100%' : step === i ? '50%' : '0%', background: 'linear-gradient(90deg,#8b5cf6,#a78bfa)' }} />
+                style={{ width: step > i ? '100%' : step === i ? '50%' : '0%', background: 'linear-gradient(90deg,#22d3ee,#14b8a6,#f97316)' }} />
             </div>
           ))}
         </div>
@@ -102,19 +115,25 @@ export default function OnboardingPage() {
           <div className="animate-fadeIn">
             <div className="mb-8 text-center">
               <p className="label mb-3">Question 1 sur 2</p>
-              <h1 className="font-display font-black text-3xl text-white leading-tight">
+              <h1 className="font-display font-black text-3xl text-[var(--text)] leading-tight">
                 Un dimanche après-midi libre,<br />
                 <span className="text-gradient">tu fais quoi ?</span>
               </h1>
+              <p className="text-sm text-[var(--muted)] mt-3">Choisis ton style de joueur pour démarrer l'aventure 🎮</p>
             </div>
             <div className="space-y-3">
-              {Q1_OPTIONS.map((o) => (
+              {Q1_OPTIONS.map((o, idx) => (
                 <button key={o.id} onClick={() => handleQ1(o.id)}
                   className="w-full text-left card card-hover rounded-2xl p-5 flex items-start gap-4 group transition-all duration-200">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-violet-400" style={{ background: 'rgba(139,92,246,.12)', border: '1px solid rgba(139,92,246,.2)' }}><Icon name={o.icon} size="xl" /></div>
+                  <div className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{
+                      color: idx === 0 ? '#fbbf24' : '#22d3ee',
+                      background: idx === 0 ? 'rgba(251,191,36,.12)' : 'rgba(34,211,238,.12)',
+                      border: idx === 0 ? '1px solid rgba(251,191,36,.28)' : '1px solid rgba(34,211,238,.28)',
+                    }}><Icon name={o.icon} size="xl" /></div>
                   <div>
-                    <p className="font-bold text-white mb-1 group-hover:text-violet-300 transition-colors">{o.title}</p>
-                    <p className="text-sm text-gray-500">{o.desc}</p>
+                    <p className="font-bold text-[var(--text)] mb-1 group-hover:text-cyan-800 transition-colors">{o.title}</p>
+                    <p className="text-sm text-[var(--muted)]">{o.desc}</p>
                   </div>
                 </button>
               ))}
@@ -127,24 +146,30 @@ export default function OnboardingPage() {
           <div className="animate-fadeIn">
             <div className="mb-8 text-center">
               <p className="label mb-3">Question 2 sur 2</p>
-              <h1 className="font-display font-black text-3xl text-white leading-tight">
+              <h1 className="font-display font-black text-3xl text-[var(--text)] leading-tight">
                 Un plan qui tombe à l'eau,<br />
                 <span className="text-gradient">c'est comment pour toi ?</span>
               </h1>
+              <p className="text-sm text-[var(--muted)] mt-3">Dernier choix avant de générer tes quêtes ⚡</p>
             </div>
             <div className="space-y-3">
-              {Q2_OPTIONS.map((o) => (
+              {Q2_OPTIONS.map((o, idx) => (
                 <button key={o.id} onClick={() => handleQ2(o.id)}
                   className="w-full text-left card card-hover rounded-2xl p-5 flex items-start gap-4 group transition-all duration-200">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-violet-400" style={{ background: 'rgba(139,92,246,.12)', border: '1px solid rgba(139,92,246,.2)' }}><Icon name={o.icon} size="xl" /></div>
+                  <div className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{
+                      color: idx === 0 ? '#0e7490' : '#f97316',
+                      background: idx === 0 ? 'rgba(34,211,238,.14)' : 'rgba(249,115,22,.14)',
+                      border: idx === 0 ? '1px solid rgba(34,211,238,.35)' : '1px solid rgba(249,115,22,.3)',
+                    }}><Icon name={o.icon} size="xl" /></div>
                   <div>
-                    <p className="font-bold text-white mb-1 group-hover:text-violet-300 transition-colors">{o.title}</p>
-                    <p className="text-sm text-gray-500">{o.desc}</p>
+                    <p className="font-bold text-[var(--text)] mb-1 group-hover:text-cyan-800 transition-colors">{o.title}</p>
+                    <p className="text-sm text-[var(--muted)]">{o.desc}</p>
                   </div>
                 </button>
               ))}
             </div>
-            <button onClick={() => setStep(0)} className="w-full text-center text-xs text-gray-600 hover:text-gray-400 transition-colors mt-5">
+            <button onClick={() => setStep(0)} className="w-full text-center text-xs text-slate-500 hover:text-slate-300 transition-colors mt-5">
               ← Revenir
             </button>
           </div>
@@ -153,34 +178,33 @@ export default function OnboardingPage() {
         {/* ── Step 2: Recap ── */}
         {step === 2 && profile && (
           <div className="animate-fadeIn text-center">
-            <p className="label mb-4">Ton profil</p>
-            <div className="flex justify-center mb-4"><Icon name={profile.icon as 'Zap' | 'Compass' | 'Drama' | 'Leaf'} size="2xl" className="text-violet-400 w-16 h-16" /></div>
-            <h2 className="font-display font-black text-3xl text-white mb-3">
+            <p className="label mb-4">Ton profil est prêt ✨</p>
+            <div className="flex justify-center mb-4"><Icon name={profile.icon as 'Zap' | 'Compass' | 'Drama' | 'Leaf'} size="2xl" className="text-cyan-600 w-16 h-16" /></div>
+            <h2 className="font-display font-black text-3xl text-[var(--text)] mb-3">
               {profile.label}
             </h2>
-            <p className="text-gray-400 mb-8 leading-relaxed">{profile.desc}</p>
+            <p className="text-[var(--muted)] mb-8 leading-relaxed">{profile.desc}</p>
 
             <div className="card rounded-2xl p-5 mb-6 text-left space-y-3">
               <div className="flex items-center gap-3">
-                <Icon name={explorer === 'explorer' ? 'Globe' : 'Home'} size="lg" className="text-violet-400 flex-shrink-0" />
-                <span className="text-sm text-gray-300">
+                <Icon name={explorer === 'explorer' ? 'Globe' : 'Home'} size="lg" className="text-cyan-600 flex-shrink-0" />
+                <span className="text-sm text-[var(--muted)]">
                   {explorer === 'explorer' ? 'Tu aimes explorer et bouger' : 'Tu aimes ta routine et ton espace'}
                 </span>
               </div>
               <div className="divider" />
               <div className="flex items-center gap-3">
-                <Icon name={risk === 'risktaker' ? 'Dices' : 'ClipboardList'} size="lg" className="text-violet-400 flex-shrink-0" />
-                <span className="text-sm text-gray-300">
+                <Icon name={risk === 'risktaker' ? 'Dices' : 'ClipboardList'} size="lg" className="text-orange-600 flex-shrink-0" />
+                <span className="text-sm text-[var(--muted)]">
                   {risk === 'risktaker' ? 'Tu fonces dans l\'inconnu' : 'Tu préfères ce qui est rassurant'}
                 </span>
               </div>
             </div>
 
-            <div className="rounded-2xl px-5 py-4 mb-7 border-l-2 border-violet-500"
-              style={{ background: 'rgba(139,92,246,.06)' }}>
-              <p className="text-sm text-violet-300 italic">
-                " Tes quêtes seront générées chaque matin en fonction de ce profil,
-                de ta météo et de ta ville. "
+            <div className="rounded-2xl px-5 py-4 mb-7 border-l-2 border-cyan-500/60 bg-cyan-500/10">
+              <p className="text-sm text-slate-700 italic">
+                " Tes quêtes seront générées chaque matin à partir de ce profil et de ce que tu
+                acceptes dans l’app — le tout pour rester à ta mesure. "
               </p>
             </div>
 
@@ -191,10 +215,10 @@ export default function OnboardingPage() {
                   <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                   Un instant…
                 </span>
-              ) : 'Créer mon compte et voir ma première quête →'}
+              ) : '🚀 Créer mon compte et voir ma première quête'}
             </button>
 
-            <button onClick={() => setStep(1)} className="w-full text-center text-xs text-gray-600 hover:text-gray-400 transition-colors mt-4">
+            <button onClick={() => setStep(1)} className="w-full text-center text-xs text-slate-500 hover:text-slate-300 transition-colors mt-4">
               ← Modifier mes réponses
             </button>
           </div>

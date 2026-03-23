@@ -17,6 +17,12 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Dopamode utilise ta localisation pour vérifier la sécurité de tes quêtes."
         }
+      ],
+      [
+        "@clerk/expo",
+        {
+          "scheme": "dopamode"
+        }
       ]
     ],
     "experiments": {

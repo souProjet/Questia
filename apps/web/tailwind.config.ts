@@ -6,12 +6,9 @@ const config: Config = {
     extend: {
       colors: {
         bg: {
-          primary: '#05050a',
-          card: '#0d0d16',
-          hover: '#111120',
-        },
-        violet: {
-          950: '#2e1065',
+          primary: '#e8f8ff',
+          card: '#ffffff',
+          hover: '#f5fbff',
         },
       },
       fontFamily: {
@@ -24,11 +21,13 @@ const config: Config = {
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
-        'fade-up': 'fadeUp 0.5s ease-out',
+        'fade-up': 'fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fadeIn': 'fadeIn 0.35s ease-out',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'spin-slow': 'spin 8s linear infinite',
-        'float': 'float 6s ease-in-out infinite',
+        float: 'float 6s ease-in-out infinite',
+        'float-delayed': 'float 7s ease-in-out 1.5s infinite',
+        'glow-soft': 'glowSoft 14s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -36,18 +35,23 @@ const config: Config = {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         fadeUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '0%': { opacity: '0', transform: 'translateY(18px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-12px)' },
         },
+        glowSoft: {
+          '0%, 100%': { opacity: '0.45' },
+          '50%': { opacity: '0.75' },
+        },
       },
       boxShadow: {
-        'glow-violet': '0 0 40px rgba(139, 92, 246, 0.25)',
-        'glow-violet-sm': '0 0 20px rgba(139, 92, 246, 0.15)',
-        'glow-gold': '0 0 30px rgba(245, 158, 11, 0.2)',
+        'glow-cyan': '0 0 36px rgba(34, 211, 238, 0.22)',
+        'glow-cyan-sm': '0 0 18px rgba(34, 211, 238, 0.12)',
+        'glow-orange': '0 0 28px rgba(249, 115, 22, 0.2)',
+        'glow-gold': '0 0 30px rgba(251, 191, 36, 0.18)',
       },
     },
   },

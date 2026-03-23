@@ -3,6 +3,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { QuestModel } from '@dopamode/shared';
+import { DA } from '../theme';
 
 interface QuestCardProps {
   quest: QuestModel;
@@ -43,7 +44,7 @@ export function QuestCard({ quest, onAccept, accepted = false }: QuestCardProps)
             {[1, 2, 3, 4].map((i) => (
               <View
                 key={i}
-                style={[styles.comfortBar, { backgroundColor: i <= comfort.bar ? comfort.color : '#2a2a3e' }]}
+                style={[styles.comfortBar, { backgroundColor: i <= comfort.bar ? comfort.color : DA.trackMuted }]}
               />
             ))}
           </View>
@@ -89,14 +90,14 @@ export function QuestCard({ quest, onAccept, accepted = false }: QuestCardProps)
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#111118',
+    backgroundColor: DA.card,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1e1e2e',
-    shadowColor: '#7c3aed',
+    borderColor: 'rgba(249,115,22,0.25)',
+    shadowColor: '#f97316',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.1,
     shadowRadius: 16,
     elevation: 6,
   },
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
   },
   questNumber: {
     fontSize: 12,
-    color: '#6b6b82',
+    color: DA.muted,
     fontWeight: '600',
   },
   comfortBadge: {
@@ -149,13 +150,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '900',
-    color: '#f0f0f8',
+    color: DA.text,
     lineHeight: 30,
     marginBottom: 10,
   },
   description: {
     fontSize: 15,
-    color: '#6b6b82',
+    color: DA.muted,
     lineHeight: 23,
     marginBottom: 18,
     fontStyle: 'italic',
@@ -168,16 +169,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   tag: {
-    backgroundColor: '#0a0a0f',
+    backgroundColor: DA.surface,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#1e1e2e',
+    borderColor: DA.border,
   },
   tagText: {
     fontSize: 12,
-    color: '#6b6b82',
+    color: DA.muted,
     fontWeight: '500',
   },
   tagOutdoor: {
@@ -190,24 +191,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tagSocial: {
-    backgroundColor: 'rgba(124,58,237,0.08)',
-    borderColor: 'rgba(124,58,237,0.25)',
+    backgroundColor: 'rgba(34,211,238,0.08)',
+    borderColor: 'rgba(34,211,238,0.25)',
   },
   tagSocialText: {
     fontSize: 12,
-    color: '#a855f7',
+    color: '#22d3ee',
     fontWeight: '600',
   },
 
   acceptButton: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#f97316',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
-    shadowColor: '#7c3aed',
+    shadowColor: '#f97316',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
     elevation: 8,
   },
   acceptText: {

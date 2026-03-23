@@ -1,3 +1,4 @@
+export { DA } from './theme';
 export { OnboardingScreen } from './screens/OnboardingScreen';
 export { QuestDashboard } from './screens/QuestDashboard';
 export { QuestDetailScreen } from './screens/QuestDetailScreen';
