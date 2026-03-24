@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { QUEST_TAXONOMY, FALLBACK_QUEST_ID } from '@dopamode/shared';
-import type { OperationalQuadrant, EscalationPhase } from '@dopamode/shared';
+import { QUEST_TAXONOMY, FALLBACK_QUEST_ID } from '@questia/shared';
+import type { OperationalQuadrant, EscalationPhase } from '@questia/shared';
 import { generateQuestNarration } from '@/lib/actions/ai';
 import { checkWeatherSafety } from '@/lib/actions/weather';
 

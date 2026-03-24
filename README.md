@@ -1,4 +1,6 @@
-# Dopamode
+# Questia
+
+Dépôt : [github.com/souProjet/Questia](https://github.com/souProjet/Questia)
 
 > Tu t'ennuies parce que t'as pas de quêtes secondaires. La vie c'est pas juste travailler + dormir.
 
@@ -9,7 +11,7 @@ Application de gamification de la vie réelle par génération de quêtes second
 Monorepo Turborepo avec partage de code TypeScript de bout en bout.
 
 ```
-dopamode/
+Questia/
 ├── apps/
 │   ├── mobile/              # Expo 53 + Expo Router (iOS/Android)
 │   └── web/                 # Next.js 15 + App Router + Server Actions
@@ -84,19 +86,19 @@ L'onboarding place l'utilisateur dans un **quadrant opérationnel** :
 npm install
 
 # Générer le client Prisma
-npx turbo db:generate --filter=@dopamode/web
+npx turbo db:generate --filter=@questia/web
 
 # Pousser le schéma vers NeonDB
-npx turbo db:push --filter=@dopamode/web
+npx turbo db:push --filter=@questia/web
 
 # Lancer en développement (web + mobile)
 npm run dev
 
 # Lancer uniquement le web
-npx turbo dev --filter=@dopamode/web
+npx turbo dev --filter=@questia/web
 
 # Lancer uniquement le mobile
-npx turbo dev --filter=@dopamode/mobile
+npx turbo dev --filter=@questia/mobile
 ```
 
 ## Configuration
@@ -105,8 +107,8 @@ Copier `.env.example` dans `apps/web/.env.local` et renseigner :
 
 ```env
 # NeonDB (Prisma)
-DATABASE_URL=postgresql://user:password@ep-xxx.region.neon.tech/dopamode?sslmode=require
-DIRECT_DATABASE_URL=postgresql://user:password@ep-xxx.region.neon.tech/dopamode?sslmode=require
+DATABASE_URL=postgresql://user:password@ep-xxx.region.neon.tech/questia?sslmode=require
+DIRECT_DATABASE_URL=postgresql://user:password@ep-xxx.region.neon.tech/questia?sslmode=require
 
 # OpenAI
 OPENAI_API_KEY=your_openai_api_key

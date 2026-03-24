@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Dopamode",
-    "slug": "dopamode",
+    "name": "Questia",
+    "slug": "questia",
     "version": "0.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "dopamode",
+    "scheme": "questia",
     "userInterfaceStyle": "dark",
     "splash": {
       "backgroundColor": "#0a0a0f"
@@ -15,13 +15,20 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Dopamode utilise ta localisation pour vérifier la sécurité de tes quêtes."
+          "locationAlwaysAndWhenInUsePermission": "Questia utilise ta localisation pour vérifier la sécurité de tes quêtes."
         }
       ],
       [
         "@clerk/expo",
         {
-          "scheme": "dopamode"
+          "scheme": "questia"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Questia accède à tes photos pour composer ta carte à partager.",
+          "cameraPermission": "Questia utilise l’appareil photo pour ta carte à partager."
         }
       ]
     ],

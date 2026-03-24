@@ -3,7 +3,7 @@
  * NEXT_PUBLIC_* est exposé au client.
  */
 export const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://dopamode.app';
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.app';
 
 export const appStoreUrl = process.env.NEXT_PUBLIC_APP_STORE_URL?.trim() ?? '';
 export const playStoreUrl = process.env.NEXT_PUBLIC_PLAY_STORE_URL?.trim() ?? '';

@@ -13,7 +13,7 @@ import {
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
-import { DA } from '@dopamode/ui';
+import { DA } from '@questia/ui';
 
 // Clerk v3 — require to bypass signal-based types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,7 +164,7 @@ export default function AuthScreen() {
           <View style={styles.logoIcon}>
             <Text style={styles.logoIconText}>D</Text>
           </View>
-          <Text style={styles.appTitle}>DOPAMODE</Text>
+          <Text style={styles.appTitle}>QUESTIA</Text>
           <Text style={styles.appTagline}>
             {mode === 'sign-in' ? 'Bienvenue de retour' : "Lance l'aventure"}
           </Text>

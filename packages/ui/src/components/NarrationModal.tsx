@@ -5,7 +5,7 @@ import {
   View, Text, Pressable, StyleSheet, Modal,
   ScrollView, Animated,
 } from 'react-native';
-import type { QuestNarrationResponse } from '@dopamode/shared';
+import type { QuestNarrationResponse } from '@questia/shared';
 import { DA } from '../theme';
 
 interface NarrationModalProps {

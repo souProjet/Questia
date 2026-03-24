@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import type { QuestModel } from '@dopamode/shared';
+import type { QuestModel } from '@questia/shared';
 import { DA } from '../theme';
 
 interface QuestCardProps {

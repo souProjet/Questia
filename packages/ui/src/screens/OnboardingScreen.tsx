@@ -3,8 +3,8 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'solito/navigation';
-import type { ExplorerAxis, RiskAxis, OperationalQuadrant } from '@dopamode/shared';
-import { QUADRANT_DEFAULTS } from '@dopamode/shared';
+import type { ExplorerAxis, RiskAxis, OperationalQuadrant } from '@questia/shared';
+import { QUADRANT_DEFAULTS } from '@questia/shared';
 import { PersonalityQuadrantPicker } from '../components/PersonalityQuadrantPicker';
 import { DA } from '../theme';
 
@@ -60,7 +60,7 @@ export function OnboardingScreen() {
             <View style={styles.logoContainer}>
               <Text style={styles.logoEmoji}>⚔️</Text>
             </View>
-            <Text style={styles.appTitle}>DOPAMODE</Text>
+            <Text style={styles.appTitle}>QUESTIA</Text>
             <Text style={styles.tagline}>Tu t'ennuies parce que{'\n'}t'as pas de quêtes secondaires.</Text>
             <Text style={styles.subTagline}>
               La vie c'est pas juste travailler + dormir.

@@ -35,7 +35,7 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
     <div
       className={`flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 sm:gap-6 ${className}`}
       role="group"
-      aria-label="Télécharger l'application Dopamode"
+      aria-label="Télécharger l'application Questia"
     >
       {ios ? (
         <a

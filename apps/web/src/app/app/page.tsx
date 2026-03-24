@@ -5,8 +5,9 @@ import dynamic from 'next/dynamic';
 import { useUser } from '@clerk/nextjs';
 import { Navbar } from '@/components/Navbar';
 import { Icon } from '@/components/Icons';
-import type { EscalationPhase } from '@dopamode/shared';
-import { questDisplayEmoji, questFamilyLabel } from '@dopamode/shared';
+import { QuestShareComposer } from '@/components/QuestShareComposer';
+import type { EscalationPhase } from '@questia/shared';
+import { questDisplayEmoji, questFamilyLabel } from '@questia/shared';
 
 const QuestDestinationMap = dynamic(
   () => import('@/components/QuestDestinationMap'),
@@ -147,6 +148,7 @@ export default function AppPage() {
   const [rerolling, setRerolling] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<{ lat: number; lon: number } | null>(null);
+  const [showShareCard, setShowShareCard] = useState(false);
 
   // ── Ensure profile exists (get-or-create from onboarding localStorage) ───────
 
@@ -155,8 +157,8 @@ export default function AppPage() {
       const res = await fetch('/api/profile', { method: 'GET' });
       if (res.ok) return true;
       if (res.status !== 404) return false;
-      const explorer = typeof window !== 'undefined' ? localStorage.getItem('dopamode_explorer') : null;
-      const risk = typeof window !== 'undefined' ? localStorage.getItem('dopamode_risk') : null;
+      const explorer = typeof window !== 'undefined' ? localStorage.getItem('questia_explorer') : null;
+      const risk = typeof window !== 'undefined' ? localStorage.getItem('questia_risk') : null;
       const createRes = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -187,7 +189,7 @@ export default function AppPage() {
           return false;
         }
         const params = lat && lon ? `?lat=${lat}&lon=${lon}` : '';
-        const res = await fetch(`/api/quest/daily${params}`);
+        const res = await fetch(`/api/quest/daily${params}`, { cache: 'no-store' });
         if (res.status === 404) {
           if (!silent) setError('Crée d\'abord ton profil via l\'onboarding.');
           return false;
@@ -242,6 +244,7 @@ export default function AppPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ questDate: quest.questDate, safetyConsentGiven: quest.isOutdoor }),
+        cache: 'no-store',
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
@@ -265,6 +268,7 @@ export default function AppPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ questDate: quest.questDate, action: 'complete' }),
+        cache: 'no-store',
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
@@ -273,6 +277,7 @@ export default function AppPage() {
       }
       const data = await res.json() as Partial<DailyQuest>;
       setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? 'completed') as DailyQuest['status'] } : null));
+      setShowShareCard(true);
     } finally {
       setCompleting(false);
     }
@@ -286,30 +291,29 @@ export default function AppPage() {
   // ── Reroll ────────────────────────────────────────────────────────────────
 
   const handleReroll = async () => {
-    if (!quest || quest.status !== 'pending' || rerolling) return;
+    if (!quest || rerolling) return;
+    // Aligné sur l’UI : boutons visibles si pas acceptée / terminée. Ne pas exiger === 'pending'
+    // (réponse API sans status, typo de casse, etc. — sinon clic sans effet ni message).
+    if (quest.status === 'accepted' || quest.status === 'completed') return;
+
     setRerolling(true);
+    setBannerError(null);
     try {
       const res = await fetch('/api/quest/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ questDate: quest.questDate, action: 'reroll' }),
+        cache: 'no-store',
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? 'Erreur lors de la relance');
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        setBannerError(data.error ?? 'Erreur lors de la relance');
         return;
       }
-      const geoParams = await new Promise<string>((resolve) => {
-        navigator.geolocation?.getCurrentPosition(
-          (pos) => resolve(`?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`),
-          () => resolve(''),
-          { timeout: 3000 },
-        );
-      });
-      const reloadRes = await fetch(`/api/quest/daily${geoParams}`);
-      if (reloadRes.ok) {
-        const data = await reloadRes.json() as DailyQuest;
-        setQuest(data);
+      // Rechargement immédiat (pas d’attente géoloc : évite plusieurs secondes sans retour visible).
+      const ok = await loadQuest(userPosition?.lat, userPosition?.lon, { silent: true });
+      if (!ok) {
+        setBannerError('Impossible de charger la nouvelle quête. Réessaie.');
       }
     } finally {
       setRerolling(false);
@@ -403,7 +407,7 @@ export default function AppPage() {
         )}
 
         {/* Bandeau joueur : une seule lecture, emojis comme la landing */}
-        <section className="mb-8 mt-2 rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-[#fffbeb] via-white/95 to-cyan-50/40 px-5 py-6 md:px-7 md:py-7 shadow-[0_10px_0_rgba(180,83,9,.1),0_22px_48px_rgba(249,115,22,.12)]">
+        <section className="mb-8 mt-2 rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-[#fffbeb] via-white/95 to-cyan-50/40 px-5 py-6 md:px-7 md:py-7 shadow-[0_10px_0_rgba(180,83,9,.1),0_22px_48px_rgba(249,115,22,.12)] motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:40ms] [animation-fill-mode:backwards]">
           <p className="label mb-3 flex items-center gap-2 text-orange-900">
             <span aria-hidden>🎮</span> Carte du jour
           </p>
@@ -429,7 +433,7 @@ export default function AppPage() {
             {(quest?.streak ?? 0) > 0 && (
               <span
                 className="streak-badge text-xs shadow-sm"
-                title="Nombre de jours calendaires d’affilée où tu as une quête Dopamode."
+                title="Nombre de jours calendaires d’affilée où tu as une quête Questia."
               >
                 <span aria-hidden>🔥</span>
                 <span className="font-black">{quest?.streak}</span>
@@ -467,14 +471,33 @@ export default function AppPage() {
         {/* Carte quête — même ADN que QuestExamplesSlider (embedded) */}
         {quest && (
           <article
-            className={`quest-slider-embedded overflow-hidden ring-1 transition-shadow duration-300 ${
+            className={`quest-slider-embedded overflow-hidden ring-1 transition-shadow duration-300 motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:110ms] [animation-fill-mode:backwards] ${
               isAccepted || isCompleted
                 ? 'ring-emerald-400/40 shadow-[0_12px_40px_-8px_rgba(16,185,129,.2)]'
                 : 'ring-orange-400/25'
             }`}
           >
             <div className="px-4 pb-5 pt-5 sm:px-6 sm:pt-6">
-              {/* Bloc 1 — mission : premier regard, plus gros que tout le reste */}
+              {/* Titre + tag : identité de la quête avant les consignes */}
+              <div className="mb-6 flex items-start gap-3">
+                <span className="text-3xl leading-none select-none sm:text-4xl" aria-hidden>
+                  {questDisplayEmoji(quest.emoji)}
+                </span>
+                <div className="min-w-0 flex-1 pr-2">
+                  <h2 className="font-display text-lg font-black leading-tight text-slate-800 sm:text-xl">
+                    {quest.title}
+                  </h2>
+                  {questFamily ? (
+                    <p className="mt-2 text-[11px] text-slate-500">
+                      <span className="rounded-full border border-slate-200/90 bg-white/90 px-2.5 py-0.5 font-semibold text-slate-600 shadow-sm">
+                        {questFamily}
+                      </span>
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Mission concrète */}
               <section
                 className="mb-6 rounded-2xl border-2 border-cyan-400/55 bg-gradient-to-br from-white via-cyan-50/50 to-white p-5 shadow-[0_8px_28px_-6px_rgba(34,211,238,0.22)] ring-1 ring-cyan-200/70 sm:p-6"
                 aria-labelledby="mission-heading"
@@ -524,26 +547,6 @@ export default function AppPage() {
                 </section>
               ) : null}
 
-              {/* Bloc 2 — titre & contexte (secondaire) */}
-              <div className="mb-5 flex items-start gap-3 border-b border-orange-200/40 pb-5">
-                <span className="text-3xl leading-none select-none sm:text-4xl" aria-hidden>
-                  {questDisplayEmoji(quest.emoji)}
-                </span>
-                <div className="min-w-0 flex-1 pr-8">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-orange-800/90">Titre</p>
-                  <h2 className="font-display text-lg font-black leading-tight text-slate-800 sm:text-xl">
-                    {quest.title}
-                  </h2>
-                  {questFamily ? (
-                    <p className="mt-2 text-[11px] text-slate-500">
-                      <span className="rounded-full border border-slate-200/90 bg-white/90 px-2.5 py-0.5 font-semibold text-slate-600 shadow-sm">
-                        {questFamily}
-                      </span>
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-
               <div className="quest-sticker mb-1 rounded-xl px-3.5 py-3 text-center text-sm font-semibold italic leading-relaxed text-[var(--text)]">
                 « {quest.hook} »
               </div>
@@ -560,11 +563,20 @@ export default function AppPage() {
 
             <div className="flex flex-col gap-3 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-4 py-4 sm:px-5">
               {isCompleted ? (
-                <div className="text-center">
+                <div className="text-center space-y-3">
                   <p className="font-display text-lg font-black text-emerald-900">
                     🏆 Quête validée — belle perf, à demain !
                   </p>
                   <p className="mt-2 text-sm text-[var(--muted)]">Ta série et ton parcours sont à jour.</p>
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowShareCard(true)}
+                      className="btn btn-md w-full sm:w-auto font-black border-2 border-cyan-400/50 bg-gradient-to-r from-cyan-50 to-amber-50 text-cyan-950 shadow-sm"
+                    >
+                      📸 Partager ma victoire
+                    </button>
+                  </div>
                 </div>
               ) : isAccepted ? (
                 completing ? (
@@ -610,6 +622,24 @@ export default function AppPage() {
 
       {showSafety && quest && (
         <SafetySheet quest={quest} onConfirm={doAccept} onClose={() => setShowSafety(false)} />
+      )}
+
+      {quest?.status === 'completed' && (
+        <QuestShareComposer
+          open={showShareCard}
+          onOpenChange={setShowShareCard}
+          userFirstName={user?.firstName ?? 'Aventurier·e'}
+          payload={{
+            questDate: quest.questDate,
+            emoji: quest.emoji,
+            title: quest.title,
+            mission: quest.mission,
+            hook: quest.hook,
+            duration: quest.duration,
+            streak: quest.streak,
+            day: quest.day,
+          }}
+        />
       )}
     </div>
   );

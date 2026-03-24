@@ -4,7 +4,7 @@
     "jsx": "react-jsx",
     "lib": ["ES2022", "dom"],
     "paths": {
-      "@dopamode/shared": ["../shared/src"]
+      "@questia/shared": ["../shared/src"]
     }
   },
   "include": ["src"],

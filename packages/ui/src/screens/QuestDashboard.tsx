@@ -6,10 +6,10 @@ import {
 } from 'react-native';
 import {
   QUEST_TAXONOMY, DAILY_FREE_REROLLS, MAX_REROLLS_PER_DAY,
-} from '@dopamode/shared';
+} from '@questia/shared';
 import type {
   QuestModel, EscalationPhase, OperationalQuadrant, QuestNarrationResponse,
-} from '@dopamode/shared';
+} from '@questia/shared';
 import { QuestCard } from '../components/QuestCard';
 import { SafetyConsentModal } from '../components/SafetyConsentModal';
 import { NarrationModal } from '../components/NarrationModal';
@@ -118,7 +118,7 @@ export function QuestDashboard({
       {/* ── Header ── */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.appName}>DOPAMODE</Text>
+          <Text style={styles.appName}>QUESTIA</Text>
           <Text style={styles.dayLabel}>Jour {day}</Text>
         </View>
         <View style={[styles.phaseBadge, { backgroundColor: pc.bg, borderColor: pc.border }]}>

@@ -1,11 +1,10 @@
 import React, { useState, useRef } from 'react';
-import {
-  View, Text, Pressable, StyleSheet, Animated, SafeAreaView,
-} from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated, ScrollView, useWindowDimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { ExplorerAxis, RiskAxis } from '@dopamode/shared';
-import { DA } from '@dopamode/ui';
+import type { ExplorerAxis, RiskAxis } from '@questia/shared';
+import { DA } from '@questia/ui';
 
 type Step = 'welcome' | 'q1' | 'q2' | 'done';
 
@@ -20,6 +19,9 @@ const C = {
 };
 
 export default function OnboardingPage() {
+  const { width } = useWindowDimensions();
+  const compact = width < 400;
+
   const router = useRouter();
   const [step, setStep] = useState<Step>('welcome');
   const [explorer, setExplorer] = useState<ExplorerAxis | null>(null);
@@ -36,8 +38,8 @@ export default function OnboardingPage() {
   const finish = async () => {
     if (!explorer || !risk) return;
     try {
-      await AsyncStorage.setItem('dopamode_explorer', explorer);
-      await AsyncStorage.setItem('dopamode_risk', risk);
+      await AsyncStorage.setItem('questia_explorer', explorer);
+      await AsyncStorage.setItem('questia_risk', risk);
     } catch {}
     router.replace('/(auth)' as never);
   };
@@ -52,9 +54,23 @@ export default function OnboardingPage() {
   const profileKey = explorer && risk ? `${explorer}_${risk}` : null;
   const profile = profileKey ? PROFILES[profileKey] : null;
 
+  const scrollPad = {
+    flexGrow: 1 as const,
+    justifyContent: 'center' as const,
+    paddingTop: 4,
+    paddingBottom: 24,
+    paddingHorizontal: compact ? 18 : 24,
+  };
+
   return (
     <SafeAreaView style={s.safe}>
-      <Animated.View style={[s.content, { opacity: fadeAnim }]}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={scrollPad}
+        bounces
+      >
+        <Animated.View style={{ opacity: fadeAnim }}>
 
         {/* ── WELCOME ── */}
         {step === 'welcome' && (
@@ -62,8 +78,8 @@ export default function OnboardingPage() {
             <View style={s.iconBox}>
               <Text style={s.iconText}>🗺️</Text>
             </View>
-            <Text style={s.title}>Dopamode</Text>
-            <Text style={s.subtitle}>Une aventure quotidienne,{'\n'}rien que pour toi.</Text>
+            <Text style={[s.title, compact && s.titleCompact]}>Questia</Text>
+            <Text style={[s.subtitle, compact && s.subtitleCompact]}>Une aventure quotidienne,{'\n'}rien que pour toi.</Text>
             <Text style={s.body}>
               En 30 secondes, on apprend à te connaître pour générer des quêtes adaptées à ta ville, ta météo et ta personnalité.
             </Text>
@@ -77,7 +93,7 @@ export default function OnboardingPage() {
         {step === 'q1' && (
           <>
             <Text style={s.stepLabel}>Question 1 / 2</Text>
-            <Text style={s.questionTitle}>Un dimanche libre,{'\n'}tu fais quoi ?</Text>
+            <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Un dimanche libre,{'\n'}tu fais quoi ?</Text>
             {[
               { id: 'homebody' as ExplorerAxis, icon: '🏠', title: 'Je reste au chaud.', desc: 'Canapé, film, routine.' },
               { id: 'explorer' as ExplorerAxis, icon: '🌍', title: 'Je pars explorer.',  desc: 'Nouvelles adresses, imprévus.' },
@@ -97,7 +113,7 @@ export default function OnboardingPage() {
         {step === 'q2' && (
           <>
             <Text style={s.stepLabel}>Question 2 / 2</Text>
-            <Text style={s.questionTitle}>Un plan tombe à l'eau,{'\n'}c'est comment ?</Text>
+            <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Un plan tombe à l'eau,{'\n'}c'est comment ?</Text>
             {[
               { id: 'cautious' as RiskAxis, icon: '📋', title: 'Je prépare, je planifie.', desc: 'Quand tout se passe comme prévu, parfait.' },
               { id: 'risktaker' as RiskAxis, icon: '🎲', title: "J'improvise, je fonce.",   desc: 'Les imprévus mènent aux meilleures histoires.' },
@@ -141,26 +157,29 @@ export default function OnboardingPage() {
           </>
         )}
 
-      </Animated.View>
+        </Animated.View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
-  content: { flex: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40, justifyContent: 'center' },
 
   iconBox: { width: 80, height: 80, borderRadius: 24, backgroundColor: 'rgba(34,211,238,.1)', borderWidth: 1, borderColor: 'rgba(249,115,22,.28)', justifyContent: 'center', alignItems: 'center', marginBottom: 24, alignSelf: 'center' },
   iconText: { fontSize: 36 },
 
   title: { fontSize: 32, fontWeight: '900', color: C.text, textAlign: 'center', letterSpacing: 1, marginBottom: 10 },
+  titleCompact: { fontSize: 26, marginBottom: 8 },
   subtitle: { fontSize: 20, fontWeight: '700', color: C.text, textAlign: 'center', lineHeight: 28, marginBottom: 16 },
+  subtitleCompact: { fontSize: 17, lineHeight: 24, marginBottom: 12 },
   body: { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 24, marginBottom: 36 },
 
   stepLabel: { fontSize: 11, fontWeight: '700', color: C.accent, letterSpacing: 2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 16 },
   questionTitle: { fontSize: 26, fontWeight: '900', color: C.text, textAlign: 'center', lineHeight: 34, marginBottom: 28 },
+  questionTitleCompact: { fontSize: 22, lineHeight: 30, marginBottom: 22 },
 
-  optionCard: { flexDirection: 'row', alignItems: 'center', gap: 16, backgroundColor: C.card, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.border, marginBottom: 12 },
+  optionCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: C.card, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: C.border, marginBottom: 12 },
   optionIcon: { fontSize: 30, flexShrink: 0 },
   optionText: { flex: 1 },
   optionTitle: { fontSize: 16, fontWeight: '800', color: C.text, marginBottom: 4 },

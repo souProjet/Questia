@@ -8,7 +8,7 @@ export async function geocodeNominatim(query: string): Promise<{ lat: number; lo
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
   const res = await fetch(url, {
     headers: {
-      'User-Agent': 'Dopamode/1.0 (daily quest; +https://github.com/dopamode)',
+      'User-Agent': 'Questia/1.0 (daily quest; +https://github.com/souProjet/Questia)',
       'Accept-Language': 'fr',
     },
     cache: 'no-store',

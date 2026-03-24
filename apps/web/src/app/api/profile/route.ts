@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
-import { QUADRANT_DEFAULTS } from '@dopamode/shared';
-import type { ExplorerAxis, RiskAxis } from '@dopamode/shared';
+import { QUADRANT_DEFAULTS } from '@questia/shared';
+import type { ExplorerAxis, RiskAxis } from '@questia/shared';
 
 /** GET /api/profile — returns the current user's profile */
 export async function GET() {

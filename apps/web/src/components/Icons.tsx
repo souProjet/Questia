@@ -38,6 +38,7 @@ import {
   Drama,
   Navigation,
   Frown,
+  Share2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -107,6 +108,7 @@ const UI_ICONS: Record<string, LucideIcon> = {
   Zap,
   Flame,
   Frown,
+  Share2,
 };
 
 export type IconName = keyof typeof UI_ICONS | keyof typeof QUEST_ICONS | keyof typeof WEATHER_ICONS;

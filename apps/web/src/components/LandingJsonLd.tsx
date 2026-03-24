@@ -16,7 +16,7 @@ export function LandingJsonLd() {
 
   const appSchema: Record<string, unknown> = {
     '@type': 'SoftwareApplication',
-    name: 'Dopamode',
+    name: 'Questia',
     applicationCategory: 'LifestyleApplication',
     operatingSystem: 'iOS, Android, Web',
     description:
@@ -39,10 +39,10 @@ export function LandingJsonLd() {
   const graph = [
     {
       '@type': 'WebSite',
-      name: 'Dopamode',
+      name: 'Questia',
       url: siteUrl,
       description:
-        'Dopamode transforme ton quotidien en aventure : une quête IRL par jour, personnalisée.',
+        'Questia transforme ton quotidien en aventure : une quête IRL par jour, personnalisée.',
       inLanguage: 'fr-FR',
     },
     appSchema,

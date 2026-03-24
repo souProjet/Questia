@@ -1,5 +1,5 @@
 /**
- * Thème Clerk aligné sur la DA Dopamode (panneau quête clair, CTA orange→or, accents cyan).
+ * Thème Clerk aligné sur la DA Questia (panneau quête clair, CTA orange→or, accents cyan).
  * Complété par `.auth-clerk-root` dans globals.css pour les classes internes Clerk.
  */
 export const clerkAuthAppearance = {

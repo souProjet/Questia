@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
-import { QUEST_TAXONOMY } from '@dopamode/shared';
+import { QUEST_TAXONOMY } from '@questia/shared';
 import { DA } from '../theme';
 
 interface QuestDetailScreenProps {

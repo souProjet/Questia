@@ -22,12 +22,14 @@ const config: Config = {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
         'fade-up': 'fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'fade-up-slow': 'fadeUpSlow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fadeIn': 'fadeIn 0.35s ease-out',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'spin-slow': 'spin 8s linear infinite',
         float: 'float 6s ease-in-out infinite',
         'float-delayed': 'float 7s ease-in-out 1.5s infinite',
         'glow-soft': 'glowSoft 14s ease-in-out infinite',
+        'share-shimmer': 'shareShimmer 2.5s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -37,6 +39,14 @@ const config: Config = {
         fadeUp: {
           '0%': { opacity: '0', transform: 'translateY(18px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeUpSlow: {
+          '0%': { opacity: '0', transform: 'translateY(26px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        shareShimmer: {
+          '0%, 100%': { opacity: '0.35' },
+          '50%': { opacity: '0.65' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },

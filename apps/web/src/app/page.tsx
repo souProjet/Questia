@@ -10,13 +10,13 @@ import { siteUrl } from '@/config/marketing';
 import { LANDING_FAQ } from '@/data/landing-seo';
 
 const seoDescription =
-  'Dopamode : application de quêtes quotidiennes dans la vraie vie. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer — iOS, Android et web.';
+  'Questia : application de quêtes quotidiennes dans la vraie vie. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer — iOS, Android et web.';
 
 export const metadata: Metadata = {
-  title: 'Dopamode — App de quêtes quotidiennes IRL (iOS, Android & Web)',
+  title: 'Questia — App de quêtes quotidiennes IRL (iOS, Android & Web)',
   description: seoDescription,
   keywords: [
-    'Dopamode',
+    'Questia',
     'application quête quotidienne',
     'motivation quotidienne',
     'défis vie réelle',
@@ -28,16 +28,16 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'Dopamode — App de quêtes quotidiennes dans la vraie vie',
+    title: 'Questia — App de quêtes quotidiennes dans la vraie vie',
     description: seoDescription,
     url: siteUrl,
     type: 'website',
     locale: 'fr_FR',
-    siteName: 'Dopamode',
+    siteName: 'Questia',
   },
   twitter: {
     card: 'summary',
-    title: 'Dopamode — App de quêtes quotidiennes IRL',
+    title: 'Questia — App de quêtes quotidiennes IRL',
     description: seoDescription,
   },
 };
@@ -281,7 +281,7 @@ export default function HomePage() {
             <AppStoreButtons className="justify-center" />
             <p className="text-sm text-slate-500 max-w-md">
               <Link href="/onboarding" className="font-semibold text-cyan-800 underline-offset-2 hover:underline">
-                Utiliser Dopamode sur le web
+                Utiliser Questia sur le web
               </Link>
             </p>
           </div>
@@ -444,7 +444,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-14">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 md:gap-12">
             <div className="max-w-sm">
-              <p className="font-display font-black text-lg tracking-tight text-slate-900">Dopamode</p>
+              <p className="font-display font-black text-lg tracking-tight text-slate-900">Questia</p>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">
                 Des quêtes courtes dans la vraie vie — une mission par jour, sans te mettre la pression.
               </p>
@@ -471,7 +471,7 @@ export default function HomePage() {
             </nav>
           </div>
           <p className="mt-10 pt-8 border-t border-slate-200/80 text-center text-xs text-slate-500">
-            © {new Date().getFullYear()} Dopamode
+            © {new Date().getFullYear()} Questia
           </p>
         </div>
       </footer>

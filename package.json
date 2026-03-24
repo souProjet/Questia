@@ -1,16 +1,26 @@
 {
-  "name": "dopamode",
+  "name": "questia",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/souProjet/Questia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/souProjet/Questia/issues"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
     "dev": "turbo dev",
-    "dev:web": "turbo dev --filter=@dopamode/web",
-    "dev:mobile": "turbo dev --filter=@dopamode/mobile",
-    "dev:mobile:clear": "npm run dev -w @dopamode/mobile -- --clear",
-    "dev:mobile:tunnel": "npm run dev:tunnel -w @dopamode/mobile",
+    "dev:web": "turbo dev --filter=@questia/web",
+    "dev:mobile": "turbo dev --filter=@questia/mobile",
+    "expo:start": "expo start apps/mobile",
+    "expo:android": "expo start apps/mobile --android",
+    "expo:ios": "expo start apps/mobile --ios",
+    "dev:mobile:clear": "npm run dev -w @questia/mobile -- --clear",
+    "dev:mobile:tunnel": "npm run dev:tunnel -w @questia/mobile",
     "build": "turbo build",
     "lint": "turbo lint",
     "type-check": "turbo type-check",

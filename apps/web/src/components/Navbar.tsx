@@ -31,8 +31,8 @@ export function Navbar() {
             ⚔
           </div>
           <div className="leading-none">
-            <p className="font-display font-black text-lg tracking-tight text-slate-900">DOPAMODE</p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-900">Daily Quest Game</p>
+            <p className="font-display font-black text-lg tracking-tight text-slate-900">QUESTIA</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-900">Quêtes quotidiennes dans la vraie vie</p>
           </div>
         </Link>
 

@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '../db';
-import type { EscalationPhase } from '@dopamode/shared';
+import type { EscalationPhase } from '@questia/shared';
 
 export async function updateQuestLogStatus(
   logId: string,

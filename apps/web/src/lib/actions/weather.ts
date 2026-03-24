@@ -1,6 +1,6 @@
 'use server';
 
-import type { WeatherCheck } from '@dopamode/shared';
+import type { WeatherCheck } from '@questia/shared';
 import type { QuestContext } from './ai';
 
 const KEY = process.env.OPENWEATHER_API_KEY ?? '';

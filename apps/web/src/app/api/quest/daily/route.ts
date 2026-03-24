@@ -8,11 +8,13 @@ import {
   computeCongruenceDelta,
   getEffectivePhase,
   FALLBACK_QUEST_ID,
-} from '@dopamode/shared';
-import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@dopamode/shared';
+} from '@questia/shared';
+import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@questia/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
 import { getQuestContext } from '@/lib/actions/weather';
 import { geocodeNominatim } from '@/lib/geocode';
+
+export const dynamic = 'force-dynamic';
 
 // ── Today's date in YYYY-MM-DD ─────────────────────────────────────────────────
 
@@ -29,12 +31,41 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const lat = url.searchParams.get('lat') ? parseFloat(url.searchParams.get('lat')!) : undefined;
   const lon = url.searchParams.get('lon') ? parseFloat(url.searchParams.get('lon')!) : undefined;
+  const requestedQuestDate = url.searchParams.get('questDate') ?? url.searchParams.get('date');
 
   // Get profile
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
   if (!profile) return NextResponse.json({ error: 'Profil introuvable. Complète l\'onboarding.' }, { status: 404 });
 
   const today = todayStr();
+
+  // ── Quête d’un autre jour (ex. carte partage / deeplink) ────────────────────
+  if (requestedQuestDate && requestedQuestDate !== today) {
+    const historical = await prisma.questLog.findUnique({
+      where: { profileId_questDate: { profileId: profile.id, questDate: requestedQuestDate } },
+    });
+    if (!historical) {
+      return NextResponse.json({ error: 'Aucune quête pour cette date.' }, { status: 404 });
+    }
+    const context =
+      historical.weatherDescription != null
+        ? {
+            weatherIcon: '',
+            weatherDescription: historical.weatherDescription,
+            temp: Math.round(historical.weatherTemp ?? 18),
+            city: historical.locationCity ?? '',
+          }
+        : undefined;
+    return NextResponse.json({
+      ...toQuestResponse(historical),
+      fromCache: true,
+      day: profile.currentDay,
+      streak: profile.streakCount,
+      phase: profile.currentPhase,
+      rerollsRemaining: profile.rerollsRemaining,
+      ...(context ? { context } : {}),
+    });
+  }
 
   // ── Check if quest already generated today ──────────────────────────────────
   const existing = await prisma.questLog.findUnique({
@@ -108,6 +139,7 @@ export async function GET(request: NextRequest) {
       delta: profile.congruenceDelta,
       explorerAxis: profile.explorerAxis as ExplorerAxis,
       riskAxis: profile.riskAxis as RiskAxis,
+      questDateIso: today,
     },
     archetype,
     context,

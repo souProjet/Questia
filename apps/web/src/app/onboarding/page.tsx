@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/Icons';
-import type { ExplorerAxis, RiskAxis } from '@dopamode/shared';
+import type { ExplorerAxis, RiskAxis } from '@questia/shared';
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
@@ -63,8 +63,8 @@ export default function OnboardingPage() {
     if (!explorer || !risk) return;
     setSaving(true);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('dopamode_explorer', explorer);
-      localStorage.setItem('dopamode_risk', risk);
+      localStorage.setItem('questia_explorer', explorer);
+      localStorage.setItem('questia_risk', risk);
     }
     router.push('/sign-up');
   };
@@ -96,7 +96,7 @@ export default function OnboardingPage() {
             }}>
             <span aria-hidden>🧭</span> Calibration du profil
           </p>
-          <span className="font-display font-black text-2xl text-[var(--text)]">dopa<span className="text-gradient">mode</span></span>
+          <span className="font-display font-black text-2xl text-[var(--text)]">Quest<span className="text-gradient">ia</span></span>
         </div>
 
         {/* Progress */}

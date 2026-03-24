@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { selectQuest, computeExhibitedPersonality, computeCongruenceDelta, getEffectivePhase } from '@dopamode/shared';
-import type { PersonalityVector, QuestLog } from '@dopamode/shared';
+import { selectQuest, computeExhibitedPersonality, computeCongruenceDelta, getEffectivePhase } from '@questia/shared';
+import type { PersonalityVector, QuestLog } from '@questia/shared';
 
 export async function POST(request: NextRequest) {
   try {

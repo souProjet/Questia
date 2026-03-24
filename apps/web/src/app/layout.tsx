@@ -20,22 +20,22 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Dopamode — App de quêtes quotidiennes dans la vraie vie',
-    template: '%s | Dopamode',
+    default: 'Questia — App de quêtes quotidiennes dans la vraie vie',
+    template: '%s | Questia',
   },
   description:
-    'Dopamode est l’app qui te donne une quête IRL par jour : motivation, sorties et défis adaptés à ton profil et à ton rythme. Gratuit pour commencer.',
+    'Questia est l’app qui te donne une quête IRL par jour : motivation, sorties et défis adaptés à ton profil et à ton rythme. Gratuit pour commencer.',
   openGraph: {
-    title: 'Dopamode — App de quêtes quotidiennes dans la vraie vie',
+    title: 'Questia — App de quêtes quotidiennes dans la vraie vie',
     description:
       'Transforme ton quotidien en jeu d’aventure : missions courtes, concrètes, sans culpabiliser.',
     type: 'website',
     locale: 'fr_FR',
-    siteName: 'Dopamode',
+    siteName: 'Questia',
   },
   twitter: {
     card: 'summary',
-    title: 'Dopamode — App de quêtes quotidiennes IRL',
+    title: 'Questia — App de quêtes quotidiennes IRL',
     description:
       'Une quête par jour dans ta vraie vie. iOS, Android et web.',
   },

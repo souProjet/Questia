@@ -1,5 +1,5 @@
 /**
- * Palette DA claire Dopamode (alignée sur docs/direction-artistique + apps/web globals).
+ * Palette DA claire Questia (alignée sur docs/direction-artistique + apps/web globals).
  * Pas de fonds sombres : cyan · orange · vert sur base bleu ciel.
  */
 export const DA = {

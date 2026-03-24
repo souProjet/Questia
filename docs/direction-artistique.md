@@ -1,4 +1,4 @@
-# Direction artistique — Dopamode (web)
+# Direction artistique — Questia (web)
 
 Ce document décrit la **DA** appliquée au site marketing et aux styles partagés dans `apps/web`. Elle est centrée sur une **identité « jeu d’aventure »** : quêtes IRL, énergie positive, **cyan · orange · vert**, sans aspect corporate froid.
 

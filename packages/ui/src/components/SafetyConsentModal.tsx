@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal, ScrollView } from 'react-native';
-import type { QuestModel } from '@dopamode/shared';
+import type { QuestModel } from '@questia/shared';
 import { DA } from '../theme';
 
 interface SafetyConsentModalProps {

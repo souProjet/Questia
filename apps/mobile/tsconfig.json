@@ -7,10 +7,10 @@
     ],
     "module": "ESNext",
     "paths": {
-      "@dopamode/shared": [
+      "@questia/shared": [
         "../../packages/shared/src"
       ],
-      "@dopamode/ui": [
+      "@questia/ui": [
         "../../packages/ui/src"
       ]
     }

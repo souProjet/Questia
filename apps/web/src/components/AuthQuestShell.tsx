@@ -56,7 +56,7 @@ export function AuthQuestShell({ badge, title, subtitle, children, footer }: Aut
               >
                 ⚔
               </div>
-              <span className="font-display font-black text-xl tracking-tight text-[var(--text)]">DOPAMODE</span>
+              <span className="font-display font-black text-xl tracking-tight text-[var(--text)]">QUESTIA</span>
             </Link>
 
             <h1 className="font-display text-2xl sm:text-3xl font-black text-[var(--text)] leading-tight mb-2">{title}</h1>

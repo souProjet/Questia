@@ -2,8 +2,8 @@
 
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '../db';
-import { QUADRANT_DEFAULTS } from '@dopamode/shared';
-import type { ExplorerAxis, RiskAxis, PersonalityVector } from '@dopamode/shared';
+import { QUADRANT_DEFAULTS } from '@questia/shared';
+import type { ExplorerAxis, RiskAxis, PersonalityVector } from '@questia/shared';
 
 export async function createProfile(
   clerkId: string,

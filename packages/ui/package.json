@@ -1,5 +1,5 @@
 {
-  "name": "@dopamode/ui",
+  "name": "@questia/ui",
   "version": "0.0.1",
   "private": true,
   "main": "./src/index.ts",
@@ -9,7 +9,7 @@
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@dopamode/shared": "*",
+    "@questia/shared": "*",
     "solito": "^4.3.0"
   },
   "peerDependencies": {

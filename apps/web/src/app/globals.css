@@ -116,6 +116,47 @@
     border: 1px solid rgba(15, 23, 42, 0.08);
   }
 
+  /* Modal partage : scrollbar discrète (WebKit + Firefox) */
+  .share-sheet-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  }
+  .share-sheet-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+  .share-sheet-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .share-sheet-scroll::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.45);
+    border-radius: 999px;
+  }
+  .share-sheet-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.55);
+  }
+
+  /* Bande « Fonds » : défilement horizontal visible + molette (voir QuestShareComposer) */
+  .share-bg-strip {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.5) rgba(241, 245, 249, 0.85);
+    touch-action: pan-x;
+  }
+  .share-bg-strip::-webkit-scrollbar {
+    height: 7px;
+  }
+  .share-bg-strip::-webkit-scrollbar-track {
+    margin: 0 6px;
+    background: rgba(241, 245, 249, 0.9);
+    border-radius: 999px;
+  }
+  .share-bg-strip::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.45);
+    border-radius: 999px;
+  }
+  .share-bg-strip::-webkit-scrollbar-thumb:hover {
+    background: rgba(71, 85, 105, 0.55);
+  }
+
   /* ── Text gradients : fonds clairs (landing, cartes crème) — stops foncés pour le contraste ── */
   .text-gradient {
     color: #164e63;
@@ -338,7 +379,7 @@
     color: var(--muted) !important;
   }
 
-  /* Doublon « Créer un compte » : on garde le lien sous le panneau Dopamode uniquement */
+  /* Doublon « Créer un compte » : on garde le lien sous le panneau Questia uniquement */
   .auth-clerk-root .cl-footerAction {
     display: none !important;
   }
