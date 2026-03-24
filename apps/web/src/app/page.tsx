@@ -127,6 +127,7 @@ export default function HomePage() {
       <div className="relative z-10">
         <LandingJsonLd />
         <Navbar />
+        <main id="main-content" tabIndex={-1} className="outline-none">
         <section
           id="hero"
           className="relative pt-36 md:pt-44 pb-28 md:pb-36 px-4 sm:px-6 overflow-hidden"
@@ -439,6 +440,7 @@ export default function HomePage() {
           </div>
         </LandingReveal>
       </section>
+        </main>
 
       <footer className="border-t border-slate-200/80 bg-white/50 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-14">

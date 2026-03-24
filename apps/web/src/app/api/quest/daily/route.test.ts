@@ -1,0 +1,218 @@
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { GET, POST } from './route';
+
+vi.mock('@/lib/actions/ai', () => ({
+  generateDailyQuest: vi.fn().mockResolvedValue({
+    icon: 'Target',
+    title: 'Titre',
+    mission: 'Mission',
+    hook: 'Hook',
+    duration: '1h',
+    isOutdoor: false,
+    safetyNote: null,
+    archetype: 'A',
+    destinationLabel: null,
+    destinationQuery: null,
+  }),
+}));
+
+vi.mock('@/lib/actions/weather', () => ({
+  getQuestContext: vi.fn().mockResolvedValue({
+    city: 'Paris',
+    country: 'FR',
+    weatherDescription: 'Beau',
+    weatherIcon: 'Sun',
+    temp: 20,
+    isOutdoorFriendly: true,
+  }),
+}));
+
+vi.mock('@/lib/geocode', () => ({
+  geocodeNominatim: vi.fn().mockResolvedValue(null),
+}));
+
+const prismaMock = vi.hoisted(() => ({
+  profile: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+  questLog: {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
+  $transaction: vi.fn(),
+}));
+
+vi.mock('@clerk/nextjs/server', () => ({
+  auth: vi.fn(),
+}));
+
+vi.mock('@/lib/db', () => ({
+  prisma: prismaMock,
+}));
+
+const profileRow = {
+  id: 'p1',
+  clerkId: 'u1',
+  currentDay: 2,
+  currentPhase: 'calibration',
+  streakCount: 0,
+  lastQuestDate: null,
+  declaredPersonality: {
+    openness: 0.5,
+    conscientiousness: 0.5,
+    extraversion: 0.5,
+    agreeableness: 0.5,
+    emotionalStability: 0.5,
+    thrillSeeking: 0.5,
+    boredomSusceptibility: 0.5,
+  },
+  congruenceDelta: 0,
+  explorerAxis: 'explorer',
+  riskAxis: 'cautious',
+  ownedNarrationPacks: [],
+  activeNarrationPackId: null,
+  rerollsRemaining: 1,
+  bonusRerollCredits: 0,
+  activeThemeId: 'default',
+  ownedThemes: ['default'],
+  coinBalance: 0,
+  ownedTitleIds: [],
+  equippedTitleId: null,
+  xpBonusCharges: 0,
+  badgesEarned: [],
+  totalXp: 0,
+  flagNextQuestAfterReroll: false,
+};
+
+const logRow = {
+  id: 'log1',
+  questDate: '2026-03-24',
+  archetypeId: 9,
+  generatedEmoji: '⚔️',
+  generatedTitle: 'T',
+  generatedMission: 'M',
+  generatedHook: 'H',
+  generatedDuration: '1h',
+  generatedSafetyNote: null,
+  isOutdoor: false,
+  destinationLabel: null,
+  destinationLat: null,
+  destinationLon: null,
+  locationCity: null,
+  weatherDescription: null,
+  weatherTemp: null,
+  status: 'pending',
+  wasRerolled: false,
+  wasFallback: false,
+  phaseAtAssignment: 'calibration',
+  profileId: 'p1',
+};
+
+describe('/api/quest/daily', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-24T12:00:00.000Z'));
+    vi.mocked(auth).mockReset();
+    prismaMock.profile.findUnique.mockReset();
+    prismaMock.questLog.findUnique.mockReset();
+    prismaMock.questLog.findMany.mockReset();
+    prismaMock.$transaction.mockReset();
+    prismaMock.questLog.create.mockReset();
+    prismaMock.questLog.update.mockReset();
+    prismaMock.questLog.delete.mockReset();
+    prismaMock.profile.update.mockReset();
+  });
+
+  it('GET 401', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
+    const res = await GET(new NextRequest('http://localhost/api/quest/daily'));
+    expect(res.status).toBe(401);
+  });
+
+  it('GET 404 profil', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue(null);
+    const res = await GET(new NextRequest('http://localhost/api/quest/daily'));
+    expect(res.status).toBe(404);
+  });
+
+  it('GET 404 date historique sans quête', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue(profileRow);
+    prismaMock.questLog.findUnique.mockResolvedValueOnce(null);
+    const res = await GET(
+      new NextRequest('http://localhost/api/quest/daily?questDate=2026-01-01'),
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it('GET 200 cache quête du jour', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue(profileRow);
+    prismaMock.questLog.findUnique
+      .mockResolvedValueOnce({
+        ...logRow,
+        questDate: '2026-03-24',
+        status: 'pending',
+      })
+      .mockResolvedValue(null);
+    const res = await GET(new NextRequest('http://localhost/api/quest/daily'));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.fromCache).toBe(true);
+  });
+
+  it('POST 401', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
+    const res = await POST(
+      new NextRequest('http://localhost/api/quest/daily', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'complete' }),
+      }),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('POST complete accorde XP', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({
+      ...profileRow,
+      streakCount: 1,
+      currentDay: 5,
+      badgesEarned: [],
+      totalXp: 100,
+    });
+    prismaMock.questLog.findUnique.mockResolvedValue({
+      ...logRow,
+      questDate: '2026-03-24',
+      status: 'accepted',
+      phaseAtAssignment: 'expansion',
+      isOutdoor: false,
+      wasRerolled: false,
+      wasFallback: false,
+    });
+    prismaMock.questLog.count.mockResolvedValue(0);
+    prismaMock.$transaction.mockResolvedValue([
+      { id: 'log1' },
+      {
+        ...profileRow,
+        totalXp: 150,
+        badgesEarned: [],
+      },
+    ]);
+    const res = await POST(
+      new NextRequest('http://localhost/api/quest/daily', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'complete', questDate: '2026-03-24' }),
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+});

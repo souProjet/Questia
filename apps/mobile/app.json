@@ -10,8 +10,20 @@
     "splash": {
       "backgroundColor": "#0a0a0f"
     },
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    },
     "plugins": [
       "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#22d3ee"
+        }
+      ],
       [
         "expo-location",
         {

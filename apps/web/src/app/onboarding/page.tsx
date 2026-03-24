@@ -84,7 +84,7 @@ export default function OnboardingPage() {
         <div className="absolute bottom-16 right-[10%] text-3xl opacity-10 animate-float select-none">🎲</div>
       </div>
 
-      <div className="relative w-full max-w-md">
+      <main id="main-content" tabIndex={-1} className="relative w-full max-w-md outline-none">
 
         {/* Logo */}
         <div className="text-center mb-10">
@@ -223,7 +223,7 @@ export default function OnboardingPage() {
             </button>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

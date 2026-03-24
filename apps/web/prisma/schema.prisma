@@ -66,13 +66,41 @@ model Profile {
   equippedTitleId       String?         @map("equipped_title_id")
   /** Charges bonus XP boutique (consommées à chaque quête validée) */
   xpBonusCharges        Int             @default(0) @map("xp_bonus_charges")
+  /** Rappel push (app mobile) pour la quête du jour */
+  reminderPushEnabled   Boolean         @default(false) @map("reminder_push_enabled")
+  /** Rappel par e-mail */
+  reminderEmailEnabled  Boolean         @default(false) @map("reminder_email_enabled")
+  /** Heure locale du rappel : minutes depuis minuit (0–1439), ex. 540 = 9h00 */
+  reminderTimeMinutes   Int             @default(540) @map("reminder_time_minutes")
+  /** Fuseau IANA (ex. Europe/Paris) — horaire du rappel */
+  reminderTimezone      String          @default("Europe/Paris") @map("reminder_timezone")
+  /** Dernière date (UTC YYYY-MM-DD) où un rappel push a été envoyé */
+  lastReminderPushDate  String?         @map("last_reminder_push_date")
+  /** Dernière date (UTC YYYY-MM-DD) où un rappel e-mail a été envoyé */
+  lastReminderEmailDate String?         @map("last_reminder_email_date")
   createdAt             DateTime        @default(now()) @map("created_at")
   updatedAt             DateTime        @updatedAt @map("updated_at")
 
   questLogs QuestLog[]
   shopTransactions ShopTransaction[]
+  pushDevices PushDevice[]
 
   @@map("profiles")
+}
+
+model PushDevice {
+  id              String   @id @default(cuid())
+  profileId       String   @map("profile_id")
+  /** Jeton Expo Push (ExponentPushToken[...]) */
+  expoPushToken   String   @unique @map("expo_push_token")
+  platform        String?  @map("platform")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("push_devices")
 }
 
 enum ShopTransactionStatus {

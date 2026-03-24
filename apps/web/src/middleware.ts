@@ -8,7 +8,9 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/api/quest(.*)',
   '/api/profile',
+  '/api/notifications(.*)',
   '/api/webhooks(.*)',
+  '/api/cron(.*)',
   '/api/shop/catalog',
   /** Handlers vérifient `auth()` (Bearer mobile + cookies web) — évite redirect Clerk sur fetch API */
   '/api/shop(.*)',

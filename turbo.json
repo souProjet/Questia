@@ -15,6 +15,10 @@
     "type-check": {
       "dependsOn": ["^build"]
     },
+    "test": {
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
     "clean": {
       "cache": false
     }

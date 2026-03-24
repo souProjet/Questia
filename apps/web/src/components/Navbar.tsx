@@ -11,19 +11,30 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-3 pt-3">
-      <nav className="navbar-shell flex items-center justify-between px-4 md:px-6 py-3 mx-auto max-w-6xl rounded-2xl">
+      <nav
+        className="navbar-shell flex items-center justify-between px-4 md:px-6 py-3 mx-auto max-w-6xl rounded-2xl"
+        aria-label="Navigation principale"
+      >
         {/* Logo */}
-        <Link href={isSignedIn ? '/app' : '/'} className="flex items-center gap-3 group">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white group-hover:scale-105 transition-all"
-            style={{ background: 'linear-gradient(135deg, #f97316, #fbbf24)', boxShadow: '0 8px 20px rgba(249,115,22,.35)' }}
-          >
-            ⚔
-          </div>
-          <div className="leading-none">
-            <p className="font-display font-black text-lg tracking-tight text-[var(--text)]">QUESTIA</p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--link-on-bg)]">Quêtes quotidiennes dans la vraie vie</p>
-          </div>
+        <Link
+          href={isSignedIn ? '/app' : '/'}
+          className="flex items-center gap-3 group"
+          aria-label="Questia, accueil"
+        >
+          <span className="flex items-center gap-3" aria-hidden>
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white group-hover:scale-105 transition-all"
+              style={{ background: 'linear-gradient(135deg, #f97316, #fbbf24)', boxShadow: '0 8px 20px rgba(249,115,22,.35)' }}
+            >
+              ⚔
+            </div>
+            <span className="leading-none">
+              <span className="font-display font-black text-lg tracking-tight text-[var(--text)] block">QUESTIA</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--link-on-bg)] block">
+                Quêtes quotidiennes dans la vraie vie
+              </span>
+            </span>
+          </span>
         </Link>
 
         {/* Nav links */}

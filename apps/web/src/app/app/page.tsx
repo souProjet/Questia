@@ -403,7 +403,7 @@ export default function AppPage() {
     return (
       <div className="min-h-screen bg-adventure">
         <Navbar />
-        <main className="max-w-2xl mx-auto px-4 pt-24 pb-20">
+        <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-4 pt-24 pb-20 outline-none">
           <div className="animate-pulse space-y-5 mt-4">
             <div className="h-5 rounded-xl w-40 bg-[color:var(--progress-track)]" />
             <div className="h-10 rounded-xl w-72 bg-[color:var(--progress-track)]" />
@@ -418,7 +418,7 @@ export default function AppPage() {
     return (
       <div className="min-h-screen bg-adventure">
         <Navbar />
-        <main className="max-w-2xl mx-auto px-4 pt-24 pb-20 flex flex-col items-center justify-center text-center gap-6">
+        <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-4 pt-24 pb-20 flex flex-col items-center justify-center text-center gap-6 outline-none">
           <Icon name="Frown" size="2xl" className="text-[var(--subtle)] mx-auto" />
           <h2 className="font-display font-black text-2xl text-[var(--text)]">Pas de quête pour l'instant</h2>
           <p className="text-[var(--muted)] max-w-md">{error}</p>
@@ -460,7 +460,7 @@ export default function AppPage() {
         </div>
       </div>
 
-      <main className="relative z-10 max-w-2xl mx-auto px-4 pt-24 pb-24">
+      <main id="main-content" tabIndex={-1} className="relative z-10 max-w-2xl mx-auto px-4 pt-24 pb-24 outline-none">
         {bannerError && (
           <div
             role="alert"
@@ -548,7 +548,7 @@ export default function AppPage() {
                   +{quest.progression.xpToNext} XP pour monter
                 </span>
               </div>
-              <p className="mt-1 text-[10px] font-semibold text-[var(--on-cream-subtle)]">
+              <p className="mt-1 text-xs font-semibold text-[var(--on-cream-subtle)]">
                 {quest.progression.xpIntoLevel}/{quest.progression.xpPerLevel} dans ce niveau
               </p>
               <div className="mt-2 h-2 rounded-full bg-[color:var(--progress-track)] overflow-hidden border border-cyan-200/50">

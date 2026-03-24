@@ -2,9 +2,9 @@
 - badges avec critères clairs (ex. série, phase rupture, première quête extérieure) et affichage profil : OK
 - boutique / catalogue d'achats (thèmes, packs narration, rerolls optionnels) + journal des transactions : OK
 - écran historique riche : filtres, recherche, réutilisation d'idées de missions passées : OK
-- rappels utilisateur (push / email) pour la quête du jour, avec préférences
-- accessibilité : contrastes, tailles de texte, lecteur d'écran web et mobile
-- tests (moteur psychologique, chemins critiques quête / complétion) + CI (lint, build, tests)
+- rappels utilisateur (push / email) pour la quête du jour, avec préférences : OK
+- accessibilité : contrastes, tailles de texte, lecteur d'écran web et mobile : OK
+- tests (moteur psychologique, chemins critiques quête / complétion) + CI (lint, build, tests) : OK
 - observabilité : suivi des erreurs, logs structurés sur IA / géo / météo
 - RGPD : politique de confidentialité, export et suppression compte / données
 - transparence contenu généré par IA et garde-fous sur les prompts

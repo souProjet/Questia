@@ -34,7 +34,7 @@ export function AuthQuestShell({ badge, title, subtitle, children, footer }: Aut
         />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[440px] min-w-0">
+      <main id="main-content" tabIndex={-1} className="relative z-10 mx-auto w-full max-w-[440px] min-w-0 outline-none">
         <div className="quest-slider-embedded p-6 sm:p-8">
           <header className="mb-8 text-center">
             <div className="flex justify-center mb-4">
@@ -72,7 +72,7 @@ export function AuthQuestShell({ badge, title, subtitle, children, footer }: Aut
             {footer}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -29,6 +29,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-leaflet": "^4.2.1",
+    "resend": "^4.0.0",
     "solito": "^4.3.0",
     "stripe": "^17.7.0"
   },

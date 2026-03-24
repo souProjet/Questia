@@ -1,3 +1,4 @@
+import '../lib/pushNotifications';
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';

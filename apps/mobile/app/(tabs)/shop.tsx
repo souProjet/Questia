@@ -699,9 +699,13 @@ export default function ShopScreen() {
                         style={styles.prefsSelectRow}
                         onPress={() => setSelectKind('theme')}
                         accessibilityRole="button"
+                        accessibilityLabel={`Thème actuel : ${themeLabel(shop.activeThemeId)}`}
+                        accessibilityHint="Ouvre le choix de thème"
                       >
                         <Text style={styles.prefsSelectRowText}>{themeLabel(shop.activeThemeId)}</Text>
-                        <Text style={styles.prefsSelectChevron}>▼</Text>
+                        <Text style={styles.prefsSelectChevron} importantForAccessibility="no">
+                          ▼
+                        </Text>
                       </Pressable>
                     </View>
                     <View style={styles.prefsFieldCard}>
@@ -710,9 +714,13 @@ export default function ShopScreen() {
                         style={styles.prefsSelectRow}
                         onPress={() => setSelectKind('narration')}
                         accessibilityRole="button"
+                        accessibilityLabel={`Ton des textes de quête : ${narrationDisplayLabel(shop)}`}
+                        accessibilityHint="Ouvre le choix du style de narration"
                       >
                         <Text style={styles.prefsSelectRowText}>{narrationDisplayLabel(shop)}</Text>
-                        <Text style={styles.prefsSelectChevron}>▼</Text>
+                        <Text style={styles.prefsSelectChevron} importantForAccessibility="no">
+                          ▼
+                        </Text>
                       </Pressable>
                     </View>
                     <View style={styles.prefsFieldCard}>
@@ -721,9 +729,13 @@ export default function ShopScreen() {
                         style={styles.prefsSelectRow}
                         onPress={() => setSelectKind('title')}
                         accessibilityRole="button"
+                        accessibilityLabel={`Titre sur le profil : ${titleDisplayLabel(shop)}`}
+                        accessibilityHint="Ouvre le choix du titre affiché"
                       >
                         <Text style={styles.prefsSelectRowText}>{titleDisplayLabel(shop)}</Text>
-                        <Text style={styles.prefsSelectChevron}>▼</Text>
+                        <Text style={styles.prefsSelectChevron} importantForAccessibility="no">
+                          ▼
+                        </Text>
                       </Pressable>
                     </View>
                   </View>

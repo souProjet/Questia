@@ -298,7 +298,7 @@ function HistoryPageInner() {
   return (
     <div className="min-h-screen bg-adventure">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 pt-24 pb-20">
+      <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 pt-24 pb-20 outline-none">
         <header className="mb-8">
           <p className="text-xs font-black uppercase tracking-widest text-[var(--orange)] mb-2">Journal</p>
           <h1 className="font-display font-black text-3xl text-[var(--text)]">Historique</h1>
@@ -308,12 +308,11 @@ function HistoryPageInner() {
           </p>
         </header>
 
-        <div className="hist-tabs mb-8" role="tablist" aria-label="Type d’historique">
+        <nav className="hist-tabs mb-8" aria-label="Type d’historique">
           <Link
             href="/app/history?tab=quests"
             scroll={false}
-            role="tab"
-            aria-selected={tab === 'quests'}
+            aria-current={tab === 'quests' ? 'page' : undefined}
             className={`hist-tab ${tab === 'quests' ? 'hist-tab--active' : ''}`}
           >
             Quêtes
@@ -321,13 +320,12 @@ function HistoryPageInner() {
           <Link
             href="/app/history?tab=wallet"
             scroll={false}
-            role="tab"
-            aria-selected={tab === 'wallet'}
+            aria-current={tab === 'wallet' ? 'page' : undefined}
             className={`hist-tab ${tab === 'wallet' ? 'hist-tab--active' : ''}`}
           >
             Portefeuille
           </Link>
-        </div>
+        </nav>
 
         {loadError ? (
           <div className="rounded-2xl border border-red-200 bg-red-50/80 px-4 py-4 text-sm font-semibold text-red-900">
@@ -702,7 +700,7 @@ export default function HistoryPage() {
       fallback={
         <div className="min-h-screen bg-adventure">
           <Navbar />
-          <main className="max-w-4xl mx-auto px-4 pt-24 pb-24 flex justify-center">
+          <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 pt-24 pb-24 flex justify-center outline-none">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
           </main>
         </div>

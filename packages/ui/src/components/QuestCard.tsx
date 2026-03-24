@@ -79,7 +79,12 @@ export function QuestCard({ quest, onAccept, accepted = false }: QuestCardProps)
           <Text style={styles.acceptedText}>✅  Quête acceptée</Text>
         </View>
       ) : (
-        <Pressable style={styles.acceptButton} onPress={onAccept}>
+        <Pressable
+          style={styles.acceptButton}
+          onPress={onAccept}
+          accessibilityRole="button"
+          accessibilityLabel="Accepter la quête"
+        >
           <Text style={styles.acceptText}>Accepter la quête  ⚔️</Text>
         </Pressable>
       )}

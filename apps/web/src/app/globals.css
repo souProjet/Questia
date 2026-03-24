@@ -103,6 +103,48 @@
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--subtle); border-radius: 3px; }
+
+  /**
+   * Lien « Aller au contenu » : hors écran jusqu’au focus clavier.
+   */
+  .skip-link {
+    position: absolute;
+    left: -10000px;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+    z-index: 9999;
+  }
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    left: 1rem;
+    top: 1rem;
+    position: fixed;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    padding: 0.75rem 1.1rem;
+    border-radius: 0.75rem;
+    border: 2px solid color-mix(in srgb, var(--violet) 55%, transparent);
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 800;
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--text) 16%, transparent);
+    text-decoration: none;
+    outline: none;
+  }
+
+  a:focus-visible:not(.skip-link) {
+    outline: 2px solid color-mix(in srgb, var(--link-on-bg) 50%, transparent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 @layer components {
@@ -431,6 +473,10 @@
     color: var(--text);
     background: color-mix(in srgb, var(--card) 88%, transparent);
   }
+  .btn:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--violet) 55%, transparent);
+    outline-offset: 3px;
+  }
 
   /* ── Phase pills ── */
   .pill-calibration {
@@ -558,6 +604,10 @@
     box-shadow:
       0 4px 18px color-mix(in srgb, var(--text) 14%, transparent),
       0 0 0 1px color-mix(in srgb, var(--cyan) 22%, transparent);
+  }
+  .hist-tab:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--cyan) 55%, transparent);
+    outline-offset: 2px;
   }
 
   .hist-filters-panel {

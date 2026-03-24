@@ -5,6 +5,7 @@ import { QUADRANT_DEFAULTS, getBadgeCatalogForUi, getThemeIds, TITLE_IDS } from 
 import type { ExplorerAxis, RiskAxis } from '@questia/shared';
 import { progressionFields, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
+import { isValidIanaTimeZone } from '@/lib/reminders/time';
 
 function shopPayload(profile: {
   rerollsRemaining: number;
@@ -70,6 +71,10 @@ export async function PATCH(request: NextRequest) {
     activeThemeId?: string;
     activeNarrationPackId?: string | null;
     equippedTitleId?: string | null;
+    reminderPushEnabled?: boolean;
+    reminderEmailEnabled?: boolean;
+    reminderTimeMinutes?: number;
+    reminderTimezone?: string;
   };
 
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
@@ -85,6 +90,10 @@ export async function PATCH(request: NextRequest) {
     activeThemeId?: string;
     activeNarrationPackId?: string | null;
     equippedTitleId?: string | null;
+    reminderPushEnabled?: boolean;
+    reminderEmailEnabled?: boolean;
+    reminderTimeMinutes?: number;
+    reminderTimezone?: string;
   } = {};
 
   if (body.activeThemeId !== undefined) {
@@ -123,6 +132,27 @@ export async function PATCH(request: NextRequest) {
       }
       data.equippedTitleId = tid;
     }
+  }
+
+  if (body.reminderPushEnabled !== undefined) {
+    data.reminderPushEnabled = Boolean(body.reminderPushEnabled);
+  }
+  if (body.reminderEmailEnabled !== undefined) {
+    data.reminderEmailEnabled = Boolean(body.reminderEmailEnabled);
+  }
+  if (body.reminderTimeMinutes !== undefined) {
+    const m = Number(body.reminderTimeMinutes);
+    if (!Number.isFinite(m) || m < 0 || m > 1439 || Math.floor(m) !== m) {
+      return NextResponse.json({ error: 'Heure invalide (minutes 0–1439)' }, { status: 400 });
+    }
+    data.reminderTimeMinutes = m;
+  }
+  if (body.reminderTimezone !== undefined) {
+    const tz = String(body.reminderTimezone).trim();
+    if (!isValidIanaTimeZone(tz)) {
+      return NextResponse.json({ error: 'Fuseau horaire invalide' }, { status: 400 });
+    }
+    data.reminderTimezone = tz;
   }
 
   if (Object.keys(data).length === 0) {
