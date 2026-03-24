@@ -130,7 +130,7 @@ function SafetySheet({ quest, onConfirm, onClose }: {
                   style={{ background: checked.has(i) ? '#10b981' : '#fff', border: `2px solid ${checked.has(i) ? '#10b981' : 'rgba(15,23,42,.2)'}` }}>
                   {checked.has(i) ? <Icon name="Check" size="xs" className="text-white" /> : null}
                 </div>
-                <span className={`text-sm ${checked.has(i) ? 'text-slate-800' : 'text-[var(--muted)]'}`}>{r}</span>
+                <span className={`text-sm ${checked.has(i) ? 'text-[var(--on-cream)]' : 'text-[var(--on-cream-muted)]'}`}>{r}</span>
               </button>
             ))}
           </div>
@@ -405,9 +405,9 @@ export default function AppPage() {
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 pt-24 pb-20">
           <div className="animate-pulse space-y-5 mt-4">
-            <div className="h-5 bg-slate-200/90 rounded-xl w-40" />
-            <div className="h-10 bg-slate-200/90 rounded-xl w-72" />
-            <div className="h-80 bg-slate-200/80 rounded-3xl" />
+            <div className="h-5 rounded-xl w-40 bg-[color:var(--progress-track)]" />
+            <div className="h-10 rounded-xl w-72 bg-[color:var(--progress-track)]" />
+            <div className="h-80 rounded-3xl bg-[color:var(--progress-track)]" />
           </div>
         </main>
       </div>
@@ -419,7 +419,7 @@ export default function AppPage() {
       <div className="min-h-screen bg-adventure">
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 pt-24 pb-20 flex flex-col items-center justify-center text-center gap-6">
-          <Icon name="Frown" size="2xl" className="text-slate-500 mx-auto" />
+          <Icon name="Frown" size="2xl" className="text-[var(--subtle)] mx-auto" />
           <h2 className="font-display font-black text-2xl text-[var(--text)]">Pas de quête pour l'instant</h2>
           <p className="text-[var(--muted)] max-w-md">{error}</p>
           {error.includes('onboarding') && (

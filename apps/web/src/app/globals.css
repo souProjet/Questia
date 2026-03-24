@@ -9,6 +9,11 @@
     --card:     #ffffff;
     --border:   rgba(255,255,255,0.07);
     --border-m: rgba(255,255,255,0.12);
+    /** Bordures / filets UI (remplace slate-200 figé) */
+    --border-ui: rgba(15, 23, 42, 0.1);
+    --border-ui-strong: rgba(15, 23, 42, 0.16);
+    --progress-track: rgba(15, 23, 42, 0.12);
+    --input-bg: #ffffff;
     --violet:   #22d3ee;
     --orange:   #f97316;
     --gold:     #fbbf24;
@@ -17,6 +22,10 @@
     --text:     #13212d;
     --muted:    #4d7187;
     --subtle:   #8bb9d1;
+    /** Texte sur panneaux toujours clairs (carte quête, modales crème) — inchangé par thème */
+    --on-cream: #13212d;
+    --on-cream-muted: #4d6570;
+    --on-cream-subtle: #64748b;
   }
 
   /* Thèmes boutique (data-theme sur <html>) */
@@ -25,8 +34,12 @@
     --surface: #111b2e;
     --card: #152238;
     --text: #e8f1fa;
-    --muted: #8aa4bd;
-    --subtle: #4d6278;
+    --muted: #a8bdd4;
+    --subtle: #8fa3b8;
+    --border-ui: rgba(232, 241, 250, 0.12);
+    --border-ui-strong: rgba(232, 241, 250, 0.2);
+    --progress-track: rgba(255, 255, 255, 0.12);
+    --input-bg: #0f1729;
     --violet: #38bdf8;
     --orange: #fb923c;
     --gold: #fcd34d;
@@ -38,8 +51,12 @@
     --surface: #fff7fb;
     --card: #ffffff;
     --text: #3b0764;
-    --muted: #7c3aed;
-    --subtle: #a78bfa;
+    --muted: #6b21a8;
+    --subtle: #9333b8;
+    --border-ui: rgba(59, 7, 100, 0.12);
+    --border-ui-strong: rgba(59, 7, 100, 0.2);
+    --progress-track: rgba(59, 7, 100, 0.1);
+    --input-bg: #ffffff;
     --violet: #c026d3;
     --orange: #ea580c;
     --gold: #fbbf24;
@@ -52,7 +69,11 @@
     --card: #fffdf8;
     --text: #3d3428;
     --muted: #6b5d4a;
-    --subtle: #9a8b78;
+    --subtle: #8a7b68;
+    --border-ui: rgba(61, 52, 40, 0.12);
+    --border-ui-strong: rgba(61, 52, 40, 0.2);
+    --progress-track: rgba(61, 52, 40, 0.12);
+    --input-bg: #fffdf8;
     --violet: #0d9488;
     --orange: #c2410c;
     --gold: #ca8a04;
@@ -68,7 +89,10 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
-  ::selection { background: rgba(249,115,22,.3); color: #0b1320; }
+  ::selection {
+    background: rgba(249, 115, 22, 0.35);
+    color: var(--text);
+  }
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--subtle); border-radius: 3px; }
@@ -267,9 +291,14 @@
   .btn-cta:hover { box-shadow: 0 8px 32px rgba(249,115,22,.5); transform: translateY(-2px); }
 
   .btn-ghost {
-    @apply btn text-slate-700 hover:text-slate-900;
-    background: rgba(255,255,255,.65);
-    border: 1px solid rgba(15,23,42,0.14);
+    @apply btn;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--card) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  }
+  .btn-ghost:hover {
+    color: var(--text);
+    background: color-mix(in srgb, var(--card) 88%, transparent);
   }
 
   /* ── Phase pills ── */

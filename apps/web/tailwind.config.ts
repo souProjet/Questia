@@ -36,6 +36,13 @@ const config: Config = {
         'xp-number-pop': 'xpNumberPop 0.65s cubic-bezier(0.22, 1, 0.36, 1) both',
         'level-banner-in': 'levelBannerIn 0.75s cubic-bezier(0.22, 1, 0.36, 1) both',
         'celebrate-shimmer': 'celebrateShimmer 2s ease-in-out infinite',
+        /** Boutique — achats QC, modale recharge */
+        'shop-balance-pop': 'shopBalancePop 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+        'shop-gold-flash': 'shopGoldFlash 0.85s ease-out forwards',
+        'shop-modal-in': 'shopModalIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'shop-card-bump': 'shopCardBump 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+        'shop-btn-pulse': 'shopBtnPulse 0.45s ease-out both',
+        'shop-sparkle': 'shopSparkle 1.2s ease-out forwards',
       },
       keyframes: {
         fadeIn: {
@@ -87,6 +94,35 @@ const config: Config = {
         celebrateShimmer: {
           '0%, 100%': { opacity: '0.35' },
           '50%': { opacity: '0.85' },
+        },
+        shopBalancePop: {
+          '0%': { transform: 'scale(1)', filter: 'brightness(1)' },
+          '35%': { transform: 'scale(1.08)', filter: 'brightness(1.12)' },
+          '65%': { transform: 'scale(1.04)', filter: 'brightness(1.06)' },
+          '100%': { transform: 'scale(1)', filter: 'brightness(1)' },
+        },
+        shopGoldFlash: {
+          '0%': { opacity: '0.5' },
+          '100%': { opacity: '0' },
+        },
+        shopModalIn: {
+          '0%': { opacity: '0', transform: 'scale(0.92) translateY(20px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        shopCardBump: {
+          '0%': { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(251, 191, 36, 0.5)' },
+          '40%': { transform: 'scale(1.04)', boxShadow: '0 0 0 8px rgba(251, 191, 36, 0.25)' },
+          '100%': { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(251, 191, 36, 0)' },
+        },
+        shopBtnPulse: {
+          '0%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.06)' },
+          '100%': { transform: 'scale(1)' },
+        },
+        shopSparkle: {
+          '0%': { opacity: '0', transform: 'scale(0.4) rotate(-8deg)' },
+          '30%': { opacity: '1', transform: 'scale(1.05) rotate(4deg)' },
+          '100%': { opacity: '0', transform: 'scale(1.2) rotate(12deg)' },
         },
       },
       boxShadow: {

@@ -9,6 +9,7 @@ export * from './engine/escalation';
 export * from './engine/xp';
 export * from './engine/badges';
 export * from './shop/catalog';
+export * from './shop/bundleOwnership';
 export * from './shop/coinPacks';
 export * from './shop/marketing';
 export * from './shop/titles';

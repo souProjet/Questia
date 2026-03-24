@@ -11,6 +11,8 @@ import {
   Platform,
   Modal,
   Alert,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -25,6 +27,8 @@ import {
   XP_SHOP_BONUS_PER_CHARGE,
   bonusPercentVsPack,
   questCoinsPerEuro,
+  catalogItemFullyOwned,
+  buildCoinPurchasedSkuSet,
   type ShopCatalogEntry,
   type ShopMarketingBadge,
 } from '@questia/shared';
@@ -97,24 +101,6 @@ function kindOrder(kind: ShopCatalogEntry['kind']): number {
     bundle: 5,
   };
   return order[kind] ?? 9;
-}
-
-function catalogItemFullyOwned(item: ShopCatalogEntry, shop: ProfileShop): boolean {
-  const ownedThemeIds = new Set(shop.ownedThemes ?? ['default']);
-  const ownedNarration = new Set(shop.ownedNarrationPacks ?? []);
-  const ownedTitles = new Set(shop.ownedTitleIds ?? []);
-  if (item.kind === 'reroll_pack' || item.kind === 'xp_booster') return false;
-  if (item.kind === 'bundle') {
-    return (
-      (item.grants.themes?.every((t) => ownedThemeIds.has(t)) ?? true) &&
-      (item.grants.narrationPacks?.every((n) => ownedNarration.has(n)) ?? true) &&
-      (item.grants.titles?.every((t) => ownedTitles.has(t)) ?? true)
-    );
-  }
-  if (item.kind === 'theme_pack') return item.grants.themes?.every((t) => ownedThemeIds.has(t)) ?? false;
-  if (item.kind === 'title') return item.grants.titles?.every((t) => ownedTitles.has(t)) ?? false;
-  if (item.kind === 'narration_pack') return item.grants.narrationPacks?.every((n) => ownedNarration.has(n)) ?? false;
-  return false;
 }
 
 function kindLabel(kind: ShopCatalogEntry['kind']): string {
@@ -270,6 +256,60 @@ export default function ShopScreen() {
   const [selectKind, setSelectKind] = useState<null | 'theme' | 'narration' | 'title'>(null);
   const [rechargeModalVisible, setRechargeModalVisible] = useState(false);
   const stripeOpenedAt = useRef<number | null>(null);
+  const [purchaseHighlightSku, setPurchaseHighlightSku] = useState<string | null>(null);
+
+  const coinPurchasedSkus = useMemo(() => buildCoinPurchasedSkuSet(transactions), [transactions]);
+
+  const balanceScale = useRef(new Animated.Value(1)).current;
+  const celebrateOverlay = useRef(new Animated.Value(0)).current;
+  const bumpScale = useRef(new Animated.Value(1)).current;
+
+  /** `sku` omis = retour recharge Stripe (flash solde sans bump carte). */
+  const runPurchaseCelebration = useCallback(
+    (sku?: string | null) => {
+      if (sku) {
+        setPurchaseHighlightSku(sku);
+        bumpScale.setValue(1);
+        Animated.sequence([
+          Animated.timing(bumpScale, {
+            toValue: 1.06,
+            duration: 140,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.spring(bumpScale, { toValue: 1, friction: 5, tension: 220, useNativeDriver: true }),
+        ]).start();
+      }
+
+      balanceScale.setValue(1);
+      Animated.sequence([
+        Animated.timing(balanceScale, {
+          toValue: 1.14,
+          duration: 180,
+          easing: Easing.out(Easing.back(1.2)),
+          useNativeDriver: true,
+        }),
+        Animated.timing(balanceScale, {
+          toValue: 1.04,
+          duration: 120,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.spring(balanceScale, { toValue: 1, friction: 6, tension: 200, useNativeDriver: true }),
+      ]).start();
+
+      celebrateOverlay.setValue(sku ? 0.42 : 0.32);
+      Animated.timing(celebrateOverlay, {
+        toValue: 0,
+        duration: 900,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+
+      if (sku) setTimeout(() => setPurchaseHighlightSku(null), 1300);
+    },
+    [balanceScale, bumpScale, celebrateOverlay],
+  );
 
   const themeOptions = useMemo(() => {
     if (!shop) return [] as SelectOpt[];
@@ -339,12 +379,12 @@ export default function ShopScreen() {
       const t = stripeOpenedAt.current;
       if (t != null && Date.now() - t < 180_000) {
         stripeOpenedAt.current = null;
-        void load({ silent: true });
+        void load({ silent: true }).then(() => runPurchaseCelebration());
         setBanner('Si le paiement est passé, ton solde est à jour ci-dessous.');
       }
     });
     return () => sub.remove();
-  }, [load]);
+  }, [load, runPurchaseCelebration]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -388,6 +428,7 @@ export default function ShopScreen() {
       }
       await load({ silent: true });
       setBanner('Achat effectué avec tes Quest Coins.');
+      runPurchaseCelebration(sku);
     } finally {
       setCoinPurchaseSku(null);
     }
@@ -419,15 +460,13 @@ export default function ShopScreen() {
 
   const renderCatalogCard = (item: ShopCatalogEntry) => {
     if (!shop) return null;
-    const owns = catalogItemFullyOwned(item, shop);
+    const owns = catalogItemFullyOwned(item, shop, coinPurchasedSkus);
     const affordable = balance >= item.priceCoins;
     const m = item.marketing;
     const highlight = m?.badge === 'featured' || m?.badge === 'best_value';
-    return (
-      <View
-        key={item.sku}
-        style={[styles.card, highlight && styles.cardHighlight]}
-      >
+    const bump = purchaseHighlightSku === item.sku;
+    const card = (
+      <View style={[styles.card, highlight && styles.cardHighlight]}>
         <View style={styles.cardTop}>
           <Text style={styles.cardEmoji}>{item.emoji}</Text>
           <View style={styles.cardBadges}>
@@ -482,6 +521,13 @@ export default function ShopScreen() {
         ) : null}
       </View>
     );
+    return bump ? (
+      <Animated.View key={item.sku} style={{ transform: [{ scale: bumpScale }] }}>
+        {card}
+      </Animated.View>
+    ) : (
+      <View key={item.sku}>{card}</View>
+    );
   };
 
   if (loading && !shop && !error) {
@@ -503,6 +549,17 @@ export default function ShopScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            zIndex: 40,
+            backgroundColor: 'rgba(251, 191, 36, 0.32)',
+            opacity: celebrateOverlay,
+          },
+        ]}
+      />
       <View style={styles.topBar}>
         <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button">
           <Text style={styles.backText}>← Retour</Text>
@@ -547,13 +604,13 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.balanceLeft}>
                   <Text style={styles.balanceK}>Ton solde</Text>
-                  <Text style={styles.balanceNum}>
+                  <Animated.Text style={[styles.balanceNum, { transform: [{ scale: balanceScale }] }]}>
                     {balance.toLocaleString('fr-FR')}
                     <Text style={styles.balanceQc}> QC</Text>
-                  </Text>
+                  </Animated.Text>
                 </View>
                 <Pressable
-                  style={styles.balanceCta}
+                  style={({ pressed }) => [styles.balanceCta, pressed && styles.balanceCtaPressed]}
                   onPress={() => setRechargeModalVisible(true)}
                   accessibilityRole="button"
                   accessibilityLabel="Ajouter des Quest Coins en euros"
@@ -624,7 +681,14 @@ export default function ShopScreen() {
             {featuredBundle ? (
               <View style={styles.section}>
                 <Text style={styles.h2}>À la une</Text>
-                <View style={styles.featuredBox}>
+                <Animated.View
+                  style={[
+                    styles.featuredBox,
+                    purchaseHighlightSku === featuredBundle.sku
+                      ? { transform: [{ scale: bumpScale }] }
+                      : null,
+                  ]}
+                >
                   <View style={styles.featuredHead}>
                     <Text style={styles.featuredEmoji}>{featuredBundle.emoji}</Text>
                     <View style={{ flex: 1, minWidth: 0 }}>
@@ -675,7 +739,7 @@ export default function ShopScreen() {
                     <Text style={styles.featuredPrice}>
                       {featuredBundle.priceCoins.toLocaleString('fr-FR')} QC
                     </Text>
-                    {catalogItemFullyOwned(featuredBundle, shop) ? (
+                    {catalogItemFullyOwned(featuredBundle, shop, coinPurchasedSkus) ? (
                       <Text style={styles.ownsLbl}>Déjà à toi</Text>
                     ) : (
                       <Pressable
@@ -693,12 +757,13 @@ export default function ShopScreen() {
                       </Pressable>
                     )}
                   </View>
-                  {!catalogItemFullyOwned(featuredBundle, shop) && balance < featuredBundle.priceCoins ? (
+                  {!catalogItemFullyOwned(featuredBundle, shop, coinPurchasedSkus) &&
+                  balance < featuredBundle.priceCoins ? (
                     <Pressable onPress={() => setRechargeModalVisible(true)} accessibilityRole="button">
                       <Text style={styles.insuffLink}>Recharger</Text>
                     </Pressable>
                   ) : null}
-                </View>
+                </Animated.View>
               </View>
             ) : null}
 
@@ -1042,6 +1107,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(16, 185, 129, 0.45)',
     flexShrink: 0,
   },
+  balanceCtaPressed: { transform: [{ scale: 0.96 }], opacity: 0.94 },
   balanceCtaText: { color: '#fff', fontWeight: '900', fontSize: 11, letterSpacing: 0.4, textAlign: 'center' },
   section: { marginBottom: 20 },
   h2: { fontSize: 18, fontWeight: '900', color: C.text, marginBottom: 6 },

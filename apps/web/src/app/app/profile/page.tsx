@@ -99,19 +99,19 @@ export default function ProfilePage() {
 
         {data && prog && (
           <>
-            <h1 className="font-display font-black text-3xl text-slate-900 mb-2">Profil</h1>
-            <p className="text-slate-600 font-semibold mb-8">{quadrant}</p>
+            <h1 className="font-display font-black text-3xl text-[var(--text)] mb-2">Profil</h1>
+            <p className="text-[var(--muted)] font-semibold mb-8">{quadrant}</p>
 
             <section className="rounded-3xl border-2 border-cyan-300/40 bg-gradient-to-br from-white via-cyan-50/40 to-amber-50/30 p-6 shadow-lg mb-8">
               <div className="flex justify-between items-end gap-4 mb-2">
                 <span className="text-xs font-black uppercase tracking-wider text-cyan-900">Niveau</span>
-                <span className="font-display text-5xl font-black text-slate-900">{prog.level}</span>
+                <span className="font-display text-5xl font-black text-[var(--text)]">{prog.level}</span>
               </div>
-              <p className="text-sm font-semibold text-slate-600 mb-3">
+              <p className="text-sm font-semibold text-[var(--muted)] mb-3">
                 {prog.totalXp} XP au total · encore {prog.xpToNext} XP pour monter · progression dans ce niveau :{' '}
                 {prog.xpIntoLevel}/{prog.xpPerLevel}
               </p>
-              <div className="h-3 rounded-full bg-slate-200/90 overflow-hidden border border-cyan-200/60">
+              <div className="h-3 rounded-full bg-[color:var(--progress-track)] overflow-hidden border border-cyan-200/60">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-orange-400 transition-all duration-700"
                   style={{ width: `${pct}%` }}
@@ -140,8 +140,8 @@ export default function ProfilePage() {
                   key={b.id}
                   className={`rounded-2xl border p-4 shadow-sm transition-all ${
                     b.unlocked
-                      ? 'border-orange-200/60 bg-white/90'
-                      : 'border-slate-200/80 bg-slate-50/90 opacity-[0.88] grayscale-[0.35]'
+                      ? 'border-orange-200/60 bg-[var(--card)]/95'
+                      : 'border-[color:var(--border-ui)] bg-[var(--surface)]/95 opacity-[0.88] grayscale-[0.35]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
@@ -149,18 +149,18 @@ export default function ProfilePage() {
                       {b.placeholderEmoji}
                     </span>
                     {!b.unlocked ? (
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[var(--subtle)] shrink-0">
                         À débloquer
                       </span>
                     ) : null}
                   </div>
-                  <span className="inline-block mt-1 mb-1 rounded-full border border-slate-200/80 bg-white/80 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-slate-500">
+                  <span className="inline-block mt-1 mb-1 rounded-full border border-[color:var(--border-ui)] bg-[var(--card)]/90 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-[var(--subtle)]">
                     {BADGE_CATEGORY_LABEL_FR[b.category]}
                   </span>
-                  <p className={`font-black ${b.unlocked ? 'text-slate-900' : 'text-slate-600'}`}>{b.title}</p>
-                  <p className="text-xs text-slate-600 mt-1 font-medium">{b.criteria}</p>
+                  <p className={`font-black ${b.unlocked ? 'text-[var(--text)]' : 'text-[var(--muted)]'}`}>{b.title}</p>
+                  <p className="text-xs text-[var(--muted)] mt-1 font-medium">{b.criteria}</p>
                   {b.unlocked && b.unlockedAt ? (
-                    <p className="text-[10px] text-slate-400 mt-3 font-semibold">
+                    <p className="text-[10px] text-[var(--subtle)] mt-3 font-semibold">
                       {new Date(b.unlockedAt).toLocaleDateString('fr-FR', {
                         day: 'numeric',
                         month: 'short',
@@ -168,7 +168,7 @@ export default function ProfilePage() {
                       })}
                     </p>
                   ) : (
-                    <p className="text-[10px] text-slate-400 mt-3 font-semibold">Objectif en cours</p>
+                    <p className="text-[10px] text-[var(--subtle)] mt-3 font-semibold">Objectif en cours</p>
                   )}
                 </li>
               ))}

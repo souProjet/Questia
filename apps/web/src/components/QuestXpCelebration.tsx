@@ -147,7 +147,7 @@ export function QuestXpCelebration({
                   +{levelInfo.levelsGained} niveaux d’un coup !
                 </p>
               ) : (
-                <p className="mt-1 text-xs font-bold text-slate-600">Palier de progression débloqué</p>
+                <p className="mt-1 text-xs font-bold text-[var(--on-cream-muted)]">Palier de progression débloqué</p>
               )}
               <span
                 className="pointer-events-none absolute -right-1 -top-1 h-14 w-14 rounded-full bg-amber-300/30 blur-xl motion-safe:animate-pulse motion-reduce:hidden"
@@ -163,12 +163,12 @@ export function QuestXpCelebration({
           >
             +{xpGain.gained} XP
           </p>
-          <p className="mt-2 text-center text-sm font-semibold text-slate-600">
+          <p className="mt-2 text-center text-sm font-semibold text-[var(--on-cream-muted)]">
             Total {xpGain.previousTotal} →{' '}
             <span className="font-black text-cyan-900">{xpGain.newTotal}</span>
           </p>
 
-          <div className="mt-5 rounded-2xl border border-cyan-200/70 bg-white/90 p-4 text-xs font-semibold text-slate-700 space-y-1 motion-safe:animate-fade-up motion-reduce:opacity-100 [animation-delay:200ms] [animation-fill-mode:backwards]">
+          <div className="mt-5 rounded-2xl border border-cyan-200/70 bg-white/90 p-4 text-xs font-semibold text-[var(--on-cream-muted)] space-y-1 motion-safe:animate-fade-up motion-reduce:opacity-100 [animation-delay:200ms] [animation-fill-mode:backwards]">
             <p className="font-black uppercase tracking-wider text-cyan-900">Détail</p>
             <p>
               Base {xpGain.breakdown.basePhase} · {xpGain.breakdown.baseAfterArchetype} XP
@@ -180,10 +180,10 @@ export function QuestXpCelebration({
               <p>Extérieur · +{xpGain.breakdown.outdoorBonus}</p>
             ) : null}
             {xpGain.breakdown.fallbackPenalty > 0 ? (
-              <p className="text-slate-500">Repli météo · −{xpGain.breakdown.fallbackPenalty}</p>
+              <p className="text-[var(--on-cream-subtle)]">Repli météo · −{xpGain.breakdown.fallbackPenalty}</p>
             ) : null}
             {xpGain.breakdown.afterReroll ? (
-              <p className="text-slate-500">Après relance · ×0,75 sur le sous-total</p>
+              <p className="text-[var(--on-cream-subtle)]">Après relance · ×0,75 sur le sous-total</p>
             ) : null}
             {xpGain.breakdown.shopBonusXp != null && xpGain.breakdown.shopBonusXp > 0 ? (
               <p className="text-emerald-800 font-black">
@@ -215,8 +215,8 @@ export function QuestXpCelebration({
                       {b.placeholderEmoji}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-black text-slate-900">{b.title}</p>
-                      <p className="text-xs font-medium text-slate-600">{b.criteria}</p>
+                      <p className="font-black text-[var(--on-cream)]">{b.title}</p>
+                      <p className="text-xs font-medium text-[var(--on-cream-muted)]">{b.criteria}</p>
                     </div>
                   </li>
                 ))}

@@ -214,6 +214,7 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
       'Utile si la quête du jour ne te convient pas : une relance consomme un crédit et en génère une nouvelle. Les crédits restent jusqu’à utilisation.',
   },
   {
+    /** Un seul achat en QC par compte une fois tout le contenu « permanent » obtenu ; avant le 1er achat du SKU, achetable même si thèmes / narration / titre déjà pris à l’unité (pour les bonus XP du lot). */
     sku: 'bundle_explorer',
     kind: 'bundle',
     name: 'Bundle Explorateur',

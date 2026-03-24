@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import type { Prisma } from '@prisma/client';
-import { getShopItem, getCoinPack } from '@questia/shared';
+import { getShopItem, getCoinPack, hasAllPermanentBundleGrants } from '@questia/shared';
 import type { ShopCatalogEntry } from '@questia/shared';
 import { applyGrantsToProfile } from '@/lib/shop/fulfill';
 import { prisma } from '@/lib/db';
@@ -16,12 +16,6 @@ function isFullyOwned(
   const packs = parseStringArray(profile.ownedNarrationPacks);
   const titles = parseStringArray(profile.ownedTitleIds);
 
-  if (item.kind === 'bundle') {
-    const th = item.grants.themes?.every((t) => themes.includes(t)) ?? true;
-    const na = item.grants.narrationPacks?.every((p) => packs.includes(p)) ?? true;
-    const ti = item.grants.titles?.every((t) => titles.includes(t)) ?? true;
-    return th && na && ti;
-  }
   if (item.kind === 'theme_pack') {
     return item.grants.themes?.every((t) => themes.includes(t)) ?? false;
   }
@@ -65,7 +59,29 @@ export async function POST(request: Request) {
       const profile = await tx.profile.findUnique({ where: { clerkId: userId } });
       if (!profile) return { ok: false, message: 'Profil introuvable' };
 
-      if (isFullyOwned(profile, item)) {
+      const themes = parseStringArray(profile.ownedThemes);
+      const packs = parseStringArray(profile.ownedNarrationPacks);
+      const titles = parseStringArray((profile as { ownedTitleIds?: unknown }).ownedTitleIds);
+
+      if (item.kind === 'bundle') {
+        if (hasAllPermanentBundleGrants(item, themes, packs, titles)) {
+          const already = await tx.shopTransaction.count({
+            where: {
+              profileId: profile.id,
+              primarySku: item.sku,
+              status: 'paid',
+              entryKind: 'coin_purchase',
+            },
+          });
+          if (already > 0) {
+            return {
+              ok: false,
+              message:
+                'Tu as déjà acheté ce bundle. Les bonus qu’il contient (dont les charges XP) ne sont appliqués qu’une fois.',
+            };
+          }
+        }
+      } else if (isFullyOwned(profile, item)) {
         return { ok: false, message: 'Tu possèdes déjà cet article.' };
       }
 

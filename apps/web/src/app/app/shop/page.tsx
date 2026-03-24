@@ -12,6 +12,8 @@ import {
   XP_SHOP_BONUS_PER_CHARGE,
   bonusPercentVsPack,
   questCoinsPerEuro,
+  catalogItemFullyOwned,
+  buildCoinPurchasedSkuSet,
   type ShopCatalogEntry,
   type CoinPackEntry,
   type ShopMarketingBadge,
@@ -39,34 +41,34 @@ function RechargeModalContent({
       <header className="shrink-0 border-b border-emerald-100 bg-gradient-to-br from-emerald-50/95 via-amber-50/50 to-cyan-50/40 px-5 pb-4 pt-5 sm:px-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h2 id="recharge-modal-title" className="font-display font-black text-xl leading-tight text-slate-900 sm:text-2xl">
+            <h2 id="recharge-modal-title" className="font-display font-black text-xl leading-tight text-[var(--text)] sm:text-2xl">
               Ajouter des Quest Coins
             </h2>
-            <p className="mt-1.5 text-sm font-medium text-slate-600">
+            <p className="mt-1.5 text-sm font-medium text-[var(--muted)]">
               Paiement par carte bancaire via Stripe. Aucun abonnement — tu paies uniquement le montant choisi.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-white/90 px-3 py-1 text-xs font-bold text-amber-950 shadow-sm">
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-[var(--card)]/95 px-3 py-1 text-xs font-bold text-amber-950 shadow-sm">
                 <span className="text-amber-800/80">Solde actuel</span>
-                <span className="font-display tabular-nums font-black text-slate-900">
+                <span className="font-display tabular-nums font-black text-[var(--text)]">
                   {balance.toLocaleString('fr-FR')} QC
                 </span>
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-800/5 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--text)_6%,transparent)] px-2.5 py-1 text-[11px] font-semibold text-[var(--muted)]">
                 <span aria-hidden>🔒</span> Paiement sécurisé
               </span>
             </div>
           </div>
           <button
             type="button"
-            className="shrink-0 rounded-full p-2 text-slate-500 transition-colors hover:bg-white/80 hover:text-slate-800"
+            className="shrink-0 rounded-full p-2 text-[var(--subtle)] transition-colors hover:bg-[var(--card)]/90 hover:text-[var(--text)]"
             onClick={onClose}
             aria-label="Fermer"
           >
             ✕
           </button>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+        <p className="mt-3 text-[11px] leading-relaxed text-[var(--subtle)]">
           Après validation, les QC sont ajoutés à ton solde. Tu les utilises dans la boutique (thèmes, bonus, packs…).
         </p>
       </header>
@@ -87,7 +89,7 @@ function RechargeModalContent({
                 className={`flex min-h-0 flex-col rounded-2xl border-2 p-4 shadow-sm transition-shadow ${
                   isBest
                     ? 'border-emerald-400 bg-gradient-to-b from-emerald-50/95 to-white ring-2 ring-emerald-300/40'
-                    : 'border-slate-200/90 bg-white'
+                    : 'border-[color:var(--border-ui)] bg-[var(--card)]'
                 }`}
               >
                 <div className="mb-3 flex items-start justify-between gap-2">
@@ -99,7 +101,7 @@ function RechargeModalContent({
                     {pack.contentsDetail ? (
                       <button
                         type="button"
-                        className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-[10px] font-black text-slate-600 hover:bg-white"
+                        className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-ui)] bg-[var(--surface)] text-[10px] font-black text-[var(--muted)] hover:bg-[var(--card)]"
                         aria-label={`Plus d'infos : ${pack.name}`}
                         onClick={() => onShowInfo(pack.name, pack.contentsDetail!)}
                       >
@@ -113,13 +115,13 @@ function RechargeModalContent({
                   +{pack.coinsGranted.toLocaleString('fr-FR')}{' '}
                   <span className="text-base font-black text-emerald-700/90">QC</span>
                 </p>
-                <p className="mt-1 text-xs font-bold text-slate-500">{pack.name}</p>
-                <p className="mt-2 line-clamp-2 text-xs font-medium leading-snug text-slate-600">{pack.description}</p>
+                <p className="mt-1 text-xs font-bold text-[var(--subtle)]">{pack.name}</p>
+                <p className="mt-2 line-clamp-2 text-xs font-medium leading-snug text-[var(--muted)]">{pack.description}</p>
 
                 {pack.includedItems?.length ? (
-                  <ul className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">
+                  <ul className="mt-3 space-y-1.5 border-t border-[color:var(--border-ui)] pt-3">
                     {pack.includedItems.map((line) => (
-                      <li key={line} className="flex gap-2 text-[11px] font-semibold leading-snug text-slate-700">
+                      <li key={line} className="flex gap-2 text-[11px] font-semibold leading-snug text-[var(--muted)]">
                         <span className="mt-0.5 shrink-0 text-emerald-600" aria-hidden>
                           ✓
                         </span>
@@ -133,11 +135,11 @@ function RechargeModalContent({
                   <p className="mt-2 text-[11px] font-bold text-emerald-800/90">{pack.marketing.hook}</p>
                 ) : null}
 
-                <div className="mt-auto border-t border-slate-100 pt-3">
-                  <p className="font-display text-xl font-black tabular-nums text-slate-900">
+                <div className="mt-auto border-t border-[color:var(--border-ui)] pt-3">
+                  <p className="font-display text-xl font-black tabular-nums text-[var(--text)]">
                     {eur} €
                   </p>
-                  <p className="mt-0.5 text-[11px] font-bold text-slate-500">
+                  <p className="mt-0.5 text-[11px] font-bold text-[var(--subtle)]">
                     <span className="tabular-nums text-emerald-800">{Math.round(qcPerEur)} QC / €</span>
                     {bonusVsStarter > 0 ? (
                       <span className="ml-1 font-black text-emerald-700">(+{bonusVsStarter}% vs petit pack)</span>
@@ -158,8 +160,8 @@ function RechargeModalContent({
         </ul>
       </div>
 
-      <footer className="shrink-0 border-t border-slate-100 bg-slate-50/90 px-5 py-3 text-center sm:px-6">
-        <p className="text-[11px] font-medium leading-relaxed text-slate-500">
+      <footer className="shrink-0 border-t border-[color:var(--border-ui)] bg-[var(--surface)]/95 px-5 py-3 text-center sm:px-6">
+        <p className="text-[11px] font-medium leading-relaxed text-[var(--subtle)]">
           Tu reviens sur la boutique après le paiement. En cas d’annulation, aucun débit.
         </p>
       </footer>
@@ -218,24 +220,6 @@ function kindOrder(kind: ShopCatalogEntry['kind']): number {
   return order[kind] ?? 9;
 }
 
-function catalogItemFullyOwned(item: ShopCatalogEntry, shop: ProfileShop): boolean {
-  const ownedThemeIds = new Set(shop.ownedThemes ?? ['default']);
-  const ownedNarration = new Set(shop.ownedNarrationPacks ?? []);
-  const ownedTitles = new Set(shop.ownedTitleIds ?? []);
-  if (item.kind === 'reroll_pack' || item.kind === 'xp_booster') return false;
-  if (item.kind === 'bundle') {
-    return (
-      (item.grants.themes?.every((t) => ownedThemeIds.has(t)) ?? true) &&
-      (item.grants.narrationPacks?.every((n) => ownedNarration.has(n)) ?? true) &&
-      (item.grants.titles?.every((t) => ownedTitles.has(t)) ?? true)
-    );
-  }
-  if (item.kind === 'theme_pack') return item.grants.themes?.every((t) => ownedThemeIds.has(t)) ?? false;
-  if (item.kind === 'title') return item.grants.titles?.every((t) => ownedTitles.has(t)) ?? false;
-  if (item.kind === 'narration_pack') return item.grants.narrationPacks?.every((n) => ownedNarration.has(n)) ?? false;
-  return false;
-}
-
 function kindLabel(kind: ShopCatalogEntry['kind']): string {
   switch (kind) {
     case 'theme_pack':
@@ -260,7 +244,7 @@ function MarketingBadge({ badge }: { badge: ShopMarketingBadge }) {
     featured: 'bg-gradient-to-r from-violet-600 to-amber-500 text-white border-0',
     best_value: 'bg-emerald-600 text-white border-emerald-700',
     popular: 'bg-orange-500 text-white border-orange-600',
-    starter: 'bg-slate-600 text-white border-slate-700',
+    starter: 'bg-[#64748b] text-white border-[color:var(--border-ui-strong)]',
     new: 'bg-cyan-600 text-white border-cyan-700',
   };
   return (
@@ -291,6 +275,18 @@ function ShopPageInner() {
   const [banner, setBanner] = useState<string | null>(null);
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [infoModal, setInfoModal] = useState<{ title: string; body: string } | null>(null);
+  /** Ré-anime le solde (clé) + flash / carte après achat QC */
+  const [balanceAnimTick, setBalanceAnimTick] = useState(0);
+  const [purchaseHighlightSku, setPurchaseHighlightSku] = useState<string | null>(null);
+  const [celebratePurchase, setCelebratePurchase] = useState(false);
+
+  const runPurchaseCelebration = useCallback((sku: string) => {
+    setBalanceAnimTick((n) => n + 1);
+    setPurchaseHighlightSku(sku);
+    setCelebratePurchase(true);
+    window.setTimeout(() => setCelebratePurchase(false), 850);
+    window.setTimeout(() => setPurchaseHighlightSku(null), 1300);
+  }, []);
 
   const { featuredBundle, xpItems, themeItems, titleItems, narrationItems, rerollItems } = useMemo(() => {
     const bundle = items.find((i) => i.kind === 'bundle');
@@ -304,6 +300,8 @@ function ShopPageInner() {
       rerollItems: rest.filter((i) => i.kind === 'reroll_pack'),
     };
   }, [items]);
+
+  const coinPurchasedSkus = useMemo(() => buildCoinPurchasedSkuSet(transactions), [transactions]);
 
   const load = useCallback(async () => {
     setError(null);
@@ -339,7 +337,12 @@ function ShopPageInner() {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
     if (success === '1') void load();
-    if (success === '1') setBanner('Paiement confirmé — tes Quest Coins sont crédités.');
+    if (success === '1') {
+      setBanner('Paiement confirmé — tes Quest Coins sont crédités.');
+      setBalanceAnimTick((n) => n + 1);
+      setCelebratePurchase(true);
+      window.setTimeout(() => setCelebratePurchase(false), 900);
+    }
     if (canceled === '1') setBanner('Paiement annulé.');
   }, [searchParams, load]);
 
@@ -385,6 +388,7 @@ function ShopPageInner() {
       }
       await load();
       setBanner('Achat effectué avec tes Quest Coins.');
+      runPurchaseCelebration(sku);
     } finally {
       setCoinPurchaseSku(null);
     }
@@ -416,17 +420,18 @@ function ShopPageInner() {
   const balance = shop?.coinBalance ?? 0;
 
   const renderCatalogCard = (item: ShopCatalogEntry) => {
-    const owns = catalogItemFullyOwned(item, shop!);
+    const owns = catalogItemFullyOwned(item, shop!, coinPurchasedSkus);
     const affordable = balance >= item.priceCoins;
     const m = item.marketing;
+    const bump = purchaseHighlightSku === item.sku;
     return (
       <li
         key={item.sku}
-        className={`rounded-2xl border bg-white/90 p-5 shadow-sm flex flex-col gap-3 ${
+        className={`rounded-2xl border bg-[var(--card)]/95 p-5 shadow-sm flex flex-col gap-3 transition-shadow duration-300 ${
           m?.badge === 'featured' || m?.badge === 'best_value'
             ? 'border-emerald-300/80 ring-1 ring-emerald-200/60'
-            : 'border-slate-200/90'
-        }`}
+            : 'border-[color:var(--border-ui)]'
+        } ${bump ? 'motion-safe:animate-shop-card-bump motion-reduce:ring-2 motion-reduce:ring-amber-300/50' : ''}`}
       >
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <span className="text-3xl leading-none" aria-hidden>
@@ -434,13 +439,13 @@ function ShopPageInner() {
           </span>
           <div className="flex flex-wrap items-center gap-1 justify-end">
             {m?.badge ? <MarketingBadge badge={m.badge} /> : null}
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[var(--subtle)] shrink-0">
               {kindLabel(item.kind)}
             </span>
             {item.contentsDetail ? (
               <button
                 type="button"
-                className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-[10px] font-black text-slate-600 hover:bg-slate-50"
+                className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-ui-strong)] bg-[var(--card)] text-[10px] font-black text-[var(--muted)] hover:bg-[var(--surface)]"
                 aria-label={`Plus d'infos : ${item.name}`}
                 onClick={() => setInfoModal({ title: item.name, body: item.contentsDetail! })}
               >
@@ -449,10 +454,10 @@ function ShopPageInner() {
             ) : null}
           </div>
         </div>
-        <p className="font-black text-slate-900">{item.name}</p>
-        <p className="text-xs text-slate-600 font-medium leading-relaxed flex-1">{item.description}</p>
+        <p className="font-black text-[var(--text)]">{item.name}</p>
+        <p className="text-xs text-[var(--muted)] font-medium leading-relaxed flex-1">{item.description}</p>
         {item.includedItems?.length ? (
-          <ul className="list-disc pl-4 text-[11px] font-medium text-slate-700 space-y-0.5">
+          <ul className="list-disc pl-4 text-[11px] font-medium text-[var(--muted)] space-y-0.5">
             {item.includedItems.map((line) => (
               <li key={line}>{line}</li>
             ))}
@@ -460,15 +465,15 @@ function ShopPageInner() {
         ) : null}
         {m?.hook ? <p className="text-[11px] font-semibold text-emerald-800/90">{m.hook}</p> : null}
         {m?.compareAtCoins != null && m.savingsCoins != null ? (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--subtle)]">
             <span className="line-through tabular-nums">{m.compareAtCoins.toLocaleString('fr-FR')} QC</span>
             <span className="mx-1.5 font-bold text-emerald-700">
               −{m.savingsCoins.toLocaleString('fr-FR')} QC
             </span>
-            <span className="text-slate-400">vs achat séparé</span>
+            <span className="text-[var(--subtle)]">vs achat séparé</span>
           </p>
         ) : null}
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-[color:var(--border-ui)]">
           <span className="font-display text-xl font-black text-amber-800 tabular-nums">
             {item.priceCoins.toLocaleString('fr-FR')} QC
           </span>
@@ -479,7 +484,7 @@ function ShopPageInner() {
               type="button"
               disabled={coinPurchaseSku === item.sku || !affordable}
               onClick={() => void buyWithCoins(item.sku)}
-              className="btn btn-primary btn-md text-sm font-black disabled:opacity-50"
+              className="btn btn-primary btn-md text-sm font-black transition-transform duration-150 will-change-transform hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
               title={!affordable ? 'Solde insuffisant — recharge des Quest Coins.' : undefined}
             >
               {coinPurchaseSku === item.sku ? '…' : 'Acheter'}
@@ -510,10 +515,13 @@ function ShopPageInner() {
           ← Retour à la quête
         </Link>
 
-        <h1 className="font-display font-black text-3xl text-slate-900 mb-6">Boutique</h1>
+        <h1 className="font-display font-black text-3xl text-[var(--text)] mb-6">Boutique</h1>
 
         {banner && (
-          <div className="mb-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/95 px-4 py-3 text-sm font-semibold text-emerald-950">
+          <div
+            key={banner}
+            className="mb-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/95 px-4 py-3 text-sm font-semibold text-emerald-950 motion-safe:animate-fade-up motion-reduce:animate-none"
+          >
             {banner}
           </div>
         )}
@@ -532,8 +540,42 @@ function ShopPageInner() {
 
         {shop && !loading && (
           <>
+            {celebratePurchase ? (
+              <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden" aria-hidden>
+                <div className="absolute inset-0 bg-gradient-to-b from-amber-300/35 via-amber-200/10 to-violet-400/20 motion-safe:animate-shop-gold-flash motion-reduce:hidden" />
+                <span
+                  className="absolute left-[12%] top-[28%] text-3xl sm:text-4xl motion-safe:animate-shop-sparkle motion-reduce:hidden"
+                  style={{ animationDelay: '0ms' }}
+                >
+                  ✨
+                </span>
+                <span
+                  className="absolute right-[18%] top-[22%] text-2xl motion-safe:animate-shop-sparkle motion-reduce:hidden"
+                  style={{ animationDelay: '120ms' }}
+                >
+                  🎉
+                </span>
+                <span
+                  className="absolute left-[40%] bottom-[38%] text-2xl motion-safe:animate-shop-sparkle motion-reduce:hidden"
+                  style={{ animationDelay: '200ms' }}
+                >
+                  ⭐
+                </span>
+                <span
+                  className="absolute right-[12%] bottom-[32%] text-3xl motion-safe:animate-shop-sparkle motion-reduce:hidden"
+                  style={{ animationDelay: '280ms' }}
+                >
+                  ✨
+                </span>
+              </div>
+            ) : null}
+
             <div className="sticky top-24 z-40 -mx-4 px-4 pt-2 pb-6 mb-6">
-              <div className="max-w-4xl mx-auto rounded-3xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-white to-amber-100/90 p-5 sm:p-6 shadow-[0_12px_40px_-8px_rgba(180,83,9,0.25)]">
+              <div
+                className={`max-w-4xl mx-auto rounded-3xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-white to-amber-100/90 p-5 sm:p-6 shadow-[0_12px_40px_-8px_rgba(180,83,9,0.25)] transition-shadow duration-300 ${
+                  celebratePurchase ? 'shadow-[0_0_0_4px_rgba(251,191,36,0.45)] ring-2 ring-amber-400/50' : ''
+                }`}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-4 sm:gap-6">
                   <div className="min-w-0 flex items-center gap-4">
                     <span
@@ -546,7 +588,10 @@ function ShopPageInner() {
                       <p className="text-xs font-black uppercase tracking-[0.15em] text-amber-900/90 mb-1">
                         Ton solde
                       </p>
-                      <p className="font-display text-4xl sm:text-5xl font-black tracking-tight text-slate-900 tabular-nums leading-none">
+                      <p
+                        key={balanceAnimTick}
+                        className="font-display text-4xl sm:text-5xl font-black tracking-tight text-[var(--text)] tabular-nums leading-none motion-safe:animate-shop-balance-pop motion-reduce:animate-none"
+                      >
                         {balance.toLocaleString('fr-FR')}
                         <span className="ml-2 text-2xl sm:text-3xl font-black text-amber-700">QC</span>
                       </p>
@@ -554,7 +599,7 @@ function ShopPageInner() {
                   </div>
                   <button
                     type="button"
-                    className="shrink-0 rounded-2xl bg-emerald-600 px-5 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-emerald-700/30 ring-2 ring-emerald-500/40 hover:bg-emerald-700 hover:ring-emerald-400/50 transition-colors sm:min-w-[200px]"
+                    className="shrink-0 rounded-2xl bg-emerald-600 px-5 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-emerald-700/30 ring-2 ring-emerald-500/40 transition-all duration-200 hover:bg-emerald-700 hover:ring-emerald-400/50 hover:scale-105 active:scale-95 sm:min-w-[200px]"
                     onClick={() => setRechargeOpen(true)}
                   >
                     Ajouter des QC
@@ -564,24 +609,24 @@ function ShopPageInner() {
             </div>
 
             <section className="mb-10" aria-labelledby="shop-prefs-heading">
-              <div className="rounded-3xl border border-slate-200/90 bg-white shadow-[0_8px_30px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-5 py-4 sm:px-6 border-b border-slate-100 bg-gradient-to-r from-slate-50/95 via-cyan-50/40 to-amber-50/30">
+              <div className="rounded-3xl border border-[color:var(--border-ui)] bg-[var(--card)] shadow-[0_8px_30px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-5 py-4 sm:px-6 border-b border-[color:var(--border-ui)] bg-gradient-to-r from-[var(--surface)]/95 via-cyan-50/40 to-amber-50/30">
                   <div>
-                    <h2 id="shop-prefs-heading" className="font-display font-black text-lg text-slate-900">
+                    <h2 id="shop-prefs-heading" className="font-display font-black text-lg text-[var(--text)]">
                       Équipement & affichage
                     </h2>
-                    <p className="text-xs font-medium text-slate-500 mt-0.5">
+                    <p className="text-xs font-medium text-[var(--subtle)] mt-0.5">
                       Thème, ton des quêtes et titre — utilisés tout de suite dans l’app.
                     </p>
                   </div>
                 </div>
                 <div className="p-5 sm:p-6 grid gap-5 md:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-4 flex flex-col gap-2">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                  <div className="rounded-2xl border border-[color:var(--border-ui)] bg-[var(--surface)]/70 p-4 flex flex-col gap-2">
+                    <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
                       Thème actif
                     </label>
                     <select
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                      className="w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
                       value={shop.activeThemeId}
                       onChange={(e) => void savePreferences({ activeThemeId: e.target.value })}
                     >
@@ -602,12 +647,12 @@ function ShopPageInner() {
                         ))}
                     </select>
                   </div>
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-4 flex flex-col gap-2">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                  <div className="rounded-2xl border border-[color:var(--border-ui)] bg-[var(--surface)]/70 p-4 flex flex-col gap-2">
+                    <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
                       Ton des textes de quête
                     </label>
                     <select
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                      className="w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
                       value={shop.activeNarrationPackId ?? ''}
                       onChange={(e) => {
                         const v = e.target.value;
@@ -625,16 +670,16 @@ function ShopPageInner() {
                           ))
                         : null}
                     </select>
-                    <p className="text-[11px] text-slate-500 leading-snug">
+                    <p className="text-[11px] text-[var(--subtle)] leading-snug">
                       Prochaines quêtes du jour uniquement.
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-4 flex flex-col gap-2">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                  <div className="rounded-2xl border border-[color:var(--border-ui)] bg-[var(--surface)]/70 p-4 flex flex-col gap-2">
+                    <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
                       Titre sur le profil
                     </label>
                     <select
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                      className="w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
                       value={shop.equippedTitleId ?? ''}
                       onChange={(e) => {
                         const v = e.target.value;
@@ -655,7 +700,7 @@ function ShopPageInner() {
                     </select>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-3 px-5 sm:px-6 py-4 bg-slate-50/90 border-t border-slate-100">
+                <div className="flex flex-wrap gap-3 px-5 sm:px-6 py-4 bg-[var(--surface)]/95 border-t border-[color:var(--border-ui)]">
                   <div className="inline-flex items-center gap-2 rounded-full border border-orange-200/80 bg-orange-50/90 px-3 py-1.5 text-xs font-semibold text-orange-950">
                     <span className="opacity-80">Relances bonus</span>
                     <span className="font-black tabular-nums text-orange-800">{shop.bonusRerollCredits}</span>
@@ -673,10 +718,16 @@ function ShopPageInner() {
 
             {featuredBundle ? (
               <section className="mb-10" aria-labelledby="shop-featured-heading">
-                <h2 id="shop-featured-heading" className="font-display font-black text-xl text-slate-900 mb-3">
+                <h2 id="shop-featured-heading" className="font-display font-black text-xl text-[var(--text)] mb-3">
                   À la une
                 </h2>
-                <div className="rounded-3xl border-2 border-violet-400/50 bg-gradient-to-br from-violet-50 via-amber-50/80 to-cyan-50 p-6 shadow-lg">
+                <div
+                  className={`rounded-3xl border-2 border-violet-400/50 bg-gradient-to-br from-violet-50 via-amber-50/80 to-cyan-50 p-6 shadow-lg transition-shadow duration-300 ${
+                    purchaseHighlightSku === featuredBundle.sku
+                      ? 'motion-safe:animate-shop-card-bump motion-reduce:ring-2 motion-reduce:ring-amber-300/60'
+                      : ''
+                  }`}
+                >
                   <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <span className="text-4xl shrink-0" aria-hidden>
@@ -687,13 +738,13 @@ function ShopPageInner() {
                           <MarketingBadge badge={featuredBundle.marketing.badge} />
                         ) : null}
                         <div className="mt-2 flex items-start gap-2">
-                          <p className="font-display font-black text-xl text-slate-900 flex-1 min-w-0">
+                          <p className="font-display font-black text-xl text-[var(--text)] flex-1 min-w-0">
                             {featuredBundle.name}
                           </p>
                           {featuredBundle.contentsDetail ? (
                             <button
                               type="button"
-                              className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-[10px] font-black text-slate-600 hover:bg-slate-50 mt-0.5"
+                              className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-ui-strong)] bg-[var(--card)] text-[10px] font-black text-[var(--muted)] hover:bg-[var(--surface)] mt-0.5"
                               aria-label={`Plus d'infos : ${featuredBundle.name}`}
                               onClick={() =>
                                 setInfoModal({
@@ -709,9 +760,9 @@ function ShopPageInner() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm text-slate-700 font-medium mb-2">{featuredBundle.description}</p>
+                  <p className="text-sm text-[var(--muted)] font-medium mb-2">{featuredBundle.description}</p>
                   {featuredBundle.includedItems?.length ? (
-                    <ul className="list-disc pl-5 text-sm text-slate-700 font-medium space-y-1 mb-2">
+                    <ul className="list-disc pl-5 text-sm text-[var(--muted)] font-medium space-y-1 mb-2">
                       {featuredBundle.includedItems.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
@@ -722,18 +773,18 @@ function ShopPageInner() {
                   ) : null}
                   {featuredBundle.marketing?.compareAtCoins != null &&
                   featuredBundle.marketing?.savingsCoins != null ? (
-                    <p className="text-sm text-slate-600 mb-4">
+                    <p className="text-sm text-[var(--muted)] mb-4">
                       <span className="line-through tabular-nums">
                         {featuredBundle.marketing.compareAtCoins.toLocaleString('fr-FR')} QC
                       </span>
                       <span className="ml-2 font-black text-emerald-700">
                         Économie ~{featuredBundle.marketing.savingsCoins.toLocaleString('fr-FR')} QC
                       </span>
-                      <span className="text-slate-400 text-xs ml-1">vs pièces détail</span>
+                      <span className="text-[var(--subtle)] text-xs ml-1">vs pièces détail</span>
                     </p>
                   ) : null}
                   {(() => {
-                    const owns = catalogItemFullyOwned(featuredBundle, shop);
+                    const owns = catalogItemFullyOwned(featuredBundle, shop, coinPurchasedSkus);
                     const affordable = balance >= featuredBundle.priceCoins;
                     return (
                       <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-violet-200/60">
@@ -747,7 +798,7 @@ function ShopPageInner() {
                             type="button"
                             disabled={coinPurchaseSku === featuredBundle.sku || !affordable}
                             onClick={() => void buyWithCoins(featuredBundle.sku)}
-                            className="btn btn-primary btn-md text-sm font-black disabled:opacity-50"
+                            className="btn btn-primary btn-md text-sm font-black transition-transform duration-150 hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                           >
                             {coinPurchaseSku === featuredBundle.sku ? '…' : 'Acheter le bundle'}
                           </button>
@@ -755,7 +806,8 @@ function ShopPageInner() {
                       </div>
                     );
                   })()}
-                  {!catalogItemFullyOwned(featuredBundle, shop) && balance < featuredBundle.priceCoins ? (
+                  {!catalogItemFullyOwned(featuredBundle, shop, coinPurchasedSkus) &&
+                  balance < featuredBundle.priceCoins ? (
                     <button
                       type="button"
                       className="mt-2 text-xs font-semibold text-orange-700 underline decoration-orange-400/80 hover:text-orange-900"
@@ -769,31 +821,31 @@ function ShopPageInner() {
             ) : null}
 
             <section className="mb-10" aria-labelledby="shop-xp-heading">
-              <h2 id="shop-xp-heading" className="font-display font-black text-lg text-slate-900 mb-3">
+              <h2 id="shop-xp-heading" className="font-display font-black text-lg text-[var(--text)] mb-3">
                 Progression & XP
               </h2>
               <ul className="grid gap-4 sm:grid-cols-2">{xpItems.map(renderCatalogCard)}</ul>
             </section>
 
             <section className="mb-10" aria-labelledby="shop-look-heading">
-              <h2 id="shop-look-heading" className="font-display font-black text-lg text-slate-900 mb-3">
+              <h2 id="shop-look-heading" className="font-display font-black text-lg text-[var(--text)] mb-3">
                 Apparence
               </h2>
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Thèmes</h3>
+              <h3 className="text-xs font-black uppercase tracking-wider text-[var(--subtle)] mb-3">Thèmes</h3>
               <ul className="grid gap-4 sm:grid-cols-2 mb-8">{themeItems.map(renderCatalogCard)}</ul>
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Titres</h3>
+              <h3 className="text-xs font-black uppercase tracking-wider text-[var(--subtle)] mb-3">Titres</h3>
               <ul className="grid gap-4 sm:grid-cols-2">{titleItems.map(renderCatalogCard)}</ul>
             </section>
 
             <section className="mb-10" aria-labelledby="shop-narration-heading">
-              <h2 id="shop-narration-heading" className="font-display font-black text-lg text-slate-900 mb-3">
+              <h2 id="shop-narration-heading" className="font-display font-black text-lg text-[var(--text)] mb-3">
                 Ton des quêtes
               </h2>
               <ul className="grid gap-4 sm:grid-cols-2">{narrationItems.map(renderCatalogCard)}</ul>
             </section>
 
             <section className="mb-10" aria-labelledby="shop-reroll-heading">
-              <h2 id="shop-reroll-heading" className="font-display font-black text-lg text-slate-900 mb-3">
+              <h2 id="shop-reroll-heading" className="font-display font-black text-lg text-[var(--text)] mb-3">
                 Relances
               </h2>
               <ul className="grid gap-4 sm:grid-cols-2">{rerollItems.map(renderCatalogCard)}</ul>
@@ -802,16 +854,16 @@ function ShopPageInner() {
             <section>
               <h2 className="label mb-4">Journal des transactions</h2>
               {transactions.length === 0 ? (
-                <p className="text-sm font-semibold text-slate-500 rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center">
+                <p className="text-sm font-semibold text-[var(--subtle)] rounded-2xl border border-dashed border-[color:var(--border-ui)] px-4 py-8 text-center">
                   Aucune opération pour l’instant.
                 </p>
               ) : (
-                <ul className="rounded-2xl border border-slate-200/90 bg-white/90 divide-y divide-slate-100 overflow-hidden">
+                <ul className="rounded-2xl border border-[color:var(--border-ui)] bg-[var(--card)]/95 divide-y divide-[color:var(--border-ui)] overflow-hidden">
                   {transactions.map((tx) => (
                     <li key={tx.id} className="px-4 py-3 flex flex-wrap items-baseline justify-between gap-2 text-sm">
                       <div className="min-w-0 flex-1">
-                        <span className="font-semibold text-slate-800 block">{tx.label}</span>
-                        <span className="text-slate-500 font-mono text-[10px]">{tx.primarySku}</span>
+                        <span className="font-semibold text-[var(--text)] block">{tx.label}</span>
+                        <span className="text-[var(--subtle)] font-mono text-[10px]">{tx.primarySku}</span>
                       </div>
                       <div className="text-right">
                         {tx.coinsDelta != null ? (
@@ -823,17 +875,17 @@ function ShopPageInner() {
                           </span>
                         ) : null}
                         {tx.amountCents > 0 ? (
-                          <span className="block text-xs text-slate-600 font-semibold">
+                          <span className="block text-xs text-[var(--muted)] font-semibold">
                             {(tx.amountCents / 100).toFixed(2).replace('.', ',')} {tx.currency.toUpperCase()}
                           </span>
                         ) : null}
                         {tx.coinBalanceAfter != null ? (
-                          <span className="block text-[10px] text-slate-400">
+                          <span className="block text-[10px] text-[var(--subtle)]">
                             Solde après : {tx.coinBalanceAfter} QC
                           </span>
                         ) : null}
                       </div>
-                      <span className="text-xs text-slate-400 w-full font-medium">
+                      <span className="text-xs text-[var(--subtle)] w-full font-medium">
                         {new Date(tx.createdAt).toLocaleString('fr-FR', {
                           dateStyle: 'medium',
                           timeStyle: 'short',
@@ -858,7 +910,7 @@ function ShopPageInner() {
                   aria-label="Fermer"
                   onClick={() => setRechargeOpen(false)}
                 />
-                <div className="relative z-10 w-full max-w-3xl overflow-hidden rounded-t-2xl border border-emerald-200/90 bg-white shadow-2xl sm:rounded-2xl">
+                <div className="relative z-10 w-full max-w-3xl overflow-hidden rounded-t-2xl border border-emerald-200/90 bg-[var(--card)] shadow-2xl motion-safe:animate-shop-modal-in motion-reduce:animate-none sm:rounded-2xl">
                   <RechargeModalContent
                     coinPacksSorted={coinPacksSorted}
                     coinPackReference={coinPackReference}
@@ -885,19 +937,19 @@ function ShopPageInner() {
                   aria-label="Fermer"
                   onClick={() => setInfoModal(null)}
                 />
-                <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+                <div className="relative z-10 w-full max-w-md rounded-2xl border border-[color:var(--border-ui)] bg-[var(--card)] p-5 shadow-2xl">
                   <button
                     type="button"
-                    className="absolute right-2 top-2 rounded-full p-2 text-slate-500 hover:bg-slate-100"
+                    className="absolute right-2 top-2 rounded-full p-2 text-[var(--subtle)] hover:bg-[var(--surface)]"
                     onClick={() => setInfoModal(null)}
                     aria-label="Fermer"
                   >
                     ✕
                   </button>
-                  <h3 id="info-modal-title" className="font-display font-black text-lg text-slate-900 pr-8">
+                  <h3 id="info-modal-title" className="font-display font-black text-lg text-[var(--text)] pr-8">
                     {infoModal.title}
                   </h3>
-                  <p className="mt-3 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  <p className="mt-3 text-sm text-[var(--muted)] leading-relaxed whitespace-pre-wrap">
                     {infoModal.body}
                   </p>
                   <button
