@@ -1,4 +1,5 @@
 export * from './types';
+export * from './historyPagination';
 export * from './questDisplayEmoji';
 export * from './questShareBackgrounds';
 export * from './formatQuestDateFr';

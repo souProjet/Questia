@@ -1,7 +1,7 @@
 - règles d'XP explicites (complétion, série, skip, plafonds) alignées avec phases d'escalade et archétypes : OK
 - badges avec critères clairs (ex. série, phase rupture, première quête extérieure) et affichage profil : OK
 - boutique / catalogue d'achats (thèmes, packs narration, rerolls optionnels) + journal des transactions : OK
-- écran historique riche : filtres, recherche, réutilisation d'idées de missions passées
+- écran historique riche : filtres, recherche, réutilisation d'idées de missions passées : OK
 - rappels utilisateur (push / email) pour la quête du jour, avec préférences
 - accessibilité : contrastes, tailles de texte, lecteur d'écran web et mobile
 - tests (moteur psychologique, chemins critiques quête / complétion) + CI (lint, build, tests)

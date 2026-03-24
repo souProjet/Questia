@@ -63,7 +63,7 @@ function InitialLayout() {
     const inAuthGroup = first === '(auth)';
     const atOnboarding = segs.length === 0 || first === 'index';
     if (isSignedIn && (inAuthGroup || atOnboarding)) {
-      router.replace('/app');
+      router.replace('/home');
     } else if (!isSignedIn && !inAuthGroup && !atOnboarding) {
       router.replace('/(auth)' as never);
     }

@@ -28,13 +28,6 @@
     --on-cream-subtle: #64748b;
     /** Liens sur fond « aventure » clair (retour, etc.) */
     --link-on-bg: #155e75;
-    /**
-     * Texte sur panneaux quête / boutique à fond « plateau » (bandeau, mission, solde…).
-     * En Nuit boréale les surfaces passent en sombre : on aligne sur --text / --muted.
-     */
-    --quest-panel-fg: var(--on-cream);
-    --quest-panel-fg-muted: var(--on-cream-muted);
-    --quest-panel-fg-subtle: var(--on-cream-subtle);
   }
 
   /* Thèmes boutique (data-theme sur <html>) */
@@ -56,9 +49,6 @@
     --green: #34d399;
     /** Liens / accents sur fond sombre (hors cartes crème) */
     --link-on-bg: #7dd3fc;
-    --quest-panel-fg: var(--text);
-    --quest-panel-fg-muted: var(--muted);
-    --quest-panel-fg-subtle: var(--subtle);
   }
 
   html[data-theme="aurora"] {
@@ -456,10 +446,401 @@
     background: rgba(249,115,22,.12); border: 1px solid rgba(249,115,22,.28); color: #c2410c;
   }
 
+  .pill-outdoor {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #059669;
+  }
+  .pill-indoor {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide;
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+    border: 1px solid var(--border-ui);
+    color: var(--muted);
+  }
+  .pill-xp-boost {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black;
+    background: color-mix(in srgb, var(--gold) 18%, var(--card));
+    border: 1px solid color-mix(in srgb, var(--orange) 35%, transparent);
+    color: color-mix(in srgb, var(--text) 70%, #92400e);
+  }
+
   /**
    * Pas de variante midnight sur les pills : le bandeau « Carte du jour » est toujours sur fond clair ;
    * des textes clairs (#a5f3fc, #fdba74…) sur crème étaient illisibles.
    */
+
+  @keyframes hist-tabs-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes hist-panel-rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes hist-card-enter {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  /* ── Historique (/app/history) : onglets, filtres, champs — même ADN que boutique & plateau ── */
+  .hist-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 1rem;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(236, 253, 255, 0.9));
+    border: 1px solid color-mix(in srgb, var(--cyan) 38%, var(--border-ui));
+    box-shadow:
+      0 10px 28px color-mix(in srgb, var(--text) 12%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(12px);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hist-tabs {
+      animation: hist-tabs-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+  html[data-theme="midnight"] .hist-tabs {
+    background: linear-gradient(145deg, rgba(21, 34, 56, 0.94), rgba(17, 27, 46, 0.96));
+    border-color: rgba(56, 189, 248, 0.45);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .hist-tab {
+    flex: 1 1 140px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 900;
+    color: var(--muted);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color 0.2s ease,
+      background 0.2s ease,
+      box-shadow 0.22s ease,
+      transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .hist-tab:hover {
+    color: var(--text);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hist-tab:active:not(.hist-tab--active) {
+      transform: scale(0.97);
+    }
+  }
+  .hist-tab--active {
+    background-color: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border-ui);
+    box-shadow:
+      0 4px 18px color-mix(in srgb, var(--text) 14%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--cyan) 22%, transparent);
+  }
+
+  .hist-filters-panel {
+    border-radius: 1.5rem;
+    border: 2px solid color-mix(in srgb, var(--violet) 32%, var(--border-ui-strong));
+    background-color: var(--card);
+    background-image: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--violet) 70%, transparent),
+        color-mix(in srgb, var(--orange) 68%, transparent),
+        color-mix(in srgb, var(--green) 62%, transparent)
+      ),
+      linear-gradient(
+        152deg,
+        color-mix(in srgb, var(--surface) 42%, var(--card)) 0%,
+        var(--card) 48%,
+        color-mix(in srgb, var(--bg) 18%, var(--card)) 100%
+      );
+    background-size: 100% 4px, 100% 100%;
+    background-repeat: no-repeat, no-repeat;
+    background-position: top, 0 0;
+    box-shadow:
+      0 16px 40px -18px color-mix(in srgb, var(--text) 22%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
+    padding: 1.125rem 1.25rem 1.25rem;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hist-filters-panel {
+      animation: hist-panel-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+
+  .hist-field-label {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 0.5rem;
+  }
+
+  .hist-input {
+    width: 100%;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in srgb, var(--text) 10%, var(--border-ui));
+    background: linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--surface) 50%, var(--input-bg)) 0%,
+      var(--input-bg) 100%
+    );
+    color: var(--text);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.45;
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--text) 5%, transparent),
+      0 1px 2px color-mix(in srgb, var(--text) 6%, transparent);
+    transition: box-shadow 0.15s ease;
+  }
+  .hist-input::placeholder {
+    color: var(--subtle);
+    font-weight: 500;
+  }
+  .hist-input:focus {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--input-bg),
+      0 0 0 4px color-mix(in srgb, var(--violet) 38%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--text) 5%, transparent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hist-input:focus {
+      transition: box-shadow 0.2s ease;
+    }
+  }
+
+  .hist-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .hist-filter-name {
+    font-size: 0.625rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    width: 100%;
+  }
+  @media (min-width: 640px) {
+    .hist-filter-name {
+      width: auto;
+      margin-right: 0.25rem;
+    }
+  }
+
+  .hist-chip {
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 9999px;
+    border: 1px solid var(--border-ui);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--surface) 88%, var(--card));
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.22s ease,
+      transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .hist-chip:hover {
+    border-color: color-mix(in srgb, var(--violet) 32%, var(--border-ui));
+    color: var(--text);
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--text) 8%, transparent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hist-chip:active {
+      transform: scale(0.96);
+    }
+  }
+  .hist-chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--violet) 35%, transparent);
+  }
+  .hist-chip--on-orange {
+    border-color: color-mix(in srgb, var(--orange) 48%, transparent);
+    background: color-mix(in srgb, var(--orange) 12%, var(--card));
+    color: var(--text);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+      0 3px 14px color-mix(in srgb, var(--orange) 22%, transparent);
+  }
+  .hist-chip--on-cyan {
+    border-color: color-mix(in srgb, var(--violet) 42%, transparent);
+    background: color-mix(in srgb, var(--violet) 10%, var(--card));
+    color: var(--text);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 50%, transparent),
+      0 3px 14px color-mix(in srgb, var(--violet) 20%, transparent);
+  }
+  .hist-chip--on-green {
+    border-color: color-mix(in srgb, var(--green) 45%, transparent);
+    background: color-mix(in srgb, var(--green) 11%, var(--card));
+    color: var(--text);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 50%, transparent),
+      0 3px 14px color-mix(in srgb, var(--green) 20%, transparent);
+  }
+  .hist-chip--on-gold {
+    border-color: color-mix(in srgb, var(--gold) 50%, transparent);
+    background: color-mix(in srgb, var(--gold) 14%, var(--card));
+    color: var(--text);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 45%, transparent),
+      0 3px 14px color-mix(in srgb, var(--gold) 24%, transparent);
+  }
+  .hist-quest-card {
+    border-radius: 1.5rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--orange) 22%, var(--border-ui));
+    background: linear-gradient(165deg, #ffffff 0%, #fffbf5 45%, #fff3e0 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 4px 6px -1px rgba(15, 23, 42, 0.05),
+      0 22px 44px -14px rgba(34, 211, 238, 0.12),
+      0 12px 28px -16px rgba(249, 115, 22, 0.08);
+  }
+  html[data-theme="midnight"] .hist-quest-card {
+    border-color: color-mix(in srgb, var(--orange) 28%, var(--border-ui));
+    background: linear-gradient(165deg, var(--card) 0%, color-mix(in srgb, var(--surface) 55%, var(--card)) 100%);
+  }
+  .hist-quest-card--enter {
+    animation: hist-card-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hist-tabs,
+    .hist-filters-panel,
+    .hist-quest-card--enter {
+      animation: none !important;
+    }
+    .hist-chip:active {
+      transform: none;
+    }
+  }
+  .hist-quest-card__bar {
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--violet) 75%, transparent),
+      color-mix(in srgb, var(--orange) 70%, transparent),
+      color-mix(in srgb, var(--green) 65%, transparent)
+    );
+  }
+  .hist-quest-card__body {
+    padding: 1rem 1.125rem 1.125rem;
+  }
+
+  .hist-mission {
+    margin-top: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 1rem;
+    border: 2px solid color-mix(in srgb, var(--violet) 38%, var(--border-ui));
+    background: linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--surface) 35%, var(--card)) 0%,
+      var(--card) 100%
+    );
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  .hist-hook {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    background: linear-gradient(
+      105deg,
+      rgba(224, 242, 254, 0.55) 0%,
+      rgba(255, 247, 237, 0.92) 55%,
+      rgba(254, 243, 199, 0.4) 100%
+    );
+    border: 1px solid rgba(249, 115, 22, 0.12);
+    border-left-width: 4px;
+    border-left-color: rgba(249, 115, 22, 0.55);
+    font-size: 0.875rem;
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  .hist-reuse-btn {
+    @apply btn btn-sm shrink-0 font-black;
+    color: var(--text);
+    background: linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--violet) 14%, var(--card)),
+      color-mix(in srgb, var(--surface) 40%, var(--card))
+    );
+    border: 2px solid color-mix(in srgb, var(--violet) 42%, var(--border-ui));
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 8%, transparent);
+  }
+  .hist-reuse-btn:hover {
+    border-color: color-mix(in srgb, var(--violet) 55%, var(--border-ui));
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--violet) 22%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .hist-empty {
+    border-radius: 1.25rem;
+    border: 1px dashed var(--border-ui-strong);
+    padding: 2.25rem 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--subtle);
+    background: color-mix(in srgb, var(--surface) 55%, transparent);
+  }
+
+  .hist-tx-list {
+    border-radius: 1.5rem;
+    overflow: hidden;
+    border: 1px solid var(--border-ui);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent),
+      0 10px 28px -12px color-mix(in srgb, var(--text) 18%, transparent);
+    background-color: var(--card);
+    background-image: linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--surface) 48%, var(--card)) 0%,
+      var(--card) 42%,
+      color-mix(in srgb, var(--bg) 22%, var(--card)) 100%
+    );
+  }
 
   /* ── Divider ── */
   .divider { height: 1px; background: var(--border); }
@@ -549,7 +930,7 @@
     font-weight: 900;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--quest-panel-fg-subtle);
+    color: var(--on-cream-subtle);
     margin-bottom: 0.5rem;
     text-align: center;
   }
@@ -558,7 +939,7 @@
     font-size: 0.9375rem;
     font-weight: 600;
     line-height: 1.65;
-    color: var(--quest-panel-fg);
+    color: var(--on-cream);
     text-align: center;
     margin: 0;
   }
@@ -593,157 +974,6 @@
   .quest-slider-embedded .btn-ghost:hover {
     color: var(--on-cream);
     background: color-mix(in srgb, var(--on-cream) 11%, transparent);
-  }
-
-  /**
-   * Nuit boréale : surfaces « plateau » encore en crème → fond sombre + texte via --quest-panel-fg*.
-   */
-  html[data-theme="midnight"] .app-hero-band {
-    border-color: rgba(56, 189, 248, 0.38) !important;
-    background: linear-gradient(145deg, #111b2e 0%, #152238 48%, #0a101c 100%) !important;
-    box-shadow:
-      0 10px 0 rgba(0, 0, 0, 0.28),
-      0 22px 48px rgba(0, 0, 0, 0.42) !important;
-  }
-  html[data-theme="midnight"] .app-hero-band .text-gradient-pop {
-    color: #7dd3fc;
-    background: linear-gradient(
-      118deg,
-      #bae6fd 0%,
-      #38bdf8 38%,
-      #22d3ee 72%,
-      #a5f3fc 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
-  }
-  html[data-theme="midnight"] .app-hero-xp-strip {
-    border-color: rgba(56, 189, 248, 0.32) !important;
-    background: linear-gradient(90deg, rgba(17, 27, 46, 0.96) 0%, rgba(21, 34, 56, 0.9) 100%) !important;
-  }
-  html[data-theme="midnight"] .quest-footer-cta .text-emerald-900,
-  html[data-theme="midnight"] .quest-slider-embedded .text-emerald-900 {
-    color: #6ee7b7 !important;
-  }
-  html[data-theme="midnight"] .quest-slider-embedded .text-orange-900 {
-    color: #fdba74 !important;
-  }
-  html[data-theme="midnight"] .app-hero-band .border-cyan-500\/45.bg-white\/95 {
-    background-color: color-mix(in srgb, var(--card) 88%, transparent) !important;
-    border-color: rgba(56, 189, 248, 0.35) !important;
-    color: var(--quest-panel-fg) !important;
-  }
-  html[data-theme="midnight"] .quest-slider-embedded {
-    background: linear-gradient(165deg, #121c2e 0%, #152238 40%, #0c1424 100%);
-    border-color: rgba(56, 189, 248, 0.38);
-    box-shadow:
-      0 10px 22px rgba(0, 0, 0, 0.35),
-      0 6px 0 rgba(0, 0, 0, 0.25);
-  }
-  html[data-theme="midnight"] .quest-hook-card {
-    background: linear-gradient(155deg, #152238 0%, #111b2e 42%, #0f1729 100%);
-    border-color: rgba(56, 189, 248, 0.28);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      0 0 0 1px rgba(56, 189, 248, 0.12);
-  }
-  html[data-theme="midnight"] .quest-hook-card__g {
-    color: rgba(251, 191, 36, 0.88);
-  }
-  html[data-theme="midnight"] .quest-mission-panel {
-    border-color: rgba(56, 189, 248, 0.42) !important;
-    background: linear-gradient(145deg, #121c2e 0%, #152238 48%, #0f1729 100%) !important;
-    box-shadow: 0 8px 28px -6px rgba(0, 0, 0, 0.45) !important;
-    --tw-ring-color: rgba(56, 189, 248, 0.22) !important;
-  }
-  html[data-theme="midnight"] .quest-mission-panel #mission-heading {
-    color: var(--violet) !important;
-  }
-  html[data-theme="midnight"] .quest-map-panel {
-    border-color: rgba(52, 211, 153, 0.35) !important;
-    background: linear-gradient(145deg, #111b2e 0%, #152238 55%, #0c1828 100%) !important;
-    --tw-ring-color: rgba(52, 211, 153, 0.15) !important;
-  }
-  html[data-theme="midnight"] .quest-map-panel h3 {
-    color: #6ee7b7 !important;
-  }
-  html[data-theme="midnight"] .quest-footer-cta {
-    border-top-color: rgba(56, 189, 248, 0.28) !important;
-    background: linear-gradient(90deg, rgba(17, 27, 46, 0.95) 0%, rgba(15, 23, 42, 0.9) 50%, rgba(12, 20, 36, 0.95) 100%) !important;
-  }
-  html[data-theme="midnight"] .quest-share-victory-btn {
-    border-color: rgba(56, 189, 248, 0.45) !important;
-    background: linear-gradient(90deg, rgba(56, 189, 248, 0.2) 0%, rgba(251, 191, 36, 0.14) 100%) !important;
-    color: var(--text) !important;
-  }
-  html[data-theme="midnight"] .quest-slider-embedded .btn-ghost {
-    color: var(--quest-panel-fg-muted);
-    background: color-mix(in srgb, var(--text) 8%, transparent);
-    border-color: color-mix(in srgb, var(--text) 16%, transparent);
-  }
-  html[data-theme="midnight"] .quest-slider-embedded .btn-ghost:hover {
-    color: var(--quest-panel-fg);
-    background: color-mix(in srgb, var(--text) 14%, transparent);
-  }
-  html[data-theme="midnight"] .shop-balance-strip {
-    border-color: rgba(251, 191, 36, 0.42) !important;
-    background: linear-gradient(145deg, #111b2e 0%, #152238 45%, #0a101c 100%) !important;
-    box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.45) !important;
-  }
-  html[data-theme="midnight"] .shop-balance-strip .text-amber-900\/90,
-  html[data-theme="midnight"] .shop-balance-strip .text-amber-800 {
-    color: #fde68a !important;
-  }
-  html[data-theme="midnight"] .shop-featured-bundle {
-    border-color: rgba(167, 139, 250, 0.45) !important;
-    background: linear-gradient(145deg, #1a1430 0%, #152238 42%, #111b2e 100%) !important;
-    color: var(--quest-panel-fg) !important;
-  }
-  html[data-theme="midnight"] .shop-featured-bundle .text-violet-950 {
-    color: #ddd6fe !important;
-  }
-  html[data-theme="midnight"] .shop-featured-bundle .border-violet-200\/60 {
-    border-color: rgba(167, 139, 250, 0.32) !important;
-  }
-  html[data-theme="midnight"] .shop-featured-bundle .text-amber-950 {
-    color: #fde68a !important;
-  }
-  html[data-theme="midnight"] .shop-featured-bundle .text-emerald-800 {
-    color: #6ee7b7 !important;
-  }
-  html[data-theme="midnight"] .quest-mission-panel .border-orange-300\/70 {
-    border-color: rgba(251, 191, 36, 0.45) !important;
-  }
-  html[data-theme="midnight"] .quest-mission-panel .bg-orange-100\/95 {
-    background-color: rgba(251, 191, 36, 0.12) !important;
-    color: #fde68a !important;
-  }
-  html[data-theme="midnight"] .quest-mission-panel .text-orange-950 {
-    color: #fde68a !important;
-  }
-  html[data-theme="midnight"] .quest-mission-panel .border-emerald-400\/40 {
-    border-color: rgba(52, 211, 153, 0.35) !important;
-  }
-  html[data-theme="midnight"] .quest-mission-panel .bg-emerald-100\/90 {
-    background-color: rgba(52, 211, 153, 0.12) !important;
-  }
-  html[data-theme="midnight"] .quest-mission-panel .text-emerald-900 {
-    color: #6ee7b7 !important;
-  }
-  html[data-theme="midnight"] .shop-recharge-modal-head {
-    border-color: rgba(52, 211, 153, 0.25) !important;
-    background: linear-gradient(145deg, #111b2e 0%, #152238 50%, #0f1729 100%) !important;
-  }
-  html[data-theme="midnight"] .shop-recharge-modal-head .border-amber-200\/80 {
-    border-color: rgba(251, 191, 36, 0.35) !important;
-  }
-  html[data-theme="midnight"] .shop-recharge-modal-head .bg-white\/95 {
-    background-color: color-mix(in srgb, var(--card) 88%, transparent) !important;
-  }
-  html[data-theme="midnight"] .shop-recharge-modal-head .text-amber-800\/80 {
-    color: #fde68a !important;
   }
 
   /* ── Streak badge ── */

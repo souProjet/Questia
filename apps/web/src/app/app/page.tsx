@@ -478,9 +478,9 @@ export default function AppPage() {
         )}
 
         {/* Bandeau joueur : une seule lecture, emojis comme la landing */}
-        <section className="app-hero-band mb-8 mt-2 rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-[#fffbeb] via-white/95 to-cyan-50/40 px-5 py-6 md:px-7 md:py-7 shadow-[0_10px_0_rgba(180,83,9,.1),0_22px_48px_rgba(249,115,22,.12)] motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:40ms] [animation-fill-mode:backwards]">
+        <section className="mb-8 mt-2 rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-[#fffbeb] via-white/95 to-cyan-50/40 px-5 py-6 md:px-7 md:py-7 shadow-[0_10px_0_rgba(180,83,9,.1),0_22px_48px_rgba(249,115,22,.12)] motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:40ms] [animation-fill-mode:backwards]">
 
-          <h1 className="font-display font-black text-2xl leading-[1.15] text-[var(--quest-panel-fg)] sm:text-3xl md:text-[2.15rem]">
+          <h1 className="font-display font-black text-2xl leading-[1.15] text-[var(--on-cream)] sm:text-3xl md:text-[2.15rem]">
             Salut {user?.firstName ?? 'aventurier·e'} <span aria-hidden>👋</span>
             <br />
             <span className="text-gradient-pop text-[1.02em] md:text-[1.06em] tracking-[-0.02em]">
@@ -490,7 +490,7 @@ export default function AppPage() {
               ⚔️
             </span>
           </h1>
-          <p className="mt-3 text-sm font-semibold text-[var(--quest-panel-fg-muted)] md:text-base">
+          <p className="mt-3 text-sm font-semibold text-[var(--on-cream-muted)] md:text-base">
             🎯 Objectif : sortir du pilote automatique — mode aventure.
           </p>
 
@@ -513,7 +513,7 @@ export default function AppPage() {
               </span>
             )}
             <span
-              className="inline-flex items-center gap-1 rounded-full border border-cyan-500/45 bg-white/95 px-3 py-1 text-xs font-black text-[var(--quest-panel-fg)] shadow-sm"
+              className="inline-flex items-center gap-1 rounded-full border border-cyan-500/45 bg-white/95 px-3 py-1 text-xs font-black text-[var(--on-cream)] shadow-sm"
               title="Étape de ton parcours (calibration → expansion → rupture)."
             >
               <span aria-hidden>📍</span>
@@ -539,16 +539,16 @@ export default function AppPage() {
           </div>
 
           {quest?.progression && (
-              <div className="app-hero-xp-strip mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50/90 to-white/90 px-4 py-3 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-black text-[var(--quest-panel-fg)]">
+              <div className="mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50/90 to-white/90 px-4 py-3 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-black text-cyan-950">
                 <span>
                   ⭐ Niveau {quest.progression.level} · {quest.progression.totalXp} XP
                 </span>
-                <span className="font-bold text-[var(--quest-panel-fg-muted)]">
+                <span className="font-bold text-[var(--on-cream-muted)]">
                   +{quest.progression.xpToNext} XP pour monter
                 </span>
               </div>
-              <p className="mt-1 text-[10px] font-semibold text-[var(--quest-panel-fg-subtle)]">
+              <p className="mt-1 text-[10px] font-semibold text-[var(--on-cream-subtle)]">
                 {quest.progression.xpIntoLevel}/{quest.progression.xpPerLevel} dans ce niveau
               </p>
               <div className="mt-2 h-2 rounded-full bg-[color:var(--progress-track)] overflow-hidden border border-cyan-200/50">
@@ -566,14 +566,14 @@ export default function AppPage() {
           )}
 
           {quest && (quest.city || quest.weather) && (
-            <p className="mt-5 border-t border-dashed border-orange-300/50 pt-4 text-sm font-medium text-[var(--quest-panel-fg-muted)]">
+            <p className="mt-5 border-t border-dashed border-orange-300/50 pt-4 text-sm font-medium text-[var(--on-cream-muted)]">
               <span className="mr-1.5" aria-hidden>
                 {weatherEmojiFromText(quest.context?.weatherDescription ?? quest.weather)}
               </span>
               {weatherLine}
               {quest.city && quest.city !== 'ta ville' && (
                 <>
-                  <span className="text-[var(--quest-panel-fg-subtle)]"> · </span>
+                  <span className="text-[var(--on-cream-subtle)]"> · </span>
                   <span className="font-bold text-[var(--link-on-bg)]">📍 {quest.city}</span>
                 </>
               )}
@@ -597,12 +597,12 @@ export default function AppPage() {
                   {questDisplayEmoji(quest.emoji)}
                 </span>
                 <div className="min-w-0 flex-1 pr-2">
-                  <h2 className="font-display text-lg font-black leading-tight text-[var(--quest-panel-fg)] sm:text-xl">
+                  <h2 className="font-display text-lg font-black leading-tight text-[var(--on-cream)] sm:text-xl">
                     {quest.title}
                   </h2>
                   {questFamily ? (
-                    <p className="mt-2 text-[11px] text-[var(--quest-panel-fg-subtle)]">
-                      <span className="rounded-full border border-[color:color-mix(in_srgb,var(--quest-panel-fg)_18%,transparent)] bg-white/90 px-2.5 py-0.5 font-semibold text-[var(--quest-panel-fg-muted)] shadow-sm">
+                    <p className="mt-2 text-[11px] text-[var(--on-cream-subtle)]">
+                      <span className="rounded-full border border-[color:color-mix(in_srgb,var(--on-cream)_16%,transparent)] bg-white/90 px-2.5 py-0.5 font-semibold text-[var(--on-cream-muted)] shadow-sm">
                         {questFamily}
                       </span>
                     </p>
@@ -612,7 +612,7 @@ export default function AppPage() {
 
               {/* Mission concrète */}
               <section
-                className="quest-mission-panel mb-6 rounded-2xl border-2 border-cyan-400/55 bg-gradient-to-br from-white via-cyan-50/50 to-white p-5 shadow-[0_8px_28px_-6px_rgba(34,211,238,0.22)] ring-1 ring-cyan-200/70 sm:p-6"
+                className="mb-6 rounded-2xl border-2 border-cyan-400/55 bg-gradient-to-br from-white via-cyan-50/50 to-white p-5 shadow-[0_8px_28px_-6px_rgba(34,211,238,0.22)] ring-1 ring-cyan-200/70 sm:p-6"
                 aria-labelledby="mission-heading"
               >
                 <p
@@ -624,7 +624,7 @@ export default function AppPage() {
                   </span>
                   Ta mission — quoi faire
                 </p>
-                <p className="font-display text-[1.15rem] font-black leading-[1.35] text-[var(--quest-panel-fg)] sm:text-xl md:text-[1.35rem] md:leading-snug">
+                <p className="font-display text-[1.15rem] font-black leading-[1.35] text-[var(--on-cream)] sm:text-xl md:text-[1.35rem] md:leading-snug">
                   {quest.mission}
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-cyan-200/60 pt-4">
@@ -652,7 +652,7 @@ export default function AppPage() {
                     <span aria-hidden>🗺️</span>
                     Point de rendez-vous
                   </h3>
-                  <p className="mb-4 text-sm text-[var(--quest-panel-fg-muted)]">
+                  <p className="mb-4 text-sm text-[var(--on-cream-muted)]">
                     Lieu suggéré pour ta mission (public, accessible). L’itinéraire à pied apparaît si tu as autorisé la
                     localisation.
                   </p>
@@ -666,7 +666,7 @@ export default function AppPage() {
                   <span className="quest-hook-card__g" aria-hidden>
                     «
                   </span>
-                  <span className="font-medium text-[var(--quest-panel-fg)]">{quest.hook}</span>
+                  <span className="font-medium text-[var(--on-cream)]">{quest.hook}</span>
                   <span className="quest-hook-card__g" aria-hidden>
                     »
                   </span>
@@ -683,18 +683,18 @@ export default function AppPage() {
               )}
             </div>
 
-            <div className="quest-footer-cta flex flex-col gap-3 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-4 py-4 sm:px-5">
+            <div className="flex flex-col gap-3 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-4 py-4 sm:px-5">
               {isCompleted ? (
                 <div className="text-center space-y-3">
                   <p className="font-display text-lg font-black text-emerald-900">
                     🏆 Quête validée — belle perf, à demain !
                   </p>
-                  <p className="mt-2 text-sm text-[var(--quest-panel-fg-muted)]">Ta série et ton parcours sont à jour.</p>
+                  <p className="mt-2 text-sm text-[var(--on-cream-muted)]">Ta série et ton parcours sont à jour.</p>
                   <div className="flex justify-center">
                     <button
                       type="button"
                       onClick={() => setShowShareCard(true)}
-                      className="quest-share-victory-btn btn btn-md w-full sm:w-auto font-black border-2 border-cyan-400/50 bg-gradient-to-r from-cyan-50 to-amber-50 text-cyan-950 shadow-sm"
+                      className="btn btn-md w-full sm:w-auto font-black border-2 border-cyan-400/50 bg-gradient-to-r from-cyan-50 to-amber-50 text-cyan-950 shadow-sm"
                     >
                       📸 Partager ma victoire
                     </button>
@@ -711,7 +711,7 @@ export default function AppPage() {
                     <button type="button" onClick={doComplete} className="btn btn-primary btn-lg w-full text-base font-black">
                       ✅ J&apos;ai fait la quête — valider
                     </button>
-                    <p className="text-center text-xs text-[var(--quest-panel-fg-muted)]">
+                    <p className="text-center text-xs text-[var(--on-cream-muted)]">
                       Quand c&apos;est fait dans la vraie vie, valide ici pour cocher ta mission.
                     </p>
                   </>

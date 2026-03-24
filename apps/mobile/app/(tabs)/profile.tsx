@@ -10,8 +10,8 @@ import {
   Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth, useUser } from '@clerk/expo';
 import { useRouter } from 'expo-router';
+import { useAuth, useUser } from '@clerk/expo';
 import {
   BADGE_CATEGORY_LABEL_FR,
   getBadgeCatalogForUi,
@@ -20,7 +20,7 @@ import {
   type RiskAxis,
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
-import { useAppTheme } from '../contexts/AppThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -47,11 +47,11 @@ type ProfilePayload = {
 };
 
 export default function ProfileScreen() {
-  const { getToken } = useAuth();
+  const router = useRouter();
+  const { getToken, signOut } = useAuth();
   const { user } = useUser();
   const { palette } = useAppTheme();
   const styles = useMemo(() => createProfileStyles(palette), [palette]);
-  const router = useRouter();
   const getTokenRef = useRef(getToken);
   useEffect(() => {
     getTokenRef.current = getToken;
@@ -113,10 +113,8 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button">
-          <Text style={styles.backText}>← Retour</Text>
-        </Pressable>
-        <Text style={styles.topTitle}>Profil</Text>
+        <View style={{ width: 72 }} />
+        <Text style={[styles.topTitle, styles.topTitleCenter]}>Profil</Text>
         <View style={{ width: 72 }} />
       </View>
 
@@ -138,7 +136,13 @@ export default function ProfileScreen() {
           </Text>
           <Text style={styles.quadrant}>{quadrantLabel}</Text>
 
-          <View style={styles.levelCard}>
+          <Pressable
+            onPress={() => router.push('/shop')}
+            accessibilityRole="button"
+            accessibilityLabel="Niveau et XP"
+            accessibilityHint="Ouvre la boutique pour bonus XP et cosmétiques"
+            style={({ pressed }) => [styles.levelCard, pressed && styles.levelCardPressed]}
+          >
             <View style={styles.levelRow}>
               <Text style={styles.levelLabel}>Niveau</Text>
               <Text style={styles.levelValue}>{level}</Text>
@@ -149,19 +153,31 @@ export default function ProfileScreen() {
             <View style={styles.track}>
               <Animated.View style={[styles.fill, { width: barWidth }]} />
             </View>
-          </View>
+          </Pressable>
 
           <View style={styles.miniStats}>
-            <View style={styles.mini}>
+            <Pressable
+              onPress={() => router.push('/history')}
+              accessibilityRole="button"
+              accessibilityLabel="Historique des quêtes"
+              accessibilityHint="Ouvre le journal des quêtes"
+              style={({ pressed }) => [styles.mini, pressed && styles.miniPressed]}
+            >
               <Text style={styles.miniEmoji}>📍</Text>
               <Text style={styles.miniVal}>Jour {profile?.currentDay ?? 1}</Text>
               <Text style={styles.miniLbl}>Parcours</Text>
-            </View>
-            <View style={styles.mini}>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/home')}
+              accessibilityRole="button"
+              accessibilityLabel="Accueil et quête du jour"
+              accessibilityHint="Retour à l’accueil"
+              style={({ pressed }) => [styles.mini, pressed && styles.miniPressed]}
+            >
               <Text style={styles.miniEmoji}>🔥</Text>
               <Text style={styles.miniVal}>{profile?.streakCount ?? 0}</Text>
               <Text style={styles.miniLbl}>Série</Text>
-            </View>
+            </Pressable>
           </View>
 
           <Text style={styles.section}>Insignes</Text>
@@ -206,6 +222,15 @@ export default function ProfileScreen() {
               </View>
             ))}
           </View>
+
+          <Pressable
+            style={({ pressed }) => [styles.signOutBtn, pressed && styles.signOutBtnPressed]}
+            onPress={() => void signOut()}
+            accessibilityRole="button"
+            accessibilityLabel="Se déconnecter"
+          >
+            <Text style={styles.signOutBtnText}>Se déconnecter</Text>
+          </Pressable>
         </ScrollView>
       )}
     </SafeAreaView>
@@ -231,9 +256,20 @@ function createProfileStyles(p: ThemePalette) {
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
-  backBtn: { paddingVertical: 8, paddingHorizontal: 4 },
-  backText: { color: p.linkOnBg, fontWeight: '800', fontSize: 14 },
   topTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 2, color: C.muted },
+  topTitleCenter: { flex: 1, textAlign: 'center' },
+  signOutBtn: {
+    marginTop: 28,
+    marginBottom: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colorWithAlpha('#b91c1c', 0.45),
+    backgroundColor: colorWithAlpha('#b91c1c', 0.06),
+  },
+  signOutBtnPressed: { opacity: 0.88 },
+  signOutBtnText: { fontSize: 15, fontWeight: '800', color: '#b91c1c' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12 },
   err: { color: '#f87171', textAlign: 'center', fontWeight: '600' },
   retry: {
@@ -255,6 +291,7 @@ function createProfileStyles(p: ThemePalette) {
     borderColor: C.border,
     marginBottom: 16,
   },
+  levelCardPressed: { opacity: 0.9 },
   levelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   levelLabel: { fontSize: 12, fontWeight: '800', color: p.linkOnBg, letterSpacing: 2 },
   levelValue: { fontSize: 36, fontWeight: '900', color: C.text },
@@ -286,6 +323,7 @@ function createProfileStyles(p: ThemePalette) {
     borderWidth: 1,
     borderColor: C.border,
   },
+  miniPressed: { opacity: 0.88 },
   miniEmoji: { fontSize: 18, marginBottom: 4 },
   miniVal: { fontSize: 16, fontWeight: '900', color: C.text },
   miniLbl: { fontSize: 10, color: C.muted, fontWeight: '600', marginTop: 2 },

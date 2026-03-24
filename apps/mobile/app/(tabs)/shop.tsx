@@ -33,7 +33,7 @@ import {
   type ShopMarketingBadge,
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
-import { useAppTheme } from '../contexts/AppThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -553,10 +553,8 @@ export default function ShopScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <View style={styles.topBar}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>← Retour</Text>
-          </Pressable>
-          <Text style={styles.topTitle}>Boutique</Text>
+          <View style={{ width: 72 }} />
+          <Text style={[styles.topTitle, styles.topTitleCenter]}>Boutique</Text>
           <View style={{ width: 72 }} />
         </View>
         <View style={styles.center}>
@@ -580,10 +578,8 @@ export default function ShopScreen() {
         ]}
       />
       <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button">
-          <Text style={styles.backText}>← Retour</Text>
-        </Pressable>
-        <Text style={styles.topTitle}>Boutique</Text>
+        <View style={{ width: 72 }} />
+        <Text style={[styles.topTitle, styles.topTitleCenter]}>Boutique</Text>
         <View style={{ width: 72 }} />
       </View>
 
@@ -635,16 +631,24 @@ export default function ShopScreen() {
               style={styles.balanceGradient}
             >
               <View style={styles.balanceRow}>
-                <View style={styles.balanceCoinIcon} accessibilityElementsHidden>
-                  <Text style={styles.balanceCoinEmoji}>🪙</Text>
-                </View>
-                <View style={styles.balanceLeft}>
-                  <Text style={styles.balanceK}>Ton solde</Text>
-                  <Animated.Text style={[styles.balanceNum, { transform: [{ scale: balanceScale }] }]}>
-                    {balance.toLocaleString('fr-FR')}
-                    <Text style={styles.balanceQc}> QC</Text>
-                  </Animated.Text>
-                </View>
+                <Pressable
+                  style={({ pressed }) => [styles.balanceTap, pressed && styles.balanceTapPressed]}
+                  onPress={() => router.push('/history?tab=wallet')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Historique du portefeuille"
+                  accessibilityHint="Ouvre le journal des mouvements Quest Coins"
+                >
+                  <View style={styles.balanceCoinIcon} accessibilityElementsHidden>
+                    <Text style={styles.balanceCoinEmoji}>🪙</Text>
+                  </View>
+                  <View style={styles.balanceLeft}>
+                    <Text style={styles.balanceK}>Ton solde</Text>
+                    <Animated.Text style={[styles.balanceNum, { transform: [{ scale: balanceScale }] }]}>
+                      {balance.toLocaleString('fr-FR')}
+                      <Text style={styles.balanceQc}> QC</Text>
+                    </Animated.Text>
+                  </View>
+                </Pressable>
                 <Pressable
                   style={({ pressed }) => [styles.balanceCta, pressed && styles.balanceCtaPressed]}
                   onPress={() => setRechargeModalVisible(true)}
@@ -861,7 +865,12 @@ export default function ShopScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.h2}>Journal des transactions</Text>
+              <View style={styles.journalHead}>
+                <Text style={[styles.h2, styles.h2JournalRow]}>Journal des transactions</Text>
+                <Pressable onPress={() => router.push('/history?tab=wallet')} hitSlop={8}>
+                  <Text style={styles.historyLink}>Historique détaillé</Text>
+                </Pressable>
+              </View>
               {transactions.length === 0 ? (
                 <Text style={styles.emptyTx}>Aucune opération pour l’instant.</Text>
               ) : (
@@ -1105,9 +1114,8 @@ function createShopStyles(p: ThemePalette) {
     borderBottomWidth: 1,
     borderBottomColor: colorWithAlpha(p.cyan, 0.22),
   },
-  backBtn: { paddingVertical: 8, minWidth: 72 },
-  backText: { color: p.linkOnBg, fontWeight: '800', fontSize: 14 },
   topTitle: { fontSize: 15, fontWeight: '900', color: C.text },
+  topTitleCenter: { flex: 1, textAlign: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   banner: {
     borderRadius: 14,
@@ -1161,6 +1169,14 @@ function createShopStyles(p: ThemePalette) {
     alignItems: 'center',
     gap: 12,
   },
+  balanceTap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minWidth: 0,
+  },
+  balanceTapPressed: { opacity: 0.88 },
   balanceCoinIcon: {
     width: 52,
     height: 52,
@@ -1194,6 +1210,16 @@ function createShopStyles(p: ThemePalette) {
   balanceCtaPressed: { transform: [{ scale: 0.96 }], opacity: 0.94 },
   balanceCtaText: { color: '#fff', fontWeight: '900', fontSize: 11, letterSpacing: 0.4, textAlign: 'center' },
   section: { marginBottom: 20 },
+  journalHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 6,
+  },
+  h2JournalRow: { marginBottom: 0 },
+  historyLink: { fontSize: 11, fontWeight: '900', color: p.cyan, textDecorationLine: 'underline' },
   h2: { fontSize: 18, fontWeight: '900', color: C.text, marginBottom: 6 },
   h3: {
     fontSize: 10,

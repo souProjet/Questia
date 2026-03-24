@@ -45,14 +45,14 @@ export default function AuthScreen() {
     setLoadingGoogle(true);
     setError('');
     try {
-      const redirectUrl = Linking.createURL('/app');
+      const redirectUrl = Linking.createURL('/home');
       const { createdSessionId, setActive: setActiveSSO } = await startSSOFlow({
         strategy: 'oauth_google',
         redirectUrl,
       });
       if (createdSessionId) {
         await (setActiveSSO ?? setActive)({ session: createdSessionId });
-        router.replace('/app');
+        router.replace('/home');
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
@@ -71,7 +71,7 @@ export default function AuthScreen() {
       const result = await signIn.create({ identifier: email, password });
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.replace('/app');
+        router.replace('/home');
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
@@ -105,7 +105,7 @@ export default function AuthScreen() {
       const result = await signUp.attemptEmailAddressVerification({ code });
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.replace('/app');
+        router.replace('/home');
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };

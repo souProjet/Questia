@@ -38,37 +38,37 @@ function RechargeModalContent({
 }) {
   return (
     <div className="flex max-h-[min(90vh,820px)] min-h-0 flex-col">
-      <header className="shop-recharge-modal-head shrink-0 border-b border-emerald-100 bg-gradient-to-br from-emerald-50/95 via-amber-50/50 to-cyan-50/40 px-5 pb-4 pt-5 sm:px-6">
+      <header className="shrink-0 border-b border-emerald-100 bg-gradient-to-br from-emerald-50/95 via-amber-50/50 to-cyan-50/40 px-5 pb-4 pt-5 sm:px-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h2 id="recharge-modal-title" className="font-display font-black text-xl leading-tight text-[var(--quest-panel-fg)] sm:text-2xl">
+            <h2 id="recharge-modal-title" className="font-display font-black text-xl leading-tight text-[var(--on-cream)] sm:text-2xl">
               Ajouter des Quest Coins
             </h2>
-            <p className="mt-1.5 text-sm font-medium text-[var(--quest-panel-fg-muted)]">
+            <p className="mt-1.5 text-sm font-medium text-[var(--on-cream-muted)]">
               Paiement par carte bancaire via Stripe. Aucun abonnement — tu paies uniquement le montant choisi.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-white/95 px-3 py-1 text-xs font-bold text-amber-950 shadow-sm backdrop-blur-[2px]">
                 <span className="text-amber-800/80">Solde actuel</span>
-                <span className="font-display tabular-nums font-black text-[var(--quest-panel-fg)]">
+                <span className="font-display tabular-nums font-black text-[var(--on-cream)]">
                   {balance.toLocaleString('fr-FR')} QC
                 </span>
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--quest-panel-fg)_10%,transparent)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quest-panel-fg-muted)]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--on-cream)_10%,transparent)] px-2.5 py-1 text-[11px] font-semibold text-[var(--on-cream-muted)]">
                 <span aria-hidden>🔒</span> Paiement sécurisé
               </span>
             </div>
           </div>
           <button
             type="button"
-            className="shrink-0 rounded-full p-2 text-[var(--quest-panel-fg-muted)] transition-colors hover:bg-black/5 hover:text-[var(--quest-panel-fg)]"
+            className="shrink-0 rounded-full p-2 text-[var(--on-cream-muted)] transition-colors hover:bg-black/5 hover:text-[var(--on-cream)]"
             onClick={onClose}
             aria-label="Fermer"
           >
             ✕
           </button>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-[var(--quest-panel-fg-muted)]">
+        <p className="mt-3 text-[11px] leading-relaxed text-[var(--on-cream-muted)]">
           Après validation, les QC sont ajoutés à ton solde. Tu les utilises dans la boutique (thèmes, bonus, packs…).
         </p>
       </header>
@@ -620,7 +620,7 @@ function ShopPageInner() {
 
             <div className="sticky top-24 z-40 -mx-4 px-4 pt-2 pb-6 mb-6">
               <div
-                className={`shop-balance-strip max-w-4xl mx-auto rounded-3xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-white to-amber-100/90 p-5 sm:p-6 shadow-[0_12px_40px_-8px_rgba(180,83,9,0.25)] transition-shadow duration-300 ${
+                className={`max-w-4xl mx-auto rounded-3xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-white to-amber-100/90 p-5 sm:p-6 shadow-[0_12px_40px_-8px_rgba(180,83,9,0.25)] transition-shadow duration-300 ${
                   celebratePurchase ? 'shadow-[0_0_0_4px_rgba(251,191,36,0.45)] ring-2 ring-amber-400/50' : ''
                 }`}
               >
@@ -784,7 +784,7 @@ function ShopPageInner() {
                   À la une
                 </h2>
                 <div
-                  className={`shop-featured-bundle rounded-3xl border-2 border-violet-400/50 bg-gradient-to-br from-violet-50 via-amber-50/80 to-cyan-50 p-6 text-[var(--quest-panel-fg)] shadow-lg transition-shadow duration-300 ${
+                  className={`rounded-3xl border-2 border-violet-400/50 bg-gradient-to-br from-violet-50 via-amber-50/80 to-cyan-50 p-6 text-[var(--on-cream)] shadow-lg transition-shadow duration-300 ${
                     purchaseHighlightSku === featuredBundle.sku
                       ? 'motion-safe:animate-shop-card-bump motion-reduce:ring-2 motion-reduce:ring-amber-300/60'
                       : ''
@@ -800,13 +800,13 @@ function ShopPageInner() {
                           <MarketingBadge badge={featuredBundle.marketing.badge} />
                         ) : null}
                         <div className="mt-2 flex items-start gap-2">
-                          <p className="font-display font-black text-xl text-[var(--quest-panel-fg)] flex-1 min-w-0">
+                          <p className="font-display font-black text-xl text-[var(--on-cream)] flex-1 min-w-0">
                             {featuredBundle.name}
                           </p>
                           {featuredBundle.contentsDetail ? (
                             <button
                               type="button"
-                              className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-slate-300/80 bg-white/95 text-[10px] font-black text-[var(--quest-panel-fg-muted)] shadow-sm hover:bg-white mt-0.5"
+                              className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-slate-300/80 bg-white/95 text-[10px] font-black text-[var(--on-cream-muted)] shadow-sm hover:bg-white mt-0.5"
                               aria-label={`Plus d'infos : ${featuredBundle.name}`}
                               onClick={() =>
                                 setInfoModal({
@@ -822,9 +822,9 @@ function ShopPageInner() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm text-[var(--quest-panel-fg-muted)] font-medium mb-2">{featuredBundle.description}</p>
+                  <p className="text-sm text-[var(--on-cream-muted)] font-medium mb-2">{featuredBundle.description}</p>
                   {featuredBundle.includedItems?.length ? (
-                    <ul className="list-disc pl-5 text-sm text-[var(--quest-panel-fg-muted)] font-medium space-y-1 mb-2">
+                    <ul className="list-disc pl-5 text-sm text-[var(--on-cream-muted)] font-medium space-y-1 mb-2">
                       {featuredBundle.includedItems.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
@@ -835,14 +835,14 @@ function ShopPageInner() {
                   ) : null}
                   {featuredBundle.marketing?.compareAtCoins != null &&
                   featuredBundle.marketing?.savingsCoins != null ? (
-                    <p className="text-sm text-[var(--quest-panel-fg-muted)] mb-4">
-                      <span className="line-through tabular-nums text-[var(--quest-panel-fg-subtle)]">
+                    <p className="text-sm text-[var(--on-cream-muted)] mb-4">
+                      <span className="line-through tabular-nums text-[var(--on-cream-subtle)]">
                         {featuredBundle.marketing.compareAtCoins.toLocaleString('fr-FR')} QC
                       </span>
                       <span className="ml-2 font-black text-emerald-800">
                         Économie ~{featuredBundle.marketing.savingsCoins.toLocaleString('fr-FR')} QC
                       </span>
-                      <span className="text-[var(--quest-panel-fg-subtle)] text-xs ml-1">vs pièces détail</span>
+                      <span className="text-[var(--on-cream-subtle)] text-xs ml-1">vs pièces détail</span>
                     </p>
                   ) : null}
                   {(() => {
@@ -919,9 +919,17 @@ function ShopPageInner() {
             </section>
 
             <section>
-              <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-[var(--orange)]">
-                Journal des transactions
-              </h2>
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <h2 className="text-xs font-black uppercase tracking-widest text-[var(--orange)]">
+                  Journal des transactions
+                </h2>
+                <Link
+                  href="/app/history?tab=wallet"
+                  className="text-xs font-black text-[var(--cyan)] underline-offset-2 hover:underline"
+                >
+                  Historique détaillé (filtres & recherche)
+                </Link>
+              </div>
               {transactions.length === 0 ? (
                 <p className="text-sm font-semibold text-[var(--subtle)] rounded-2xl border border-dashed border-[color:var(--border-ui)] px-4 py-8 text-center">
                   Aucune opération pour l’instant.

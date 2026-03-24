@@ -84,6 +84,9 @@ export default function ShareCardScreen() {
 
   const captureRefView = useRef<View>(null);
 
+  const { palette, themeId } = useAppTheme();
+  const styles = useMemo(() => createShareStyles(palette, themeId), [palette, themeId]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -212,7 +215,7 @@ export default function ShareCardScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.centered}>
           <Text style={styles.err}>{error ?? 'Erreur'}</Text>
-          <Pressable style={styles.primaryBtn} onPress={() => router.replace('/app')}>
+          <Pressable style={styles.primaryBtn} onPress={() => router.replace('/home')}>
             <Text style={styles.primaryBtnText}>Retour</Text>
           </Pressable>
         </View>
