@@ -1,3 +1,12 @@
-- système d'XP avec progression et badge 
-- bibliothèque de quêtes / historiques
-- Système de coin / monnaie virtuelle pour effectuer des achats in app
+- règles d'XP explicites (complétion, série, skip, plafonds) alignées avec phases d'escalade et archétypes : OK
+- badges avec critères clairs (ex. série, phase rupture, première quête extérieure) et affichage profil : OK
+- boutique / catalogue d'achats (thèmes, packs narration, rerolls optionnels) + journal des transactions
+- rappels utilisateur (push / email) pour la quête du jour, avec préférences
+- écran historique riche : filtres, recherche, réutilisation d'idées de missions passées
+- accessibilité : contrastes, tailles de texte, lecteur d'écran web et mobile
+- tests (moteur psychologique, chemins critiques quête / complétion) + CI (lint, build, tests)
+- observabilité : suivi des erreurs, logs structurés sur IA / géo / météo
+- RGPD : politique de confidentialité, export et suppression compte / données
+- transparence contenu généré par IA et garde-fous sur les prompts
+- fiches et conformité App Store / Play (captures, bien-être, guidelines)
+- deep links et partage cohérents entre web et mobile

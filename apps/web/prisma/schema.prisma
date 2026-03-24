@@ -44,13 +44,73 @@ model Profile {
   congruenceDelta       Float           @default(0) @map("congruence_delta")
   streakCount           Int             @default(0) @map("streak_count")
   rerollsRemaining      Int             @default(1) @map("rerolls_remaining")
+  /** Relances achetées, utilisables quand la relance du jour est épuisée */
+  bonusRerollCredits    Int             @default(0) @map("bonus_reroll_credits")
   lastQuestDate         String?         @map("last_quest_date")
+  totalXp               Int             @default(0) @map("total_xp")
+  badgesEarned          Json            @default("[]") @map("badges_earned")
+  flagNextQuestAfterReroll Boolean      @default(false) @map("flag_next_quest_after_reroll")
+  /** Thème UI actif : default | midnight | aurora | parchment */
+  activeThemeId         String          @default("default") @map("active_theme_id")
+  /** Liste des ids de thèmes possédés (JSON string[]) */
+  ownedThemes           Json            @default("[\"default\"]") @map("owned_themes")
+  /** Packs narration débloqués (JSON string[] : cinematic | poetic | noir) */
+  ownedNarrationPacks   Json            @default("[]") @map("owned_narration_packs")
+  /** Pack narration appliqué à la génération (null = style Questia de base) */
+  activeNarrationPackId String?         @map("active_narration_pack_id")
+  /** Monnaie virtuelle (Quest Coins) — recharge via Stripe (packs) uniquement */
+  coinBalance           Int             @default(0) @map("coin_balance")
+  /** Titres boutique débloqués (JSON string[] — ids TITLES_REGISTRY) */
+  ownedTitleIds         Json            @default("[]") @map("owned_title_ids")
+  /** Titre affiché sous le pseudo (null = aucun) */
+  equippedTitleId       String?         @map("equipped_title_id")
+  /** Charges bonus XP boutique (consommées à chaque quête validée) */
+  xpBonusCharges        Int             @default(0) @map("xp_bonus_charges")
   createdAt             DateTime        @default(now()) @map("created_at")
   updatedAt             DateTime        @updatedAt @map("updated_at")
 
   questLogs QuestLog[]
+  shopTransactions ShopTransaction[]
 
   @@map("profiles")
+}
+
+enum ShopTransactionStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+/** Historique : anciens paiements Stripe directs, recharge coins, ou dépôts en coins */
+enum WalletEntryKind {
+  legacy_stripe_product
+  stripe_coin_topup
+  coin_purchase
+}
+
+model ShopTransaction {
+  id                    String   @id @default(cuid())
+  profileId             String   @map("profile_id")
+  entryKind             WalletEntryKind @default(legacy_stripe_product) @map("entry_kind")
+  /** Variation de solde en coins (+ recharge, − achat). Null pour anciennes lignes. */
+  coinsDelta            Int?     @map("coins_delta")
+  coinBalanceAfter      Int?     @map("coin_balance_after")
+  stripeCheckoutSessionId String? @unique @map("stripe_checkout_session_id")
+  stripePaymentIntentId String?  @map("stripe_payment_intent_id")
+  /** Montant EUR (centimes) pour recharge Stripe ; 0 pour achat en coins */
+  amountCents           Int      @default(0) @map("amount_cents")
+  currency              String   @default("eur")
+  status                ShopTransactionStatus @default(pending)
+  primarySku            String   @map("primary_sku")
+  label                 String
+  lineItems             Json?    @map("line_items")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("shop_transactions")
 }
 
 model QuestLog {
@@ -86,6 +146,8 @@ model QuestLog {
   safetyConsentGiven Boolean        @default(false) @map("safety_consent_given")
   wasRerolled       Boolean         @default(false) @map("was_rerolled")
   wasFallback       Boolean         @default(false) @map("was_fallback")
+  xpAwarded         Int?            @map("xp_awarded")
+  xpBreakdown       Json?           @map("xp_breakdown")
 
   // Snapshot of profile state at quest time
   phaseAtAssignment     EscalationPhase @default(calibration) @map("phase_at_assignment")

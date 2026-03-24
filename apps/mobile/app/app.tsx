@@ -16,7 +16,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { MAX_REROLLS_PER_DAY, questDisplayEmoji, questFamilyLabel } from '@questia/shared';
 import { DA } from '@questia/ui';
-import type { EscalationPhase } from '@questia/shared';
+import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
+import { QuestRewardOverlay, type QuestRewardPayload } from '../components/QuestRewardOverlay';
+
+interface ProgressionPayload {
+  totalXp: number;
+  level: number;
+  xpIntoLevel: number;
+  xpToNext: number;
+  xpPerLevel: number;
+  badges: DisplayBadge[];
+}
 
 interface DailyQuest {
   questDate: string;
@@ -39,6 +49,8 @@ interface DailyQuest {
   phase: EscalationPhase;
   rerollsRemaining?: number;
   destination?: { label: string; lat: number | null; lon: number | null } | null;
+  progression?: ProgressionPayload;
+  xpAwarded?: number | null;
 }
 
 const PHASE_LABEL: Record<EscalationPhase, string> = {
@@ -132,6 +144,8 @@ export default function DashboardScreen() {
   const [showSafety, setShowSafety] = useState(false);
   const [rerolling, setRerolling] = useState(false);
   const [rerollsRemaining, setRerollsRemaining] = useState(1);
+  const [reward, setReward] = useState<QuestRewardPayload | null>(null);
+  const [showReward, setShowReward] = useState(false);
 
   const ensureProfile = useCallback(async (token: string | null): Promise<{ ok: boolean; error?: string }> => {
     try {
@@ -251,15 +265,44 @@ export default function DashboardScreen() {
         body: JSON.stringify({ questDate: quest.questDate, action: 'complete' }),
       });
       if (res.ok) {
-        const data = await res.json() as Partial<DailyQuest>;
+        const data = await res.json() as Partial<DailyQuest> & {
+          xpGain?: { gained: number; breakdown: XpBreakdown; newTotal: number; previousTotal: number };
+          badgesUnlocked?: DisplayBadge[];
+          progression?: ProgressionPayload;
+        };
         const qd = quest.questDate;
-        setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? 'completed') as DailyQuest['status'] } : null));
-        router.push({ pathname: '/share-card', params: { questDate: qd } });
+        setQuest((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...data,
+                status: (data.status ?? 'completed') as DailyQuest['status'],
+                progression: data.progression ?? prev.progression,
+                xpAwarded: data.xpAwarded ?? prev.xpAwarded,
+              }
+            : null,
+        );
+        if (data.xpGain) {
+          setReward({
+            xpGain: data.xpGain,
+            badgesUnlocked: data.badgesUnlocked ?? [],
+          });
+          setShowReward(true);
+        } else {
+          router.push({ pathname: '/share-card', params: { questDate: qd } });
+        }
       }
     } finally {
       setCompleting(false);
     }
   }, [quest, getToken, router]);
+
+  const finishRewardAndShare = useCallback(() => {
+    const qd = quest?.questDate;
+    setShowReward(false);
+    setReward(null);
+    if (qd) router.push({ pathname: '/share-card', params: { questDate: qd } });
+  }, [quest?.questDate, router]);
 
   const handleAccept = () => {
     if (quest?.isOutdoor) setShowSafety(true);
@@ -343,15 +386,35 @@ export default function DashboardScreen() {
               Bonjour, {user?.firstName ?? 'Aventurier'} 👋
             </Text>
           </View>
-          <Pressable
-            onPress={() => signOut()}
-            style={styles.signOutBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="Se déconnecter"
-          >
-            <Text style={styles.signOutText}>Déco.</Text>
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => router.push('/shop')}
+              style={styles.shopBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Boutique Quest Coins"
+            >
+              <Text style={styles.shopBtnText}>Boutique</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/profile')}
+              style={styles.profileBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Profil et badges"
+            >
+              <Text style={styles.profileBtnText}>Profil</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => signOut()}
+              style={styles.signOutBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Se déconnecter"
+            >
+              <Text style={styles.signOutText}>Déco.</Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={[styles.statsRow, compact && styles.statsRowCompact]}>
@@ -369,6 +432,33 @@ export default function DashboardScreen() {
             </View>
           ))}
         </View>
+
+        {quest?.progression ? (
+          <View style={styles.xpStrip}>
+            <View style={styles.xpStripTop}>
+              <Text style={styles.xpStripLabel}>
+                ⭐ Niveau {quest.progression.level} · {quest.progression.totalXp} XP
+              </Text>
+              <Text style={styles.xpStripSub}>+{quest.progression.xpToNext} XP pour monter</Text>
+            </View>
+            <Text style={styles.xpStripMeta}>
+              {quest.progression.xpIntoLevel}/{quest.progression.xpPerLevel} dans ce niveau
+            </Text>
+            <View style={styles.xpTrack}>
+              <View
+                style={[
+                  styles.xpFill,
+                  {
+                    width: `${Math.min(
+                      100,
+                      (quest.progression.xpIntoLevel / Math.max(1, quest.progression.xpPerLevel)) * 100,
+                    )}%`,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        ) : null}
 
         {(quest?.streak ?? 0) > 0 && (
           <View style={styles.streakHint}>
@@ -496,6 +586,8 @@ export default function DashboardScreen() {
       {showSafety && quest && (
         <SafetySheet quest={quest} onConfirm={doAccept} onClose={() => setShowSafety(false)} />
       )}
+
+      <QuestRewardOverlay visible={showReward} payload={reward} onContinue={finishRewardAndShare} />
     </SafeAreaView>
   );
 }
@@ -525,6 +617,27 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
   headerCompact: { marginBottom: 18 },
   headerTitles: { flex: 1, marginRight: 12, minWidth: 0 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' },
+  shopBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(245,158,11,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.4)',
+    marginTop: 2,
+  },
+  shopBtnText: { fontSize: 12, color: '#9a3412', fontWeight: '900' },
+  profileBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(34,211,238,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(34,211,238,0.35)',
+    marginTop: 2,
+  },
+  profileBtnText: { fontSize: 12, color: '#0e7490', fontWeight: '900' },
   appName: { fontSize: 11, fontWeight: '800', color: C.accent, letterSpacing: 3, marginBottom: 4 },
   greeting: { fontSize: 26, fontWeight: '900', color: C.text },
   greetingCompact: { fontSize: 22, lineHeight: 28 },
@@ -557,6 +670,26 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 13, fontWeight: '800', color: C.text, marginBottom: 2, textAlign: 'center' },
   statValueCompact: { fontSize: 11, lineHeight: 15 },
   statLabel: { fontSize: 10, color: C.muted, fontWeight: '500' },
+  xpStrip: {
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    backgroundColor: 'rgba(34,211,238,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(34,211,238,0.28)',
+  },
+  xpStripTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, gap: 8 },
+  xpStripLabel: { fontSize: 12, fontWeight: '900', color: '#0e7490', flex: 1 },
+  xpStripSub: { fontSize: 10, fontWeight: '700', color: C.muted },
+  xpStripMeta: { fontSize: 10, fontWeight: '600', color: C.muted, marginBottom: 8 },
+  xpTrack: {
+    height: 8,
+    borderRadius: 6,
+    backgroundColor: 'rgba(15,23,42,0.06)',
+    overflow: 'hidden',
+  },
+  xpFill: { height: '100%', borderRadius: 6, backgroundColor: '#22d3ee' },
   sectionLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 2, marginBottom: 12, textTransform: 'uppercase' },
   questCard: { backgroundColor: C.card, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(249,115,22,0.22)', marginBottom: 16 },
   questCardAccepted: { borderColor: 'rgba(16,185,129,0.3)' },

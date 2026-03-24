@@ -1,0 +1,44 @@
+/**
+ * Titres d’affichage (boutique) — une ligne de données par id, aucun CSS à ajouter.
+ * Pour en créer un nouveau : ajouter une entrée ici + un SKU dans catalog.ts qui grant `titles: ['id']`.
+ */
+export interface TitleDefinition {
+  id: string;
+  /** Court libellé sous le pseudo / dans la nav */
+  label: string;
+  emoji: string;
+}
+
+export const TITLES_REGISTRY: Record<string, TitleDefinition> = {
+  scout: {
+    id: 'scout',
+    label: 'Éclaireur·se des trottoirs',
+    emoji: '🧭',
+  },
+  spark: {
+    id: 'spark',
+    label: 'Étincelle du quotidien',
+    emoji: '✨',
+  },
+  anchor: {
+    id: 'anchor',
+    label: 'Ancre du calme',
+    emoji: '⚓',
+  },
+  comet: {
+    id: 'comet',
+    label: 'Traînée comète',
+    emoji: '☄️',
+  },
+  heart: {
+    id: 'heart',
+    label: 'Cœur en vadrouille',
+    emoji: '💛',
+  },
+};
+
+export const TITLE_IDS = Object.keys(TITLES_REGISTRY);
+
+export function getTitleDefinition(id: string): TitleDefinition | undefined {
+  return TITLES_REGISTRY[id];
+}

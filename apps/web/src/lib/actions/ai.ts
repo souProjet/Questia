@@ -109,6 +109,8 @@ export async function generateDailyQuest(
     riskAxis: RiskAxis;
     /** YYYY-MM-DD — sert à varier le hook d’un jour à l’autre */
     questDateIso: string;
+    /** Directive optionnelle (pack narration acheté) */
+    narrationDirective?: string;
   },
   archetype: QuestModel,
   context: QuestContext,
@@ -131,6 +133,7 @@ PROFIL UTILISATEUR :
 - Jour n°${profile.day} de son aventure
 - Niveau : ${PHASE_LABEL[profile.phase]}
 - Personnalité : ${PROFILE_LABEL(profile.explorerAxis, profile.riskAxis)}
+${profile.narrationDirective ? `\nDIRECTIVE DE STYLE (respecte-la sans la citer mot pour mot) :\n${profile.narrationDirective}\n` : ''}
 
 ARCHÉTYPE SÉLECTIONNÉ : "${archetype.title}"
 Concept : ${archetype.description}

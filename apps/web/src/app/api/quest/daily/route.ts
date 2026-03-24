@@ -8,11 +8,20 @@ import {
   computeCongruenceDelta,
   getEffectivePhase,
   FALLBACK_QUEST_ID,
+  computeCompletionXp,
+  evaluateNewBadges,
+  levelFromTotalXp,
+  getBadgeCatalogForUi,
+  XP_SHOP_BONUS_PER_CHARGE,
 } from '@questia/shared';
 import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@questia/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
 import { getQuestContext } from '@/lib/actions/weather';
 import { geocodeNominatim } from '@/lib/geocode';
+import { Prisma } from '@prisma/client';
+import { badgeIdsSet, parseBadgesEarned, serializeBadges } from '@/lib/progression';
+import { parseStringArray } from '@/lib/shop/parse';
+import { getNarrationDirectiveForPack } from '@/lib/narrationPack';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +29,50 @@ export const dynamic = 'force-dynamic';
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
+}
+
+/** Champs boutique / relances pour le client (thème, packs, crédits) */
+function shopClientPayload(profile: {
+  rerollsRemaining: number;
+  bonusRerollCredits: number;
+  activeThemeId: string;
+  ownedThemes: unknown;
+  ownedNarrationPacks: unknown;
+  activeNarrationPackId: string | null;
+  coinBalance?: number | null;
+  ownedTitleIds?: unknown;
+  equippedTitleId?: string | null;
+  xpBonusCharges?: number | null;
+}) {
+  const ownedNarrationPacks = parseStringArray(profile.ownedNarrationPacks);
+  const activePack = profile.activeNarrationPackId;
+  const narrationActive =
+    activePack && ownedNarrationPacks.includes(activePack) ? activePack : null;
+  const ownedTitles = parseStringArray(profile.ownedTitleIds);
+  let equipped = profile.equippedTitleId ?? null;
+  if (equipped && !ownedTitles.includes(equipped)) equipped = null;
+  return {
+    coinBalance: profile.coinBalance ?? 0,
+    rerollsRemaining: profile.rerollsRemaining,
+    bonusRerollCredits: profile.bonusRerollCredits ?? 0,
+    activeThemeId: profile.activeThemeId ?? 'default',
+    ownedThemes: parseStringArray(profile.ownedThemes),
+    ownedNarrationPacks,
+    activeNarrationPackId: narrationActive,
+    ownedTitleIds: ownedTitles,
+    equippedTitleId: equipped,
+    xpBonusCharges: profile.xpBonusCharges ?? 0,
+  };
+}
+
+function progressionPayload(profile: { totalXp: number; badgesEarned: unknown }) {
+  const safe = Math.max(0, Math.floor(profile.totalXp ?? 0));
+  return {
+    totalXp: safe,
+    ...levelFromTotalXp(safe),
+    badges: serializeBadges(profile.badgesEarned),
+    badgeCatalog: getBadgeCatalogForUi(profile.badgesEarned),
+  };
 }
 
 // ── Route ─────────────────────────────────────────────────────────────────────
@@ -62,7 +115,8 @@ export async function GET(request: NextRequest) {
       day: profile.currentDay,
       streak: profile.streakCount,
       phase: profile.currentPhase,
-      rerollsRemaining: profile.rerollsRemaining,
+      ...shopClientPayload(profile),
+      progression: progressionPayload(profile),
       ...(context ? { context } : {}),
     });
   }
@@ -79,7 +133,8 @@ export async function GET(request: NextRequest) {
       day: profile.currentDay,
       streak: profile.streakCount,
       phase: profile.currentPhase,
-      rerollsRemaining: profile.rerollsRemaining,
+      ...shopClientPayload(profile),
+      progression: progressionPayload(profile),
     });
   }
 
@@ -124,12 +179,21 @@ export async function GET(request: NextRequest) {
   );
 
   // Fallback météo si quête extérieure non recommandée
+  let wasWeatherFallback = false;
   if (archetype?.requiresOutdoor && !context.isOutdoorFriendly) {
+    wasWeatherFallback = true;
     archetype = QUEST_TAXONOMY.find((q) => q.id === (archetype!.fallbackQuestId ?? FALLBACK_QUEST_ID)) ?? archetype;
   }
   if (!archetype) {
     archetype = QUEST_TAXONOMY.find((q) => q.id === FALLBACK_QUEST_ID) ?? QUEST_TAXONOMY[0];
   }
+
+  const ownedPacks = parseStringArray(profile.ownedNarrationPacks);
+  const activePack = profile.activeNarrationPackId;
+  const narrationDirective =
+    activePack && ownedPacks.includes(activePack)
+      ? getNarrationDirectiveForPack(activePack)
+      : undefined;
 
   // Generate the quest via OpenAI
   const generated = await generateDailyQuest(
@@ -140,6 +204,7 @@ export async function GET(request: NextRequest) {
       explorerAxis: profile.explorerAxis as ExplorerAxis,
       riskAxis: profile.riskAxis as RiskAxis,
       questDateIso: today,
+      narrationDirective,
     },
     archetype,
     context,
@@ -173,6 +238,8 @@ export async function GET(request: NextRequest) {
   const newDay = profile.currentDay + (lastDate !== today ? 1 : 0);
   const newPhase: EscalationPhase = newDay <= 3 ? 'calibration' : newDay <= 10 ? 'expansion' : 'rupture';
 
+  const assignAfterReroll = profile.flagNextQuestAfterReroll;
+
   // Save quest log + update profile atomically
   const [questLog] = await prisma.$transaction([
     prisma.questLog.create({
@@ -195,6 +262,8 @@ export async function GET(request: NextRequest) {
         weatherTemp:        context.temp,
         phaseAtAssignment:  profile.currentPhase as EscalationPhase,
         congruenceDeltaAtTime: profile.congruenceDelta,
+        wasRerolled:        assignAfterReroll,
+        wasFallback:        wasWeatherFallback,
       },
     }),
     prisma.profile.update({
@@ -206,9 +275,13 @@ export async function GET(request: NextRequest) {
         lastQuestDate:    today,
         rerollsRemaining: 1,
         congruenceDelta:  congruenceDelta,
+        flagNextQuestAfterReroll: false,
       },
     }),
   ]);
+
+  const freshProfile = await prisma.profile.findUnique({ where: { id: profile.id } });
+  const p = freshProfile ?? profile;
 
   return NextResponse.json({
     ...toQuestResponse(questLog),
@@ -216,8 +289,9 @@ export async function GET(request: NextRequest) {
     day: newDay,
     streak: newStreak,
     phase: newPhase,
-    rerollsRemaining: 1,
     context,
+    ...shopClientPayload(p),
+    progression: progressionPayload(p),
   }, { status: 201 });
 }
 
@@ -238,27 +312,57 @@ export async function POST(request: NextRequest) {
 
   const today = body.questDate ?? todayStr();
 
-  // ── Reroll: delete today's quest and decrement rerolls ──────────────────────
+  // ── Reroll: relance quotidienne ou crédit bonus (boutique) ──────────────────
   if (body.action === 'reroll' || body.action === 'replace') {
-    if (profile.rerollsRemaining <= 0) {
-      return NextResponse.json({ error: 'Plus de relances disponibles aujourd\'hui.' }, { status: 400 });
-    }
     const existing = await prisma.questLog.findUnique({
       where: { profileId_questDate: { profileId: profile.id, questDate: today } },
     });
     if (!existing) {
       return NextResponse.json({ error: 'Aucune quête à relancer.' }, { status: 400 });
     }
-    await prisma.$transaction([
-      prisma.questLog.delete({
-        where: { profileId_questDate: { profileId: profile.id, questDate: today } },
-      }),
-      prisma.profile.update({
-        where: { id: profile.id },
-        data: { rerollsRemaining: Math.max(0, profile.rerollsRemaining - 1) },
-      }),
-    ]);
-    return NextResponse.json({ rerolled: true, rerollsRemaining: profile.rerollsRemaining - 1 });
+
+    const daily = profile.rerollsRemaining;
+    const bonus = profile.bonusRerollCredits ?? 0;
+
+    if (daily <= 0 && bonus <= 0) {
+      return NextResponse.json(
+        { error: 'Plus de relances disponibles. La boutique propose des packs de relances bonus.' },
+        { status: 400 },
+      );
+    }
+
+    const updatedProfile =
+      daily > 0
+        ? await prisma.$transaction(async (tx) => {
+            await tx.questLog.delete({
+              where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+            });
+            return tx.profile.update({
+              where: { id: profile.id },
+              data: {
+                rerollsRemaining: Math.max(0, daily - 1),
+                flagNextQuestAfterReroll: true,
+              },
+            });
+          })
+        : await prisma.$transaction(async (tx) => {
+            await tx.questLog.delete({
+              where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+            });
+            return tx.profile.update({
+              where: { id: profile.id },
+              data: {
+                bonusRerollCredits: bonus - 1,
+                flagNextQuestAfterReroll: true,
+              },
+            });
+          });
+
+    return NextResponse.json({
+      rerolled: true,
+      ...shopClientPayload(updatedProfile),
+      progression: progressionPayload(updatedProfile),
+    });
   }
 
   // ── Complete: quête faite aujourd'hui (après acceptation) ───────────────────
@@ -275,14 +379,96 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    const updated = await prisma.questLog.update({
-      where: { profileId_questDate: { profileId: profile.id, questDate: today } },
-      data: {
-        status: 'completed',
-        completedAt: new Date(),
-      },
+
+    const completedBefore = await prisma.questLog.count({
+      where: { profileId: profile.id, status: 'completed' },
     });
-    return NextResponse.json(toQuestResponse(updated));
+    const outdoorBefore = await prisma.questLog.count({
+      where: { profileId: profile.id, status: 'completed', isOutdoor: true },
+    });
+
+    const { total: xpGained, breakdown } = computeCompletionXp({
+      phaseAtAssignment: existing.phaseAtAssignment as EscalationPhase,
+      streakCount: profile.streakCount,
+      isOutdoor: existing.isOutdoor,
+      explorerAxis: profile.explorerAxis as ExplorerAxis,
+      riskAxis: profile.riskAxis as RiskAxis,
+      wasRerolled: existing.wasRerolled,
+      wasFallback: existing.wasFallback,
+    });
+
+    const pShop = profile as { xpBonusCharges?: number | null };
+    let xpBonusChargesAfter = pShop.xpBonusCharges ?? 0;
+    let shopBonusXp = 0;
+    if (xpBonusChargesAfter > 0) {
+      shopBonusXp = XP_SHOP_BONUS_PER_CHARGE;
+      xpBonusChargesAfter -= 1;
+    }
+    const totalXpGained = xpGained + shopBonusXp;
+    const breakdownWithShop = {
+      ...breakdown,
+      ...(shopBonusXp > 0 ? { shopBonusXp } : {}),
+    };
+
+    const totalCompletions = completedBefore + 1;
+    const outdoorCompletions = outdoorBefore + (existing.isOutdoor ? 1 : 0);
+
+    const existingBadgeIds = badgeIdsSet(profile.badgesEarned);
+    const newBadges = evaluateNewBadges(existingBadgeIds, {
+      totalCompletions,
+      outdoorCompletions,
+      currentStreak: profile.streakCount,
+      currentDay: profile.currentDay,
+      currentPhase: profile.currentPhase as EscalationPhase,
+      explorerAxis: profile.explorerAxis as ExplorerAxis,
+      riskAxis: profile.riskAxis as RiskAxis,
+    });
+
+    const priorEarned = parseBadgesEarned(profile.badgesEarned);
+    const mergedBadges = [
+      ...priorEarned,
+      ...newBadges.map((b) => ({ id: b.id, unlockedAt: b.unlockedAt })),
+    ];
+
+    const newTotalXp = (profile.totalXp ?? 0) + totalXpGained;
+
+    const [updated, profileAfter] = await prisma.$transaction([
+      prisma.questLog.update({
+        where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+        data: {
+          status: 'completed',
+          completedAt: new Date(),
+          xpAwarded: totalXpGained,
+          xpBreakdown: breakdownWithShop as unknown as Prisma.InputJsonValue,
+        },
+      }),
+      prisma.profile.update({
+        where: { id: profile.id },
+        data: {
+          totalXp: newTotalXp,
+          badgesEarned: mergedBadges as unknown as Prisma.InputJsonValue,
+          xpBonusCharges: xpBonusChargesAfter,
+        } as unknown as Prisma.ProfileUpdateInput,
+      }),
+    ]);
+
+    const prog = progressionPayload(profileAfter);
+    const badgesUnlocked = serializeBadges(
+      newBadges.map((b) => ({ id: b.id, unlockedAt: b.unlockedAt })),
+    );
+
+    return NextResponse.json({
+      ...toQuestResponse(updated),
+      progression: prog,
+      ...shopClientPayload(profileAfter),
+      xpGain: {
+        gained: totalXpGained,
+        breakdown: breakdownWithShop,
+        previousTotal: profile.totalXp ?? 0,
+        newTotal: newTotalXp,
+      },
+      badgesUnlocked,
+    });
   }
 
   // ── Accept: mark as accepted ─────────────────────────────────────────────────
@@ -296,7 +482,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Quête déjà validée.' }, { status: 400 });
   }
   if (logForAccept.status === 'accepted') {
-    return NextResponse.json(toQuestResponse(logForAccept));
+    return NextResponse.json({
+      ...toQuestResponse(logForAccept),
+      ...shopClientPayload(profile),
+    });
   }
 
   const { safetyConsentGiven } = body;
@@ -308,7 +497,10 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.json(toQuestResponse(updated));
+  return NextResponse.json({
+    ...toQuestResponse(updated),
+    ...shopClientPayload(profile),
+  });
 }
 
 // ── Helper: shape the response ─────────────────────────────────────────────────
@@ -330,6 +522,9 @@ function toQuestResponse(log: {
   weatherDescription: string | null;
   weatherTemp: number | null;
   status: string;
+  wasRerolled?: boolean;
+  wasFallback?: boolean;
+  xpAwarded?: number | null;
 }) {
   const archetype = QUEST_TAXONOMY.find((q) => q.id === log.archetypeId);
   const destination =
@@ -357,5 +552,8 @@ function toQuestResponse(log: {
     weather: log.weatherDescription,
     weatherTemp: log.weatherTemp,
     status: log.status,
+    wasRerolled: log.wasRerolled ?? false,
+    wasFallback: log.wasFallback ?? false,
+    xpAwarded: log.xpAwarded ?? null,
   };
 }

@@ -6,8 +6,9 @@ import { useUser } from '@clerk/nextjs';
 import { Navbar } from '@/components/Navbar';
 import { Icon } from '@/components/Icons';
 import { QuestShareComposer } from '@/components/QuestShareComposer';
-import type { EscalationPhase } from '@questia/shared';
-import { questDisplayEmoji, questFamilyLabel } from '@questia/shared';
+import { QuestXpCelebration } from '@/components/QuestXpCelebration';
+import type { DisplayBadge, EscalationPhase, XpBreakdown } from '@questia/shared';
+import { questDisplayEmoji, questFamilyLabel, getTitleDefinition } from '@questia/shared';
 
 const QuestDestinationMap = dynamic(
   () => import('@/components/QuestDestinationMap'),
@@ -51,6 +52,19 @@ interface DailyQuest {
     temp: number;
     city: string;
   };
+  progression?: {
+    totalXp: number;
+    level: number;
+    xpIntoLevel: number;
+    xpToNext: number;
+    xpPerLevel: number;
+  };
+  /** Boutique / relances (réponse API quête) */
+  rerollsRemaining?: number;
+  bonusRerollCredits?: number;
+  activeThemeId?: string;
+  equippedTitleId?: string | null;
+  xpBonusCharges?: number;
 }
 
 // ── Phase → friendly label ─────────────────────────────────────────────────────
@@ -149,6 +163,15 @@ export default function AppPage() {
   const [bannerError, setBannerError] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<{ lat: number; lon: number } | null>(null);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [xpCelebration, setXpCelebration] = useState<{
+    xpGain: {
+      gained: number;
+      breakdown: XpBreakdown;
+      newTotal: number;
+      previousTotal: number;
+    };
+    badgesUnlocked: DisplayBadge[];
+  } | null>(null);
 
   // ── Ensure profile exists (get-or-create from onboarding localStorage) ───────
 
@@ -233,6 +256,13 @@ export default function AppPage() {
     };
   }, [isLoaded, loadQuest]);
 
+  useEffect(() => {
+    const t = quest?.activeThemeId ?? 'default';
+    if (typeof document === 'undefined') return;
+    if (t === 'default') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', t);
+  }, [quest?.activeThemeId]);
+
   // ── Accept quest ──────────────────────────────────────────────────────────
 
   const doAccept = useCallback(async () => {
@@ -275,9 +305,34 @@ export default function AppPage() {
         setBannerError(err.error ?? 'Impossible de valider la quête.');
         return;
       }
-      const data = await res.json() as Partial<DailyQuest>;
-      setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? 'completed') as DailyQuest['status'] } : null));
-      setShowShareCard(true);
+      const data = await res.json() as Partial<DailyQuest> & {
+        xpGain?: {
+          gained: number;
+          breakdown: XpBreakdown;
+          newTotal: number;
+          previousTotal: number;
+        };
+        badgesUnlocked?: DisplayBadge[];
+        progression?: DailyQuest['progression'];
+      };
+      setQuest((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...data,
+              status: (data.status ?? 'completed') as DailyQuest['status'],
+              progression: data.progression ?? prev.progression,
+            }
+          : null,
+      );
+      if (data.xpGain) {
+        setXpCelebration({
+          xpGain: data.xpGain,
+          badgesUnlocked: data.badgesUnlocked ?? [],
+        });
+      } else {
+        setShowShareCard(true);
+      }
     } finally {
       setCompleting(false);
     }
@@ -295,6 +350,10 @@ export default function AppPage() {
     // Aligné sur l’UI : boutons visibles si pas acceptée / terminée. Ne pas exiger === 'pending'
     // (réponse API sans status, typo de casse, etc. — sinon clic sans effet ni message).
     if (quest.status === 'accepted' || quest.status === 'completed') return;
+
+    const daily = quest.rerollsRemaining ?? 1;
+    const bonus = quest.bonusRerollCredits ?? 0;
+    if (daily + bonus <= 0) return;
 
     setRerolling(true);
     setBannerError(null);
@@ -325,6 +384,18 @@ export default function AppPage() {
   const phase = quest?.phase ?? 'calibration';
   const phaseInfo = PHASE_LABEL[phase];
   const questFamily = quest ? questFamilyLabel(quest.archetypeCategory) : null;
+
+  const rerollDaily = quest?.rerollsRemaining ?? 1;
+  const rerollBonus = quest?.bonusRerollCredits ?? 0;
+  const rerollParts: string[] = [];
+  if (rerollDaily > 0) rerollParts.push(`${rerollDaily} du jour`);
+  if (rerollBonus > 0) rerollParts.push(`${rerollBonus} bonus`);
+  const rerollLabel = rerollParts.length > 0 ? rerollParts.join(' · ') : 'aucune';
+  const canReroll =
+    quest &&
+    quest.status !== 'accepted' &&
+    quest.status !== 'completed' &&
+    rerollDaily + rerollBonus > 0;
 
   // ── Skeleton ──────────────────────────────────────────────────────────────
 
@@ -450,7 +521,51 @@ export default function AppPage() {
               <span aria-hidden>📍</span>
               Parcours · jour {quest?.day ?? 1}
             </span>
+            {quest?.equippedTitleId && getTitleDefinition(quest.equippedTitleId) ? (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-gradient-to-r from-amber-50 to-orange-50 px-3 py-1 text-[11px] font-black text-amber-950 shadow-sm"
+                title="Titre boutique"
+              >
+                <span aria-hidden>{getTitleDefinition(quest.equippedTitleId)!.emoji}</span>
+                {getTitleDefinition(quest.equippedTitleId)!.label}
+              </span>
+            ) : null}
+            {(quest?.xpBonusCharges ?? 0) > 0 ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-50/90 px-3 py-1 text-[11px] font-black text-emerald-900 shadow-sm"
+                title="Surcharges XP boutique restantes"
+              >
+                ⚡ {quest?.xpBonusCharges} bonus XP
+              </span>
+            ) : null}
           </div>
+
+          {quest?.progression && (
+            <div className="mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50/90 to-white/90 px-4 py-3 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-black text-cyan-950">
+                <span>
+                  ⭐ Niveau {quest.progression.level} · {quest.progression.totalXp} XP
+                </span>
+                <span className="font-bold text-slate-600">
+                  +{quest.progression.xpToNext} XP pour monter
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                {quest.progression.xpIntoLevel}/{quest.progression.xpPerLevel} dans ce niveau
+              </p>
+              <div className="mt-2 h-2 rounded-full bg-slate-200/90 overflow-hidden border border-cyan-200/50">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-orange-400 transition-all duration-700"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (quest.progression.xpIntoLevel / Math.max(1, quest.progression.xpPerLevel)) * 100,
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
           {quest && (quest.city || quest.weather) && (
             <p className="mt-5 border-t border-dashed border-orange-300/50 pt-4 text-sm font-medium text-slate-700">
@@ -604,8 +719,13 @@ export default function AppPage() {
                   <button type="button" onClick={handleAccept} className="btn btn-cta btn-lg w-full text-base font-black">
                     ⚔️ Je relève le défi !
                   </button>
-                  <button type="button" onClick={handleReroll} disabled={rerolling} className="btn btn-ghost btn-md w-full font-bold disabled:opacity-40">
-                    {rerolling ? '…' : '🎲 Changer de quête (1× / jour)'}
+                  <button
+                    type="button"
+                    onClick={handleReroll}
+                    disabled={rerolling || !canReroll}
+                    className="btn btn-ghost btn-md w-full font-bold disabled:opacity-40"
+                  >
+                    {rerolling ? '…' : `🎲 Changer de quête (${rerollLabel})`}
                   </button>
                 </>
               )}
@@ -622,6 +742,21 @@ export default function AppPage() {
 
       {showSafety && quest && (
         <SafetySheet quest={quest} onConfirm={doAccept} onClose={() => setShowSafety(false)} />
+      )}
+
+      {xpCelebration && (
+        <QuestXpCelebration
+          open
+          xpGain={xpCelebration.xpGain}
+          badgesUnlocked={xpCelebration.badgesUnlocked}
+          onOpenChange={(open) => {
+            if (!open) setXpCelebration(null);
+          }}
+          onContinue={() => {
+            setXpCelebration(null);
+            setShowShareCard(true);
+          }}
+        />
       )}
 
       {quest?.status === 'completed' && (

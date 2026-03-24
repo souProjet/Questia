@@ -58,6 +58,22 @@ export function Navbar() {
                   Ouvrir l&apos;app
                 </Link>
               )}
+              {isAppRoute && (
+                <>
+                  <Link
+                    href="/app/shop"
+                    className="hidden sm:inline-flex text-sm font-black text-cyan-950 px-3 py-2 rounded-xl hover:bg-white/85 border border-amber-200/60 transition-all"
+                  >
+                    Boutique
+                  </Link>
+                  <Link
+                    href="/app/profile"
+                    className="hidden sm:inline-flex text-sm font-black text-cyan-950 px-3 py-2 rounded-xl hover:bg-white/85 border border-cyan-200/60 transition-all"
+                  >
+                    Profil
+                  </Link>
+                </>
+              )}
               <UserButton
                 appearance={{
                   variables: { colorPrimary: '#f97316' },

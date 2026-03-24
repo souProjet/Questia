@@ -8,6 +8,10 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/api/quest(.*)',
   '/api/profile',
+  '/api/webhooks(.*)',
+  '/api/shop/catalog',
+  /** Handlers vérifient `auth()` (Bearer mobile + cookies web) — évite redirect Clerk sur fetch API */
+  '/api/shop(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

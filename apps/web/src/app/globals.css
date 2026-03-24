@@ -19,6 +19,46 @@
     --subtle:   #8bb9d1;
   }
 
+  /* Thèmes boutique (data-theme sur <html>) */
+  html[data-theme="midnight"] {
+    --bg: #0a101c;
+    --surface: #111b2e;
+    --card: #152238;
+    --text: #e8f1fa;
+    --muted: #8aa4bd;
+    --subtle: #4d6278;
+    --violet: #38bdf8;
+    --orange: #fb923c;
+    --gold: #fcd34d;
+    --green: #34d399;
+  }
+
+  html[data-theme="aurora"] {
+    --bg: #fdf4ff;
+    --surface: #fff7fb;
+    --card: #ffffff;
+    --text: #3b0764;
+    --muted: #7c3aed;
+    --subtle: #a78bfa;
+    --violet: #c026d3;
+    --orange: #ea580c;
+    --gold: #fbbf24;
+    --green: #059669;
+  }
+
+  html[data-theme="parchment"] {
+    --bg: #f5f0e6;
+    --surface: #faf6ee;
+    --card: #fffdf8;
+    --text: #3d3428;
+    --muted: #6b5d4a;
+    --subtle: #9a8b78;
+    --violet: #0d9488;
+    --orange: #c2410c;
+    --gold: #ca8a04;
+    --green: #15803d;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
