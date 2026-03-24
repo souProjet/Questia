@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -23,7 +23,8 @@ import {
   getQuestShareBackgroundById,
   questDisplayEmoji,
 } from '@questia/shared';
-import { DA } from '@questia/ui';
+import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { useAppTheme } from '../contexts/AppThemeContext';
 
 interface DailyQuest {
   questDate: string;
@@ -199,7 +200,7 @@ export default function ShareCardScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.centered}>
-          <ActivityIndicator color="#22d3ee" size="large" />
+          <ActivityIndicator color={palette.cyan} size="large" />
           <Text style={styles.muted}>Préparation de ta carte…</Text>
         </View>
       </SafeAreaView>
@@ -367,10 +368,12 @@ export default function ShareCardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: DA.bg },
+function createShareStyles(p: ThemePalette, themeId: string) {
+  const cardFrameBg = themeId === 'midnight' ? p.surface : '#0f172a';
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: p.bg },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
-  muted: { color: DA.muted, fontSize: 14 },
+  muted: { color: p.muted, fontSize: 14 },
   err: { color: '#f87171', textAlign: 'center', fontSize: 14 },
   topBar: {
     flexDirection: 'row',
@@ -379,24 +382,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: DA.borderCyan,
+    borderBottomColor: p.borderCyan,
   },
-  back: { color: DA.cyan, fontWeight: '700', fontSize: 15 },
-  topTitle: { fontWeight: '900', fontSize: 15, color: DA.text },
+  back: { color: p.cyan, fontWeight: '700', fontSize: 15 },
+  topTitle: { fontWeight: '900', fontSize: 15, color: p.text },
   scroll: { padding: 20, paddingBottom: 32 },
   scrollCompact: { paddingHorizontal: 14, paddingTop: 12 },
   sectionLabel: {
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
-    color: DA.muted,
+    color: p.muted,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
   sectionHint: {
     fontSize: 10,
     lineHeight: 14,
-    color: DA.muted,
+    color: p.muted,
     opacity: 0.9,
     marginBottom: 10,
   },
@@ -408,26 +411,26 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  bgChipOn: { borderColor: '#f97316' },
+  bgChipOn: { borderColor: p.orange },
   bgChipGrad: { paddingHorizontal: 14, paddingVertical: 10, minWidth: 88, alignItems: 'center' },
-  bgChipText: { fontWeight: '900', fontSize: 12, color: '#0f172a' },
+  bgChipText: { fontWeight: '900', fontSize: 12, color: p.onCream },
   bgChipTextLight: { color: '#fff' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 20 },
   secondaryBtn: {
-    backgroundColor: DA.surface,
+    backgroundColor: p.surface,
     borderWidth: 1,
-    borderColor: DA.border,
+    borderColor: p.border,
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 14,
   },
-  secondaryBtnText: { fontWeight: '800', color: DA.text, fontSize: 14 },
-  clearPhoto: { color: DA.muted, fontWeight: '700', fontSize: 13 },
+  secondaryBtnText: { fontWeight: '800', color: p.text, fontSize: 14 },
+  clearPhoto: { color: p.muted, fontWeight: '700', fontSize: 13 },
   cardWrap: { alignItems: 'center', marginBottom: 24 },
   cardOuter: {
     borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: '#0f172a',
+    backgroundColor: cardFrameBg,
   },
   cardInner: {
     flex: 1,
@@ -466,7 +469,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 100,
     borderWidth: 2,
-    borderColor: 'rgba(249,115,22,0.22)',
+    borderColor: colorWithAlpha(p.orange, 0.22),
   },
   heroRingB: {
     position: 'absolute',
@@ -474,16 +477,16 @@ const styles = StyleSheet.create({
     height: 156,
     borderRadius: 78,
     borderWidth: 1,
-    borderColor: 'rgba(15,23,42,0.12)',
+    borderColor: colorWithAlpha(p.text, 0.14),
     borderStyle: 'dashed',
   },
   heroEmoji: { fontSize: 88, lineHeight: 88, zIndex: 1 },
-  brand: { fontSize: 10, fontWeight: '900', letterSpacing: 3.2, color: '#0f172a' },
+  brand: { fontSize: 10, fontWeight: '900', letterSpacing: 3.2, color: p.onCream },
   brandLight: { color: 'rgba(248,250,252,0.95)' },
   date: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#334155',
+    color: p.onCreamMuted,
     textAlign: 'right',
     flexShrink: 1,
     maxWidth: 200,
@@ -504,7 +507,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 2.2,
-    color: '#64748b',
+    color: p.onCreamMuted,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
@@ -512,7 +515,7 @@ const styles = StyleSheet.create({
   missionHero: {
     fontSize: 19,
     fontWeight: '900',
-    color: '#0f172a',
+    color: p.onCream,
     lineHeight: 25,
     letterSpacing: -0.3,
   },
@@ -520,7 +523,7 @@ const styles = StyleSheet.create({
   metaCompact: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748b',
+    color: p.onCreamMuted,
     textAlign: 'left',
     paddingTop: 10,
     marginBottom: 0,
@@ -534,21 +537,21 @@ const styles = StyleSheet.create({
   hook: {
     fontSize: 12,
     fontStyle: 'italic',
-    color: '#64748b',
+    color: p.onCreamMuted,
     marginTop: 12,
     marginBottom: 12,
     lineHeight: 18,
     textAlign: 'left',
   },
   hookLight: { color: 'rgba(226,232,240,0.9)' },
-  footerName: { fontSize: 12, fontWeight: '900', color: '#0e7490', textAlign: 'center' },
-  footerNameLight: { color: '#22d3ee' },
+  footerName: { fontSize: 12, fontWeight: '900', color: p.linkOnBg, textAlign: 'center' },
+  footerNameLight: { color: p.cyan },
   shareBtn: {
-    backgroundColor: '#f97316',
+    backgroundColor: p.orange,
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
-    shadowColor: '#f97316',
+    shadowColor: p.orange,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
@@ -556,10 +559,11 @@ const styles = StyleSheet.create({
   },
   shareBtnText: { color: '#fff', fontWeight: '900', fontSize: 16 },
   primaryBtn: {
-    backgroundColor: '#22d3ee',
+    backgroundColor: p.cyan,
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 14,
   },
-  primaryBtnText: { color: '#0f172a', fontWeight: '800', fontSize: 15 },
-});
+  primaryBtnText: { color: p.onCream, fontWeight: '800', fontSize: 15 },
+  });
+}

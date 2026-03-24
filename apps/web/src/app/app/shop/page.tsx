@@ -38,37 +38,37 @@ function RechargeModalContent({
 }) {
   return (
     <div className="flex max-h-[min(90vh,820px)] min-h-0 flex-col">
-      <header className="shrink-0 border-b border-emerald-100 bg-gradient-to-br from-emerald-50/95 via-amber-50/50 to-cyan-50/40 px-5 pb-4 pt-5 sm:px-6">
+      <header className="shop-recharge-modal-head shrink-0 border-b border-emerald-100 bg-gradient-to-br from-emerald-50/95 via-amber-50/50 to-cyan-50/40 px-5 pb-4 pt-5 sm:px-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h2 id="recharge-modal-title" className="font-display font-black text-xl leading-tight text-[var(--text)] sm:text-2xl">
+            <h2 id="recharge-modal-title" className="font-display font-black text-xl leading-tight text-[var(--quest-panel-fg)] sm:text-2xl">
               Ajouter des Quest Coins
             </h2>
-            <p className="mt-1.5 text-sm font-medium text-[var(--muted)]">
+            <p className="mt-1.5 text-sm font-medium text-[var(--quest-panel-fg-muted)]">
               Paiement par carte bancaire via Stripe. Aucun abonnement — tu paies uniquement le montant choisi.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-[var(--card)]/95 px-3 py-1 text-xs font-bold text-amber-950 shadow-sm">
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-white/95 px-3 py-1 text-xs font-bold text-amber-950 shadow-sm backdrop-blur-[2px]">
                 <span className="text-amber-800/80">Solde actuel</span>
-                <span className="font-display tabular-nums font-black text-[var(--text)]">
+                <span className="font-display tabular-nums font-black text-[var(--quest-panel-fg)]">
                   {balance.toLocaleString('fr-FR')} QC
                 </span>
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--text)_6%,transparent)] px-2.5 py-1 text-[11px] font-semibold text-[var(--muted)]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--quest-panel-fg)_10%,transparent)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quest-panel-fg-muted)]">
                 <span aria-hidden>🔒</span> Paiement sécurisé
               </span>
             </div>
           </div>
           <button
             type="button"
-            className="shrink-0 rounded-full p-2 text-[var(--subtle)] transition-colors hover:bg-[var(--card)]/90 hover:text-[var(--text)]"
+            className="shrink-0 rounded-full p-2 text-[var(--quest-panel-fg-muted)] transition-colors hover:bg-black/5 hover:text-[var(--quest-panel-fg)]"
             onClick={onClose}
             aria-label="Fermer"
           >
             ✕
           </button>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-[var(--subtle)]">
+        <p className="mt-3 text-[11px] leading-relaxed text-[var(--quest-panel-fg-muted)]">
           Après validation, les QC sont ajoutés à ton solde. Tu les utilises dans la boutique (thèmes, bonus, packs…).
         </p>
       </header>
@@ -111,9 +111,19 @@ function RechargeModalContent({
                   </div>
                 </div>
 
-                <p className="font-display text-2xl font-black leading-none tracking-tight text-emerald-900 sm:text-[1.65rem]">
+                <p
+                  className={`font-display text-2xl font-black leading-none tracking-tight sm:text-[1.65rem] ${
+                    isBest ? 'text-emerald-900' : 'text-[var(--green)]'
+                  }`}
+                >
                   +{pack.coinsGranted.toLocaleString('fr-FR')}{' '}
-                  <span className="text-base font-black text-emerald-700/90">QC</span>
+                  <span
+                    className={`text-base font-black ${
+                      isBest ? 'text-emerald-700/90' : 'text-[var(--green)]'
+                    }`}
+                  >
+                    QC
+                  </span>
                 </p>
                 <p className="mt-1 text-xs font-bold text-[var(--subtle)]">{pack.name}</p>
                 <p className="mt-2 line-clamp-2 text-xs font-medium leading-snug text-[var(--muted)]">{pack.description}</p>
@@ -122,7 +132,10 @@ function RechargeModalContent({
                   <ul className="mt-3 space-y-1.5 border-t border-[color:var(--border-ui)] pt-3">
                     {pack.includedItems.map((line) => (
                       <li key={line} className="flex gap-2 text-[11px] font-semibold leading-snug text-[var(--muted)]">
-                        <span className="mt-0.5 shrink-0 text-emerald-600" aria-hidden>
+                        <span
+                          className={`mt-0.5 shrink-0 ${isBest ? 'text-emerald-600' : 'text-[var(--green)]'}`}
+                          aria-hidden
+                        >
                           ✓
                         </span>
                         <span>{line}</span>
@@ -132,7 +145,13 @@ function RechargeModalContent({
                 ) : null}
 
                 {pack.marketing?.hook ? (
-                  <p className="mt-2 text-[11px] font-bold text-emerald-800/90">{pack.marketing.hook}</p>
+                  <p
+                    className={`mt-2 text-[11px] font-bold ${
+                      isBest ? 'text-emerald-800/90' : 'text-[var(--green)]'
+                    }`}
+                  >
+                    {pack.marketing.hook}
+                  </p>
                 ) : null}
 
                 <div className="mt-auto border-t border-[color:var(--border-ui)] pt-3">
@@ -140,9 +159,23 @@ function RechargeModalContent({
                     {eur} €
                   </p>
                   <p className="mt-0.5 text-[11px] font-bold text-[var(--subtle)]">
-                    <span className="tabular-nums text-emerald-800">{Math.round(qcPerEur)} QC / €</span>
+                    <span
+                      className={
+                        isBest ? 'tabular-nums text-emerald-800' : 'tabular-nums text-[var(--green)]'
+                      }
+                    >
+                      {Math.round(qcPerEur)} QC / €
+                    </span>
                     {bonusVsStarter > 0 ? (
-                      <span className="ml-1 font-black text-emerald-700">(+{bonusVsStarter}% vs petit pack)</span>
+                      <span
+                        className={
+                          isBest
+                            ? 'ml-1 font-black text-emerald-700'
+                            : 'ml-1 font-black text-[var(--green)]'
+                        }
+                      >
+                        (+{bonusVsStarter}% vs petit pack)
+                      </span>
                     ) : null}
                   </p>
                   <button
@@ -160,7 +193,7 @@ function RechargeModalContent({
         </ul>
       </div>
 
-      <footer className="shrink-0 border-t border-[color:var(--border-ui)] bg-[var(--surface)]/95 px-5 py-3 text-center sm:px-6">
+      <footer className="shrink-0 border-t border-[color:var(--border-ui)] bg-[var(--surface)] px-5 py-3 text-center sm:px-6">
         <p className="text-[11px] font-medium leading-relaxed text-[var(--subtle)]">
           Tu reviens sur la boutique après le paiement. En cas d’annulation, aucun débit.
         </p>
@@ -168,6 +201,8 @@ function RechargeModalContent({
     </div>
   );
 }
+
+type ShopFlash = { message: string; kind: 'success' | 'error' | 'info' };
 
 type ProfileShop = {
   coinBalance: number;
@@ -272,7 +307,7 @@ function ShopPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [stripeLoadingSku, setStripeLoadingSku] = useState<string | null>(null);
   const [coinPurchaseSku, setCoinPurchaseSku] = useState<string | null>(null);
-  const [banner, setBanner] = useState<string | null>(null);
+  const [flash, setFlash] = useState<ShopFlash | null>(null);
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [infoModal, setInfoModal] = useState<{ title: string; body: string } | null>(null);
   /** Ré-anime le solde (clé) + flash / carte après achat QC */
@@ -338,12 +373,15 @@ function ShopPageInner() {
     const canceled = searchParams.get('canceled');
     if (success === '1') void load();
     if (success === '1') {
-      setBanner('Paiement confirmé — tes Quest Coins sont crédités.');
+      setFlash({
+        message: 'Paiement confirmé — tes Quest Coins sont crédités.',
+        kind: 'success',
+      });
       setBalanceAnimTick((n) => n + 1);
       setCelebratePurchase(true);
       window.setTimeout(() => setCelebratePurchase(false), 900);
     }
-    if (canceled === '1') setBanner('Paiement annulé.');
+    if (canceled === '1') setFlash({ message: 'Paiement annulé.', kind: 'info' });
   }, [searchParams, load]);
 
   useEffect(() => {
@@ -354,7 +392,7 @@ function ShopPageInner() {
 
   const rechargeStripe = async (sku: string) => {
     setStripeLoadingSku(sku);
-    setBanner(null);
+    setFlash(null);
     try {
       const res = await fetch('/api/shop/checkout', {
         method: 'POST',
@@ -363,7 +401,7 @@ function ShopPageInner() {
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
-        setBanner(data.error ?? 'Impossible de lancer le paiement.');
+        setFlash({ message: data.error ?? 'Impossible de lancer le paiement.', kind: 'error' });
         return;
       }
       window.location.href = data.url;
@@ -374,7 +412,7 @@ function ShopPageInner() {
 
   const buyWithCoins = async (sku: string) => {
     setCoinPurchaseSku(sku);
-    setBanner(null);
+    setFlash(null);
     try {
       const res = await fetch('/api/shop/purchase', {
         method: 'POST',
@@ -383,11 +421,10 @@ function ShopPageInner() {
       });
       const data = (await res.json()) as { error?: string; coinBalance?: number };
       if (!res.ok) {
-        setBanner(data.error ?? 'Achat impossible.');
+        setFlash({ message: data.error ?? 'Achat impossible.', kind: 'error' });
         return;
       }
       await load();
-      setBanner('Achat effectué avec tes Quest Coins.');
       runPurchaseCelebration(sku);
     } finally {
       setCoinPurchaseSku(null);
@@ -399,7 +436,7 @@ function ShopPageInner() {
     activeNarrationPackId?: string | null;
     equippedTitleId?: string | null;
   }) => {
-    setBanner(null);
+    setFlash(null);
     const res = await fetch('/api/profile', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -407,12 +444,11 @@ function ShopPageInner() {
     });
     if (!res.ok) {
       const j = (await res.json().catch(() => ({}))) as { error?: string };
-      setBanner(j.error ?? 'Impossible d’enregistrer.');
+      setFlash({ message: j.error ?? 'Impossible d’enregistrer.', kind: 'error' });
       return;
     }
     const j = (await res.json()) as { shop?: ProfileShop };
     setShop(j.shop ?? null);
-    setBanner('Préférences enregistrées.');
   };
 
   const ownedThemeIds = new Set(shop?.ownedThemes ?? ['default']);
@@ -427,7 +463,7 @@ function ShopPageInner() {
     return (
       <li
         key={item.sku}
-        className={`rounded-2xl border bg-[var(--card)]/95 p-5 shadow-sm flex flex-col gap-3 transition-shadow duration-300 ${
+        className={`shop-elevated-surface rounded-2xl border p-5 flex flex-col gap-3 transition-shadow duration-300 ${
           m?.badge === 'featured' || m?.badge === 'best_value'
             ? 'border-emerald-300/80 ring-1 ring-emerald-200/60'
             : 'border-[color:var(--border-ui)]'
@@ -463,43 +499,48 @@ function ShopPageInner() {
             ))}
           </ul>
         ) : null}
-        {m?.hook ? <p className="text-[11px] font-semibold text-emerald-800/90">{m.hook}</p> : null}
+        {m?.hook ? (
+          <p className="text-[11px] font-semibold text-[var(--green)]">{m.hook}</p>
+        ) : null}
         {m?.compareAtCoins != null && m.savingsCoins != null ? (
           <p className="text-xs text-[var(--subtle)]">
             <span className="line-through tabular-nums">{m.compareAtCoins.toLocaleString('fr-FR')} QC</span>
-            <span className="mx-1.5 font-bold text-emerald-700">
+            <span className="mx-1.5 font-bold text-[var(--green)]">
               −{m.savingsCoins.toLocaleString('fr-FR')} QC
             </span>
             <span className="text-[var(--subtle)]">vs achat séparé</span>
           </p>
         ) : null}
         <div className="flex items-center justify-between gap-2 pt-3 border-t border-[color:var(--border-ui)]">
-          <span className="font-display text-xl font-black text-amber-800 tabular-nums">
+          <span className="font-display text-xl font-black text-[var(--orange)] tabular-nums">
             {item.priceCoins.toLocaleString('fr-FR')} QC
           </span>
           {owns ? (
-            <span className="text-xs font-black uppercase tracking-wider text-emerald-700">Déjà à toi</span>
+            <span className="text-xs font-black uppercase tracking-wider text-[var(--green)]">Déjà à toi</span>
           ) : (
             <button
               type="button"
-              disabled={coinPurchaseSku === item.sku || !affordable}
-              onClick={() => void buyWithCoins(item.sku)}
-              className="btn btn-primary btn-md text-sm font-black transition-transform duration-150 will-change-transform hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-              title={!affordable ? 'Solde insuffisant — recharge des Quest Coins.' : undefined}
+              disabled={coinPurchaseSku === item.sku}
+              onClick={() => {
+                if (!affordable) {
+                  setRechargeOpen(true);
+                  return;
+                }
+                void buyWithCoins(item.sku);
+              }}
+              className={`btn btn-primary btn-md text-sm font-black transition-transform duration-150 will-change-transform hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100 ${
+                !affordable && coinPurchaseSku !== item.sku ? 'ring-2 ring-amber-400/80 ring-offset-2 ring-offset-[var(--card)]' : ''
+              }`}
+              title={
+                !affordable
+                  ? 'Solde insuffisant — clique pour ajouter des Quest Coins (recharge).'
+                  : undefined
+              }
             >
               {coinPurchaseSku === item.sku ? '…' : 'Acheter'}
             </button>
           )}
         </div>
-        {!owns && !affordable ? (
-          <button
-            type="button"
-            className="self-start text-[11px] font-semibold text-orange-700 underline decoration-orange-400/80 hover:text-orange-900"
-            onClick={() => setRechargeOpen(true)}
-          >
-            Recharger
-          </button>
-        ) : null}
       </li>
     );
   };
@@ -510,21 +551,28 @@ function ShopPageInner() {
       <main className="relative z-10 max-w-4xl mx-auto px-4 pt-24 pb-24">
         <Link
           href="/app"
-          className="inline-flex items-center gap-2 text-sm font-bold text-cyan-900 hover:underline mb-6"
+          className="inline-flex items-center gap-2 text-sm font-bold text-[var(--link-on-bg)] hover:underline mb-6"
         >
           ← Retour à la quête
         </Link>
 
         <h1 className="font-display font-black text-3xl text-[var(--text)] mb-6">Boutique</h1>
 
-        {banner && (
+        {flash ? (
           <div
-            key={banner}
-            className="mb-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/95 px-4 py-3 text-sm font-semibold text-emerald-950 motion-safe:animate-fade-up motion-reduce:animate-none"
+            role={flash.kind === 'error' ? 'alert' : 'status'}
+            key={flash.message}
+            className={`mb-6 rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--text)] motion-safe:animate-fade-up motion-reduce:animate-none ${
+              flash.kind === 'success'
+                ? 'shop-flash-success'
+                : flash.kind === 'error'
+                  ? 'shop-flash-error'
+                  : 'shop-flash-info'
+            }`}
           >
-            {banner}
+            {flash.message}
           </div>
-        )}
+        ) : null}
 
         {error && (
           <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900">
@@ -572,7 +620,7 @@ function ShopPageInner() {
 
             <div className="sticky top-24 z-40 -mx-4 px-4 pt-2 pb-6 mb-6">
               <div
-                className={`max-w-4xl mx-auto rounded-3xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-white to-amber-100/90 p-5 sm:p-6 shadow-[0_12px_40px_-8px_rgba(180,83,9,0.25)] transition-shadow duration-300 ${
+                className={`shop-balance-strip max-w-4xl mx-auto rounded-3xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-white to-amber-100/90 p-5 sm:p-6 shadow-[0_12px_40px_-8px_rgba(180,83,9,0.25)] transition-shadow duration-300 ${
                   celebratePurchase ? 'shadow-[0_0_0_4px_rgba(251,191,36,0.45)] ring-2 ring-amber-400/50' : ''
                 }`}
               >
@@ -590,10 +638,10 @@ function ShopPageInner() {
                       </p>
                       <p
                         key={balanceAnimTick}
-                        className="font-display text-4xl sm:text-5xl font-black tracking-tight text-[var(--text)] tabular-nums leading-none motion-safe:animate-shop-balance-pop motion-reduce:animate-none"
+                        className="font-display text-4xl sm:text-5xl font-black tracking-tight text-[var(--on-cream)] tabular-nums leading-none motion-safe:animate-shop-balance-pop motion-reduce:animate-none"
                       >
                         {balance.toLocaleString('fr-FR')}
-                        <span className="ml-2 text-2xl sm:text-3xl font-black text-amber-700">QC</span>
+                        <span className="ml-2 text-2xl sm:text-3xl font-black text-amber-800">QC</span>
                       </p>
                     </div>
                   </div>
@@ -609,24 +657,38 @@ function ShopPageInner() {
             </div>
 
             <section className="mb-10" aria-labelledby="shop-prefs-heading">
-              <div className="rounded-3xl border border-[color:var(--border-ui)] bg-[var(--card)] shadow-[0_8px_30px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-5 py-4 sm:px-6 border-b border-[color:var(--border-ui)] bg-gradient-to-r from-[var(--surface)]/95 via-cyan-50/40 to-amber-50/30">
-                  <div>
-                    <h2 id="shop-prefs-heading" className="font-display font-black text-lg text-[var(--text)]">
-                      Équipement & affichage
-                    </h2>
-                    <p className="text-xs font-medium text-[var(--subtle)] mt-0.5">
-                      Thème, ton des quêtes et titre — utilisés tout de suite dans l’app.
+              <h2 id="shop-prefs-heading" className="font-display font-black text-xl text-[var(--text)] mb-1">
+                Équipement & affichage
+              </h2>
+              <p className="text-sm text-[var(--muted)] mb-4 max-w-xl">
+                Thème, ton des quêtes et titre — appliqués tout de suite dans l’app.
+              </p>
+
+              <div className="shop-prefs-panel p-5 sm:p-6 pt-6 sm:pt-7">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+                  <span
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--violet)_16%,transparent)] text-[22px] ring-2 ring-[color:color-mix(in_srgb,var(--violet)_32%,transparent)]"
+                    aria-hidden
+                  >
+                    ⚙️
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[var(--subtle)]">
+                      Personnalisation
+                    </p>
+                    <p className="text-sm font-bold text-[var(--text)]">
+                      Règle l’apparence comme sur ton inventaire
                     </p>
                   </div>
                 </div>
-                <div className="p-5 sm:p-6 grid gap-5 md:grid-cols-3">
-                  <div className="rounded-2xl border border-[color:var(--border-ui)] bg-[var(--surface)]/70 p-4 flex flex-col gap-2">
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="shop-pref-field p-4 flex flex-col gap-2">
                     <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
                       Thème actif
                     </label>
                     <select
-                      className="w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                      className="shop-pref-select"
                       value={shop.activeThemeId}
                       onChange={(e) => void savePreferences({ activeThemeId: e.target.value })}
                     >
@@ -647,12 +709,12 @@ function ShopPageInner() {
                         ))}
                     </select>
                   </div>
-                  <div className="rounded-2xl border border-[color:var(--border-ui)] bg-[var(--surface)]/70 p-4 flex flex-col gap-2">
+                  <div className="shop-pref-field p-4 flex flex-col gap-2">
                     <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
                       Ton des textes de quête
                     </label>
                     <select
-                      className="w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                      className="shop-pref-select"
                       value={shop.activeNarrationPackId ?? ''}
                       onChange={(e) => {
                         const v = e.target.value;
@@ -670,16 +732,13 @@ function ShopPageInner() {
                           ))
                         : null}
                     </select>
-                    <p className="text-[11px] text-[var(--subtle)] leading-snug">
-                      Prochaines quêtes du jour uniquement.
-                    </p>
                   </div>
-                  <div className="rounded-2xl border border-[color:var(--border-ui)] bg-[var(--surface)]/70 p-4 flex flex-col gap-2">
+                  <div className="shop-pref-field p-4 flex flex-col gap-2">
                     <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
                       Titre sur le profil
                     </label>
                     <select
-                      className="w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                      className="shop-pref-select"
                       value={shop.equippedTitleId ?? ''}
                       onChange={(e) => {
                         const v = e.target.value;
@@ -700,15 +759,18 @@ function ShopPageInner() {
                     </select>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-3 px-5 sm:px-6 py-4 bg-[var(--surface)]/95 border-t border-[color:var(--border-ui)]">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-orange-200/80 bg-orange-50/90 px-3 py-1.5 text-xs font-semibold text-orange-950">
-                    <span className="opacity-80">Relances bonus</span>
-                    <span className="font-black tabular-nums text-orange-800">{shop.bonusRerollCredits}</span>
+
+                <div className="mt-5 pt-5 border-t border-[color:var(--border-ui)] flex flex-wrap gap-2.5">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--orange)_14%,var(--card))] px-3 py-1.5 text-xs font-semibold text-[var(--text)]">
+                    <span className="text-[var(--muted)]">Relances bonus</span>
+                    <span className="font-black tabular-nums text-[var(--orange)]">
+                      {shop.bonusRerollCredits}
+                    </span>
                   </div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/90 px-3 py-1.5 text-xs font-semibold text-emerald-950">
-                    <span className="opacity-80">Surcharges XP</span>
-                    <span className="font-black tabular-nums text-emerald-800">{shop.xpBonusCharges}</span>
-                    <span className="text-[10px] font-medium text-emerald-800/80">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--green)_12%,var(--card))] px-3 py-1.5 text-xs font-semibold text-[var(--text)]">
+                    <span className="text-[var(--muted)]">Surcharges XP</span>
+                    <span className="font-black tabular-nums text-[var(--green)]">{shop.xpBonusCharges}</span>
+                    <span className="text-[10px] font-medium text-[var(--muted)]">
                       (+{XP_SHOP_BONUS_PER_CHARGE} XP / validation)
                     </span>
                   </div>
@@ -718,11 +780,11 @@ function ShopPageInner() {
 
             {featuredBundle ? (
               <section className="mb-10" aria-labelledby="shop-featured-heading">
-                <h2 id="shop-featured-heading" className="font-display font-black text-xl text-[var(--text)] mb-3">
+                <h2 id="shop-featured-heading" className="font-display font-black text-xl text-[var(--text)] mb-3 drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]">
                   À la une
                 </h2>
                 <div
-                  className={`rounded-3xl border-2 border-violet-400/50 bg-gradient-to-br from-violet-50 via-amber-50/80 to-cyan-50 p-6 shadow-lg transition-shadow duration-300 ${
+                  className={`shop-featured-bundle rounded-3xl border-2 border-violet-400/50 bg-gradient-to-br from-violet-50 via-amber-50/80 to-cyan-50 p-6 text-[var(--quest-panel-fg)] shadow-lg transition-shadow duration-300 ${
                     purchaseHighlightSku === featuredBundle.sku
                       ? 'motion-safe:animate-shop-card-bump motion-reduce:ring-2 motion-reduce:ring-amber-300/60'
                       : ''
@@ -738,13 +800,13 @@ function ShopPageInner() {
                           <MarketingBadge badge={featuredBundle.marketing.badge} />
                         ) : null}
                         <div className="mt-2 flex items-start gap-2">
-                          <p className="font-display font-black text-xl text-[var(--text)] flex-1 min-w-0">
+                          <p className="font-display font-black text-xl text-[var(--quest-panel-fg)] flex-1 min-w-0">
                             {featuredBundle.name}
                           </p>
                           {featuredBundle.contentsDetail ? (
                             <button
                               type="button"
-                              className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-ui-strong)] bg-[var(--card)] text-[10px] font-black text-[var(--muted)] hover:bg-[var(--surface)] mt-0.5"
+                              className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-slate-300/80 bg-white/95 text-[10px] font-black text-[var(--quest-panel-fg-muted)] shadow-sm hover:bg-white mt-0.5"
                               aria-label={`Plus d'infos : ${featuredBundle.name}`}
                               onClick={() =>
                                 setInfoModal({
@@ -760,27 +822,27 @@ function ShopPageInner() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm text-[var(--muted)] font-medium mb-2">{featuredBundle.description}</p>
+                  <p className="text-sm text-[var(--quest-panel-fg-muted)] font-medium mb-2">{featuredBundle.description}</p>
                   {featuredBundle.includedItems?.length ? (
-                    <ul className="list-disc pl-5 text-sm text-[var(--muted)] font-medium space-y-1 mb-2">
+                    <ul className="list-disc pl-5 text-sm text-[var(--quest-panel-fg-muted)] font-medium space-y-1 mb-2">
                       {featuredBundle.includedItems.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
                   ) : null}
                   {featuredBundle.marketing?.hook ? (
-                    <p className="text-sm font-semibold text-violet-900 mb-3">{featuredBundle.marketing.hook}</p>
+                    <p className="text-sm font-semibold text-violet-950 mb-3">{featuredBundle.marketing.hook}</p>
                   ) : null}
                   {featuredBundle.marketing?.compareAtCoins != null &&
                   featuredBundle.marketing?.savingsCoins != null ? (
-                    <p className="text-sm text-[var(--muted)] mb-4">
-                      <span className="line-through tabular-nums">
+                    <p className="text-sm text-[var(--quest-panel-fg-muted)] mb-4">
+                      <span className="line-through tabular-nums text-[var(--quest-panel-fg-subtle)]">
                         {featuredBundle.marketing.compareAtCoins.toLocaleString('fr-FR')} QC
                       </span>
-                      <span className="ml-2 font-black text-emerald-700">
+                      <span className="ml-2 font-black text-emerald-800">
                         Économie ~{featuredBundle.marketing.savingsCoins.toLocaleString('fr-FR')} QC
                       </span>
-                      <span className="text-[var(--subtle)] text-xs ml-1">vs pièces détail</span>
+                      <span className="text-[var(--quest-panel-fg-subtle)] text-xs ml-1">vs pièces détail</span>
                     </p>
                   ) : null}
                   {(() => {
@@ -788,17 +850,32 @@ function ShopPageInner() {
                     const affordable = balance >= featuredBundle.priceCoins;
                     return (
                       <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-violet-200/60">
-                        <span className="font-display text-2xl font-black text-amber-900 tabular-nums">
+                        <span className="font-display text-2xl font-black text-amber-950 tabular-nums">
                           {featuredBundle.priceCoins.toLocaleString('fr-FR')} QC
                         </span>
                         {owns ? (
-                          <span className="text-sm font-black uppercase text-emerald-700">Déjà à toi</span>
+                          <span className="text-sm font-black uppercase text-emerald-800">Déjà à toi</span>
                         ) : (
                           <button
                             type="button"
-                            disabled={coinPurchaseSku === featuredBundle.sku || !affordable}
-                            onClick={() => void buyWithCoins(featuredBundle.sku)}
-                            className="btn btn-primary btn-md text-sm font-black transition-transform duration-150 hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                            disabled={coinPurchaseSku === featuredBundle.sku}
+                            onClick={() => {
+                              if (!affordable) {
+                                setRechargeOpen(true);
+                                return;
+                              }
+                              void buyWithCoins(featuredBundle.sku);
+                            }}
+                            className={`btn btn-primary btn-md text-sm font-black transition-transform duration-150 hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100 ${
+                              !affordable && coinPurchaseSku !== featuredBundle.sku
+                                ? 'ring-2 ring-amber-400/80 ring-offset-2 ring-offset-amber-50'
+                                : ''
+                            }`}
+                            title={
+                              !affordable
+                                ? 'Solde insuffisant — clique pour ajouter des Quest Coins (recharge).'
+                                : undefined
+                            }
                           >
                             {coinPurchaseSku === featuredBundle.sku ? '…' : 'Acheter le bundle'}
                           </button>
@@ -806,16 +883,6 @@ function ShopPageInner() {
                       </div>
                     );
                   })()}
-                  {!catalogItemFullyOwned(featuredBundle, shop, coinPurchasedSkus) &&
-                  balance < featuredBundle.priceCoins ? (
-                    <button
-                      type="button"
-                      className="mt-2 text-xs font-semibold text-orange-700 underline decoration-orange-400/80 hover:text-orange-900"
-                      onClick={() => setRechargeOpen(true)}
-                    >
-                      Recharger
-                    </button>
-                  ) : null}
                 </div>
               </section>
             ) : null}
@@ -852,13 +919,15 @@ function ShopPageInner() {
             </section>
 
             <section>
-              <h2 className="label mb-4">Journal des transactions</h2>
+              <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-[var(--orange)]">
+                Journal des transactions
+              </h2>
               {transactions.length === 0 ? (
                 <p className="text-sm font-semibold text-[var(--subtle)] rounded-2xl border border-dashed border-[color:var(--border-ui)] px-4 py-8 text-center">
                   Aucune opération pour l’instant.
                 </p>
               ) : (
-                <ul className="rounded-2xl border border-[color:var(--border-ui)] bg-[var(--card)]/95 divide-y divide-[color:var(--border-ui)] overflow-hidden">
+                <ul className="shop-elevated-surface rounded-2xl border border-[color:var(--border-ui)] divide-y divide-[color:var(--border-ui)] overflow-hidden">
                   {transactions.map((tx) => (
                     <li key={tx.id} className="px-4 py-3 flex flex-wrap items-baseline justify-between gap-2 text-sm">
                       <div className="min-w-0 flex-1">
@@ -868,7 +937,9 @@ function ShopPageInner() {
                       <div className="text-right">
                         {tx.coinsDelta != null ? (
                           <span
-                            className={`font-black tabular-nums ${tx.coinsDelta >= 0 ? 'text-emerald-700' : 'text-orange-800'}`}
+                            className={`font-black tabular-nums ${
+                              tx.coinsDelta >= 0 ? 'text-[var(--green)]' : 'text-[var(--orange)]'
+                            }`}
                           >
                             {tx.coinsDelta >= 0 ? '+' : ''}
                             {tx.coinsDelta} QC

@@ -26,6 +26,15 @@
     --on-cream: #13212d;
     --on-cream-muted: #4d6570;
     --on-cream-subtle: #64748b;
+    /** Liens sur fond « aventure » clair (retour, etc.) */
+    --link-on-bg: #155e75;
+    /**
+     * Texte sur panneaux quête / boutique à fond « plateau » (bandeau, mission, solde…).
+     * En Nuit boréale les surfaces passent en sombre : on aligne sur --text / --muted.
+     */
+    --quest-panel-fg: var(--on-cream);
+    --quest-panel-fg-muted: var(--on-cream-muted);
+    --quest-panel-fg-subtle: var(--on-cream-subtle);
   }
 
   /* Thèmes boutique (data-theme sur <html>) */
@@ -33,20 +42,27 @@
     --bg: #0a101c;
     --surface: #111b2e;
     --card: #152238;
-    --text: #e8f1fa;
-    --muted: #a8bdd4;
-    --subtle: #8fa3b8;
-    --border-ui: rgba(232, 241, 250, 0.12);
-    --border-ui-strong: rgba(232, 241, 250, 0.2);
-    --progress-track: rgba(255, 255, 255, 0.12);
+    /** Texte principal : proche du blanc pour WCAG sur fond bleu nuit */
+    --text: #f1f5f9;
+    --muted: #b4c4d8;
+    --subtle: #94a8bc;
+    --border-ui: rgba(232, 241, 250, 0.14);
+    --border-ui-strong: rgba(232, 241, 250, 0.24);
+    --progress-track: rgba(255, 255, 255, 0.14);
     --input-bg: #0f1729;
     --violet: #38bdf8;
     --orange: #fb923c;
     --gold: #fcd34d;
     --green: #34d399;
+    /** Liens / accents sur fond sombre (hors cartes crème) */
+    --link-on-bg: #7dd3fc;
+    --quest-panel-fg: var(--text);
+    --quest-panel-fg-muted: var(--muted);
+    --quest-panel-fg-subtle: var(--subtle);
   }
 
   html[data-theme="aurora"] {
+    --link-on-bg: #6d28d9;
     --bg: #fdf4ff;
     --surface: #fff7fb;
     --card: #ffffff;
@@ -64,6 +80,7 @@
   }
 
   html[data-theme="parchment"] {
+    --link-on-bg: #92400e;
     --bg: #f5f0e6;
     --surface: #faf6ee;
     --card: #fffdf8;
@@ -104,6 +121,24 @@
   .bg-grid {
     background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
     background-size: 36px 36px;
+  }
+
+  /**
+   * Navbar : verre clair — bordure plus lisible sur fond sombre (ex. thème Nuit boréale).
+   */
+  .navbar-shell {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(236, 253, 255, 0.92));
+    border: 1px solid rgba(8, 145, 178, 0.42);
+    box-shadow:
+      0 10px 30px rgba(15, 23, 42, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(14px);
+  }
+  html[data-theme="midnight"] .navbar-shell {
+    border-color: rgba(56, 189, 248, 0.55);
+    box-shadow:
+      0 12px 36px rgba(0, 0, 0, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
   /* Alias : tout l’app utilise la même DA claire que la landing (doc direction-artistique) */
@@ -159,6 +194,112 @@
   }
 
   /* ── Cards ── */
+  /**
+   * Surfaces boutique (cartes produit, listes) : fond bien visible sur tout fond de page.
+   * Évite bg-[var(--card)]/95 en Tailwind : l’opacité sur variable hex ne produit souvent aucun fond.
+   */
+  .shop-elevated-surface {
+    background-color: var(--card);
+    background-image: linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--surface) 48%, var(--card)) 0%,
+      var(--card) 42%,
+      color-mix(in srgb, var(--bg) 22%, var(--card)) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent),
+      0 10px 32px -14px color-mix(in srgb, var(--text) 16%, transparent);
+  }
+
+  /** Messages flash boutique — alignés sur les variables de thème (pas de vert « admin » figé) */
+  .shop-flash-success {
+    border: 1px solid color-mix(in srgb, var(--green) 38%, var(--border-ui-strong));
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--green) 14%, var(--card)) 0%,
+      var(--card) 100%
+    );
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 5%, transparent);
+  }
+  .shop-flash-error {
+    border: 1px solid color-mix(in srgb, var(--red) 42%, var(--border-ui-strong));
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--red) 12%, var(--card)) 0%,
+      var(--card) 100%
+    );
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 5%, transparent);
+  }
+  .shop-flash-info {
+    border: 1px solid color-mix(in srgb, var(--orange) 35%, var(--border-ui-strong));
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--gold) 10%, var(--card)) 0%,
+      var(--card) 100%
+    );
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 5%, transparent);
+  }
+
+  /**
+   * Boutique — bloc « Équipement & affichage » : bandeau cyan·orange·vert + carte jeu (DA aventure).
+   */
+  .shop-prefs-panel {
+    position: relative;
+    border: 2px solid color-mix(in srgb, var(--violet) 38%, var(--border-ui-strong));
+    border-radius: 1.5rem;
+    background-color: var(--card);
+    background-image:
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--violet) 72%, transparent),
+        color-mix(in srgb, var(--orange) 70%, transparent),
+        color-mix(in srgb, var(--green) 65%, transparent)
+      ),
+      linear-gradient(
+        152deg,
+        color-mix(in srgb, var(--violet) 16%, var(--card)) 0%,
+        var(--card) 40%,
+        color-mix(in srgb, var(--orange) 11%, var(--card)) 100%
+      );
+    background-size: 100% 4px, 100% 100%;
+    background-repeat: no-repeat, no-repeat;
+    background-position: top, 0 0;
+    box-shadow:
+      0 16px 44px -16px color-mix(in srgb, var(--text) 22%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+  }
+
+  .shop-pref-field {
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--violet) 26%, var(--border-ui));
+    background: linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--surface) 50%, var(--input-bg)) 0%,
+      var(--input-bg) 100%
+    );
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 5%, transparent);
+  }
+
+  .shop-pref-select {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--text) 10%, var(--border-ui));
+    background-color: var(--input-bg);
+    color: var(--text);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.4;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 5%, transparent);
+    transition: box-shadow 0.15s ease;
+  }
+  .shop-pref-select:focus {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--input-bg),
+      0 0 0 4px color-mix(in srgb, var(--violet) 42%, transparent);
+  }
+
   .card {
     background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(245,251,255,.94));
     border: 1px solid rgba(19,33,45,.12);
@@ -312,8 +453,13 @@
   }
   .pill-rupture {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
-    background: rgba(249,115,22,.12); border: 1px solid rgba(249,115,22,.25); color: #fb923c;
+    background: rgba(249,115,22,.12); border: 1px solid rgba(249,115,22,.28); color: #c2410c;
   }
+
+  /**
+   * Pas de variante midnight sur les pills : le bandeau « Carte du jour » est toujours sur fond clair ;
+   * des textes clairs (#a5f3fc, #fdba74…) sur crème étaient illisibles.
+   */
 
   /* ── Divider ── */
   .divider { height: 1px; background: var(--border); }
@@ -326,6 +472,11 @@
   .label-on-dark {
     @apply text-xs font-black tracking-widest uppercase text-orange-800;
   }
+
+  /**
+   * .label sur fond clair (carte du jour, etc.) : garder le texte foncé même en Nuit boréale.
+   * Pour un titre accent sur fond sombre, utiliser text-[var(--orange)] ou .label-accent en Tailwind.
+   */
 
   /* ── Quest card highlight ── */
   .quest-glow {
@@ -366,10 +517,59 @@
     border-radius: 1rem;
   }
 
+  /** Pastille / badge (ex. AuthQuestShell) — pas le bloc citation */
   .quest-sticker {
     background: linear-gradient(135deg, rgba(34,211,238,.2), rgba(16,185,129,.2));
     border: 1px solid rgba(34,211,238,.35);
-    color: #0f3a45;
+    color: var(--on-cream-muted);
+  }
+
+  /**
+   * Citation du jour (hook) — alignée sur le plateau : crème, orange, cyan, pas d’italique global.
+   */
+  .quest-hook-card {
+    border-radius: 1rem;
+    padding: 0.875rem 1rem 1rem;
+    max-width: 36rem;
+    margin-left: auto;
+    margin-right: auto;
+    background: linear-gradient(
+      155deg,
+      rgba(255, 251, 235, 0.98) 0%,
+      rgba(255, 247, 237, 0.92) 42%,
+      rgba(224, 242, 254, 0.4) 100%
+    );
+    border: 1px solid rgba(249, 115, 22, 0.22);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.92),
+      0 0 0 1px rgba(34, 211, 238, 0.1);
+  }
+  .quest-hook-card__label {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--quest-panel-fg-subtle);
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+  .quest-hook-card__quote {
+    font-family: var(--font-space), var(--font-inter), system-ui, sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.65;
+    color: var(--quest-panel-fg);
+    text-align: center;
+    margin: 0;
+  }
+  @media (min-width: 640px) {
+    .quest-hook-card__quote {
+      font-size: 1rem;
+    }
+  }
+  .quest-hook-card__g {
+    color: rgba(249, 115, 22, 0.75);
+    font-weight: 800;
   }
 
   /* Slider hero — même famille que .quest-board ; ombres serrées = texte plus net (pas de gros blur) */
@@ -380,6 +580,170 @@
       0 10px 22px rgba(249, 115, 22, 0.11),
       0 6px 0 rgba(120, 53, 15, 0.12);
     border-radius: 26px;
+  }
+
+  /**
+   * Carte quête : fond toujours « crème » — les boutons ghost utilisaient --muted (clair en thème nuit).
+   */
+  .quest-slider-embedded .btn-ghost {
+    color: var(--on-cream-muted);
+    background: color-mix(in srgb, var(--on-cream) 7%, transparent);
+    border-color: color-mix(in srgb, var(--on-cream) 14%, transparent);
+  }
+  .quest-slider-embedded .btn-ghost:hover {
+    color: var(--on-cream);
+    background: color-mix(in srgb, var(--on-cream) 11%, transparent);
+  }
+
+  /**
+   * Nuit boréale : surfaces « plateau » encore en crème → fond sombre + texte via --quest-panel-fg*.
+   */
+  html[data-theme="midnight"] .app-hero-band {
+    border-color: rgba(56, 189, 248, 0.38) !important;
+    background: linear-gradient(145deg, #111b2e 0%, #152238 48%, #0a101c 100%) !important;
+    box-shadow:
+      0 10px 0 rgba(0, 0, 0, 0.28),
+      0 22px 48px rgba(0, 0, 0, 0.42) !important;
+  }
+  html[data-theme="midnight"] .app-hero-band .text-gradient-pop {
+    color: #7dd3fc;
+    background: linear-gradient(
+      118deg,
+      #bae6fd 0%,
+      #38bdf8 38%,
+      #22d3ee 72%,
+      #a5f3fc 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
+  }
+  html[data-theme="midnight"] .app-hero-xp-strip {
+    border-color: rgba(56, 189, 248, 0.32) !important;
+    background: linear-gradient(90deg, rgba(17, 27, 46, 0.96) 0%, rgba(21, 34, 56, 0.9) 100%) !important;
+  }
+  html[data-theme="midnight"] .quest-footer-cta .text-emerald-900,
+  html[data-theme="midnight"] .quest-slider-embedded .text-emerald-900 {
+    color: #6ee7b7 !important;
+  }
+  html[data-theme="midnight"] .quest-slider-embedded .text-orange-900 {
+    color: #fdba74 !important;
+  }
+  html[data-theme="midnight"] .app-hero-band .border-cyan-500\/45.bg-white\/95 {
+    background-color: color-mix(in srgb, var(--card) 88%, transparent) !important;
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    color: var(--quest-panel-fg) !important;
+  }
+  html[data-theme="midnight"] .quest-slider-embedded {
+    background: linear-gradient(165deg, #121c2e 0%, #152238 40%, #0c1424 100%);
+    border-color: rgba(56, 189, 248, 0.38);
+    box-shadow:
+      0 10px 22px rgba(0, 0, 0, 0.35),
+      0 6px 0 rgba(0, 0, 0, 0.25);
+  }
+  html[data-theme="midnight"] .quest-hook-card {
+    background: linear-gradient(155deg, #152238 0%, #111b2e 42%, #0f1729 100%);
+    border-color: rgba(56, 189, 248, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 0 0 1px rgba(56, 189, 248, 0.12);
+  }
+  html[data-theme="midnight"] .quest-hook-card__g {
+    color: rgba(251, 191, 36, 0.88);
+  }
+  html[data-theme="midnight"] .quest-mission-panel {
+    border-color: rgba(56, 189, 248, 0.42) !important;
+    background: linear-gradient(145deg, #121c2e 0%, #152238 48%, #0f1729 100%) !important;
+    box-shadow: 0 8px 28px -6px rgba(0, 0, 0, 0.45) !important;
+    --tw-ring-color: rgba(56, 189, 248, 0.22) !important;
+  }
+  html[data-theme="midnight"] .quest-mission-panel #mission-heading {
+    color: var(--violet) !important;
+  }
+  html[data-theme="midnight"] .quest-map-panel {
+    border-color: rgba(52, 211, 153, 0.35) !important;
+    background: linear-gradient(145deg, #111b2e 0%, #152238 55%, #0c1828 100%) !important;
+    --tw-ring-color: rgba(52, 211, 153, 0.15) !important;
+  }
+  html[data-theme="midnight"] .quest-map-panel h3 {
+    color: #6ee7b7 !important;
+  }
+  html[data-theme="midnight"] .quest-footer-cta {
+    border-top-color: rgba(56, 189, 248, 0.28) !important;
+    background: linear-gradient(90deg, rgba(17, 27, 46, 0.95) 0%, rgba(15, 23, 42, 0.9) 50%, rgba(12, 20, 36, 0.95) 100%) !important;
+  }
+  html[data-theme="midnight"] .quest-share-victory-btn {
+    border-color: rgba(56, 189, 248, 0.45) !important;
+    background: linear-gradient(90deg, rgba(56, 189, 248, 0.2) 0%, rgba(251, 191, 36, 0.14) 100%) !important;
+    color: var(--text) !important;
+  }
+  html[data-theme="midnight"] .quest-slider-embedded .btn-ghost {
+    color: var(--quest-panel-fg-muted);
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    border-color: color-mix(in srgb, var(--text) 16%, transparent);
+  }
+  html[data-theme="midnight"] .quest-slider-embedded .btn-ghost:hover {
+    color: var(--quest-panel-fg);
+    background: color-mix(in srgb, var(--text) 14%, transparent);
+  }
+  html[data-theme="midnight"] .shop-balance-strip {
+    border-color: rgba(251, 191, 36, 0.42) !important;
+    background: linear-gradient(145deg, #111b2e 0%, #152238 45%, #0a101c 100%) !important;
+    box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.45) !important;
+  }
+  html[data-theme="midnight"] .shop-balance-strip .text-amber-900\/90,
+  html[data-theme="midnight"] .shop-balance-strip .text-amber-800 {
+    color: #fde68a !important;
+  }
+  html[data-theme="midnight"] .shop-featured-bundle {
+    border-color: rgba(167, 139, 250, 0.45) !important;
+    background: linear-gradient(145deg, #1a1430 0%, #152238 42%, #111b2e 100%) !important;
+    color: var(--quest-panel-fg) !important;
+  }
+  html[data-theme="midnight"] .shop-featured-bundle .text-violet-950 {
+    color: #ddd6fe !important;
+  }
+  html[data-theme="midnight"] .shop-featured-bundle .border-violet-200\/60 {
+    border-color: rgba(167, 139, 250, 0.32) !important;
+  }
+  html[data-theme="midnight"] .shop-featured-bundle .text-amber-950 {
+    color: #fde68a !important;
+  }
+  html[data-theme="midnight"] .shop-featured-bundle .text-emerald-800 {
+    color: #6ee7b7 !important;
+  }
+  html[data-theme="midnight"] .quest-mission-panel .border-orange-300\/70 {
+    border-color: rgba(251, 191, 36, 0.45) !important;
+  }
+  html[data-theme="midnight"] .quest-mission-panel .bg-orange-100\/95 {
+    background-color: rgba(251, 191, 36, 0.12) !important;
+    color: #fde68a !important;
+  }
+  html[data-theme="midnight"] .quest-mission-panel .text-orange-950 {
+    color: #fde68a !important;
+  }
+  html[data-theme="midnight"] .quest-mission-panel .border-emerald-400\/40 {
+    border-color: rgba(52, 211, 153, 0.35) !important;
+  }
+  html[data-theme="midnight"] .quest-mission-panel .bg-emerald-100\/90 {
+    background-color: rgba(52, 211, 153, 0.12) !important;
+  }
+  html[data-theme="midnight"] .quest-mission-panel .text-emerald-900 {
+    color: #6ee7b7 !important;
+  }
+  html[data-theme="midnight"] .shop-recharge-modal-head {
+    border-color: rgba(52, 211, 153, 0.25) !important;
+    background: linear-gradient(145deg, #111b2e 0%, #152238 50%, #0f1729 100%) !important;
+  }
+  html[data-theme="midnight"] .shop-recharge-modal-head .border-amber-200\/80 {
+    border-color: rgba(251, 191, 36, 0.35) !important;
+  }
+  html[data-theme="midnight"] .shop-recharge-modal-head .bg-white\/95 {
+    background-color: color-mix(in srgb, var(--card) 88%, transparent) !important;
+  }
+  html[data-theme="midnight"] .shop-recharge-modal-head .text-amber-800\/80 {
+    color: #fde68a !important;
   }
 
   /* ── Streak badge ── */

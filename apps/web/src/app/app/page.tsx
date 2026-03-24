@@ -107,14 +107,14 @@ function SafetySheet({ quest, onConfirm, onClose }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/35 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-md card rounded-3xl overflow-hidden shadow-xl">
         <div className="h-1 bg-gradient-to-r from-cyan-500 via-amber-400 to-orange-500" />
         <div className="p-7">
           <div className="text-center mb-6">
             <div className="flex justify-center mb-3"><Icon name="Shield" size="2xl" className="text-orange-500" /></div>
-            <h3 className="font-display font-black text-xl text-[var(--text)] mb-1">🛡️ Avant de partir…</h3>
-            <p className="text-sm text-[var(--muted)]">
+            <h3 className="font-display font-black text-xl text-[var(--on-cream)] mb-1">🛡️ Avant de partir…</h3>
+            <p className="text-sm text-[var(--on-cream-muted)]">
               {quest.title} se passe en extérieur. Coche chaque point pour confirmer.
             </p>
           </div>
@@ -478,11 +478,9 @@ export default function AppPage() {
         )}
 
         {/* Bandeau joueur : une seule lecture, emojis comme la landing */}
-        <section className="mb-8 mt-2 rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-[#fffbeb] via-white/95 to-cyan-50/40 px-5 py-6 md:px-7 md:py-7 shadow-[0_10px_0_rgba(180,83,9,.1),0_22px_48px_rgba(249,115,22,.12)] motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:40ms] [animation-fill-mode:backwards]">
-          <p className="label mb-3 flex items-center gap-2 text-orange-900">
-            <span aria-hidden>🎮</span> Carte du jour
-          </p>
-          <h1 className="font-display font-black text-2xl leading-[1.15] text-slate-900 sm:text-3xl md:text-[2.15rem]">
+        <section className="app-hero-band mb-8 mt-2 rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-[#fffbeb] via-white/95 to-cyan-50/40 px-5 py-6 md:px-7 md:py-7 shadow-[0_10px_0_rgba(180,83,9,.1),0_22px_48px_rgba(249,115,22,.12)] motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:40ms] [animation-fill-mode:backwards]">
+
+          <h1 className="font-display font-black text-2xl leading-[1.15] text-[var(--quest-panel-fg)] sm:text-3xl md:text-[2.15rem]">
             Salut {user?.firstName ?? 'aventurier·e'} <span aria-hidden>👋</span>
             <br />
             <span className="text-gradient-pop text-[1.02em] md:text-[1.06em] tracking-[-0.02em]">
@@ -492,7 +490,7 @@ export default function AppPage() {
               ⚔️
             </span>
           </h1>
-          <p className="mt-3 text-sm font-semibold text-slate-600 md:text-base">
+          <p className="mt-3 text-sm font-semibold text-[var(--quest-panel-fg-muted)] md:text-base">
             🎯 Objectif : sortir du pilote automatique — mode aventure.
           </p>
 
@@ -515,7 +513,7 @@ export default function AppPage() {
               </span>
             )}
             <span
-              className="inline-flex items-center gap-1 rounded-full border border-cyan-300/50 bg-white/90 px-3 py-1 text-xs font-black text-cyan-950 shadow-sm"
+              className="inline-flex items-center gap-1 rounded-full border border-cyan-500/45 bg-white/95 px-3 py-1 text-xs font-black text-[var(--quest-panel-fg)] shadow-sm"
               title="Étape de ton parcours (calibration → expansion → rupture)."
             >
               <span aria-hidden>📍</span>
@@ -532,7 +530,7 @@ export default function AppPage() {
             ) : null}
             {(quest?.xpBonusCharges ?? 0) > 0 ? (
               <span
-                className="inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-50/90 px-3 py-1 text-[11px] font-black text-emerald-900 shadow-sm"
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-500/45 bg-emerald-50/95 px-3 py-1 text-[11px] font-black text-emerald-950 shadow-sm"
                 title="Surcharges XP boutique restantes"
               >
                 ⚡ {quest?.xpBonusCharges} bonus XP
@@ -541,19 +539,19 @@ export default function AppPage() {
           </div>
 
           {quest?.progression && (
-            <div className="mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50/90 to-white/90 px-4 py-3 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-black text-cyan-950">
+              <div className="app-hero-xp-strip mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50/90 to-white/90 px-4 py-3 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-black text-[var(--quest-panel-fg)]">
                 <span>
                   ⭐ Niveau {quest.progression.level} · {quest.progression.totalXp} XP
                 </span>
-                <span className="font-bold text-slate-600">
+                <span className="font-bold text-[var(--quest-panel-fg-muted)]">
                   +{quest.progression.xpToNext} XP pour monter
                 </span>
               </div>
-              <p className="mt-1 text-[10px] font-semibold text-slate-500">
+              <p className="mt-1 text-[10px] font-semibold text-[var(--quest-panel-fg-subtle)]">
                 {quest.progression.xpIntoLevel}/{quest.progression.xpPerLevel} dans ce niveau
               </p>
-              <div className="mt-2 h-2 rounded-full bg-slate-200/90 overflow-hidden border border-cyan-200/50">
+              <div className="mt-2 h-2 rounded-full bg-[color:var(--progress-track)] overflow-hidden border border-cyan-200/50">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-orange-400 transition-all duration-700"
                   style={{
@@ -568,15 +566,15 @@ export default function AppPage() {
           )}
 
           {quest && (quest.city || quest.weather) && (
-            <p className="mt-5 border-t border-dashed border-orange-300/50 pt-4 text-sm font-medium text-slate-700">
+            <p className="mt-5 border-t border-dashed border-orange-300/50 pt-4 text-sm font-medium text-[var(--quest-panel-fg-muted)]">
               <span className="mr-1.5" aria-hidden>
                 {weatherEmojiFromText(quest.context?.weatherDescription ?? quest.weather)}
               </span>
               {weatherLine}
               {quest.city && quest.city !== 'ta ville' && (
                 <>
-                  <span className="text-slate-400"> · </span>
-                  <span className="font-bold text-cyan-900">📍 {quest.city}</span>
+                  <span className="text-[var(--quest-panel-fg-subtle)]"> · </span>
+                  <span className="font-bold text-[var(--link-on-bg)]">📍 {quest.city}</span>
                 </>
               )}
             </p>
@@ -599,12 +597,12 @@ export default function AppPage() {
                   {questDisplayEmoji(quest.emoji)}
                 </span>
                 <div className="min-w-0 flex-1 pr-2">
-                  <h2 className="font-display text-lg font-black leading-tight text-slate-800 sm:text-xl">
+                  <h2 className="font-display text-lg font-black leading-tight text-[var(--quest-panel-fg)] sm:text-xl">
                     {quest.title}
                   </h2>
                   {questFamily ? (
-                    <p className="mt-2 text-[11px] text-slate-500">
-                      <span className="rounded-full border border-slate-200/90 bg-white/90 px-2.5 py-0.5 font-semibold text-slate-600 shadow-sm">
+                    <p className="mt-2 text-[11px] text-[var(--quest-panel-fg-subtle)]">
+                      <span className="rounded-full border border-[color:color-mix(in_srgb,var(--quest-panel-fg)_18%,transparent)] bg-white/90 px-2.5 py-0.5 font-semibold text-[var(--quest-panel-fg-muted)] shadow-sm">
                         {questFamily}
                       </span>
                     </p>
@@ -614,7 +612,7 @@ export default function AppPage() {
 
               {/* Mission concrète */}
               <section
-                className="mb-6 rounded-2xl border-2 border-cyan-400/55 bg-gradient-to-br from-white via-cyan-50/50 to-white p-5 shadow-[0_8px_28px_-6px_rgba(34,211,238,0.22)] ring-1 ring-cyan-200/70 sm:p-6"
+                className="quest-mission-panel mb-6 rounded-2xl border-2 border-cyan-400/55 bg-gradient-to-br from-white via-cyan-50/50 to-white p-5 shadow-[0_8px_28px_-6px_rgba(34,211,238,0.22)] ring-1 ring-cyan-200/70 sm:p-6"
                 aria-labelledby="mission-heading"
               >
                 <p
@@ -626,7 +624,7 @@ export default function AppPage() {
                   </span>
                   Ta mission — quoi faire
                 </p>
-                <p className="font-display text-[1.15rem] font-black leading-[1.35] text-slate-900 sm:text-xl md:text-[1.35rem] md:leading-snug">
+                <p className="font-display text-[1.15rem] font-black leading-[1.35] text-[var(--quest-panel-fg)] sm:text-xl md:text-[1.35rem] md:leading-snug">
                   {quest.mission}
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-cyan-200/60 pt-4">
@@ -654,7 +652,7 @@ export default function AppPage() {
                     <span aria-hidden>🗺️</span>
                     Point de rendez-vous
                   </h3>
-                  <p className="mb-4 text-sm text-slate-600">
+                  <p className="mb-4 text-sm text-[var(--quest-panel-fg-muted)]">
                     Lieu suggéré pour ta mission (public, accessible). L’itinéraire à pied apparaît si tu as autorisé la
                     localisation.
                   </p>
@@ -662,9 +660,18 @@ export default function AppPage() {
                 </section>
               ) : null}
 
-              <div className="quest-sticker mb-1 rounded-xl px-3.5 py-3 text-center text-sm font-semibold italic leading-relaxed text-[var(--text)]">
-                « {quest.hook} »
-              </div>
+              <figure className="quest-hook-card mb-2 mt-1">
+                <figcaption className="quest-hook-card__label">Pensée du jour</figcaption>
+                <blockquote className="quest-hook-card__quote">
+                  <span className="quest-hook-card__g" aria-hidden>
+                    «
+                  </span>
+                  <span className="font-medium text-[var(--quest-panel-fg)]">{quest.hook}</span>
+                  <span className="quest-hook-card__g" aria-hidden>
+                    »
+                  </span>
+                </blockquote>
+              </figure>
 
               {quest.safetyNote && isPending && (
                 <div className="mt-5 flex items-start gap-2 rounded-2xl border border-amber-200/70 bg-amber-50/95 p-3.5 text-sm text-amber-950 shadow-sm">
@@ -676,18 +683,18 @@ export default function AppPage() {
               )}
             </div>
 
-            <div className="flex flex-col gap-3 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-4 py-4 sm:px-5">
+            <div className="quest-footer-cta flex flex-col gap-3 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-4 py-4 sm:px-5">
               {isCompleted ? (
                 <div className="text-center space-y-3">
                   <p className="font-display text-lg font-black text-emerald-900">
                     🏆 Quête validée — belle perf, à demain !
                   </p>
-                  <p className="mt-2 text-sm text-[var(--muted)]">Ta série et ton parcours sont à jour.</p>
+                  <p className="mt-2 text-sm text-[var(--quest-panel-fg-muted)]">Ta série et ton parcours sont à jour.</p>
                   <div className="flex justify-center">
                     <button
                       type="button"
                       onClick={() => setShowShareCard(true)}
-                      className="btn btn-md w-full sm:w-auto font-black border-2 border-cyan-400/50 bg-gradient-to-r from-cyan-50 to-amber-50 text-cyan-950 shadow-sm"
+                      className="quest-share-victory-btn btn btn-md w-full sm:w-auto font-black border-2 border-cyan-400/50 bg-gradient-to-r from-cyan-50 to-amber-50 text-cyan-950 shadow-sm"
                     >
                       📸 Partager ma victoire
                     </button>
@@ -704,7 +711,7 @@ export default function AppPage() {
                     <button type="button" onClick={doComplete} className="btn btn-primary btn-lg w-full text-base font-black">
                       ✅ J&apos;ai fait la quête — valider
                     </button>
-                    <p className="text-center text-xs text-[var(--muted)]">
+                    <p className="text-center text-xs text-[var(--quest-panel-fg-muted)]">
                       Quand c&apos;est fait dans la vraie vie, valide ici pour cocher ta mission.
                     </p>
                   </>

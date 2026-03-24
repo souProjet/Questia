@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,8 @@ import {
   type ExplorerAxis,
   type RiskAxis,
 } from '@questia/shared';
-import { DA } from '@questia/ui';
+import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { useAppTheme } from '../contexts/AppThemeContext';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -48,6 +49,8 @@ type ProfilePayload = {
 export default function ProfileScreen() {
   const { getToken } = useAuth();
   const { user } = useUser();
+  const { palette } = useAppTheme();
+  const styles = useMemo(() => createProfileStyles(palette), [palette]);
   const router = useRouter();
   const getTokenRef = useRef(getToken);
   useEffect(() => {
@@ -119,7 +122,7 @@ export default function ProfileScreen() {
 
       {loading && !profile ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#22d3ee" size="large" />
+          <ActivityIndicator color={palette.cyan} size="large" />
         </View>
       ) : error ? (
         <View style={styles.center}>
@@ -163,26 +166,34 @@ export default function ProfileScreen() {
 
           <Text style={styles.section}>Insignes</Text>
           <Text style={styles.hint}>
-            Tous les objectifs sont visibles : débloqués en couleur, les autres en attente.
+            Débloqués : bordure ambre et ombre. En attente : carte grisée et bordure en pointillés.
           </Text>
 
           <View style={styles.badgeGrid}>
             {badgeCatalog.map((b) => (
               <View
                 key={b.id}
-                style={[styles.badgeCard, !b.unlocked && styles.badgeCardLocked]}
+                style={[styles.badgeCard, b.unlocked ? styles.badgeCardUnlocked : styles.badgeCardLocked]}
               >
                 <View style={styles.badgeTopRow}>
                   <Text style={[styles.badgeEmoji, !b.unlocked && styles.badgeEmojiMuted]}>{b.placeholderEmoji}</Text>
-                  {!b.unlocked ? (
-                    <Text style={styles.badgeLockLabel}>À débloquer</Text>
-                  ) : null}
+                  {b.unlocked ? (
+                    <View style={styles.badgePillUnlocked}>
+                      <Text style={styles.badgePillUnlockedText}>Débloqué</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.badgePillLocked}>
+                      <Text style={styles.badgePillLockedText}>À débloquer</Text>
+                    </View>
+                  )}
                 </View>
-                <Text style={styles.badgeCat}>{BADGE_CATEGORY_LABEL_FR[b.category]}</Text>
+                <Text style={[styles.badgeCat, b.unlocked ? styles.badgeCatUnlocked : styles.badgeCatLocked]}>
+                  {BADGE_CATEGORY_LABEL_FR[b.category]}
+                </Text>
                 <Text style={[styles.badgeName, !b.unlocked && styles.badgeNameMuted]}>{b.title}</Text>
-                <Text style={styles.badgeCrit}>{b.criteria}</Text>
+                <Text style={[styles.badgeCrit, !b.unlocked && styles.badgeCritLocked]}>{b.criteria}</Text>
                 {b.unlocked && b.unlockedAt ? (
-                  <Text style={styles.badgeDate}>
+                  <Text style={styles.badgeDateUnlocked}>
                     {new Date(b.unlockedAt).toLocaleDateString('fr-FR', {
                       day: 'numeric',
                       month: 'short',
@@ -201,16 +212,17 @@ export default function ProfileScreen() {
   );
 }
 
-const C = {
-  bg: DA.bg,
-  card: DA.card,
-  border: DA.borderCyan,
-  accent: DA.cyan,
-  text: DA.text,
-  muted: DA.muted,
-};
+function createProfileStyles(p: ThemePalette) {
+  const C = {
+    bg: p.bg,
+    card: p.card,
+    border: p.borderCyan,
+    accent: p.cyan,
+    text: p.text,
+    muted: p.muted,
+  };
 
-const styles = StyleSheet.create({
+  return StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   topBar: {
     flexDirection: 'row',
@@ -220,7 +232,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   backBtn: { paddingVertical: 8, paddingHorizontal: 4 },
-  backText: { color: C.accent, fontWeight: '800', fontSize: 14 },
+  backText: { color: p.linkOnBg, fontWeight: '800', fontSize: 14 },
   topTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 2, color: C.muted },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12 },
   err: { color: '#f87171', textAlign: 'center', fontWeight: '600' },
@@ -244,7 +256,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   levelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  levelLabel: { fontSize: 12, fontWeight: '800', color: '#0e7490', letterSpacing: 2 },
+  levelLabel: { fontSize: 12, fontWeight: '800', color: p.linkOnBg, letterSpacing: 2 },
   levelValue: { fontSize: 36, fontWeight: '900', color: C.text },
   xpCaption: { marginTop: 8, fontSize: 12, color: C.muted, fontWeight: '600', lineHeight: 18 },
   track: {
@@ -290,31 +302,76 @@ const styles = StyleSheet.create({
   badgeCard: {
     width: '47%',
     minWidth: 140,
-    backgroundColor: C.card,
     borderRadius: 18,
     padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.22)',
+  },
+  badgeCardUnlocked: {
+    backgroundColor: p.cardCream,
+    borderWidth: 2,
+    borderColor: colorWithAlpha(p.gold, 0.75),
+    shadowColor: p.orange,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    elevation: 4,
   },
   badgeCardLocked: {
-    opacity: 0.88,
-    backgroundColor: 'rgba(248,250,252,0.98)',
-    borderColor: 'rgba(148,163,184,0.5)',
+    backgroundColor: p.surface,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: p.border,
+    opacity: 0.95,
   },
   badgeTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
   badgeEmoji: { fontSize: 28, marginBottom: 0 },
-  badgeEmojiMuted: { opacity: 0.65 },
-  badgeLockLabel: { fontSize: 9, fontWeight: '900', color: '#94a3b8' },
+  badgeEmojiMuted: { opacity: 0.45 },
+  badgePillUnlocked: {
+    backgroundColor: colorWithAlpha(p.green, 0.2),
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.green, 0.45),
+  },
+  badgePillUnlockedText: { fontSize: 8, fontWeight: '900', color: p.green, letterSpacing: 0.6 },
+  badgePillLocked: {
+    backgroundColor: colorWithAlpha(p.text, 0.08),
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: p.border,
+  },
+  badgePillLockedText: { fontSize: 8, fontWeight: '900', color: p.muted, letterSpacing: 0.6 },
   badgeCat: {
     fontSize: 9,
     fontWeight: '900',
-    color: '#64748b',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  badgeCatUnlocked: {
+    color: '#78350f',
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.5)',
+  },
+  badgeCatLocked: {
+    color: '#64748b',
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.45)',
   },
   badgeName: { fontSize: 14, fontWeight: '900', color: C.text, marginBottom: 4 },
-  badgeNameMuted: { color: '#64748b' },
+  badgeNameMuted: { color: p.subtle },
   badgeCrit: { fontSize: 11, color: C.muted, fontWeight: '600', marginBottom: 8, lineHeight: 16 },
-  badgeDate: { fontSize: 10, color: '#94a3b8', fontWeight: '600' },
-});
+  badgeCritLocked: { color: p.subtle },
+  badgeDate: { fontSize: 10, color: p.subtle, fontWeight: '600' },
+  badgeDateUnlocked: { fontSize: 10, color: p.green, fontWeight: '800' },
+  });
+}

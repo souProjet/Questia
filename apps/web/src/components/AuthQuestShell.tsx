@@ -56,11 +56,11 @@ export function AuthQuestShell({ badge, title, subtitle, children, footer }: Aut
               >
                 ⚔
               </div>
-              <span className="font-display font-black text-xl tracking-tight text-[var(--text)]">QUESTIA</span>
+              <span className="font-display font-black text-xl tracking-tight text-[var(--on-cream)]">QUESTIA</span>
             </Link>
 
-            <h1 className="font-display text-2xl sm:text-3xl font-black text-[var(--text)] leading-tight mb-2">{title}</h1>
-            <p className="text-sm text-[var(--muted)] leading-relaxed">{subtitle}</p>
+            <h1 className="font-display text-2xl sm:text-3xl font-black text-[var(--on-cream)] leading-tight mb-2">{title}</h1>
+            <p className="text-sm text-[var(--on-cream-muted)] leading-relaxed">{subtitle}</p>
           </header>
 
           <div className="auth-clerk-root mx-auto w-full min-w-0 text-[var(--text)] [color-scheme:light]">

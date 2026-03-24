@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,8 +15,9 @@ import { useRouter, Link } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { MAX_REROLLS_PER_DAY, questDisplayEmoji, questFamilyLabel } from '@questia/shared';
-import { DA } from '@questia/ui';
+import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
+import { useAppTheme } from '../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../components/QuestRewardOverlay';
 
 interface ProgressionPayload {
@@ -79,6 +80,8 @@ function SafetySheet({ quest, onConfirm, onClose }: {
   onConfirm: () => void;
   onClose: () => void;
 }) {
+  const { palette } = useAppTheme();
+  const sheet = useMemo(() => buildSafetySheetStyles(palette), [palette]);
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const rules = [
     "Je reste dans des lieux publics et accessibles.",
@@ -336,11 +339,14 @@ export default function DashboardScreen() {
   const isCompleted = qs === 'completed';
   const questFamily = quest ? questFamilyLabel(quest.archetypeCategory) : null;
 
+  const { palette } = useAppTheme();
+  const styles = useMemo(() => buildDashboardStyles(palette), [palette]);
+
   if (loading && !quest) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.loadingFull}>
-          <ActivityIndicator color="#22d3ee" size="large" />
+          <ActivityIndicator color={palette.cyan} size="large" />
           <Text style={styles.loadingText}>Chargement de ta quête…</Text>
         </View>
       </SafeAreaView>
@@ -526,8 +532,13 @@ export default function DashboardScreen() {
               )}
 
               {quest.hook ? (
-                <View style={styles.hookBox}>
-                  <Text style={styles.hookText}>" {quest.hook} "</Text>
+                <View style={styles.hookCard}>
+                  <Text style={styles.hookCaption}>Pensée du jour</Text>
+                  <Text style={styles.hookQuote}>
+                    <Text style={styles.hookGuillemet}>« </Text>
+                    <Text style={styles.hookQuoteBody}>{quest.hook}</Text>
+                    <Text style={styles.hookGuillemet}> »</Text>
+                  </Text>
                 </View>
               ) : null}
 
@@ -592,18 +603,19 @@ export default function DashboardScreen() {
   );
 }
 
-const C = {
-  bg: DA.bg,
-  card: DA.card,
-  border: DA.borderCyan,
-  accent: DA.cyan,
-  accentWarm: DA.orange,
-  text: DA.text,
-  muted: DA.muted,
-  success: DA.green,
-};
+function buildDashboardStyles(p: ThemePalette) {
+  const C = {
+    bg: p.bg,
+    card: p.card,
+    border: p.borderCyan,
+    accent: p.cyan,
+    accentWarm: p.orange,
+    text: p.text,
+    muted: p.muted,
+    success: p.green,
+  };
 
-const styles = StyleSheet.create({
+  return StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
   content: { padding: 20, paddingTop: 14, paddingBottom: 24 },
@@ -622,22 +634,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: 'rgba(245,158,11,0.12)',
+    backgroundColor: colorWithAlpha(p.orange, 0.22),
     borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.4)',
+    borderColor: colorWithAlpha(p.orange, 0.52),
     marginTop: 2,
   },
-  shopBtnText: { fontSize: 12, color: '#9a3412', fontWeight: '900' },
+  shopBtnText: { fontSize: 12, color: p.text, fontWeight: '900' },
   profileBtn: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: 'rgba(34,211,238,0.12)',
+    backgroundColor: colorWithAlpha(p.cyan, 0.12),
     borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.35)',
+    borderColor: colorWithAlpha(p.cyan, 0.35),
     marginTop: 2,
   },
-  profileBtnText: { fontSize: 12, color: '#0e7490', fontWeight: '900' },
+  profileBtnText: { fontSize: 12, color: p.linkOnBg, fontWeight: '900' },
   appName: { fontSize: 11, fontWeight: '800', color: C.accent, letterSpacing: 3, marginBottom: 4 },
   greeting: { fontSize: 26, fontWeight: '900', color: C.text },
   greetingCompact: { fontSize: 22, lineHeight: 28 },
@@ -646,9 +658,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: DA.surface,
+    backgroundColor: p.surface,
     borderWidth: 1,
-    borderColor: DA.border,
+    borderColor: p.border,
     marginTop: 2,
   },
   signOutText: { fontSize: 12, color: C.muted, fontWeight: '600' },
@@ -659,11 +671,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(249,115,22,0.08)',
+    backgroundColor: colorWithAlpha(p.orange, 0.1),
     borderWidth: 1,
-    borderColor: 'rgba(249,115,22,0.2)',
+    borderColor: colorWithAlpha(p.orange, 0.28),
   },
-  streakHintText: { fontSize: 12, fontWeight: '700', color: '#9a3412', textAlign: 'center' },
+  streakHintText: { fontSize: 12, fontWeight: '700', color: p.onCream, textAlign: 'center' },
   statCard: { flex: 1, minWidth: 0, backgroundColor: C.card, borderRadius: 16, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: C.border },
   statCardCompact: { paddingHorizontal: 8, paddingVertical: 10, borderRadius: 14 },
   statEmoji: { fontSize: 18, marginBottom: 4 },
@@ -675,21 +687,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 16,
-    backgroundColor: 'rgba(34,211,238,0.08)',
+    backgroundColor: colorWithAlpha(p.cyan, 0.12),
     borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.28)',
+    borderColor: colorWithAlpha(p.cyan, 0.32),
   },
   xpStripTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, gap: 8 },
-  xpStripLabel: { fontSize: 12, fontWeight: '900', color: '#0e7490', flex: 1 },
+  xpStripLabel: { fontSize: 12, fontWeight: '900', color: p.linkOnBg, flex: 1 },
   xpStripSub: { fontSize: 10, fontWeight: '700', color: C.muted },
   xpStripMeta: { fontSize: 10, fontWeight: '600', color: C.muted, marginBottom: 8 },
   xpTrack: {
     height: 8,
     borderRadius: 6,
-    backgroundColor: 'rgba(15,23,42,0.06)',
+    backgroundColor: p.trackMuted,
     overflow: 'hidden',
   },
-  xpFill: { height: '100%', borderRadius: 6, backgroundColor: '#22d3ee' },
+  xpFill: { height: '100%', borderRadius: 6, backgroundColor: p.cyan },
   sectionLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 2, marginBottom: 12, textTransform: 'uppercase' },
   questCard: { backgroundColor: C.card, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(249,115,22,0.22)', marginBottom: 16 },
   questCardAccepted: { borderColor: 'rgba(16,185,129,0.3)' },
@@ -699,48 +711,121 @@ const styles = StyleSheet.create({
   questCardBodyCompact: { padding: 16 },
   mapCta: {
     borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.35)',
+    borderColor: colorWithAlpha(p.green, 0.4),
     borderRadius: 16,
     padding: 14,
     marginBottom: 18,
-    backgroundColor: 'rgba(16,185,129,0.06)',
+    backgroundColor: colorWithAlpha(p.green, 0.08),
   },
-  mapCtaLabel: { fontSize: 10, fontWeight: '900', color: '#047857', letterSpacing: 1, marginBottom: 6 },
-  mapCtaText: { fontSize: 15, fontWeight: '800', color: C.text },
-  mapCtaHint: { fontSize: 11, color: C.muted, marginTop: 6, fontWeight: '600' },
+  mapCtaLabel: { fontSize: 10, fontWeight: '900', color: p.green, letterSpacing: 1, marginBottom: 6 },
+  mapCtaText: { fontSize: 15, fontWeight: '800', color: p.onCream },
+  mapCtaHint: { fontSize: 11, color: p.onCreamMuted, marginTop: 6, fontWeight: '600' },
   missionBlock: {
     borderWidth: 2,
-    borderColor: 'rgba(34,211,238,0.45)',
+    borderColor: colorWithAlpha(p.cyan, 0.45),
     borderRadius: 16,
     padding: 16,
     marginBottom: 18,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: p.cardCream,
   },
-  missionLabel: { fontSize: 10, fontWeight: '900', color: '#0e7490', letterSpacing: 2, marginBottom: 8 },
-  missionText: { fontSize: 18, fontWeight: '900', color: C.text, lineHeight: 26 },
-  missionTextCompact: { fontSize: 16, lineHeight: 24 },
-  missionMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(34,211,238,0.35)' },
-  durationPill: { backgroundColor: 'rgba(251,191,36,0.25)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(249,115,22,0.35)' },
-  durationPillText: { fontSize: 12, fontWeight: '900', color: '#9a3412' },
-  titleBlock: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(249,115,22,0.2)' },
+  missionLabel: { fontSize: 10, fontWeight: '900', color: p.linkOnBg, letterSpacing: 2, marginBottom: 8 },
+  missionText: { fontSize: 18, fontWeight: '900', color: p.onCream, lineHeight: 26 },
+  missionTextCompact: { fontSize: 16, lineHeight: 24, color: p.onCream },
+  missionMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: colorWithAlpha(p.cyan, 0.35),
+  },
+  durationPill: {
+    backgroundColor: colorWithAlpha(p.gold, 0.28),
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.orange, 0.4),
+  },
+  durationPillText: { fontSize: 12, fontWeight: '900', color: p.onCream },
+  titleBlock: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 12,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colorWithAlpha(p.orange, 0.25),
+  },
   titleBlockText: { flex: 1 },
-  questIconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(34,211,238,0.1)', borderWidth: 1, borderColor: 'rgba(34,211,238,0.25)', justifyContent: 'center', alignItems: 'center' },
+  questIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: colorWithAlpha(p.cyan, 0.12),
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.28),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   questIcon: { fontSize: 22 },
   questCategory: { fontSize: 12, color: C.muted, fontWeight: '600', marginTop: 4 },
   questTitle: { fontSize: 19, fontWeight: '900', color: C.text, lineHeight: 24 },
   questTitleCompact: { fontSize: 17, lineHeight: 22 },
   questTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  tag: { backgroundColor: DA.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: C.border },
+  tag: { backgroundColor: p.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: C.border },
   tagText: { fontSize: 12, color: C.muted },
-  tagOutdoor: { backgroundColor: 'rgba(16,185,129,0.08)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(16,185,129,0.2)' },
+  tagOutdoor: {
+    backgroundColor: colorWithAlpha(p.green, 0.1),
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.green, 0.28),
+  },
   tagOutdoorText: { fontSize: 12, color: C.success, fontWeight: '600' },
-  hookBox: { backgroundColor: 'rgba(249,115,22,0.08)', borderLeftWidth: 3, borderLeftColor: C.accentWarm, borderRadius: 4, padding: 14, marginBottom: 18 },
-  hookText: { color: '#2dd4bf', fontSize: 14, fontStyle: 'italic', fontWeight: '500', lineHeight: 22 },
+  hookCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.orange, 0.28),
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 18,
+    backgroundColor: p.cardCream,
+    shadowColor: p.cyan,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  hookCaption: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 2,
+    color: p.onCreamMuted,
+    textAlign: 'center',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+  },
+  hookQuote: { textAlign: 'center' },
+  hookGuillemet: { fontSize: 15, fontWeight: '800', color: colorWithAlpha(p.orange, 0.85) },
+  hookQuoteBody: { fontSize: 15, fontWeight: '600', lineHeight: 24, color: p.onCream },
   actions: { gap: 10 },
-  rerollBtn: { backgroundColor: DA.surface, borderWidth: 1, borderColor: C.border, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  rerollBtn: { backgroundColor: p.surface, borderWidth: 1, borderColor: C.border, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   rerollBtnDisabled: { opacity: 0.4 },
   rerollText: { color: C.accent, fontWeight: '700', fontSize: 14 },
-  acceptBtn: { backgroundColor: C.accentWarm, paddingVertical: 16, borderRadius: 14, alignItems: 'center', shadowColor: '#f97316', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 6 },
+  acceptBtn: {
+    backgroundColor: C.accentWarm,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    shadowColor: p.orange,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+  },
   acceptText: { color: '#fff', fontWeight: '800', fontSize: 16 },
   localhostWarning: { backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)', borderRadius: 10, padding: 10, marginBottom: 8 },
   localhostWarningText: { color: '#f59e0b', fontSize: 11, fontWeight: '600', lineHeight: 16 },
@@ -749,31 +834,53 @@ const styles = StyleSheet.create({
   shareBlock: { gap: 12 },
   shareLinkBtn: {
     borderWidth: 2,
-    borderColor: 'rgba(34,211,238,0.45)',
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderColor: colorWithAlpha(p.cyan, 0.45),
+    backgroundColor: p.cardCream,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  shareLinkText: { fontWeight: '900', fontSize: 15, color: '#0e7490' },
-});
+  shareLinkText: { fontWeight: '900', fontSize: 15, color: p.linkOnBg },
+  });
+}
 
-const sheet = StyleSheet.create({
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 },
-  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: DA.overlay },
-  container: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: DA.cardCream, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: DA.borderCyan, maxHeight: '90%', padding: 24, paddingBottom: 40 },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: DA.trackMuted, alignSelf: 'center', marginBottom: 24 },
-  safetyTitle: { fontSize: 20, fontWeight: '900', color: C.text, marginBottom: 8, textAlign: 'center' },
-  safetySubtitle: { fontSize: 14, color: C.muted, marginBottom: 20, textAlign: 'center' },
-  ruleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
-  checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: DA.border, alignItems: 'center', justifyContent: 'center' },
-  checkboxChecked: { backgroundColor: C.success, borderColor: C.success },
-  check: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  ruleText: { fontSize: 14, color: C.text, flex: 1 },
-  safetyActions: { flexDirection: 'row', gap: 10, marginTop: 24 },
-  laterBtn: { flex: 1, paddingVertical: 16, borderRadius: 14, borderWidth: 1, borderColor: DA.border, alignItems: 'center' },
-  laterText: { color: C.muted, fontWeight: '600', fontSize: 14 },
-  goBtn: { flex: 2, paddingVertical: 16, borderRadius: 14, backgroundColor: C.accentWarm, alignItems: 'center' },
-  goBtnDisabled: { opacity: 0.5 },
-  goText: { color: '#fff', fontWeight: '800', fontSize: 15 },
-});
+function buildSafetySheetStyles(p: ThemePalette) {
+  const C = {
+    text: p.text,
+    muted: p.muted,
+    success: p.green,
+    accentWarm: p.orange,
+  };
+  return StyleSheet.create({
+    overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 },
+    backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: p.overlay },
+    container: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: p.cardCream,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      borderTopWidth: 1,
+      borderColor: p.borderCyan,
+      maxHeight: '90%',
+      padding: 24,
+      paddingBottom: 40,
+    },
+    handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: p.trackMuted, alignSelf: 'center', marginBottom: 24 },
+    safetyTitle: { fontSize: 20, fontWeight: '900', color: C.text, marginBottom: 8, textAlign: 'center' },
+    safetySubtitle: { fontSize: 14, color: C.muted, marginBottom: 20, textAlign: 'center' },
+    ruleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
+    checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: p.border, alignItems: 'center', justifyContent: 'center' },
+    checkboxChecked: { backgroundColor: C.success, borderColor: C.success },
+    check: { color: '#fff', fontWeight: '800', fontSize: 14 },
+    ruleText: { fontSize: 14, color: C.text, flex: 1 },
+    safetyActions: { flexDirection: 'row', gap: 10, marginTop: 24 },
+    laterBtn: { flex: 1, paddingVertical: 16, borderRadius: 14, borderWidth: 1, borderColor: p.border, alignItems: 'center' },
+    laterText: { color: C.muted, fontWeight: '600', fontSize: 14 },
+    goBtn: { flex: 2, paddingVertical: 16, borderRadius: 14, backgroundColor: C.accentWarm, alignItems: 'center' },
+    goBtnDisabled: { opacity: 0.5 },
+    goText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  });
+}

@@ -1,6 +1,8 @@
+import { getThemePalette as getThemePaletteInner, type ThemePalette as ThemePaletteInner } from './themePalettes';
+
 /**
  * Palette DA claire Questia (alignée sur docs/direction-artistique + apps/web globals).
- * Pas de fonds sombres : cyan · orange · vert sur base bleu ciel.
+ * Valeur par défaut ; les thèmes boutique utilisent `getThemePalette`.
  */
 export const DA = {
   bg: '#e8f8ff',
@@ -20,3 +22,11 @@ export const DA = {
   divider: 'rgba(19, 33, 45, 0.12)',
   trackMuted: 'rgba(19, 33, 45, 0.15)',
 } as const;
+
+export type ThemePalette = ThemePaletteInner;
+
+export function getThemePalette(themeId: string | null | undefined): ThemePalette {
+  return getThemePaletteInner(themeId);
+}
+
+export { themeUsesLightStatusBar, colorWithAlpha } from './themePalettes';

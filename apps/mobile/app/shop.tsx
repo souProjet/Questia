@@ -32,7 +32,8 @@ import {
   type ShopCatalogEntry,
   type ShopMarketingBadge,
 } from '@questia/shared';
-import { DA } from '@questia/ui';
+import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { useAppTheme } from '../contexts/AppThemeContext';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -60,6 +61,8 @@ type ProfileShop = {
   equippedTitleId: string | null;
   xpBonusCharges: number;
 };
+
+type ShopFlash = { message: string; kind: 'success' | 'error' | 'info' };
 
 type TxRow = {
   id: string;
@@ -160,6 +163,8 @@ function SelectSheet({
   onSelect: (value: string) => void;
   onClose: () => void;
 }) {
+  const { palette } = useAppTheme();
+  const styles = useMemo(() => createShopStyles(palette), [palette]);
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalRoot}>
@@ -208,6 +213,8 @@ const BADGE_BG: Record<ShopMarketingBadge, string> = {
 };
 
 function MarketingBadgeRN({ badge }: { badge: ShopMarketingBadge }) {
+  const { palette } = useAppTheme();
+  const styles = useMemo(() => createShopStyles(palette), [palette]);
   return (
     <View style={[styles.badgePill, { backgroundColor: BADGE_BG[badge] }]}>
       <Text style={styles.badgePillText}>{BADGE_LABELS[badge]}</Text>
@@ -217,6 +224,8 @@ function MarketingBadgeRN({ badge }: { badge: ShopMarketingBadge }) {
 
 export default function ShopScreen() {
   const router = useRouter();
+  const { palette, refresh: refreshAppTheme } = useAppTheme();
+  const styles = useMemo(() => createShopStyles(palette), [palette]);
   const { getToken } = useAuth();
   const getTokenRef = useRef(getToken);
   useEffect(() => {
@@ -252,7 +261,7 @@ export default function ShopScreen() {
   const [error, setError] = useState<string | null>(null);
   const [stripeLoadingSku, setStripeLoadingSku] = useState<string | null>(null);
   const [coinPurchaseSku, setCoinPurchaseSku] = useState<string | null>(null);
-  const [banner, setBanner] = useState<string | null>(null);
+  const [flash, setFlash] = useState<ShopFlash | null>(null);
   const [selectKind, setSelectKind] = useState<null | 'theme' | 'narration' | 'title'>(null);
   const [rechargeModalVisible, setRechargeModalVisible] = useState(false);
   const stripeOpenedAt = useRef<number | null>(null);
@@ -380,7 +389,10 @@ export default function ShopScreen() {
       if (t != null && Date.now() - t < 180_000) {
         stripeOpenedAt.current = null;
         void load({ silent: true }).then(() => runPurchaseCelebration());
-        setBanner('Si le paiement est passé, ton solde est à jour ci-dessous.');
+        setFlash({
+          message: 'Si le paiement est passé, ton solde est à jour ci-dessous.',
+          kind: 'info',
+        });
       }
     });
     return () => sub.remove();
@@ -393,7 +405,7 @@ export default function ShopScreen() {
 
   const rechargeStripe = async (sku: string) => {
     setStripeLoadingSku(sku);
-    setBanner(null);
+    setFlash(null);
     try {
       const token = await getTokenRef.current();
       const res = await apiFetch(`${API_BASE_URL}/api/shop/checkout`, token, {
@@ -402,7 +414,7 @@ export default function ShopScreen() {
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
-        setBanner(data.error ?? 'Impossible de lancer le paiement.');
+        setFlash({ message: data.error ?? 'Impossible de lancer le paiement.', kind: 'error' });
         return;
       }
       stripeOpenedAt.current = Date.now();
@@ -414,7 +426,7 @@ export default function ShopScreen() {
 
   const buyWithCoins = async (sku: string) => {
     setCoinPurchaseSku(sku);
-    setBanner(null);
+    setFlash(null);
     try {
       const token = await getTokenRef.current();
       const res = await apiFetch(`${API_BASE_URL}/api/shop/purchase`, token, {
@@ -423,11 +435,10 @@ export default function ShopScreen() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setBanner(data.error ?? 'Achat impossible.');
+        setFlash({ message: data.error ?? 'Achat impossible.', kind: 'error' });
         return;
       }
       await load({ silent: true });
-      setBanner('Achat effectué avec tes Quest Coins.');
       runPurchaseCelebration(sku);
     } finally {
       setCoinPurchaseSku(null);
@@ -439,7 +450,7 @@ export default function ShopScreen() {
     activeNarrationPackId?: string | null;
     equippedTitleId?: string | null;
   }) => {
-    setBanner(null);
+    setFlash(null);
     const token = await getTokenRef.current();
     const res = await apiFetch(`${API_BASE_URL}/api/profile`, token, {
       method: 'PATCH',
@@ -448,12 +459,12 @@ export default function ShopScreen() {
     });
     if (!res.ok) {
       const j = (await res.json().catch(() => ({}))) as { error?: string };
-      setBanner(j.error ?? 'Impossible d’enregistrer.');
+      setFlash({ message: j.error ?? 'Impossible d’enregistrer.', kind: 'error' });
       return;
     }
     const j = (await res.json()) as { shop?: ProfileShop };
     setShop(j.shop ?? null);
-    setBanner('Préférences enregistrées.');
+    if (patch.activeThemeId != null) void refreshAppTheme();
   };
 
   const balance = shop?.coinBalance ?? 0;
@@ -506,19 +517,27 @@ export default function ShopScreen() {
             <Text style={styles.ownsLbl}>Déjà à toi</Text>
           ) : (
             <Pressable
-              style={[styles.buyBtn, (!affordable || coinPurchaseSku === item.sku) && styles.buyBtnDisabled]}
-              disabled={coinPurchaseSku === item.sku || !affordable}
-              onPress={() => void buyWithCoins(item.sku)}
+              style={[
+                styles.buyBtn,
+                coinPurchaseSku === item.sku && styles.buyBtnDisabled,
+                !affordable && coinPurchaseSku !== item.sku && styles.buyBtnNeedRecharge,
+              ]}
+              disabled={coinPurchaseSku === item.sku}
+              accessibilityHint={
+                !affordable ? 'Ouvre l’achat de Quest Coins — solde insuffisant pour cet article.' : undefined
+              }
+              onPress={() => {
+                if (!affordable) {
+                  setRechargeModalVisible(true);
+                  return;
+                }
+                void buyWithCoins(item.sku);
+              }}
             >
               <Text style={styles.buyBtnText}>{coinPurchaseSku === item.sku ? '…' : 'Acheter'}</Text>
             </Pressable>
           )}
         </View>
-        {!owns && !affordable ? (
-          <Pressable onPress={() => setRechargeModalVisible(true)} accessibilityRole="button">
-            <Text style={styles.insuffLink}>Recharger</Text>
-          </Pressable>
-        ) : null}
       </View>
     );
     return bump ? (
@@ -541,7 +560,7 @@ export default function ShopScreen() {
           <View style={{ width: 72 }} />
         </View>
         <View style={styles.center}>
-          <ActivityIndicator color="#22d3ee" size="large" />
+          <ActivityIndicator color={palette.cyan} size="large" />
         </View>
       </SafeAreaView>
     );
@@ -571,12 +590,29 @@ export default function ShopScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#22d3ee" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.cyan} />}
         keyboardShouldPersistTaps="handled"
       >
-        {banner ? (
-          <View style={styles.banner}>
-            <Text style={styles.bannerText}>{banner}</Text>
+        {flash ? (
+          <View
+            style={[
+              styles.banner,
+              flash.kind === 'success' && styles.bannerSuccess,
+              flash.kind === 'error' && styles.bannerError,
+              flash.kind === 'info' && styles.bannerInfo,
+            ]}
+            accessibilityRole={flash.kind === 'error' ? 'alert' : undefined}
+          >
+            <Text
+              style={[
+                styles.bannerText,
+                flash.kind === 'success' && styles.bannerTextSuccess,
+                flash.kind === 'error' && styles.bannerTextError,
+                flash.kind === 'info' && styles.bannerTextInfo,
+              ]}
+            >
+              {flash.message}
+            </Text>
           </View>
         ) : null}
 
@@ -620,61 +656,88 @@ export default function ShopScreen() {
               </View>
             </LinearGradient>
 
-            <View style={styles.prefsSection}>
-              <View style={styles.prefsHero}>
-                <Text style={styles.prefsTitle}>Équipement & affichage</Text>
-                <Text style={styles.prefsSubtitle}>
-                  Thème, ton des quêtes et titre — utilisés tout de suite dans l’app.
-                </Text>
-              </View>
-              <View style={styles.prefsFields}>
-                <View style={styles.prefsFieldCard}>
-                  <Text style={styles.prefsFieldLabel}>Thème actif</Text>
-                  <Pressable
-                    style={styles.selectRow}
-                    onPress={() => setSelectKind('theme')}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.selectRowText}>{themeLabel(shop.activeThemeId)}</Text>
-                    <Text style={styles.selectChevron}>▼</Text>
-                  </Pressable>
-                </View>
-                <View style={styles.prefsFieldCard}>
-                  <Text style={styles.prefsFieldLabel}>Ton des textes de quête</Text>
-                  <Pressable
-                    style={styles.selectRow}
-                    onPress={() => setSelectKind('narration')}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.selectRowText}>{narrationDisplayLabel(shop)}</Text>
-                    <Text style={styles.selectChevron}>▼</Text>
-                  </Pressable>
-                  <Text style={styles.prefsFieldHint}>Prochaines quêtes du jour uniquement.</Text>
-                </View>
-                <View style={styles.prefsFieldCard}>
-                  <Text style={styles.prefsFieldLabel}>Titre sur le profil</Text>
-                  <Pressable
-                    style={styles.selectRow}
-                    onPress={() => setSelectKind('title')}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.selectRowText}>{titleDisplayLabel(shop)}</Text>
-                    <Text style={styles.selectChevron}>▼</Text>
-                  </Pressable>
-                </View>
-              </View>
-              <View style={styles.prefsStatsRow}>
-                <View style={styles.statPillOrange}>
-                  <Text style={styles.statPillLabel}>Relances bonus</Text>
-                  <Text style={styles.statPillValueReroll}>{shop.bonusRerollCredits}</Text>
-                </View>
-                <View style={styles.statPillGreen}>
-                  <Text style={styles.statPillLabel}>Surcharges XP</Text>
-                  <Text style={styles.statPillValueXp}>{shop.xpBonusCharges}</Text>
-                  <Text style={styles.statPillHint}>
-                    (+{XP_SHOP_BONUS_PER_CHARGE} XP / validation)
-                  </Text>
-                </View>
+            <View style={styles.prefsSectionOuter}>
+              <Text style={styles.prefsSectionHeading}>Équipement & affichage</Text>
+              <Text style={styles.prefsSectionIntro}>
+                Thème, ton des quêtes et titre — appliqués tout de suite dans l’app.
+              </Text>
+
+              <View style={styles.prefsPanelOuter}>
+                <LinearGradient
+                  colors={[palette.cyan, palette.orange, palette.green]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.prefsStripe}
+                />
+                <LinearGradient
+                  colors={[palette.surface, palette.card, palette.card]}
+                  locations={[0, 0.4, 1]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.prefsPanelInner}
+                >
+                  <View style={styles.prefsEquipRow}>
+                    <View style={styles.prefsGearIcon}>
+                      <Text style={styles.prefsGearEmoji} accessibilityElementsHidden>
+                        ⚙️
+                      </Text>
+                    </View>
+                    <View style={styles.prefsEquipCopy}>
+                      <Text style={styles.prefsPanelKicker}>Personnalisation</Text>
+                      <Text style={styles.prefsPanelLead}>Règle l’apparence comme sur ton inventaire</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.prefsFieldsGrid}>
+                    <View style={styles.prefsFieldCard}>
+                      <Text style={styles.prefsFieldLabel}>Thème actif</Text>
+                      <Pressable
+                        style={styles.prefsSelectRow}
+                        onPress={() => setSelectKind('theme')}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.prefsSelectRowText}>{themeLabel(shop.activeThemeId)}</Text>
+                        <Text style={styles.prefsSelectChevron}>▼</Text>
+                      </Pressable>
+                    </View>
+                    <View style={styles.prefsFieldCard}>
+                      <Text style={styles.prefsFieldLabel}>Ton des textes de quête</Text>
+                      <Pressable
+                        style={styles.prefsSelectRow}
+                        onPress={() => setSelectKind('narration')}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.prefsSelectRowText}>{narrationDisplayLabel(shop)}</Text>
+                        <Text style={styles.prefsSelectChevron}>▼</Text>
+                      </Pressable>
+                    </View>
+                    <View style={styles.prefsFieldCard}>
+                      <Text style={styles.prefsFieldLabel}>Titre sur le profil</Text>
+                      <Pressable
+                        style={styles.prefsSelectRow}
+                        onPress={() => setSelectKind('title')}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.prefsSelectRowText}>{titleDisplayLabel(shop)}</Text>
+                        <Text style={styles.prefsSelectChevron}>▼</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+
+                  <View style={styles.prefsStatsRow}>
+                    <View style={styles.statPillOrange}>
+                      <Text style={styles.statPillLabel}>Relances bonus</Text>
+                      <Text style={styles.statPillValueReroll}>{shop.bonusRerollCredits}</Text>
+                    </View>
+                    <View style={styles.statPillGreen}>
+                      <Text style={styles.statPillLabel}>Surcharges XP</Text>
+                      <Text style={styles.statPillValueXp}>{shop.xpBonusCharges}</Text>
+                      <Text style={styles.statPillHint}>
+                        (+{XP_SHOP_BONUS_PER_CHARGE} XP / validation)
+                      </Text>
+                    </View>
+                  </View>
+                </LinearGradient>
               </View>
             </View>
 
@@ -745,11 +808,24 @@ export default function ShopScreen() {
                       <Pressable
                         style={[
                           styles.buyBtnLg,
-                          (balance < featuredBundle.priceCoins || coinPurchaseSku === featuredBundle.sku) &&
-                            styles.buyBtnDisabled,
+                          coinPurchaseSku === featuredBundle.sku && styles.buyBtnDisabled,
+                          balance < featuredBundle.priceCoins &&
+                            coinPurchaseSku !== featuredBundle.sku &&
+                            styles.buyBtnNeedRecharge,
                         ]}
-                        disabled={coinPurchaseSku === featuredBundle.sku || balance < featuredBundle.priceCoins}
-                        onPress={() => void buyWithCoins(featuredBundle.sku)}
+                        disabled={coinPurchaseSku === featuredBundle.sku}
+                        accessibilityHint={
+                          balance < featuredBundle.priceCoins
+                            ? 'Ouvre l’achat de Quest Coins — solde insuffisant pour ce bundle.'
+                            : undefined
+                        }
+                        onPress={() => {
+                          if (balance < featuredBundle.priceCoins) {
+                            setRechargeModalVisible(true);
+                            return;
+                          }
+                          void buyWithCoins(featuredBundle.sku);
+                        }}
                       >
                         <Text style={styles.buyBtnText}>
                           {coinPurchaseSku === featuredBundle.sku ? '…' : 'Acheter le bundle'}
@@ -757,12 +833,6 @@ export default function ShopScreen() {
                       </Pressable>
                     )}
                   </View>
-                  {!catalogItemFullyOwned(featuredBundle, shop, coinPurchasedSkus) &&
-                  balance < featuredBundle.priceCoins ? (
-                    <Pressable onPress={() => setRechargeModalVisible(true)} accessibilityRole="button">
-                      <Text style={styles.insuffLink}>Recharger</Text>
-                    </Pressable>
-                  ) : null}
                 </Animated.View>
               </View>
             ) : null}
@@ -1012,16 +1082,17 @@ export default function ShopScreen() {
   );
 }
 
-const C = {
-  bg: DA.bg,
-  card: DA.card,
-  border: DA.borderCyan,
-  accent: DA.cyan,
-  text: DA.text,
-  muted: DA.muted,
-};
+function createShopStyles(p: ThemePalette) {
+  const C = {
+    bg: p.bg,
+    card: p.card,
+    border: p.borderCyan,
+    accent: p.cyan,
+    text: p.text,
+    muted: p.muted,
+  };
 
-const styles = StyleSheet.create({
+  return StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 40 },
@@ -1032,21 +1103,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(34,211,238,0.2)',
+    borderBottomColor: colorWithAlpha(p.cyan, 0.22),
   },
   backBtn: { paddingVertical: 8, minWidth: 72 },
-  backText: { color: C.accent, fontWeight: '800', fontSize: 14 },
+  backText: { color: p.linkOnBg, fontWeight: '800', fontSize: 14 },
   topTitle: { fontSize: 15, fontWeight: '900', color: C.text },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   banner: {
-    backgroundColor: 'rgba(16,185,129,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.35)',
     borderRadius: 14,
     padding: 12,
     marginBottom: 12,
+    borderWidth: 1,
   },
-  bannerText: { fontSize: 13, fontWeight: '600', color: '#065f46' },
+  bannerSuccess: {
+    backgroundColor: 'rgba(16,185,129,0.14)',
+    borderColor: 'rgba(16,185,129,0.4)',
+  },
+  bannerError: {
+    backgroundColor: 'rgba(248,113,113,0.12)',
+    borderColor: 'rgba(220,38,38,0.35)',
+  },
+  bannerInfo: {
+    backgroundColor: 'rgba(251,191,36,0.14)',
+    borderColor: 'rgba(245,158,11,0.4)',
+  },
+  bannerText: { fontSize: 13, fontWeight: '600' },
+  bannerTextSuccess: { color: p.green },
+  bannerTextError: { color: '#f87171' },
+  bannerTextInfo: { color: p.linkOnBg },
   errBox: { marginBottom: 12 },
   errText: { color: '#f87171', fontWeight: '600', marginBottom: 8 },
   retry: {
@@ -1092,19 +1176,19 @@ const styles = StyleSheet.create({
   balanceK: {
     fontSize: 11,
     fontWeight: '900',
-    color: '#78350f',
+    color: p.onCream,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
-  balanceNum: { fontSize: 32, fontWeight: '900', color: C.text, marginTop: 4, letterSpacing: -0.5 },
-  balanceQc: { fontSize: 20, fontWeight: '900', color: '#b45309' },
+  balanceNum: { fontSize: 32, fontWeight: '900', color: p.onCream, marginTop: 4, letterSpacing: -0.5 },
+  balanceQc: { fontSize: 20, fontWeight: '900', color: p.orange },
   balanceCta: {
-    backgroundColor: '#059669',
+    backgroundColor: p.green,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: 'rgba(16, 185, 129, 0.45)',
+    borderColor: colorWithAlpha(p.green, 0.45),
     flexShrink: 0,
   },
   balanceCtaPressed: { transform: [{ scale: 0.96 }], opacity: 0.94 },
@@ -1114,7 +1198,7 @@ const styles = StyleSheet.create({
   h3: {
     fontSize: 10,
     fontWeight: '900',
-    color: '#94a3b8',
+    color: p.subtle,
     letterSpacing: 1,
     marginBottom: 8,
     marginTop: 8,
@@ -1123,16 +1207,16 @@ const styles = StyleSheet.create({
   sectionSub: { fontSize: 11, color: C.muted, marginBottom: 10, lineHeight: 16 },
   featuredBox: {
     borderWidth: 2,
-    borderColor: 'rgba(139,92,246,0.45)',
+    borderColor: colorWithAlpha(p.cyan, 0.45),
     borderRadius: 22,
     padding: 16,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: p.cardCream,
   },
   featuredHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 10 },
   featuredEmoji: { fontSize: 40 },
-  featuredName: { fontSize: 18, fontWeight: '900', color: C.text, marginTop: 6 },
-  featuredDesc: { fontSize: 13, color: '#334155', fontWeight: '600', lineHeight: 20, marginBottom: 8 },
-  featuredHook: { fontSize: 13, fontWeight: '700', color: '#5b21b6', marginBottom: 8 },
+  featuredName: { fontSize: 18, fontWeight: '900', color: p.onCream, marginTop: 6 },
+  featuredDesc: { fontSize: 13, color: p.onCreamMuted, fontWeight: '600', lineHeight: 20, marginBottom: 8 },
+  featuredHook: { fontSize: 13, fontWeight: '700', color: p.linkOnBg, marginBottom: 8 },
   featuredSave: { fontSize: 12, marginBottom: 10 },
   featuredFooter: {
     flexDirection: 'row',
@@ -1141,29 +1225,29 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(139,92,246,0.25)',
+    borderTopColor: colorWithAlpha(p.cyan, 0.28),
     gap: 12,
   },
-  featuredPrice: { fontSize: 22, fontWeight: '900', color: '#92400e' },
+  featuredPrice: { fontSize: 22, fontWeight: '900', color: p.orange },
   coinCard: {
     borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.35)',
+    borderColor: colorWithAlpha(p.green, 0.38),
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
-    backgroundColor: '#fff',
+    backgroundColor: p.card,
   },
   coinCardBest: {
     borderWidth: 2,
-    borderColor: '#34d399',
-    backgroundColor: 'rgba(236,253,245,0.95)',
+    borderColor: p.green,
+    backgroundColor: colorWithAlpha(p.green, 0.08),
   },
-  coinGrant: { fontSize: 18, fontWeight: '900', color: '#047857', marginTop: 6 },
-  coinMeta: { fontSize: 11, fontWeight: '700', color: '#475569', marginTop: 4 },
-  bonusPct: { color: '#047857', fontWeight: '900' },
+  coinGrant: { fontSize: 18, fontWeight: '900', color: p.green, marginTop: 6 },
+  coinMeta: { fontSize: 11, fontWeight: '700', color: p.muted, marginTop: 4 },
+  bonusPct: { color: p.green, fontWeight: '900' },
   stripeBtn: {
     marginTop: 12,
-    backgroundColor: '#f97316',
+    backgroundColor: p.orange,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -1172,44 +1256,44 @@ const styles = StyleSheet.create({
   stripeBtnText: { color: '#fff', fontWeight: '900', fontSize: 13 },
   card: {
     borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.45)',
+    borderColor: p.border,
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     backgroundColor: C.card,
   },
   cardHighlight: {
-    borderColor: 'rgba(16,185,129,0.45)',
+    borderColor: colorWithAlpha(p.green, 0.45),
     borderWidth: 2,
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   cardEmoji: { fontSize: 28 },
   cardBadges: { alignItems: 'flex-end', gap: 4 },
-  kindLbl: { fontSize: 9, fontWeight: '900', color: '#94a3b8', letterSpacing: 1, textAlign: 'right' },
+  kindLbl: { fontSize: 9, fontWeight: '900', color: p.subtle, letterSpacing: 1, textAlign: 'right' },
   infoDot: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: p.border,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: p.inputBg,
   },
-  infoDotText: { fontSize: 10, fontWeight: '900', color: '#475569' },
-  includedLine: { fontSize: 11, color: '#334155', fontWeight: '600', marginTop: 4, lineHeight: 16 },
-  includedLineFeatured: { fontSize: 12, color: '#334155', fontWeight: '600', marginTop: 4, lineHeight: 18 },
+  infoDotText: { fontSize: 10, fontWeight: '900', color: p.muted },
+  includedLine: { fontSize: 11, color: p.muted, fontWeight: '600', marginTop: 4, lineHeight: 16 },
+  includedLineFeatured: { fontSize: 12, color: p.muted, fontWeight: '600', marginTop: 4, lineHeight: 18 },
   featuredTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 6 },
   featuredNameFlex: { flex: 1, minWidth: 0, marginTop: 0 },
   badgePill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
   badgePillText: { fontSize: 9, fontWeight: '900', color: '#fff', letterSpacing: 0.5 },
   cardTitle: { fontSize: 15, fontWeight: '900', color: C.text, marginTop: 8 },
   cardDesc: { fontSize: 12, color: C.muted, marginTop: 6, lineHeight: 18, fontWeight: '600' },
-  cardHook: { fontSize: 11, fontWeight: '700', color: '#047857', marginTop: 6 },
+  cardHook: { fontSize: 11, fontWeight: '700', color: p.green, marginTop: 6 },
   cardSave: { fontSize: 11, marginTop: 6 },
-  strike: { textDecorationLine: 'line-through', color: '#94a3b8' },
-  saveAmt: { fontWeight: '900', color: '#047857' },
-  mutedSm: { color: '#94a3b8', fontSize: 11 },
+  strike: { textDecorationLine: 'line-through', color: p.subtle },
+  saveAmt: { fontWeight: '900', color: p.green },
+  mutedSm: { color: p.subtle, fontSize: 11 },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1217,80 +1301,134 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(226,232,240,0.9)',
+    borderTopColor: p.divider,
   },
-  price: { fontSize: 18, fontWeight: '900', color: '#92400e' },
-  ownsLbl: { fontSize: 11, fontWeight: '900', color: '#047857', letterSpacing: 0.5 },
+  price: { fontSize: 18, fontWeight: '900', color: p.orange },
+  ownsLbl: { fontSize: 11, fontWeight: '900', color: p.green, letterSpacing: 0.5 },
   buyBtn: {
-    backgroundColor: '#f97316',
+    backgroundColor: p.orange,
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 12,
   },
   buyBtnLg: {
-    backgroundColor: '#f97316',
+    backgroundColor: p.orange,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
   },
   buyBtnDisabled: { opacity: 0.45 },
+  /** Solde insuffisant : bouton toujours actif → ouvre la recharge ; contour pour le signaler */
+  buyBtnNeedRecharge: {
+    borderWidth: 2,
+    borderColor: p.gold,
+  },
   buyBtnText: { color: '#fff', fontWeight: '900', fontSize: 13 },
-  insuffLink: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#c2410c',
-    marginTop: 6,
-    textDecorationLine: 'underline',
-    textDecorationColor: 'rgba(194,65,12,0.45)',
+  /** Aligné sur .shop-prefs-panel + en-tête section (apps/web shop) */
+  prefsSectionOuter: { marginBottom: 20 },
+  prefsSectionHeading: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: C.text,
+    marginBottom: 4,
+    letterSpacing: -0.3,
   },
-  prefsSection: {
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.35)',
-    backgroundColor: '#fff',
-    marginBottom: 20,
+  prefsSectionIntro: {
+    fontSize: 14,
+    color: C.muted,
+    marginBottom: 16,
+    lineHeight: 20,
+    maxWidth: 560,
+    fontWeight: '500',
+  },
+  prefsPanelOuter: {
+    borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#0f172a',
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
+    borderWidth: 2,
+    borderColor: p.borderCyan,
+    backgroundColor: p.card,
+    shadowColor: p.text,
+    shadowOpacity: 0.14,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 5,
   },
-  prefsHero: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(226,232,240,0.95)',
-    backgroundColor: 'rgba(248,250,252,0.95)',
+  prefsStripe: { height: 4, width: '100%' },
+  prefsPanelInner: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 22,
   },
-  prefsTitle: { fontSize: 17, fontWeight: '900', color: C.text },
-  prefsSubtitle: { fontSize: 12, color: C.muted, fontWeight: '600', marginTop: 4, lineHeight: 17 },
-  prefsFields: { padding: 14, gap: 12 },
+  prefsEquipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 22,
+  },
+  prefsGearIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${p.cyan}22`,
+    borderWidth: 2,
+    borderColor: `${p.cyan}48`,
+  },
+  prefsGearEmoji: { fontSize: 22, lineHeight: 26 },
+  prefsEquipCopy: { flex: 1, minWidth: 0 },
+  prefsPanelKicker: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 2.2,
+    textTransform: 'uppercase',
+    color: C.muted,
+    marginBottom: 4,
+  },
+  prefsPanelLead: { fontSize: 14, fontWeight: '700', color: C.text, lineHeight: 20 },
+  prefsFieldsGrid: { gap: 16 },
   prefsFieldCard: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(226,232,240,0.95)',
-    backgroundColor: 'rgba(248,250,252,0.65)',
-    padding: 12,
+    borderColor: p.borderCyan,
+    backgroundColor: p.surface,
+    padding: 16,
+    gap: 8,
   },
   prefsFieldLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '900',
-    color: '#64748b',
-    letterSpacing: 0.8,
-    marginBottom: 8,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
+    color: C.muted,
   },
   prefsFieldHint: { fontSize: 11, color: C.muted, marginTop: 8, lineHeight: 15 },
+  prefsSelectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: p.divider,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: p.inputBg,
+    shadowColor: p.text,
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  prefsSelectRowText: { fontSize: 14, fontWeight: '600', color: C.text, flex: 1, marginRight: 8, lineHeight: 20 },
+  prefsSelectChevron: { fontSize: 10, color: p.linkOnBg, fontWeight: '900' },
   prefsStatsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    marginTop: 20,
+    paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(241,245,249,0.95)',
-    backgroundColor: 'rgba(248,250,252,0.9)',
+    borderTopColor: p.divider,
   },
   statPillOrange: {
     flexDirection: 'row',
@@ -1298,8 +1436,8 @@ const styles = StyleSheet.create({
     gap: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(251,146,60,0.45)',
-    backgroundColor: 'rgba(255,247,237,0.95)',
+    borderColor: p.divider,
+    backgroundColor: `${p.orange}24`,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
@@ -1310,19 +1448,19 @@ const styles = StyleSheet.create({
     gap: 6,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.4)',
-    backgroundColor: 'rgba(236,253,245,0.95)',
+    borderColor: p.divider,
+    backgroundColor: `${p.green}22`,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
-  statPillLabel: { fontSize: 11, fontWeight: '700', color: '#334155' },
-  statPillValueReroll: { fontSize: 13, fontWeight: '900', color: '#c2410c' },
-  statPillValueXp: { fontSize: 13, fontWeight: '900', color: '#047857' },
-  statPillHint: { fontSize: 10, fontWeight: '600', color: '#047857', flexShrink: 1 },
+  statPillLabel: { fontSize: 12, fontWeight: '600', color: C.muted },
+  statPillValueReroll: { fontSize: 13, fontWeight: '900', color: p.orange },
+  statPillValueXp: { fontSize: 13, fontWeight: '900', color: p.green },
+  statPillHint: { fontSize: 10, fontWeight: '500', color: C.muted, flexShrink: 1 },
   label: {
     fontSize: 10,
     fontWeight: '900',
-    color: '#0e7490',
+    color: p.linkOnBg,
     letterSpacing: 1,
     marginBottom: 6,
     marginTop: 10,
@@ -1333,27 +1471,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.45)',
+    borderColor: colorWithAlpha(p.cyan, 0.42),
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    backgroundColor: '#fff',
+    backgroundColor: p.inputBg,
   },
   selectRowText: { fontSize: 14, fontWeight: '700', color: C.text, flex: 1, marginRight: 8 },
-  selectChevron: { fontSize: 10, color: '#0e7490', fontWeight: '900' },
+  selectChevron: { fontSize: 10, color: p.linkOnBg, fontWeight: '900' },
   modalRoot: {
     flex: 1,
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: p.overlay,
   },
   modalSheetWrap: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: '#fff',
+    backgroundColor: p.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '78%',
@@ -1361,8 +1499,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     zIndex: 2,
     elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
+    shadowColor: p.text,
+    shadowOpacity: 0.22,
     shadowRadius: 12,
   },
   rechargeModalSheet: {
@@ -1374,8 +1512,8 @@ const styles = StyleSheet.create({
   },
   rechargeModalHeader: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(16,185,129,0.2)',
-    backgroundColor: 'rgba(236,253,245,0.85)',
+    borderBottomColor: colorWithAlpha(p.green, 0.25),
+    backgroundColor: colorWithAlpha(p.green, 0.1),
   },
   rechargeModalHeaderTop: {
     flexDirection: 'row',
@@ -1390,7 +1528,7 @@ const styles = StyleSheet.create({
   rechargeModalTitle: { fontSize: 18, fontWeight: '900', color: C.text },
   rechargeModalSubtitle: {
     fontSize: 12,
-    color: '#475569',
+    color: p.muted,
     fontWeight: '600',
     marginTop: 6,
     lineHeight: 17,
@@ -1411,12 +1549,12 @@ const styles = StyleSheet.create({
   rechargeBalancePillVal: { fontSize: 13, fontWeight: '900', color: C.text },
   rechargeTrustPill: {
     borderRadius: 999,
-    backgroundColor: 'rgba(15,23,42,0.06)',
+    backgroundColor: colorWithAlpha(p.text, 0.06),
     paddingVertical: 6,
     paddingHorizontal: 10,
     justifyContent: 'center',
   },
-  rechargeTrustPillTxt: { fontSize: 10, fontWeight: '700', color: '#475569' },
+  rechargeTrustPillTxt: { fontSize: 10, fontWeight: '700', color: p.muted },
   rechargeModalHint: {
     fontSize: 11,
     color: C.muted,
@@ -1430,14 +1568,14 @@ const styles = StyleSheet.create({
   rechargePackCard: {
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: 'rgba(226,232,240,0.95)',
-    backgroundColor: '#fff',
+    borderColor: p.divider,
+    backgroundColor: p.inputBg,
     padding: 14,
     marginBottom: 4,
   },
   rechargePackCardBest: {
-    borderColor: '#34d399',
-    backgroundColor: 'rgba(236,253,245,0.5)',
+    borderColor: p.green,
+    backgroundColor: colorWithAlpha(p.green, 0.12),
   },
   rechargePackTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   rechargePackEmoji: { fontSize: 28 },
@@ -1453,14 +1591,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(226,232,240,0.95)',
+    borderTopColor: p.divider,
   },
   rechargePackEur: { fontSize: 22, fontWeight: '900', color: C.text },
-  rechargePackMeta: { fontSize: 11, fontWeight: '700', color: '#64748b', marginTop: 4 },
+  rechargePackMeta: { fontSize: 11, fontWeight: '700', color: p.muted, marginTop: 4 },
   rechargeModalFooter: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(241,245,249,0.95)',
-    backgroundColor: 'rgba(248,250,252,0.95)',
+    borderTopColor: p.divider,
+    backgroundColor: p.surface,
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 12,
@@ -1468,7 +1606,7 @@ const styles = StyleSheet.create({
   rechargeModalFooterTxt: {
     fontSize: 11,
     textAlign: 'center',
-    color: '#64748b',
+    color: p.muted,
     fontWeight: '600',
     lineHeight: 16,
     marginBottom: 8,
@@ -1480,7 +1618,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     textAlign: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(226,232,240,0.9)',
+    borderBottomColor: p.divider,
   },
   modalScroll: { maxHeight: 360 },
   modalRow: {
@@ -1490,19 +1628,19 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(241,245,249,0.9)',
+    borderBottomColor: p.divider,
   },
-  modalRowSelected: { backgroundColor: 'rgba(34,211,238,0.08)' },
+  modalRowSelected: { backgroundColor: colorWithAlpha(p.cyan, 0.12) },
   modalRowText: { fontSize: 15, fontWeight: '600', color: C.text, flex: 1, paddingRight: 12 },
-  modalCheck: { fontSize: 16, color: '#047857', fontWeight: '900' },
+  modalCheck: { fontSize: 16, color: p.green, fontWeight: '900' },
   modalCancel: {
     paddingVertical: 12,
     alignItems: 'center',
   },
-  modalCancelText: { fontSize: 15, fontWeight: '800', color: '#0e7490' },
+  modalCancelText: { fontSize: 15, fontWeight: '800', color: p.linkOnBg },
   hintSm: { fontSize: 11, color: C.muted, marginTop: 6, lineHeight: 16 },
   statLine: { fontSize: 13, color: C.text, fontWeight: '600', marginTop: 10 },
-  statEm: { fontWeight: '900', color: '#047857' },
+  statEm: { fontWeight: '900', color: p.green },
   emptyTx: {
     textAlign: 'center',
     padding: 24,
@@ -1510,22 +1648,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#cbd5e1',
+    borderColor: p.border,
     borderRadius: 14,
   },
   txRow: {
     flexDirection: 'row',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(226,232,240,0.9)',
+    borderBottomColor: p.divider,
     gap: 8,
   },
   txLabel: { fontSize: 13, fontWeight: '700', color: C.text },
-  txSku: { fontSize: 9, color: '#94a3b8', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  txSku: { fontSize: 9, color: p.subtle, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
   txCoins: { fontSize: 13, fontWeight: '900' },
-  txPos: { color: '#047857' },
-  txNeg: { color: '#c2410c' },
-  txEur: { fontSize: 11, color: '#475569', fontWeight: '600' },
-  txAfter: { fontSize: 9, color: '#94a3b8' },
-  txDate: { fontSize: 10, color: '#94a3b8', marginTop: 4 },
-});
+  txPos: { color: p.green },
+  txNeg: { color: '#f87171' },
+  txEur: { fontSize: 11, color: p.muted, fontWeight: '600' },
+  txAfter: { fontSize: 9, color: p.subtle },
+  txDate: { fontSize: 10, color: p.subtle, marginTop: 4 },
+  });
+}

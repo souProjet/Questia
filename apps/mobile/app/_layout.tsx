@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { DA } from '@questia/ui';
+import { AppThemeProvider, useAppTheme } from '../contexts/AppThemeContext';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
@@ -51,6 +52,7 @@ const PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 
 function InitialLayout() {
   const { isSignedIn, isLoaded } = useAuth();
+  const { statusBarStyle } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -69,7 +71,7 @@ function InitialLayout() {
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={statusBarStyle} />
       <Slot />
     </>
   );
@@ -92,7 +94,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY} tokenCache={tokenCache}>
-        <InitialLayout />
+        <AppThemeProvider>
+          <InitialLayout />
+        </AppThemeProvider>
       </ClerkProvider>
     </SafeAreaProvider>
   );

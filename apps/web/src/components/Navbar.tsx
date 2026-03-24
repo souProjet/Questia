@@ -9,19 +9,9 @@ export function Navbar() {
   const { isSignedIn } = useAuth();
   const isAppRoute = pathname?.startsWith('/app');
 
-  const navShell = {
-    background: 'linear-gradient(145deg, rgba(255,255,255,0.93), rgba(236,253,255,0.9))',
-    borderColor: 'rgba(34,211,238,.35)',
-    boxShadow: '0 10px 30px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.7)',
-    backdropFilter: 'blur(14px)' as const,
-  };
-
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-3 pt-3">
-      <nav
-        className="flex items-center justify-between px-4 md:px-6 py-3 mx-auto max-w-6xl rounded-2xl border"
-        style={navShell}
-      >
+      <nav className="navbar-shell flex items-center justify-between px-4 md:px-6 py-3 mx-auto max-w-6xl rounded-2xl">
         {/* Logo */}
         <Link href={isSignedIn ? '/app' : '/'} className="flex items-center gap-3 group">
           <div
@@ -31,8 +21,8 @@ export function Navbar() {
             ⚔
           </div>
           <div className="leading-none">
-            <p className="font-display font-black text-lg tracking-tight text-slate-900">QUESTIA</p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-900">Quêtes quotidiennes dans la vraie vie</p>
+            <p className="font-display font-black text-lg tracking-tight text-[var(--text)]">QUESTIA</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--link-on-bg)]">Quêtes quotidiennes dans la vraie vie</p>
           </div>
         </Link>
 
@@ -62,13 +52,13 @@ export function Navbar() {
                 <>
                   <Link
                     href="/app/shop"
-                    className="hidden sm:inline-flex text-sm font-black text-cyan-950 px-3 py-2 rounded-xl hover:bg-white/85 border border-amber-200/60 transition-all"
+                    className="hidden sm:inline-flex text-sm font-black text-[var(--text)] px-3 py-2 rounded-xl border-2 border-[color:color-mix(in_srgb,var(--orange)_48%,transparent)] bg-[color:color-mix(in_srgb,var(--card)_72%,transparent)] hover:bg-[var(--card)] hover:border-[color:color-mix(in_srgb,var(--orange)_58%,transparent)] transition-all shadow-sm"
                   >
                     Boutique
                   </Link>
                   <Link
                     href="/app/profile"
-                    className="hidden sm:inline-flex text-sm font-black text-cyan-950 px-3 py-2 rounded-xl hover:bg-white/85 border border-cyan-200/60 transition-all"
+                    className="hidden sm:inline-flex text-sm font-black text-[var(--text)] px-3 py-2 rounded-xl border-2 border-[color:color-mix(in_srgb,var(--violet)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--card)_72%,transparent)] hover:bg-[var(--card)] hover:border-[color:color-mix(in_srgb,var(--violet)_55%,transparent)] transition-all shadow-sm"
                   >
                     Profil
                   </Link>

@@ -113,7 +113,7 @@ export default function QuestDestinationMap({
     return (
       <div className="rounded-2xl border border-cyan-200/70 bg-white/90 p-4 shadow-sm">
         <p className="text-sm font-bold text-cyan-950">📍 {destination.label}</p>
-        <p className="mt-1 text-xs text-[var(--muted)]">
+        <p className="mt-1 text-xs text-[var(--on-cream-muted)]">
           Le lieu n’a pas pu être placé sur une carte automatiquement. Ouvre la recherche ci-dessous.
         </p>
         <a
@@ -177,7 +177,7 @@ export default function QuestDestinationMap({
             Itinéraire à pied (Google Maps)
           </a>
         ) : (
-          <p className="text-xs text-[var(--muted)]">
+          <p className="text-xs text-[var(--on-cream-muted)]">
             Active la localisation dans le navigateur pour tracer un itinéraire depuis ta position.
           </p>
         )}

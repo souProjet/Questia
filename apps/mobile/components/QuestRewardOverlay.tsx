@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { DisplayBadge, XpBreakdown } from '@questia/shared';
-import { DA } from '@questia/ui';
+import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { useAppTheme } from '../contexts/AppThemeContext';
 
 export interface QuestRewardPayload {
   xpGain: {
@@ -29,6 +30,8 @@ type Props = {
 };
 
 export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
+  const { palette } = useAppTheme();
+  const styles = useMemo(() => buildRewardStyles(palette), [palette]);
   const scale = useRef(new Animated.Value(0.88)).current;
   const xpPop = useRef(new Animated.Value(0)).current;
 
@@ -62,7 +65,7 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
         <View style={styles.glowRing} />
         <Animated.View style={[styles.cardWrap, { transform: [{ scale }] }]}>
           <LinearGradient
-            colors={['#fff7ed', '#ecfeff', '#fffbeb']}
+            colors={[palette.cardCream, palette.surface, '#fffbeb']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.card}
@@ -125,7 +128,7 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
 
             <Pressable style={styles.cta} onPress={onContinue} accessibilityRole="button">
               <LinearGradient
-                colors={['#f97316', '#fbbf24']}
+                colors={[palette.orange, palette.gold]}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
                 style={styles.ctaGrad}
@@ -140,92 +143,94 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15,23,42,0.55)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  glowRing: {
-    position: 'absolute',
-    alignSelf: 'center',
-    width: 280,
-    height: 280,
-    borderRadius: 200,
-    backgroundColor: '#22d3ee',
-    opacity: 0.45,
-    top: '22%',
-  },
-  cardWrap: {
-    position: 'relative',
-    zIndex: 2,
-  },
-  card: {
-    borderRadius: 28,
-    padding: 22,
-    borderWidth: 2,
-    borderColor: 'rgba(249,115,22,0.35)',
-    shadowColor: '#f97316',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
-    elevation: 12,
-  },
-  kicker: {
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 2,
-    color: '#0e7490',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  xpBig: {
-    fontSize: 44,
-    fontWeight: '900',
-    color: DA.text,
-    textAlign: 'center',
-  },
-  totalLine: {
-    textAlign: 'center',
-    marginTop: 6,
-    marginBottom: 16,
-    fontSize: 14,
-    color: DA.muted,
-    fontWeight: '600',
-  },
-  totalBold: { color: '#0e7490', fontWeight: '900' },
-  rulesBox: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.35)',
-    marginBottom: 14,
-    gap: 4,
-  },
-  rulesTitle: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 2,
-    color: '#0e7490',
-    marginBottom: 6,
-  },
-  ruleLine: { fontSize: 12, color: '#0f172a', fontWeight: '600' },
-  ruleLineMuted: { fontSize: 12, color: '#64748b', fontWeight: '600' },
-  badgeBlock: { marginBottom: 14, gap: 10 },
-  badgeKicker: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#f97316',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  badgeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  badgeEmoji: { fontSize: 28 },
-  badgeTitle: { fontSize: 15, fontWeight: '900', color: DA.text },
-  badgeCrit: { fontSize: 12, color: DA.muted, marginTop: 2, fontWeight: '600' },
-  cta: { borderRadius: 16, overflow: 'hidden' },
-  ctaGrad: { paddingVertical: 16, alignItems: 'center' },
-  ctaText: { color: '#fff', fontWeight: '900', fontSize: 16 },
-});
+function buildRewardStyles(p: ThemePalette) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: p.overlay,
+      justifyContent: 'center',
+      padding: 20,
+    },
+    glowRing: {
+      position: 'absolute',
+      alignSelf: 'center',
+      width: 280,
+      height: 280,
+      borderRadius: 200,
+      backgroundColor: p.cyan,
+      opacity: 0.45,
+      top: '22%',
+    },
+    cardWrap: {
+      position: 'relative',
+      zIndex: 2,
+    },
+    card: {
+      borderRadius: 28,
+      padding: 22,
+      borderWidth: 2,
+      borderColor: colorWithAlpha(p.orange, 0.38),
+      shadowColor: p.orange,
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.35,
+      shadowRadius: 24,
+      elevation: 12,
+    },
+    kicker: {
+      fontSize: 12,
+      fontWeight: '900',
+      letterSpacing: 2,
+      color: p.linkOnBg,
+      textAlign: 'center',
+      marginBottom: 8,
+    },
+    xpBig: {
+      fontSize: 44,
+      fontWeight: '900',
+      color: p.onCream,
+      textAlign: 'center',
+    },
+    totalLine: {
+      textAlign: 'center',
+      marginTop: 6,
+      marginBottom: 16,
+      fontSize: 14,
+      color: p.onCreamMuted,
+      fontWeight: '600',
+    },
+    totalBold: { color: p.linkOnBg, fontWeight: '900' },
+    rulesBox: {
+      backgroundColor: p.cardCream,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: p.borderCyan,
+      marginBottom: 14,
+      gap: 4,
+    },
+    rulesTitle: {
+      fontSize: 10,
+      fontWeight: '900',
+      letterSpacing: 2,
+      color: p.linkOnBg,
+      marginBottom: 6,
+    },
+    ruleLine: { fontSize: 12, color: p.onCream, fontWeight: '600' },
+    ruleLineMuted: { fontSize: 12, color: p.onCreamMuted, fontWeight: '600' },
+    badgeBlock: { marginBottom: 14, gap: 10 },
+    badgeKicker: {
+      fontSize: 11,
+      fontWeight: '900',
+      color: p.orange,
+      letterSpacing: 1,
+      marginBottom: 4,
+    },
+    badgeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+    badgeEmoji: { fontSize: 28 },
+    badgeTitle: { fontSize: 15, fontWeight: '900', color: p.onCream },
+    badgeCrit: { fontSize: 12, color: p.onCreamMuted, marginTop: 2, fontWeight: '600' },
+    cta: { borderRadius: 16, overflow: 'hidden' },
+    ctaGrad: { paddingVertical: 16, alignItems: 'center' },
+    ctaText: { color: '#fff', fontWeight: '900', fontSize: 16 },
+  });
+}
