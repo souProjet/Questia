@@ -13,6 +13,8 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      TURBO_TELEMETRY_DISABLED: 1
     steps:
       - uses: actions/checkout@v4
 

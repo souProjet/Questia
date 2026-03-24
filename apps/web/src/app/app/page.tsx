@@ -102,7 +102,12 @@ function SafetySheet({ quest, onConfirm, onClose }: {
     "J'ai informé quelqu'un de mon itinéraire (optionnel mais recommandé).",
   ];
   const toggle = (i: number) =>
-    setChecked((p) => { const n = new Set(p); n.has(i) ? n.delete(i) : n.add(i); return n; });
+    setChecked((p) => {
+      const n = new Set(p);
+      if (n.has(i)) n.delete(i);
+      else n.add(i);
+      return n;
+    });
   const ok = checked.size === rules.length;
 
   return (

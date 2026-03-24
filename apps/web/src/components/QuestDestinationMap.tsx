@@ -64,9 +64,12 @@ export default function QuestDestinationMap({
   const [route, setRoute] = useState<[number, number][] | null>(null);
   const [routeError, setRouteError] = useState(false);
 
-  const dest = destination.lat != null && destination.lon != null
-    ? { lat: destination.lat, lon: destination.lon }
-    : null;
+  const dest = useMemo(() => {
+    if (destination.lat != null && destination.lon != null) {
+      return { lat: destination.lat, lon: destination.lon };
+    }
+    return null;
+  }, [destination.lat, destination.lon]);
 
   useEffect(() => {
     if (!dest || !userPosition) {
@@ -84,7 +87,7 @@ export default function QuestDestinationMap({
         if (!ac.signal.aborted) setRouteError(true);
       });
     return () => ac.abort();
-  }, [dest?.lat, dest?.lon, userPosition?.lat, userPosition?.lon]);
+  }, [dest, userPosition]);
 
   const googleSearch = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination.label)}`;
   const googleDir =
