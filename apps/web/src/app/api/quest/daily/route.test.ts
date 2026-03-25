@@ -232,6 +232,7 @@ describe('/api/quest/daily', () => {
     });
     prismaMock.questLog.findUnique.mockResolvedValue({
       ...logRow,
+      archetypeId: 4,
       questDate: '2026-03-24',
       status: 'pending',
     });
