@@ -1,17 +1,41 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+let Notifications: typeof import('expo-notifications') | null = null;
+
+function isExpoGo(): boolean {
+  return Constants.appOwnership === 'expo';
+}
+
+async function getNotificationsModule() {
+  if (Notifications) return Notifications;
+  if (isExpoGo()) return null;
+  try {
+    Notifications = await import('expo-notifications');
+    return Notifications;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Configure le handler de notification (appeler une seule fois, au mount de l'app).
+ * No-op dans Expo Go.
+ */
+export async function setupNotificationHandler() {
+  const mod = await getNotificationsModule();
+  if (!mod) return;
+  mod.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 function resolveProjectId(): string | undefined {
   const fromConfig = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
@@ -22,37 +46,34 @@ function resolveProjectId(): string | undefined {
 }
 
 /**
- * Demande la permission et renvoie un jeton Expo Push, ou null (simulateur, refus, projet non configuré).
+ * Demande la permission et renvoie un jeton Expo Push, ou null (simulateur, refus, projet non configuré, Expo Go).
  */
 export async function registerForExpoPushTokenAsync(): Promise<string | null> {
-  if (!Device.isDevice) {
-    return null;
-  }
+  if (!Device.isDevice) return null;
 
-  const { status: existing } = await Notifications.getPermissionsAsync();
+  const mod = await getNotificationsModule();
+  if (!mod) return null;
+
+  const { status: existing } = await mod.getPermissionsAsync();
   let finalStatus = existing;
   if (existing !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
+    const { status } = await mod.requestPermissionsAsync();
     finalStatus = status;
   }
-  if (finalStatus !== 'granted') {
-    return null;
-  }
+  if (finalStatus !== 'granted') return null;
 
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
+    await mod.setNotificationChannelAsync('default', {
       name: 'default',
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: mod.AndroidImportance.DEFAULT,
     });
   }
 
   const projectId = resolveProjectId();
-  if (!projectId) {
-    return null;
-  }
+  if (!projectId) return null;
 
   try {
-    const token = await Notifications.getExpoPushTokenAsync({ projectId });
+    const token = await mod.getExpoPushTokenAsync({ projectId });
     return token.data;
   } catch {
     return null;

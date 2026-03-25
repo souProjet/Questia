@@ -265,68 +265,82 @@ export default function ProfilePage() {
               ))}
             </ul>
 
-            <section className="mt-12 rounded-3xl border-2 border-slate-300/50 bg-[var(--surface)]/95 p-6 shadow-inner">
-              <h2 className="label mb-3">Données personnelles et IA</h2>
-              <p className="text-sm text-[var(--muted)] mb-4 leading-relaxed">
-                Les textes de quête sont générés par intelligence artificielle à partir de ton profil, du contexte
-                (météo, lieu) et de règles internes. Ce contenu est une{' '}
-                <strong className="text-[var(--text)]">suggestion ludique</strong>, pas un conseil médical ou
-                psychologique. Tu peux consulter le détail des traitements et tes droits dans la politique de
-                confidentialité.
-              </p>
-              <p className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-4">
-                <Link
-                  href="/legal/confidentialite"
-                  className="text-sm font-bold text-orange-600 hover:underline underline-offset-2"
-                >
-                  Confidentialité
-                </Link>
-                <Link
-                  href="/legal/mentions-legales"
-                  className="text-sm font-bold text-slate-700 hover:underline underline-offset-2"
-                >
-                  Mentions légales
-                </Link>
-                <Link href="/legal/cgu" className="text-sm font-bold text-slate-700 hover:underline underline-offset-2">
-                  CGU
-                </Link>
-                <Link href="/legal/cgv" className="text-sm font-bold text-slate-700 hover:underline underline-offset-2">
-                  CGV
-                </Link>
-                <Link
-                  href="/legal/bien-etre"
-                  className="text-sm font-bold text-cyan-700 hover:underline underline-offset-2"
-                >
-                  Bien-être et limites
-                </Link>
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            <section className="mt-12 space-y-6">
+
+              {/* ── Données & IA ── */}
+              <div className="rounded-2xl border border-[var(--border-ui)] bg-[var(--card)] p-5 sm:p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-xl leading-none" aria-hidden>🤖</span>
+                  <h3 className="text-base font-black text-[var(--text)]">Données personnelles et IA</h3>
+                </div>
+                <p className="text-sm text-[var(--muted)] leading-relaxed">
+                  Les textes de quête sont générés par intelligence artificielle à partir de ton profil,
+                  du contexte (météo, lieu) et de règles internes. Ce contenu est une suggestion ludique,
+                  pas un conseil médical ou psychologique. Tu peux consulter le détail des traitements et
+                  tes droits dans la <Link href="/legal/confidentialite" className="underline underline-offset-2 hover:text-cyan-700 transition-colors">politique de confidentialité</Link>.
+                </p>
+              </div>
+
+              {/* ── Liens légaux ── */}
+              <div className="rounded-2xl border border-[var(--border-ui)] bg-[var(--card)] p-5 sm:p-6 shadow-sm">
+                <h3 className="text-xs font-black uppercase tracking-widest text-[var(--muted)] mb-4">Informations légales</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    { href: '/legal/confidentialite', label: 'Confidentialité', icon: '🔒' },
+                    { href: '/legal/mentions-legales', label: 'Mentions légales', icon: '📄' },
+                    { href: '/legal/cgu', label: 'CGU', icon: '📋' },
+                    { href: '/legal/cgv', label: 'CGV', icon: '💳' },
+                    { href: '/legal/bien-etre', label: 'Bien-être', icon: '💚' },
+                  ].map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className="flex items-center gap-2 rounded-xl border border-[var(--border-ui)] bg-[var(--surface)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] hover:border-cyan-400/50 hover:bg-cyan-50/60 transition-colors duration-150"
+                    >
+                      <span className="text-base leading-none" aria-hidden>{l.icon}</span>
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Export ── */}
+              <div className="rounded-2xl border border-[var(--border-ui)] bg-[var(--card)] p-5 sm:p-6 shadow-sm">
+                <h3 className="text-xs font-black uppercase tracking-widest text-[var(--muted)] mb-3">Tes données</h3>
+                <p className="text-sm text-[var(--muted)] mb-4 leading-relaxed">
+                  Télécharge une copie de ton profil, tes quêtes et ton historique au format JSON.
+                </p>
                 <button
                   type="button"
                   onClick={() => void handleExport()}
                   disabled={exporting}
-                  className="inline-flex justify-center items-center rounded-2xl border-2 border-cyan-400/60 bg-[var(--card)] px-4 py-3 text-sm font-black text-[var(--text)] hover:bg-cyan-50/80 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/50 bg-cyan-50/70 px-4 py-2.5 text-sm font-bold text-cyan-900 hover:bg-cyan-100/80 hover:border-cyan-500/70 transition-colors disabled:opacity-50"
                 >
-                  {exporting ? 'Préparation…' : 'Télécharger mes données (JSON)'}
+                  <span aria-hidden>📥</span>
+                  {exporting ? 'Préparation…' : 'Exporter mes données'}
                 </button>
               </div>
 
-              <div className="border-t border-slate-200/80 pt-6">
-                <h3 className="text-sm font-black uppercase tracking-wider text-red-900/90 mb-2">Supprimer le compte</h3>
-                <p className="text-sm text-[var(--muted)] mb-3 leading-relaxed">
-                  Efface définitivement ton profil Questia, ton historique (quêtes, boutique) et ton compte
-                  d&apos;authentification. Cette action est irréversible.
+              {/* ── Suppression ── */}
+              <div className="rounded-2xl border border-red-200/80 bg-red-50/50 p-5 sm:p-6 shadow-sm">
+                <div className="flex items-start gap-3 mb-2">
+                  <span className="shrink-0 text-lg leading-none mt-0.5" aria-hidden>⚠️</span>
+                  <h3 className="font-bold text-red-900">Supprimer mon compte</h3>
+                </div>
+                <p className="text-sm text-red-800/80 mb-4 leading-relaxed">
+                  Efface définitivement ton profil, ton historique (quêtes, boutique) et ton compte
+                  d&apos;authentification. <strong>Cette action est irréversible.</strong>
                 </p>
-                <label htmlFor="delete-confirm" className="sr-only">
-                  Confirmation de suppression
+                <label htmlFor="delete-confirm" className="block text-xs font-bold text-red-900/70 mb-1.5">
+                  Tape <span className="font-black">SUPPRIMER</span> pour confirmer
                 </label>
                 <input
                   id="delete-confirm"
                   type="text"
                   value={deleteConfirm}
                   onChange={(e) => setDeleteConfirm(e.target.value)}
-                  placeholder="Tape SUPPRIMER pour confirmer"
-                  className="w-full max-w-md rounded-xl border-2 border-[color:color-mix(in_srgb,var(--text)_18%,transparent)] bg-white px-3 py-2 text-sm font-semibold text-[var(--text)] mb-3"
+                  placeholder="SUPPRIMER"
+                  className="w-full max-w-xs rounded-lg border border-red-300/80 bg-white px-3 py-2 text-sm font-semibold text-red-900 placeholder:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-400/40 mb-3"
                   autoComplete="off"
                 />
                 {deleteError && (
@@ -337,10 +351,10 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => void handleDeleteAccount()}
-                  disabled={deleting}
-                  className="rounded-2xl border-2 border-red-500/70 bg-red-50 px-4 py-3 text-sm font-black text-red-900 hover:bg-red-100 disabled:opacity-50"
+                  disabled={deleting || deleteConfirm !== 'SUPPRIMER'}
+                  className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {deleting ? 'Suppression…' : 'Supprimer mon compte et mes données'}
+                  {deleting ? 'Suppression…' : 'Supprimer définitivement'}
                 </button>
               </div>
             </section>

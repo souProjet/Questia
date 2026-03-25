@@ -1,14 +1,13 @@
-import '../lib/pushNotifications';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClerkProvider, useAuth } from '@clerk/expo';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { DA } from '@questia/ui';
 import { AppThemeProvider, useAppTheme } from '../contexts/AppThemeContext';
+import { setupNotificationHandler } from '../lib/pushNotifications';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
@@ -79,6 +78,10 @@ function InitialLayout() {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    void setupNotificationHandler();
+  }, []);
+
   if (!PUBLISHABLE_KEY) {
     return (
       <View style={errStyles.container}>

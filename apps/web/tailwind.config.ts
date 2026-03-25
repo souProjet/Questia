@@ -24,6 +24,10 @@ const config: Config = {
         'fade-up': 'fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fade-up-slow': 'fadeUpSlow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fadeIn': 'fadeIn 0.35s ease-out',
+        /** Entrée de page (template racine) — discret */
+        'page-enter': 'pageEnter 0.4s cubic-bezier(0.22, 1, 0.36, 1) both',
+        /** Étapes onboarding : un peu plus de relief que fadeIn */
+        'onboarding-step': 'onboardingStep 0.48s cubic-bezier(0.22, 1, 0.36, 1) both',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'spin-slow': 'spin 8s linear infinite',
         float: 'float 6s ease-in-out infinite',
@@ -57,6 +61,14 @@ const config: Config = {
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        pageEnter: {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        onboardingStep: {
+          '0%': { opacity: '0', transform: 'translateY(16px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         fadeUp: {

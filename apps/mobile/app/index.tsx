@@ -86,6 +86,9 @@ export default function OnboardingPage() {
             <Pressable style={s.btn} onPress={() => goTo('q1')}>
               <Text style={s.btnText}>Commencer →</Text>
             </Pressable>
+            <Pressable onPress={() => router.replace('/(auth)' as never)} style={s.loginLink}>
+              <Text style={s.loginText}>Déjà un compte ? <Text style={s.loginHighlight}>Se connecter</Text></Text>
+            </Pressable>
           </>
         )}
 
@@ -197,4 +200,8 @@ const s = StyleSheet.create({
   btnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
   backBtn: { alignItems: 'center', paddingVertical: 10 },
   backText: { color: C.muted, fontSize: 14 },
+
+  loginLink: { alignItems: 'center', paddingVertical: 14, marginTop: 4 },
+  loginText: { color: C.muted, fontSize: 14, fontWeight: '500' },
+  loginHighlight: { color: C.accent, fontWeight: '700' },
 });

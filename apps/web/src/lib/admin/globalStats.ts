@@ -39,9 +39,9 @@ function enumerateDaysUtc(fromStr: string, toStr: string): string[] {
   const out: string[] = [];
   const [fy, fm, fd] = fromStr.split('-').map(Number);
   const [ty, tm, td] = toStr.split('-').map(Number);
-  let y = fy;
-  let m = fm;
-  let d = fd;
+  const y = fy;
+  const m = fm;
+  const d = fd;
   const end = new Date(Date.UTC(ty, tm - 1, td));
   let cur = new Date(Date.UTC(y, m - 1, d));
   while (cur <= end) {

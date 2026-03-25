@@ -80,7 +80,7 @@ export default function AdminConsoleClient() {
   const [godBusy, setGodBusy] = useState(false);
 
   const [targetClerkId, setTargetClerkId] = useState('');
-  const [targetLabel, setTargetLabel] = useState('');
+  const [_targetLabel, setTargetLabel] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchHit[]>([]);

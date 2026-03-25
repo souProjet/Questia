@@ -11,18 +11,14 @@ export default function SignInPage() {
           <span aria-hidden>🧭</span> Reprendre ta progression
         </>
       }
-      title={
-        <>
-          Bon retour, <span className="text-gradient">aventurier·e</span> ⚔️
-        </>
-      }
+      title={<>Bon retour, aventurier·e ⚔️</>}
       subtitle="Connecte-toi pour retrouver ta quête du jour et ta série."
       footer={
-        <p className="text-center text-sm text-[var(--muted)]">
+        <p className="text-center text-sm text-slate-500">
           Pas encore de compte ?{' '}
           <Link
             href="/sign-up"
-            className="font-bold text-cyan-800 hover:text-orange-600 underline decoration-orange-400/30 underline-offset-2 transition-colors"
+            className="font-bold text-cyan-700 hover:text-orange-600 underline decoration-cyan-300/50 underline-offset-[0.2em] transition-colors duration-200"
           >
             Créer un compte gratuitement
           </Link>

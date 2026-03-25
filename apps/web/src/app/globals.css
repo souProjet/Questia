@@ -90,11 +90,27 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
-    background-color: var(--bg);
     color: var(--text);
     font-family: var(--font-inter), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    min-height: 100dvh;
+    /* Fond aventure par défaut — couvre tout le viewport, pas de bande plate en bas */
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(ellipse 78% 50% at 50% -22%, rgba(34, 211, 238, 0.38), transparent),
+      radial-gradient(ellipse 60% 42% at 100% 52%, rgba(249, 115, 22, 0.28), transparent),
+      radial-gradient(ellipse 55% 38% at 0% 80%, rgba(16, 185, 129, 0.22), transparent),
+      repeating-linear-gradient(
+        -18deg,
+        transparent,
+        transparent 48px,
+        rgba(34, 211, 238, 0.1) 48px,
+        rgba(34, 211, 238, 0.1) 49px
+      ),
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.42) 1px, transparent 0);
+    background-size: auto, auto, auto, auto, 32px 32px;
+    background-attachment: fixed;
   }
   ::selection {
     background: rgba(249, 115, 22, 0.35);
@@ -973,9 +989,9 @@
 
   /** Pastille / badge (ex. AuthQuestShell) — pas le bloc citation */
   .quest-sticker {
-    background: linear-gradient(135deg, rgba(34,211,238,.2), rgba(16,185,129,.2));
-    border: 1px solid rgba(34,211,238,.35);
-    color: var(--on-cream-muted);
+    background: linear-gradient(135deg, rgba(34,211,238,.22), rgba(16,185,129,.18));
+    border: 1px solid rgba(14, 116, 144, 0.35);
+    color: var(--on-cream);
   }
 
   /**
@@ -1057,65 +1073,73 @@
 
   /* ── Step animation ── */
   .animate-fadeIn { animation: fadeIn 0.35s ease-out; }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fadeIn { animation: none; }
+  }
 
-  /* ── Clerk (sign-in / sign-up) — thème clair forcé (évite footer / zone dev noirs) ── */
+  /* ── Clerk (sign-in / sign-up) — transparent, s'intègre dans AuthQuestShell ── */
   .auth-clerk-root {
     --clerk-color-primary: #f97316;
-    --clerk-color-background: #fffdf5;
-    --clerk-color-foreground: #13212d;
-    --clerk-color-text: #13212d;
-    --clerk-color-text-secondary: #4d7187;
-    --clerk-color-input-background: #ffffff;
-    --clerk-color-neutral: #fff7ed;
+    --clerk-color-background: transparent;
+    --clerk-color-foreground: #0f172a;
+    --clerk-color-text: #0f172a;
+    --clerk-color-text-secondary: #64748b;
+    --clerk-color-input-background: #f8fafc;
+    --clerk-color-neutral: #f1f5f9;
     --clerk-color-shimmer: #e0f2fe;
     color-scheme: light;
     width: 100%;
     max-width: 100%;
-    margin-left: auto;
-    margin-right: auto;
   }
 
-  /* Centrage horizontal du composant Clerk (root + carte) */
-  .auth-clerk-root .cl-rootBox {
-    margin-left: auto !important;
-    margin-right: auto !important;
+  .auth-clerk-root .cl-rootBox,
+  .auth-clerk-root .cl-main,
+  .auth-clerk-root .cl-card,
+  .auth-clerk-root [class*='cl-card'] {
     width: 100% !important;
     max-width: 100% !important;
-    box-sizing: border-box;
-  }
-
-  .auth-clerk-root .cl-main {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    box-sizing: border-box;
+    margin: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
   }
 
   .auth-clerk-root .cl-footer,
   .auth-clerk-root [class*='cl-footer'] {
-    background-color: #fffdf5 !important;
+    background: transparent !important;
+    background-color: transparent !important;
     background-image: none !important;
-    color: var(--text) !important;
-    border-color: rgba(249, 115, 22, 0.2) !important;
+    border: none !important;
+    color: #64748b !important;
   }
 
-  .auth-clerk-root .cl-socialButtonsBlockButton {
+  .auth-clerk-root .cl-socialButtonsRoot {
+    padding-top: 0 !important;
+    position: relative !important;
     overflow: visible !important;
   }
 
-  /* Espace pour le pastille « dernière fois » au-dessus du bouton OAuth */
-  .auth-clerk-root .cl-socialButtonsRoot {
-    padding-top: 0.5rem !important;
+  /* Badge « Utilisé la dernière fois » : masquer pour éviter le débordement */
+  .auth-clerk-root .cl-socialButtonsBlockButton > span[style*="position"],
+  .auth-clerk-root .cl-socialButtonsBlockButton > div[style*="position"],
+  .auth-clerk-root [class*="badge"],
+  .auth-clerk-root [class*="lastUsed" i],
+  .auth-clerk-root [class*="Badge"],
+  .auth-clerk-root [data-localization-key*="lastUsed"] {
+    display: none !important;
   }
 
   .auth-clerk-root .cl-footerPages,
   .auth-clerk-root [class*='FooterPages'] {
-    background-color: #fffdf5 !important;
-    color: var(--muted) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #64748b !important;
   }
 
-  /* Doublon « Créer un compte » : on garde le lien sous le panneau Questia uniquement */
   .auth-clerk-root .cl-footerAction {
     display: none !important;
   }
@@ -1123,19 +1147,29 @@
   .auth-clerk-root .cl-formButtonPrimary {
     width: 100% !important;
     max-width: 100% !important;
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     box-sizing: border-box !important;
-    background: linear-gradient(135deg, #f97316, #fbbf24) !important;
+    background: #f97316 !important;
     color: #fff !important;
     font-weight: 800 !important;
-    border-radius: 1rem !important;
-    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.38) !important;
+    font-size: 0.9375rem !important;
+    letter-spacing: 0.01em !important;
+    padding: 0.875rem 1.5rem !important;
+    border-radius: 0.875rem !important;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.28) !important;
     text-transform: none !important;
     border: none !important;
+    transition: background 0.15s, box-shadow 0.15s, transform 0.15s !important;
   }
   .auth-clerk-root .cl-formButtonPrimary:hover {
-    filter: brightness(1.05);
-    transform: translateY(-1px);
+    background: #ea580c !important;
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.38) !important;
+    transform: translateY(-1px) !important;
+  }
+  .auth-clerk-root .cl-formButtonPrimary:active {
+    transform: scale(0.99) !important;
   }
   .auth-clerk-root .cl-socialButtonsBlockButton {
     width: 100% !important;
@@ -1143,14 +1177,14 @@
     justify-content: center !important;
     box-sizing: border-box !important;
     border-radius: 1rem !important;
-    border-width: 2px !important;
-    border-color: rgba(249, 115, 22, 0.28) !important;
-    background: rgba(255, 255, 255, 0.95) !important;
+    border-width: 1px !important;
+    border-color: #e2e8f0 !important;
+    background: #f8fafc !important;
     font-weight: 700 !important;
-    color: var(--text) !important;
+    color: #0f172a !important;
   }
   .auth-clerk-root .cl-socialButtonsBlockButton:hover {
-    background: rgba(224, 242, 254, 0.95) !important;
+    background: #ecfeff !important;
     border-color: rgba(34, 211, 238, 0.45) !important;
   }
   .auth-clerk-root .cl-footerActionLink {
@@ -1161,6 +1195,6 @@
     color: #ea580c !important;
   }
   .auth-clerk-root .cl-dividerLine {
-    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.4), transparent) !important;
+    background: #e2e8f0 !important;
   }
 }

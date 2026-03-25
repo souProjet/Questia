@@ -11,18 +11,14 @@ export default function SignUpPage() {
           <span aria-hidden>🚀</span> Débloquer ta première quête
         </>
       }
-      title={
-        <>
-          Lance <span className="text-gradient">l&apos;aventure</span> 🎮
-        </>
-      }
-      subtitle="Inscris-toi — ta première quête personnalisée t’attend de l’autre côté."
+      title={<>Lance l&apos;aventure 🎮</>}
+      subtitle="Inscris-toi — ta première quête personnalisée t'attend de l'autre côté."
       footer={
-        <p className="text-center text-sm text-[var(--muted)]">
+        <p className="text-center text-sm text-slate-500">
           Déjà un compte ?{' '}
           <Link
             href="/sign-in"
-            className="font-bold text-cyan-800 hover:text-orange-600 underline decoration-orange-400/30 underline-offset-2 transition-colors"
+            className="font-bold text-cyan-700 hover:text-orange-600 underline decoration-cyan-300/50 underline-offset-[0.2em] transition-colors duration-200"
           >
             Se connecter
           </Link>

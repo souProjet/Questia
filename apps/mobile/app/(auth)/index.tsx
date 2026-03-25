@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,22 +10,29 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { useRouter } from 'expo-router';
 import { DA } from '@questia/ui';
 
-// Clerk v3 — require to bypass signal-based types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { useSignIn, useSignUp, useSSO } = require('@clerk/expo') as any;
 
-// Required for OAuth redirect handling in Expo Go / standalone builds
 WebBrowser.maybeCompleteAuthSession();
 
 type AuthMode = 'sign-in' | 'sign-up';
 
+function useWarmUpBrowser() {
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      void WebBrowser.warmUpAsync();
+      return () => { void WebBrowser.coolDownAsync(); };
+    }
+  }, []);
+}
+
 export default function AuthScreen() {
-  const router = useRouter();
+  useWarmUpBrowser();
 
   const { signIn, isLoaded: signInLoaded, setActive } = useSignIn();
   const { signUp, isLoaded: signUpLoaded } = useSignUp();
@@ -40,19 +47,18 @@ export default function AuthScreen() {
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [error, setError] = useState('');
 
-  // ─── Google OAuth ────────────────────────────────────────────────────────────
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = useCallback(async () => {
     setLoadingGoogle(true);
     setError('');
     try {
-      const redirectUrl = Linking.createURL('/home');
+      const redirectUrl = Linking.createURL('/(auth)');
       const { createdSessionId, setActive: setActiveSSO } = await startSSOFlow({
         strategy: 'oauth_google',
         redirectUrl,
+        redirectCompletedUrl: redirectUrl,
       });
       if (createdSessionId) {
         await (setActiveSSO ?? setActive)({ session: createdSessionId });
-        router.replace('/home');
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
@@ -60,10 +66,9 @@ export default function AuthScreen() {
     } finally {
       setLoadingGoogle(false);
     }
-  };
+  }, [startSSOFlow, setActive]);
 
-  // ─── Email / Password ────────────────────────────────────────────────────────
-  const handleSignIn = async () => {
+  const handleSignIn = useCallback(async () => {
     if (!signInLoaded) return;
     setLoading(true);
     setError('');
@@ -71,7 +76,6 @@ export default function AuthScreen() {
       const result = await signIn.create({ identifier: email, password });
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.replace('/home');
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
@@ -79,9 +83,9 @@ export default function AuthScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [signInLoaded, signIn, email, password, setActive]);
 
-  const handleSignUp = async () => {
+  const handleSignUp = useCallback(async () => {
     if (!signUpLoaded) return;
     setLoading(true);
     setError('');
@@ -95,9 +99,9 @@ export default function AuthScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [signUpLoaded, signUp, email, password]);
 
-  const handleVerify = async () => {
+  const handleVerify = useCallback(async () => {
     if (!signUpLoaded) return;
     setLoading(true);
     setError('');
@@ -105,7 +109,6 @@ export default function AuthScreen() {
       const result = await signUp.attemptEmailAddressVerification({ code });
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.replace('/home');
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
@@ -113,34 +116,40 @@ export default function AuthScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [signUpLoaded, signUp, code, setActive]);
 
-  // ─── Verification screen ─────────────────────────────────────────────────────
   if (pendingVerification) {
     return (
       <KeyboardAvoidingView
-        style={styles.container}
+        style={s.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.inner}>
-          <Text style={styles.title}>Vérifie ton email</Text>
-          <Text style={styles.subtitle}>
-            Code envoyé à <Text style={styles.emailHighlight}>{email}</Text>
+        <View style={s.verifyInner}>
+          <View style={s.verifyIconBox}>
+            <Text style={s.verifyIconText}>{'\u{1F4E7}'}</Text>
+          </View>
+          <Text style={s.verifyTitle}>V\u00e9rifie ton email</Text>
+          <Text style={s.verifySubtitle}>
+            Code envoy\u00e9 \u00e0 <Text style={s.emailHighlight}>{email}</Text>
           </Text>
           <TextInput
-            style={styles.input}
-            placeholder="Code à 6 chiffres"
-            placeholderTextColor={DA.muted}
+            style={s.input}
+            placeholder="Code \u00e0 6 chiffres"
+            placeholderTextColor="#94a3b8"
             value={code}
             onChangeText={setCode}
             keyboardType="number-pad"
             autoFocus
           />
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          <Pressable style={styles.primaryButton} onPress={handleVerify} disabled={loading}>
+          {error ? <Text style={s.errorText}>{error}</Text> : null}
+          <Pressable
+            style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
+            onPress={handleVerify}
+            disabled={loading}
+          >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.primaryButtonText}>Confirmer le code</Text>
+              : <Text style={s.primaryButtonText}>Confirmer le code</Text>
             }
           </Pressable>
         </View>
@@ -148,57 +157,66 @@ export default function AuthScreen() {
     );
   }
 
-  // ─── Main auth screen ────────────────────────────────────────────────────────
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={s.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={s.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         {/* Logo */}
-        <View style={styles.logoSection}>
-          <View style={styles.logoIcon}>
-            <Text style={styles.logoIconText}>D</Text>
+        <View style={s.logoSection}>
+          <LinearGradient
+            colors={['#f97316', '#fbbf24']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={s.logoIcon}
+          >
+            <Text style={s.logoIconText}>{'\u2694'}</Text>
+          </LinearGradient>
+          <Text style={s.appTitle}>QUESTIA</Text>
+          <View style={s.badgeRow}>
+            <Text style={s.badgeText}>
+              {mode === 'sign-in' ? '\u{1F9ED} Reprendre ta progression' : '\u{1F680} D\u00e9bloquer ta premi\u00e8re qu\u00eate'}
+            </Text>
           </View>
-          <Text style={styles.appTitle}>QUESTIA</Text>
-          <Text style={styles.appTagline}>
-            {mode === 'sign-in' ? 'Bienvenue de retour' : "Lance l'aventure"}
+          <Text style={s.appTagline}>
+            {mode === 'sign-in'
+              ? 'Connecte-toi pour retrouver ta qu\u00eate du jour.'
+              : 'Inscris-toi \u2014 ta premi\u00e8re qu\u00eate t\'attend.'}
           </Text>
         </View>
 
-        <View style={styles.form}>
-          {/* Google Button */}
+        {/* Form card */}
+        <View style={s.formCard}>
           <Pressable
-            style={({ pressed }) => [styles.googleButton, pressed && styles.buttonPressed]}
+            style={({ pressed }) => [s.googleButton, pressed && s.buttonPressed]}
             onPress={handleGoogleSignIn}
             disabled={loadingGoogle}
           >
             {loadingGoogle ? (
-              <ActivityIndicator color={DA.muted} size="small" />
+              <ActivityIndicator color="#64748b" size="small" />
             ) : (
               <>
-                <Text style={styles.googleIcon}>G</Text>
-                <Text style={styles.googleButtonText}>Continuer avec Google</Text>
+                <Text style={s.googleIcon}>G</Text>
+                <Text style={s.googleButtonText}>Continuer avec Google</Text>
               </>
             )}
           </Pressable>
 
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>ou</Text>
-            <View style={styles.dividerLine} />
+          <View style={s.divider}>
+            <View style={s.dividerLine} />
+            <Text style={s.dividerText}>OU</Text>
+            <View style={s.dividerLine} />
           </View>
 
-          {/* Email + password */}
           <TextInput
-            style={styles.input}
+            style={s.input}
             placeholder="Adresse email"
-            placeholderTextColor={DA.muted}
+            placeholderTextColor="#94a3b8"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -206,43 +224,47 @@ export default function AuthScreen() {
             autoCorrect={false}
           />
           <TextInput
-            style={styles.input}
+            style={s.input}
             placeholder="Mot de passe"
-            placeholderTextColor={DA.muted}
+            placeholderTextColor="#94a3b8"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {error ? <Text style={s.errorText}>{error}</Text> : null}
 
           <Pressable
-            style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
+            style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
             onPress={mode === 'sign-in' ? handleSignIn : handleSignUp}
             disabled={loading}
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.primaryButtonText}>
-                  {mode === 'sign-in' ? 'Se connecter' : 'Créer mon compte'}
+              : <Text style={s.primaryButtonText}>
+                  {mode === 'sign-in' ? 'Se connecter' : 'Cr\u00e9er mon compte'}
                 </Text>
             }
           </Pressable>
-
-          <Pressable
-            onPress={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); }}
-          >
-            <Text style={styles.switchText}>
-              {mode === 'sign-in' ? "Pas de compte ? S'inscrire" : 'Déjà inscrit ? Se connecter'}
-            </Text>
-          </Pressable>
         </View>
+
+        <Pressable
+          onPress={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); }}
+          style={s.switchBtn}
+        >
+          <Text style={s.switchText}>
+            {mode === 'sign-in' ? 'Pas de compte ? ' : 'D\u00e9j\u00e0 inscrit ? '}
+            <Text style={s.switchHighlight}>
+              {mode === 'sign-in' ? "S'inscrire" : 'Se connecter'}
+            </Text>
+          </Text>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: DA.bg,
@@ -254,63 +276,85 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 48,
   },
-  inner: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    width: '100%',
-    gap: 12,
-  },
+
   logoSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
   },
   logoIcon: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
     borderRadius: 16,
-    backgroundColor: '#f97316',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
     shadowColor: '#f97316',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
     elevation: 8,
   },
   logoIconText: {
     color: '#fff',
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '900',
   },
   appTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '900',
     color: DA.text,
-    letterSpacing: 5,
-    marginBottom: 8,
+    letterSpacing: 3,
+    marginBottom: 12,
+  },
+  badgeRow: {
+    backgroundColor: 'rgba(34,211,238,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(14,116,144,0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0e7490',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   appTagline: {
-    fontSize: 15,
+    fontSize: 14,
     color: DA.muted,
+    textAlign: 'center',
+    lineHeight: 20,
   },
-  form: {
+
+  formCard: {
     width: '100%',
     maxWidth: 400,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(19,33,45,0.08)',
+    padding: 20,
     gap: 12,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
   },
+
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: DA.card,
+    backgroundColor: '#f8fafc',
     borderWidth: 1,
-    borderColor: DA.border,
+    borderColor: '#e2e8f0',
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 16,
   },
   googleIcon: {
     fontSize: 18,
@@ -321,46 +365,53 @@ const styles = StyleSheet.create({
   googleButtonText: {
     color: DA.text,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   buttonPressed: {
-    opacity: 0.75,
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
+
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginVertical: 4,
+    marginVertical: 2,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: DA.divider,
+    backgroundColor: '#e2e8f0',
   },
   dividerText: {
-    color: DA.muted,
-    fontSize: 13,
-    fontWeight: '500',
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.5,
   },
+
   input: {
-    backgroundColor: DA.surface,
+    backgroundColor: '#f8fafc',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: DA.border,
+    borderColor: '#e2e8f0',
     paddingHorizontal: 18,
     paddingVertical: 16,
     color: DA.text,
     fontSize: 16,
+    fontWeight: '500',
   },
+
   primaryButton: {
+    overflow: 'hidden',
     backgroundColor: '#f97316',
     paddingVertical: 18,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
     shadowColor: '#f97316',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
     elevation: 8,
     marginTop: 4,
   },
@@ -368,39 +419,73 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+
+  switchBtn: {
+    paddingVertical: 16,
+    marginTop: 8,
   },
   switchText: {
-    color: '#22d3ee',
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '600',
-    paddingVertical: 8,
-  },
-  errorText: {
-    color: '#ef4444',
-    fontSize: 13,
-    textAlign: 'center',
-    backgroundColor: 'rgba(239,68,68,0.08)',
-    borderRadius: 8,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.2)',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: DA.text,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
     color: DA.muted,
     textAlign: 'center',
     fontSize: 14,
+    fontWeight: '500',
+  },
+  switchHighlight: {
+    color: '#0e7490',
+    fontWeight: '800',
+  },
+
+  errorText: {
+    color: '#dc2626',
+    fontSize: 13,
+    textAlign: 'center',
+    backgroundColor: 'rgba(239,68,68,0.06)',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.15)',
+    fontWeight: '600',
+    overflow: 'hidden',
+  },
+
+  verifyInner: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    width: '100%',
+    gap: 14,
+  },
+  verifyIconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: 'rgba(34,211,238,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(14,116,144,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 8,
   },
+  verifyIconText: {
+    fontSize: 28,
+  },
+  verifyTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: DA.text,
+    textAlign: 'center',
+  },
+  verifySubtitle: {
+    color: DA.muted,
+    textAlign: 'center',
+    fontSize: 14,
+    lineHeight: 20,
+  },
   emailHighlight: {
-    color: '#22d3ee',
-    fontWeight: '600',
+    color: '#0e7490',
+    fontWeight: '700',
   },
 });

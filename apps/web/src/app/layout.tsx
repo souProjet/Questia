@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider localization={frFR}>
       <html lang="fr" className={`${inter.variable} ${spaceGrotesk.variable}`}>
         {/* Pas de text-white / fond sombre sur body : ça forçait du texte blanc partout (Clerk + auth illisibles). globals.css définit déjà --text / --bg. */}
-        <body className="pb-28 font-sans antialiased md:pb-24">
+        <body className="font-sans antialiased">
           <SkipLink />
           {children}
           <CookieNotice />
