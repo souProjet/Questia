@@ -2,12 +2,6 @@
   "framework": "nextjs",
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
-  "crons": [
-    {
-      "path": "/api/cron/daily-reminders",
-      "schedule": "*/15 * * * *"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
