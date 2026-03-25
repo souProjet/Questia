@@ -8,10 +8,7 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
-  Switch,
-  Platform,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth, useUser } from '@clerk/expo';
@@ -24,22 +21,8 @@ import {
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../../contexts/AppThemeContext';
-import { registerForExpoPushTokenAsync } from '../../lib/pushNotifications';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
-const PUSH_TOKEN_STORAGE_KEY = 'questia_expo_push_token';
-
-const REMINDER_TIMEZONE_OPTIONS = [
-  'Europe/Paris',
-  'Europe/Brussels',
-  'Europe/Zurich',
-  'America/Montreal',
-  'America/Guadeloupe',
-  'America/Martinique',
-  'Indian/Reunion',
-  'Pacific/Tahiti',
-  'UTC',
-] as const;
 
 async function apiFetch(
   url: string,
@@ -61,10 +44,6 @@ type ProfilePayload = {
   streakCount: number;
   currentDay: number;
   badgesEarned: unknown;
-  reminderPushEnabled?: boolean;
-  reminderEmailEnabled?: boolean;
-  reminderTimeMinutes?: number;
-  reminderTimezone?: string;
 };
 
 export default function ProfileScreen() {
@@ -81,12 +60,6 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfilePayload | null>(null);
-  const [rePush, setRePush] = useState(false);
-  const [reEmail, setReEmail] = useState(false);
-  const [reMinutes, setReMinutes] = useState(540);
-  const [reTz, setReTz] = useState('Europe/Paris');
-  const [reminderSaving, setReminderSaving] = useState(false);
-  const [reminderMsg, setReminderMsg] = useState<string | null>(null);
 
   const barAnim = useRef(new Animated.Value(0)).current;
 
@@ -103,14 +76,6 @@ export default function ProfileScreen() {
       }
       const data = (await res.json()) as ProfilePayload;
       setProfile(data);
-      setRePush(data.reminderPushEnabled ?? false);
-      setReEmail(data.reminderEmailEnabled ?? false);
-      setReMinutes(
-        typeof data.reminderTimeMinutes === 'number' && data.reminderTimeMinutes >= 0 && data.reminderTimeMinutes <= 1439
-          ? data.reminderTimeMinutes
-          : 540,
-      );
-      setReTz(data.reminderTimezone?.trim() || 'Europe/Paris');
       barAnim.setValue(0);
       const j = levelFromTotalXp(data.totalXp ?? 0);
       Animated.timing(barAnim, {
@@ -129,100 +94,6 @@ export default function ProfileScreen() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const saveReminders = useCallback(async () => {
-    if (!profile) return;
-    setReminderSaving(true);
-    setReminderMsg(null);
-    try {
-      const token = await getTokenRef.current();
-      let nextPush = rePush;
-      if (rePush) {
-        const expoToken = await registerForExpoPushTokenAsync();
-        if (!expoToken) {
-          setReminderMsg(
-            'Notifications indisponibles (simulateur, permission refusée, ou configure EAS : projectId dans app.json ou EXPO_PUBLIC_EAS_PROJECT_ID).',
-          );
-          nextPush = false;
-        } else {
-          const reg = await apiFetch(`${API_BASE_URL}/api/notifications/push-token`, token, {
-            method: 'POST',
-            body: JSON.stringify({ token: expoToken, platform: Platform.OS }),
-          });
-          if (!reg.ok) {
-            setReminderMsg('Impossible d’enregistrer le jeton push.');
-            nextPush = false;
-          } else {
-            await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, expoToken);
-          }
-        }
-      } else {
-        const stored = await AsyncStorage.getItem(PUSH_TOKEN_STORAGE_KEY);
-        if (stored) {
-          await apiFetch(`${API_BASE_URL}/api/notifications/push-token`, token, {
-            method: 'DELETE',
-            body: JSON.stringify({ token: stored }),
-          });
-          await AsyncStorage.removeItem(PUSH_TOKEN_STORAGE_KEY);
-        }
-      }
-
-      const res = await apiFetch(`${API_BASE_URL}/api/profile`, token, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          reminderPushEnabled: nextPush,
-          reminderEmailEnabled: reEmail,
-          reminderTimeMinutes: reMinutes,
-          reminderTimezone: reTz,
-        }),
-      });
-      if (!res.ok) {
-        const j = (await res.json().catch(() => ({}))) as { error?: string };
-        setReminderMsg(j.error ?? 'Erreur enregistrement');
-        return;
-      }
-      const updated = (await res.json()) as ProfilePayload;
-      setProfile(updated);
-      setRePush(updated.reminderPushEnabled ?? false);
-      setReEmail(updated.reminderEmailEnabled ?? false);
-      setReminderMsg('Préférences enregistrées.');
-    } catch {
-      setReminderMsg('Erreur réseau.');
-    } finally {
-      setReminderSaving(false);
-    }
-  }, [profile, rePush, reEmail, reMinutes, reTz]);
-
-  const tzOptions = useMemo(() => {
-    const tz = profile?.reminderTimezone?.trim();
-    const base: string[] = [...REMINDER_TIMEZONE_OPTIONS];
-    if (tz && !base.includes(tz)) {
-      base.unshift(tz);
-    }
-    return base;
-  }, [profile?.reminderTimezone]);
-
-  const remH = Math.floor(reMinutes / 60);
-  const remM = reMinutes % 60;
-  const bumpHour = (d: number) => {
-    setReMinutes((prev) => {
-      const m = prev % 60;
-      const h = Math.floor(prev / 60);
-      const nh = (h + d + 24) % 24;
-      return nh * 60 + m;
-    });
-  };
-  const bumpMinuteQuarter = (d: number) => {
-    setReMinutes((prev) => {
-      const slots = [0, 15, 30, 45];
-      const m = prev % 60;
-      const h = Math.floor(prev / 60);
-      let idx = slots.indexOf(m);
-      if (idx < 0) idx = 0;
-      idx = (idx + d + 4) % 4;
-      return Math.min(1439, h * 60 + slots[idx]);
-    });
-  };
 
   const totalXp = profile?.totalXp ?? 0;
   const { level, xpIntoLevel, xpToNext, xpPerLevel } = levelFromTotalXp(totalXp);
@@ -309,92 +180,6 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          <Text style={styles.section}>Rappels</Text>
-          <Text style={styles.hint}>
-            Un rappel par jour à l’heure choisie (fuseau local), si ta quête du jour n’est pas encore complétée. Les e-mails
-            partent via Resend côté serveur (clé API sur le backend).
-          </Text>
-          <View style={styles.reminderCard}>
-            <View style={styles.reminderRow}>
-              <Text style={styles.reminderLabel}>Notification push</Text>
-              <Switch
-                value={rePush}
-                onValueChange={setRePush}
-                trackColor={{ false: 'rgba(148,163,184,0.45)', true: colorWithAlpha(palette.cyan, 0.55) }}
-                thumbColor={rePush ? '#fff' : '#f1f5f9'}
-              />
-            </View>
-            <View style={styles.reminderRow}>
-              <Text style={styles.reminderLabel}>E-mail</Text>
-              <Switch
-                value={reEmail}
-                onValueChange={setReEmail}
-                trackColor={{ false: 'rgba(148,163,184,0.45)', true: colorWithAlpha(palette.cyan, 0.55) }}
-                thumbColor={reEmail ? '#fff' : '#f1f5f9'}
-              />
-            </View>
-            <Text style={styles.reminderSub}>Heure (locale)</Text>
-            <View style={styles.timeRow}>
-              <View style={styles.timeCol}>
-                <Text style={styles.timeLbl}>Heures</Text>
-                <View style={styles.stepper}>
-                  <Pressable style={styles.stepBtn} onPress={() => bumpHour(-1)}>
-                    <Text style={styles.stepBtnText}>−</Text>
-                  </Pressable>
-                  <Text style={styles.timeVal}>{remH}</Text>
-                  <Pressable style={styles.stepBtn} onPress={() => bumpHour(1)}>
-                    <Text style={styles.stepBtnText}>+</Text>
-                  </Pressable>
-                </View>
-              </View>
-              <View style={styles.timeCol}>
-                <Text style={styles.timeLbl}>Minutes</Text>
-                <View style={styles.stepper}>
-                  <Pressable style={styles.stepBtn} onPress={() => bumpMinuteQuarter(-1)}>
-                    <Text style={styles.stepBtnText}>−</Text>
-                  </Pressable>
-                  <Text style={styles.timeVal}>{remM}</Text>
-                  <Pressable style={styles.stepBtn} onPress={() => bumpMinuteQuarter(1)}>
-                    <Text style={styles.stepBtnText}>+</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-            <Text style={styles.reminderSub}>Fuseau</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tzScroll}>
-              {tzOptions.map((z) => (
-                <Pressable
-                  key={z}
-                  onPress={() => setReTz(z)}
-                  style={[
-                    styles.tzChip,
-                    reTz === z && styles.tzChipOn,
-                  ]}
-                >
-                  <Text style={[styles.tzChipText, reTz === z && styles.tzChipTextOn]} numberOfLines={1}>
-                    {z.replace(/_/g, ' ')}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-            {reminderMsg ? (
-              <Text style={[styles.reminderFoot, reminderMsg.includes('Enregistr') ? styles.reminderOk : styles.reminderWarn]}>
-                {reminderMsg}
-              </Text>
-            ) : null}
-            <Pressable
-              style={({ pressed }) => [styles.reminderSave, pressed && styles.reminderSavePressed]}
-              onPress={() => void saveReminders()}
-              disabled={reminderSaving}
-            >
-              {reminderSaving ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.reminderSaveText}>Enregistrer les rappels</Text>
-              )}
-            </Pressable>
-          </View>
-
           <Text style={styles.section}>Insignes</Text>
           <Text style={styles.hint}>
             Débloqués : bordure ambre et ombre. En attente : carte grisée et bordure en pointillés.
@@ -473,62 +258,6 @@ function createProfileStyles(p: ThemePalette) {
   },
   topTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 2, color: C.muted },
   topTitleCenter: { flex: 1, textAlign: 'center' },
-  reminderCard: {
-    backgroundColor: C.card,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 22,
-    borderWidth: 1,
-    borderColor: C.border,
-    gap: 10,
-  },
-  reminderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  reminderLabel: { fontSize: 15, fontWeight: '800', color: C.text },
-  reminderSub: { fontSize: 11, fontWeight: '800', letterSpacing: 1, color: C.muted, marginTop: 6 },
-  timeRow: { flexDirection: 'row', gap: 16, marginTop: 4 },
-  timeCol: { flex: 1 },
-  timeLbl: { fontSize: 11, color: C.muted, fontWeight: '600', marginBottom: 6 },
-  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(34,211,238,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.35)',
-  },
-  stepBtnText: { fontSize: 20, fontWeight: '900', color: p.cyan },
-  timeVal: { fontSize: 22, fontWeight: '900', color: C.text, minWidth: 44, textAlign: 'center' },
-  tzScroll: { marginTop: 4, maxHeight: 44 },
-  tzChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    marginRight: 8,
-    backgroundColor: p.surface,
-    borderWidth: 1,
-    borderColor: p.border,
-  },
-  tzChipOn: {
-    backgroundColor: colorWithAlpha(p.cyan, 0.2),
-    borderColor: colorWithAlpha(p.cyan, 0.55),
-  },
-  tzChipText: { fontSize: 11, fontWeight: '700', color: C.muted, maxWidth: 160 },
-  tzChipTextOn: { color: C.text },
-  reminderFoot: { fontSize: 12, fontWeight: '600', marginTop: 4 },
-  reminderOk: { color: p.green },
-  reminderWarn: { color: '#f97316' },
-  reminderSave: {
-    marginTop: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    backgroundColor: p.cyan,
-  },
-  reminderSavePressed: { opacity: 0.88 },
-  reminderSaveText: { color: '#fff', fontWeight: '900', fontSize: 15 },
   signOutBtn: {
     marginTop: 28,
     marginBottom: 8,

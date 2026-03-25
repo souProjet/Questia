@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import {
@@ -18,10 +18,6 @@ type ProfileRes = {
   streakCount: number;
   currentDay: number;
   shop?: { activeThemeId: string };
-  reminderPushEnabled?: boolean;
-  reminderEmailEnabled?: boolean;
-  reminderTimeMinutes?: number;
-  reminderTimezone?: string;
   badgesEarned?: unknown;
   progression: {
     level: number;
@@ -34,26 +30,9 @@ type ProfileRes = {
   };
 };
 
-const REMINDER_TZ_OPTIONS = [
-  'Europe/Paris',
-  'Europe/Brussels',
-  'Europe/Zurich',
-  'America/Montreal',
-  'America/Guadeloupe',
-  'America/Martinique',
-  'Indian/Reunion',
-  'Pacific/Tahiti',
-  'UTC',
-] as const;
-
 export default function ProfilePage() {
   const [data, setData] = useState<ProfileRes | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [reEmail, setReEmail] = useState(false);
-  const [reMinutes, setReMinutes] = useState(540);
-  const [reTz, setReTz] = useState('Europe/Paris');
-  const [reminderSaving, setReminderSaving] = useState(false);
-  const [reminderMsg, setReminderMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -65,10 +44,6 @@ export default function ProfilePage() {
       }
       const json = (await res.json()) as ProfileRes & { totalXp?: number };
       setData(json);
-      setReEmail(json.reminderEmailEnabled ?? false);
-      const m = json.reminderTimeMinutes;
-      setReMinutes(typeof m === 'number' && m >= 0 && m <= 1439 ? m : 540);
-      setReTz(json.reminderTimezone?.trim() || 'Europe/Paris');
     } catch {
       setError('Impossible de charger le profil.');
     }
@@ -98,44 +73,6 @@ export default function ProfilePage() {
     prog?.badgeCatalog && prog.badgeCatalog.length > 0
       ? prog.badgeCatalog
       : getBadgeCatalogForUi(data?.badgesEarned);
-
-  const remH = Math.floor(reMinutes / 60);
-  const remM = reMinutes % 60;
-
-  const tzSelectOptions = useMemo(() => {
-    const opts: string[] = [...REMINDER_TZ_OPTIONS];
-    if (reTz && !opts.includes(reTz)) {
-      opts.unshift(reTz);
-    }
-    return opts;
-  }, [reTz]);
-
-  const saveRemindersWeb = async () => {
-    setReminderSaving(true);
-    setReminderMsg(null);
-    try {
-      const res = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reminderEmailEnabled: reEmail,
-          reminderTimeMinutes: reMinutes,
-          reminderTimezone: reTz,
-        }),
-      });
-      const j = (await res.json().catch(() => ({}))) as { error?: string } & ProfileRes;
-      if (!res.ok) {
-        setReminderMsg(j.error ?? 'Erreur enregistrement');
-        return;
-      }
-      setData((prev) => (prev ? { ...prev, ...j } : prev));
-      setReminderMsg('Préférences enregistrées.');
-    } catch {
-      setReminderMsg('Erreur réseau.');
-    } finally {
-      setReminderSaving(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-adventure">
@@ -198,97 +135,6 @@ export default function ProfilePage() {
                 <span aria-hidden>🔥</span>
                 <span className="font-black">{data.streakCount}</span> série
               </span>
-            </section>
-
-            <section className="rounded-3xl border-2 border-cyan-500/30 bg-[var(--surface)]/95 p-6 shadow-md mb-10">
-              <h2 className="label mb-2">Rappels — quête du jour</h2>
-              <p className="text-sm text-[var(--muted)] mb-5 leading-relaxed">
-                Reçois un rappel une fois par jour à l’heure indiquée (dans ton fuseau), si ta quête du jour n’est pas encore
-                complétée. Les notifications push se configurent depuis l’app mobile Questia.
-              </p>
-              <p className="text-xs font-bold text-[var(--muted)] mb-2">
-                Push mobile :{' '}
-                {data.reminderPushEnabled ? (
-                  <span className="text-emerald-700">activé</span>
-                ) : (
-                  <span className="text-[var(--subtle)]">non activé</span>
-                )}
-              </p>
-              <label className="flex items-center justify-between gap-4 py-3 border-b border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]">
-                <span className="text-sm font-bold text-[var(--text)]">E-mail</span>
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 accent-orange-500"
-                  checked={reEmail}
-                  onChange={(e) => setReEmail(e.target.checked)}
-                />
-              </label>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <span className="text-xs font-black uppercase tracking-wider text-[var(--muted)]">Heure</span>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <select
-                      className="rounded-xl border-2 border-[color:var(--border-ui)] bg-[var(--card)] px-3 py-2 text-sm font-bold text-[var(--text)]"
-                      value={remH}
-                      onChange={(e) => {
-                        const h = Number(e.target.value);
-                        setReMinutes(h * 60 + remM);
-                      }}
-                    >
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <option key={i} value={i}>
-                          {i} h
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      className="rounded-xl border-2 border-[color:var(--border-ui)] bg-[var(--card)] px-3 py-2 text-sm font-bold text-[var(--text)]"
-                      value={remM}
-                      onChange={(e) => {
-                        const m = Number(e.target.value);
-                        setReMinutes(remH * 60 + m);
-                      }}
-                    >
-                      {[0, 15, 30, 45].map((m) => (
-                        <option key={m} value={m}>
-                          {m.toString().padStart(2, '0')} min
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-xs font-black uppercase tracking-wider text-[var(--muted)]">Fuseau</span>
-                  <select
-                    className="mt-2 w-full rounded-xl border-2 border-[color:var(--border-ui)] bg-[var(--card)] px-3 py-2 text-sm font-bold text-[var(--text)]"
-                    value={reTz}
-                    onChange={(e) => setReTz(e.target.value)}
-                  >
-                    {tzSelectOptions.map((z) => (
-                      <option key={z} value={z}>
-                        {z.replace(/_/g, ' ')}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              {reminderMsg ? (
-                <p
-                  className={`mt-4 text-sm font-semibold ${
-                    reminderMsg.includes('enregistr') ? 'text-emerald-700' : 'text-orange-700'
-                  }`}
-                >
-                  {reminderMsg}
-                </p>
-              ) : null}
-              <button
-                type="button"
-                className="mt-5 w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-orange-500 py-3 text-sm font-black text-white shadow-md hover:opacity-95 disabled:opacity-60"
-                disabled={reminderSaving}
-                onClick={() => void saveRemindersWeb()}
-              >
-                {reminderSaving ? 'Enregistrement…' : 'Enregistrer les rappels'}
-              </button>
             </section>
 
             <h2 className="label mb-3">Insignes</h2>

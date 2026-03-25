@@ -232,8 +232,8 @@ export default function HomePage() {
               Trois étapes, puis ta quête du matin
             </h2>
             <p className="text-slate-600 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
-              Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur l’app : rappels et tout dans la
-              poche ; sur le web, même expérience depuis un navigateur.
+              Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur l’app mobile, tout dans la poche ;
+              sur le web, même expérience depuis un navigateur.
             </p>
           </div>
 
@@ -275,8 +275,7 @@ export default function HomePage() {
             iPhone &amp; Android
           </h2>
           <p className="text-slate-600 text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
-            Quête du jour, rappels et progression sur ton téléphone. Tu peux aussi tout faire depuis le web avec le
-            même compte.
+            Quête du jour et progression sur ton téléphone. Tu peux aussi tout faire depuis le web avec le même compte.
           </p>
           <div className="pt-4 flex flex-col items-center gap-4">
             <AppStoreButtons className="justify-center" />

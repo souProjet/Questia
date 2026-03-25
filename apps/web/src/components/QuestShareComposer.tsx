@@ -216,6 +216,7 @@ function QuestShareCardFrame({
                 }}
               />
               <span
+                data-share-emoji-decor
                 style={{
                   fontSize: 88,
                   lineHeight: 1,
@@ -232,6 +233,7 @@ function QuestShareCardFrame({
         )}
 
         <div
+          data-share-panel={panelDark ? 'dark' : 'light'}
           style={{
             flexShrink: 0,
             margin: '0 14px 14px',
@@ -464,8 +466,26 @@ export function QuestShareComposer({
       const canvas = await html2canvas(el, {
         scale: 3,
         useCORS: true,
+        allowTaint: false,
         logging: false,
         backgroundColor: null,
+        /** html2canvas ne reproduit pas backdrop-filter / filter comme le navigateur — on aplatit pour coller à la preview. */
+        onclone: (_documentClone, cloned) => {
+          cloned.querySelectorAll<HTMLElement>('[data-share-panel]').forEach((node) => {
+            const mode = node.getAttribute('data-share-panel');
+            node.style.backdropFilter = 'none';
+            node.style.setProperty('-webkit-backdrop-filter', 'none');
+            if (mode === 'dark') {
+              node.style.background = 'rgba(15, 23, 42, 0.88)';
+            } else {
+              node.style.background = 'rgba(255, 255, 255, 0.92)';
+            }
+          });
+          cloned.querySelectorAll<HTMLElement>('[data-share-emoji-decor]').forEach((node) => {
+            node.style.filter = 'none';
+            node.style.textShadow = '0 4px 14px rgba(15, 23, 42, 0.2)';
+          });
+        },
       });
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob((b) => resolve(b), 'image/png', 1),
