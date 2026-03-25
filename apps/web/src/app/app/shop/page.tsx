@@ -319,8 +319,8 @@ function ShopPageInner() {
     setBalanceAnimTick((n) => n + 1);
     setPurchaseHighlightSku(sku);
     setCelebratePurchase(true);
-    window.setTimeout(() => setCelebratePurchase(false), 850);
-    window.setTimeout(() => setPurchaseHighlightSku(null), 1300);
+    window.setTimeout(() => setCelebratePurchase(false), 2200);
+    window.setTimeout(() => setPurchaseHighlightSku(null), 1800);
   }, []);
 
   const { featuredBundle, xpItems, themeItems, titleItems, narrationItems, rerollItems } = useMemo(() => {
@@ -379,7 +379,7 @@ function ShopPageInner() {
       });
       setBalanceAnimTick((n) => n + 1);
       setCelebratePurchase(true);
-      window.setTimeout(() => setCelebratePurchase(false), 900);
+      window.setTimeout(() => setCelebratePurchase(false), 2200);
     }
     if (canceled === '1') setFlash({ message: 'Paiement annulé.', kind: 'info' });
   }, [searchParams, load]);
@@ -590,35 +590,54 @@ function ShopPageInner() {
           <>
             {celebratePurchase ? (
               <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden" aria-hidden>
-                <div className="absolute inset-0 bg-gradient-to-b from-amber-300/35 via-amber-200/10 to-violet-400/20 motion-safe:animate-shop-gold-flash motion-reduce:hidden" />
+                <div className="absolute inset-0 bg-gradient-to-b from-amber-300/45 via-fuchsia-400/15 to-cyan-400/25 motion-safe:animate-shop-celebration-overlay motion-reduce:hidden" />
+                <div className="absolute inset-0 bg-gradient-to-t from-violet-500/10 via-transparent to-amber-200/20 motion-safe:animate-shop-gold-flash motion-reduce:hidden" />
+                {[
+                  { emoji: '✨', left: '10%', top: '24%', delay: '0ms', orbit: false },
+                  { emoji: '🎉', left: '82%', top: '18%', delay: '90ms', orbit: true },
+                  { emoji: '⭐', left: '44%', top: '62%', delay: '160ms', orbit: false },
+                  { emoji: '✨', left: '78%', top: '48%', delay: '220ms', orbit: true },
+                  { emoji: '🪙', left: '50%', top: '42%', delay: '100ms', orbit: false },
+                  { emoji: '💎', left: '18%', top: '52%', delay: '280ms', orbit: true },
+                  { emoji: '🔥', left: '64%', top: '28%', delay: '40ms', orbit: false },
+                  { emoji: '✨', left: '36%', top: '34%', delay: '340ms', orbit: true },
+                ].map((s, i) => (
+                  <span
+                    key={i}
+                    className={`absolute text-2xl sm:text-4xl motion-reduce:hidden ${
+                      s.orbit ? 'motion-safe:animate-shop-sparkle-orbit' : 'motion-safe:animate-shop-sparkle'
+                    }`}
+                    style={{ left: s.left, top: s.top, animationDelay: s.delay }}
+                  >
+                    {s.emoji}
+                  </span>
+                ))}
                 <span
-                  className="absolute left-[12%] top-[28%] text-3xl sm:text-4xl motion-safe:animate-shop-sparkle motion-reduce:hidden"
-                  style={{ animationDelay: '0ms' }}
+                  className="absolute left-1/2 top-[32%] text-4xl sm:text-5xl motion-safe:animate-shop-coin-burst motion-reduce:hidden"
+                  style={{ animationDelay: '60ms' }}
                 >
-                  ✨
+                  🪙
                 </span>
                 <span
-                  className="absolute right-[18%] top-[22%] text-2xl motion-safe:animate-shop-sparkle motion-reduce:hidden"
-                  style={{ animationDelay: '120ms' }}
+                  className="absolute left-[30%] top-[40%] text-3xl motion-safe:animate-shop-coin-burst motion-reduce:hidden"
+                  style={{ animationDelay: '140ms' }}
                 >
-                  🎉
+                  🪙
                 </span>
                 <span
-                  className="absolute left-[40%] bottom-[38%] text-2xl motion-safe:animate-shop-sparkle motion-reduce:hidden"
+                  className="absolute left-[70%] top-[38%] text-3xl motion-safe:animate-shop-coin-burst motion-reduce:hidden"
                   style={{ animationDelay: '200ms' }}
                 >
-                  ⭐
-                </span>
-                <span
-                  className="absolute right-[12%] bottom-[32%] text-3xl motion-safe:animate-shop-sparkle motion-reduce:hidden"
-                  style={{ animationDelay: '280ms' }}
-                >
-                  ✨
+                  🪙
                 </span>
               </div>
             ) : null}
 
-            <div className="sticky top-24 z-40 -mx-4 px-4 pt-2 pb-6 mb-6">
+            <div
+              className={`sticky top-24 z-40 -mx-4 px-4 pt-2 pb-6 mb-6 motion-reduce:animate-none ${
+                celebratePurchase ? 'motion-safe:animate-shop-screen-shake' : ''
+              }`}
+            >
               <div
                 className={`max-w-4xl mx-auto rounded-3xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-white to-amber-100/90 p-5 sm:p-6 shadow-[0_12px_40px_-8px_rgba(180,83,9,0.25)] transition-shadow duration-300 ${
                   celebratePurchase ? 'shadow-[0_0_0_4px_rgba(251,191,36,0.45)] ring-2 ring-amber-400/50' : ''

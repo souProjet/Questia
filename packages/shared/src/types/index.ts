@@ -44,7 +44,7 @@ export type PsychologicalCategory =
 // Comfort zone exit level
 export type ComfortLevel = 'low' | 'moderate' | 'high' | 'extreme';
 
-// Quest model (the 13 archetypes)
+// Quest model (entrée de la taxonomie des quêtes)
 export interface QuestModel {
   id: number;
   title: string;

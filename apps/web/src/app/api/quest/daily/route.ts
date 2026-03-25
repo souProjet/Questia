@@ -13,6 +13,10 @@ import {
   levelFromTotalXp,
   getBadgeCatalogForUi,
   XP_SHOP_BONUS_PER_CHARGE,
+  REFINEMENT_SCHEMA_VERSION,
+  refinementAnswersToCategoryBias,
+  parseValidRefinementAnswers,
+  buildRefinementContextForPrompt,
 } from '@questia/shared';
 import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@questia/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
@@ -22,6 +26,7 @@ import { Prisma } from '@prisma/client';
 import { badgeIdsSet, parseBadgesEarned, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
 import { getNarrationDirectiveForPack } from '@/lib/narrationPack';
+import { getRefinementSurveyPayload } from '@/lib/refinementPayload';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,6 +95,18 @@ export async function GET(request: NextRequest) {
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
   if (!profile) return NextResponse.json({ error: 'Profil introuvable. Complète l\'onboarding.' }, { status: 404 });
 
+  const completedQuestCount = await prisma.questLog.count({
+    where: { profileId: profile.id, status: 'completed' },
+  });
+  const refinementSurvey = getRefinementSurveyPayload(
+    {
+      currentDay: profile.currentDay,
+      refinementSchemaVersion: profile.refinementSchemaVersion ?? 0,
+      refinementSkippedAt: profile.refinementSkippedAt ?? null,
+    },
+    completedQuestCount,
+  );
+
   const today = todayStr();
 
   // ── Quête d’un autre jour (ex. carte partage / deeplink) ────────────────────
@@ -117,6 +134,7 @@ export async function GET(request: NextRequest) {
       phase: profile.currentPhase,
       ...shopClientPayload(profile),
       progression: progressionPayload(profile),
+      refinement: refinementSurvey,
       ...(context ? { context } : {}),
     });
   }
@@ -135,6 +153,7 @@ export async function GET(request: NextRequest) {
       phase: profile.currentPhase,
       ...shopClientPayload(profile),
       progression: progressionPayload(profile),
+      refinement: refinementSurvey,
     });
   }
 
@@ -170,12 +189,20 @@ export async function GET(request: NextRequest) {
   const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs);
   const recentIds = recentLogs.slice(0, 7).map((r) => r.archetypeId);
 
-  // Select archetype via moteur Delta de congruence
+  const storedRefinementAnswers =
+    (profile.refinementSchemaVersion ?? 0) >= REFINEMENT_SCHEMA_VERSION
+      ? parseValidRefinementAnswers(profile.refinementAnswers)
+      : null;
+  const categoryBias = refinementAnswersToCategoryBias(storedRefinementAnswers);
+  const refinementContext = buildRefinementContextForPrompt(storedRefinementAnswers);
+
+  // Select archetype via moteur Delta de congruence (+ biais questionnaire)
   let archetype = selectQuest(
     declaredPersonality,
     effectivePhase,
     recentIds,
     context.isOutdoorFriendly,
+    categoryBias,
   );
 
   // Fallback météo si quête extérieure non recommandée
@@ -195,16 +222,20 @@ export async function GET(request: NextRequest) {
       ? getNarrationDirectiveForPack(activePack)
       : undefined;
 
-  // Generate the quest via OpenAI
+  // Generate the quest via OpenAI (phase effective + delta calculés = alignés avec le choix d’archétype)
   const generated = await generateDailyQuest(
     {
-      phase: profile.currentPhase as EscalationPhase,
+      phase: effectivePhase,
       day: profile.currentDay,
-      delta: profile.congruenceDelta,
+      congruenceDelta,
       explorerAxis: profile.explorerAxis as ExplorerAxis,
       riskAxis: profile.riskAxis as RiskAxis,
       questDateIso: today,
       narrationDirective,
+      declaredPersonality,
+      exhibitedPersonality: exhibited,
+      isRerollGeneration: profile.flagNextQuestAfterReroll === true,
+      refinementContext,
     },
     archetype,
     context,
@@ -292,6 +323,14 @@ export async function GET(request: NextRequest) {
     context,
     ...shopClientPayload(p),
     progression: progressionPayload(p),
+    refinement: getRefinementSurveyPayload(
+      {
+        currentDay: newDay,
+        refinementSchemaVersion: p.refinementSchemaVersion ?? 0,
+        refinementSkippedAt: p.refinementSkippedAt ?? null,
+      },
+      completedQuestCount,
+    ),
   }, { status: 201 });
 }
 

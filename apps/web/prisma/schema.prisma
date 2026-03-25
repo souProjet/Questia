@@ -78,6 +78,15 @@ model Profile {
   lastReminderPushDate  String?         @map("last_reminder_push_date")
   /** Dernière date (UTC YYYY-MM-DD) où un rappel e-mail a été envoyé */
   lastReminderEmailDate String?         @map("last_reminder_email_date")
+  /** Réponses questionnaire raffinement profil (ids question → id option) */
+  refinementAnswers       Json          @default("{}") @map("refinement_answers")
+  /** Dernière version du schéma de questionnaire complétée (0 = jamais) */
+  refinementSchemaVersion Int           @default(0) @map("refinement_schema_version")
+  refinementCompletedAt   DateTime?     @map("refinement_completed_at")
+  /** Dernière date « plus tard » (YYYY-MM-DD) pour cooldown */
+  refinementSkippedAt     String?       @map("refinement_skipped_at")
+  /** Consentement explicite au traitement de ces préférences (RGPD) */
+  refinementConsentAt     DateTime?     @map("refinement_consent_at")
   createdAt             DateTime        @default(now()) @map("created_at")
   updatedAt             DateTime        @updatedAt @map("updated_at")
 

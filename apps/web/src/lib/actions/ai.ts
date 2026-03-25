@@ -1,7 +1,20 @@
 'use server';
 
 import OpenAI from 'openai';
-import type { QuestModel, EscalationPhase, ExplorerAxis, RiskAxis } from '@questia/shared';
+import type {
+  QuestModel,
+  EscalationPhase,
+  ExplorerAxis,
+  RiskAxis,
+  PersonalityVector,
+  QuestNarrationRequest,
+  QuestNarrationResponse,
+} from '@questia/shared';
+import {
+  archetypeCategoryLabelFr,
+  buildPersonalityPromptBlock,
+  describeArchetypeTargetTraits,
+} from './questGenerationPrompt';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
 
@@ -11,32 +24,55 @@ export interface QuestContext {
   city: string;
   country: string;
   weatherDescription: string;
-  weatherIcon: string;   // Lucide icon name: Sun, CloudRain, Cloud, etc.
+  weatherIcon: string; // Lucide icon name: Sun, CloudRain, Cloud, etc.
   temp: number;
   isOutdoorFriendly: boolean;
 }
 
 export interface GeneratedDailyQuest {
-  icon: string;  // Lucide icon name
+  icon: string; // Lucide icon name
   title: string;
-  mission: string;       // 2-3 sentences, concrete actions
-  hook: string;          // short motivational punch line
-  duration: string;      // human readable
+  mission: string; // 2-3 sentences, concrete actions
+  hook: string; // short motivational punch line
+  duration: string; // human readable
   isOutdoor: boolean;
   safetyNote: string | null;
-  archetype: string;     // archetype name for display
+  archetype: string; // archetype name for display
   /** Lieu public pour carte / itinéraire (null si intérieur) */
   destinationLabel: string | null;
   /** Recherche type Google Maps : lieu + ville + pays */
   destinationQuery: string | null;
 }
 
+/** Entrées pour personnaliser au maximum la génération (aligné moteur + profil). */
+export interface DailyQuestProfileInput {
+  /** Phase utilisée pour le choix d’archétype (peut différer du champ profil BDD). */
+  phase: EscalationPhase;
+  day: number;
+  /** Delta de congruence calculé (déclaré vs comportement observé). */
+  congruenceDelta: number;
+  explorerAxis: ExplorerAxis;
+  riskAxis: RiskAxis;
+  /** YYYY-MM-DD — varie le hook */
+  questDateIso: string;
+  /** Big Five (+ autres clés) déclaré à l’onboarding */
+  declaredPersonality: PersonalityVector;
+  /** Personnalité inférée depuis l’historique de quêtes */
+  exhibitedPersonality: PersonalityVector;
+  /** Directive optionnelle (pack narration acheté) */
+  narrationDirective?: string;
+  /** Relance du jour : exiger une formulation nettement différente */
+  isRerollGeneration?: boolean;
+  /** Préférences issues du questionnaire de raffinement (optionnel) */
+  refinementContext?: string | null;
+}
+
 // ── Phase → human label ───────────────────────────────────────────────────────
 
 const PHASE_LABEL: Record<EscalationPhase, string> = {
   calibration: 'débutant (zone de confort proche)',
-  expansion:   'en progression (léger inconfort accepté)',
-  rupture:     'en rupture (challenge significatif recherché)',
+  expansion: 'en progression (léger inconfort accepté)',
+  rupture: 'en rupture (challenge significatif recherché)',
 };
 
 const PROFILE_LABEL = (e: ExplorerAxis, r: RiskAxis) => {
@@ -44,6 +80,31 @@ const PROFILE_LABEL = (e: ExplorerAxis, r: RiskAxis) => {
   const risk = r === 'risktaker' ? 'prend des risques spontanément' : 'préfère planifier et sécuriser';
   return `${explorer}, ${risk}`;
 };
+
+const ICON_ALLOWLIST = new Set([
+  'Swords',
+  'Camera',
+  'Coffee',
+  'Mic',
+  'Compass',
+  'Sparkles',
+  'TreePine',
+  'MapPin',
+  'Target',
+  'BookOpen',
+  'UtensilsCrossed',
+  'Drama',
+  'Leaf',
+  'Navigation',
+  'Flower',
+]);
+
+const VAGUE_MISSION_SNIPPETS = [
+  'réfléchis à ta vie',
+  'médite sur',
+  'prends le temps de réfléchir',
+  'pense à ton passé',
+];
 
 /** Phrases de secours : une par jour (et variante selon archétype) si l’API échoue — pas une seule phrase figée. */
 const FALLBACK_HOOKS: string[] = [
@@ -98,117 +159,281 @@ function pickFallbackHook(questDateIso: string, archetypeId: number): string {
   return FALLBACK_HOOKS[idx]!;
 }
 
-// ── Main: generate a full unique daily quest ──────────────────────────────────
+function normalizeIcon(raw: unknown): string {
+  const s = typeof raw === 'string' ? raw.trim() : '';
+  if (ICON_ALLOWLIST.has(s)) return s;
+  return 'Target';
+}
 
-export async function generateDailyQuest(
-  profile: {
-    phase: EscalationPhase;
-    day: number;
-    delta: number;
-    explorerAxis: ExplorerAxis;
-    riskAxis: RiskAxis;
-    /** YYYY-MM-DD — sert à varier le hook d’un jour à l’autre */
-    questDateIso: string;
-    /** Directive optionnelle (pack narration acheté) */
-    narrationDirective?: string;
+function cityMustAppearInMission(city: string): boolean {
+  const c = city.trim().toLowerCase();
+  return c.length > 2 && c !== 'ta ville';
+}
+
+function validateGeneratedPayload(
+  parsed: {
+    title: string;
+    mission: string;
+    hook: string;
+    destinationLabel: string | null;
+    destinationQuery: string | null;
   },
+  context: QuestContext,
+  archetype: QuestModel,
+  computedIsOutdoor: boolean,
+): { ok: true } | { ok: false; reason: string } {
+  const title = parsed.title.trim();
+  const mission = parsed.mission.trim();
+  const hook = parsed.hook.trim();
+
+  if (title.length < 3 || title.length > 90) {
+    return { ok: false, reason: 'titre trop court ou trop long' };
+  }
+  if (mission.length < 38) {
+    return { ok: false, reason: 'mission pas assez concrète (trop courte)' };
+  }
+  if (hook.length < 6 || hook.split(/\s+/).length > 22) {
+    return { ok: false, reason: 'hook invalide (longueur ou nombre de mots)' };
+  }
+  const m = mission.toLowerCase();
+  for (const bad of VAGUE_MISSION_SNIPPETS) {
+    if (m.includes(bad)) {
+      return { ok: false, reason: 'mission trop vague (évite la pure introspection sans action)' };
+    }
+  }
+  if (cityMustAppearInMission(context.city) && !m.includes(context.city.trim().toLowerCase())) {
+    return { ok: false, reason: `la mission doit mentionner naturellement la ville ${context.city}` };
+  }
+  if (computedIsOutdoor) {
+    const label = (parsed.destinationLabel ?? '').trim();
+    const query = (parsed.destinationQuery ?? '').trim();
+    if (label.length < 2 || query.length < 6) {
+      return { ok: false, reason: 'lieu extérieur : destinationLabel et destinationQuery requis' };
+    }
+  }
+  if (archetype.requiresSocial) {
+    const socialHints =
+      /inconnu|quelqu'un|une personne|un proche|appelle|parle|discute|rencontre|écris|message|voisin|sms|texto|invite|compliment|serveur|commerçant|collègue|ami|famille|conversation|discuter avec|parler à/i;
+    if (!socialHints.test(mission)) {
+      return { ok: false, reason: "l'archétype implique du social : la mission doit l'évoquer clairement" };
+    }
+  }
+  return { ok: true };
+}
+
+function applyComputedOutdoor(
+  parsed: GeneratedDailyQuest,
+  computedIsOutdoor: boolean,
+  context: QuestContext,
+): GeneratedDailyQuest {
+  if (!computedIsOutdoor) {
+    return {
+      ...parsed,
+      isOutdoor: false,
+      destinationLabel: null,
+      destinationQuery: null,
+      safetyNote: null,
+    };
+  }
+  return {
+    ...parsed,
+    isOutdoor: true,
+    destinationLabel: parsed.destinationLabel?.trim() || null,
+    destinationQuery: parsed.destinationQuery?.trim() || null,
+  };
+}
+
+function buildUserPrompt(
+  profile: DailyQuestProfileInput,
   archetype: QuestModel,
   context: QuestContext,
-): Promise<GeneratedDailyQuest> {
-  const system = `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu t'adresses à l'utilisateur en le tutoyant, avec un ton chaleureux et direct. Jamais de jargon psychologique. Chaque quête doit être faisable par n'importe qui, même sans expérience.`;
+  computedIsOutdoor: boolean,
+  personalityBlock: string,
+  categoryFr: string,
+  targetTraitsLine: string,
+  repairHint: string | null,
+): string {
+  const rerollBlock = profile.isRerollGeneration
+    ? `\nIMPORTANT : c’est une RELANCE — la formulation (titre, mission, hook) doit être NETTEMENT différente d’une première proposition, tout en restant dans le même archétype.\n`
+    : '';
 
-  const user = `Génère une quête quotidienne unique pour aujourd'hui.
+  const repairBlock = repairHint
+    ? `\nCORRECTION DEMANDÉE (la proposition précédente était invalide) :\n${repairHint}\nRéécris entièrement title, mission, hook${computedIsOutdoor ? ', destinationLabel, destinationQuery' : ''}.\n`
+    : '';
 
-DATE DU JOUR (référence pour varier le hook) : ${profile.questDateIso}
-- Le champ "hook" doit être une phrase courte et percutante (max 15 mots), DIFFÉRENTE d'un jour à l'autre pour la même personne.
-- Évite les formules creuses et répétitives du type « Chaque jour est une chance de… », « Sois toi-même », « Crois en tes rêves ».
-- Tu peux t'appuyer subtilement sur le jour de la semaine, la saison, ou le contexte météo ci-dessous — sans nommer la date en chiffres.
+  const variationSalt = `${profile.questDateIso}|${archetype.id}|${profile.congruenceDelta.toFixed(3)}|${profile.day}|${repairHint ? 'r1' : 'r0'}`;
+
+  return `Génère une quête quotidienne unique pour aujourd'hui.
+
+VARIATION (évite la copie) : ${variationSalt}
+${rerollBlock}${repairBlock}
+DATE DU JOUR : ${profile.questDateIso}
+- Le champ "hook" : phrase courte (max 15 mots), DIFFÉRENTE d'un jour à l'autre.
+- Évite les formules creuses (« Sois toi-même », « Crois en tes rêves »).
 
 CONTEXTE DU JOUR :
 - Ville : ${context.city}, ${context.country}
 - Météo : ${context.weatherIcon} ${context.weatherDescription}, ${Math.round(context.temp)}°C
 - Sortie en extérieur : ${context.isOutdoorFriendly ? 'Oui, météo favorable' : 'Déconseillé (mauvais temps)'}
 
-PROFIL UTILISATEUR :
-- Jour n°${profile.day} de son aventure
-- Niveau : ${PHASE_LABEL[profile.phase]}
-- Personnalité : ${PROFILE_LABEL(profile.explorerAxis, profile.riskAxis)}
-${profile.narrationDirective ? `\nDIRECTIVE DE STYLE (respecte-la sans la citer mot pour mot) :\n${profile.narrationDirective}\n` : ''}
+PROFIL OPÉRATIONNEL :
+- Jour n°${profile.day}
+- Niveau (phase effective pour cette quête) : ${PHASE_LABEL[profile.phase]}
+- Tendance explorateur / risque : ${PROFILE_LABEL(profile.explorerAxis, profile.riskAxis)}
 
-ARCHÉTYPE SÉLECTIONNÉ : "${archetype.title}"
+${personalityBlock}
+
+FAMILLE DE QUÊTE (respecte l’intention ; ne la cite pas comme étiquette) :
+- ${categoryFr}
+- Axes visés par l’archétype : ${targetTraitsLine}
+
+${profile.narrationDirective ? `DIRECTIVE DE STYLE (respecte-la sans la citer mot pour mot) :\n${profile.narrationDirective}\n` : ''}
+${profile.refinementContext ? `PRÉFÉRENCES UTILISATEUR (adapter la mission, sans citer la source) :\n${profile.refinementContext}\n` : ''}
+
+ARCHÉTYPE (titre canon) : "${archetype.title}"
 Concept : ${archetype.description}
 Durée minimale : ${archetype.minimumDurationMinutes} minutes
 
 RÈGLES ABSOLUES :
-1. La mission doit être CONCRÈTE (des actions précises, pas "réfléchis à ta vie")
-2. Elle doit être faisable AUJOURD'HUI à ${context.city} par n'importe qui
-3. ${context.isOutdoorFriendly ? "Peut se passer en extérieur" : "Doit se passer en intérieur ou sous abri"}
-4. Adapte la durée à la météo et à la ville
-5. Zéro jargon technique ou psychologique
-6. Commence la mission par un verbe d'action
-7. Si la quête est EN EXTÉRIEUR (isOutdoor true), propose UN lieu public réel et accessible à ${context.city} (parc, place, quai, jardin…). Remplis destinationLabel (nom court) et destinationQuery (phrase complète type recherche Google Maps : lieu + ville + pays). Si la quête est en intérieur (isOutdoor false), mets destinationLabel et destinationQuery à null.
+1. La mission doit être CONCRÈTE (actions précises, objets, lieux, durée) — pas seulement « réfléchir ».
+2. Elle doit être faisable AUJOURD'HUI${cityMustAppearInMission(context.city) ? ` à ${context.city}` : ''}.
+3. ${context.isOutdoorFriendly ? 'Peut se passer en extérieur si isOutdoor est true.' : 'Doit se passer en intérieur ou sous abri.'}
+4. Adapte la durée à la météo.
+5. Zéro jargon psychologique ou clinique (pas de Big Five, pas de « traits »).
+6. Commence la mission par un verbe d’action à l’impératif ou « Va », « Prends », « Écris », etc.
+7. isOutdoor doit être EXACTEMENT : ${computedIsOutdoor}
+8. ${computedIsOutdoor ? `Si isOutdoor true : UN lieu public réel à ${context.city} ; destinationQuery = "Lieu, ${context.city}, ${context.country}"` : 'Si isOutdoor false : destinationLabel et destinationQuery à null.'}
+${archetype.requiresSocial ? '9. Cette famille implique une interaction sociale réelle (inconnu, proche, message, appel…) — intègre-la dans la mission.\n' : ''}
 
-Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste (sans rien d'autre) : Swords, Camera, Coffee, Mic, Compass, Sparkles, TreePine, MapPin, Target, BookOpen, UtensilsCrossed, Drama, Leaf, Navigation, Flower.
+Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[...ICON_ALLOWLIST].join(', ')}.
 {
-  "icon": "nom d'icône dans la liste ci-dessus",
+  "icon": "...",
   "title": "titre court (4-6 mots max), intrigant",
-  "mission": "la mission complète en 2-3 phrases précises, actions concrètes, mention naturelle de ${context.city}",
-  "hook": "une phrase percutante et motivante (max 15 mots), unique par rapport aux autres jours",
-  "duration": "durée réaliste (ex: 1h30, 45 min, toute la journée)",
-  "isOutdoor": ${context.isOutdoorFriendly && archetype.requiresOutdoor},
-  "safetyNote": ${archetype.requiresOutdoor && context.isOutdoorFriendly ? '"une note de sécurité courte si nécessaire, sinon null"' : 'null'},
-  "destinationLabel": ${context.isOutdoorFriendly && archetype.requiresOutdoor ? `"ex: Parc des Buttes-Chaumont"` : 'null'},
-  "destinationQuery": ${context.isOutdoorFriendly && archetype.requiresOutdoor ? `"ex: Parc des Buttes-Chaumont, ${context.city}, ${context.country}"` : 'null'}
+  "mission": "2-3 phrases précises${cityMustAppearInMission(context.city) ? `, mention naturelle de ${context.city}` : ''}",
+  "hook": "max 15 mots",
+  "duration": "ex: 45 min, 1h30",
+  "isOutdoor": ${computedIsOutdoor},
+  "safetyNote": ${computedIsOutdoor ? 'string court ou null' : 'null'},
+  "destinationLabel": ${computedIsOutdoor ? `"nom court du lieu"` : 'null'},
+  "destinationQuery": ${computedIsOutdoor ? `"Lieu, ${context.city}, ${context.country}"` : 'null'}
 }`;
+}
 
-  try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.95,
-      max_tokens: 520,
-    });
+async function callModel(user: string, system: string, temperature: number): Promise<string> {
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+    response_format: { type: 'json_object' },
+    temperature,
+    max_tokens: 600,
+  });
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error('Empty response');
+  return raw;
+}
 
-    const raw = completion.choices[0]?.message?.content;
-    if (!raw) throw new Error('Empty response');
+// ── Main: generate a full unique daily quest ──────────────────────────────────
 
-    const parsed = JSON.parse(raw) as (GeneratedDailyQuest & { emoji?: string });
-    const icon = parsed.icon ?? parsed.emoji ?? 'Target';
-    const destinationLabel =
-      typeof parsed.destinationLabel === 'string' ? parsed.destinationLabel.trim() || null : null;
-    const destinationQuery =
-      typeof parsed.destinationQuery === 'string' ? parsed.destinationQuery.trim() || null : null;
-    return {
-      ...parsed,
-      icon,
-      archetype: archetype.title,
-      destinationLabel,
-      destinationQuery,
-    };
-  } catch {
-    // Graceful fallback — hook rotatif selon la date (pas une phrase unique figée)
-    return {
-      icon: 'Swords',
-      title: archetype.title,
-      mission: archetype.description,
-      hook: pickFallbackHook(profile.questDateIso, archetype.id),
-      duration: `${archetype.minimumDurationMinutes} min`,
-      isOutdoor: archetype.requiresOutdoor && context.isOutdoorFriendly,
-      safetyNote: archetype.requiresOutdoor ? 'Reste dans des zones sûres et éclairées.' : null,
-      archetype: archetype.title,
-      destinationLabel: null,
-      destinationQuery: null,
-    } as GeneratedDailyQuest;
+export async function generateDailyQuest(
+  profile: DailyQuestProfileInput,
+  archetype: QuestModel,
+  context: QuestContext,
+): Promise<GeneratedDailyQuest> {
+  const system = `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d’exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores.`;
+
+  const computedIsOutdoor = context.isOutdoorFriendly && archetype.requiresOutdoor;
+  const personalityBlock = buildPersonalityPromptBlock(
+    profile.declaredPersonality,
+    profile.exhibitedPersonality,
+    profile.congruenceDelta,
+  );
+  const categoryFr = archetypeCategoryLabelFr(archetype.category);
+  const targetTraitsLine = describeArchetypeTargetTraits(archetype);
+
+  let repairHint: string | null = null;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const user = buildUserPrompt(
+        profile,
+        archetype,
+        context,
+        computedIsOutdoor,
+        personalityBlock,
+        categoryFr,
+        targetTraitsLine,
+        repairHint,
+      );
+      const temperature = attempt === 0 ? 0.78 : 0.62;
+      const raw = await callModel(user, system, temperature);
+      const parsedRaw = JSON.parse(raw) as Record<string, unknown>;
+
+      const parsed = {
+        ...parsedRaw,
+        icon: normalizeIcon(parsedRaw.icon ?? parsedRaw.emoji),
+        title: typeof parsedRaw.title === 'string' ? parsedRaw.title.trim() : '',
+        mission: typeof parsedRaw.mission === 'string' ? parsedRaw.mission.trim() : '',
+        hook: typeof parsedRaw.hook === 'string' ? parsedRaw.hook.trim() : '',
+        duration: typeof parsedRaw.duration === 'string' ? parsedRaw.duration.trim() : `${archetype.minimumDurationMinutes} min`,
+        isOutdoor: computedIsOutdoor,
+        safetyNote:
+          typeof parsedRaw.safetyNote === 'string' && parsedRaw.safetyNote.trim()
+            ? parsedRaw.safetyNote.trim()
+            : null,
+        archetype: archetype.title,
+        destinationLabel:
+          typeof parsedRaw.destinationLabel === 'string' ? parsedRaw.destinationLabel.trim() : '',
+        destinationQuery:
+          typeof parsedRaw.destinationQuery === 'string' ? parsedRaw.destinationQuery.trim() : '',
+      } as GeneratedDailyQuest;
+
+      const normalized = applyComputedOutdoor(parsed, computedIsOutdoor, context);
+      const v = validateGeneratedPayload(
+        {
+          title: normalized.title,
+          mission: normalized.mission,
+          hook: normalized.hook,
+          destinationLabel: normalized.destinationLabel,
+          destinationQuery: normalized.destinationQuery,
+        },
+        context,
+        archetype,
+        computedIsOutdoor,
+      );
+      if (v.ok) {
+        const note = normalized.safetyNote;
+        return {
+          ...normalized,
+          safetyNote:
+            computedIsOutdoor && archetype.requiresOutdoor && !note
+              ? 'Reste dans des zones sûres et éclairées.'
+              : note,
+        };
+      }
+      repairHint = v.reason;
+    } catch {
+      repairHint = repairHint ?? 'JSON incomplet ou invalide — réessaie avec tous les champs requis.';
+    }
   }
+
+  return {
+    icon: 'Swords',
+    title: archetype.title,
+    mission: archetype.description,
+    hook: pickFallbackHook(profile.questDateIso, archetype.id),
+    duration: `${archetype.minimumDurationMinutes} min`,
+    isOutdoor: computedIsOutdoor,
+    safetyNote: computedIsOutdoor ? 'Reste dans des zones sûres et éclairées.' : null,
+    archetype: archetype.title,
+    destinationLabel: null,
+    destinationQuery: null,
+  } as GeneratedDailyQuest;
 }
 
 // ── Legacy: kept for /api/quest/accept backward compat ───────────────────────
-
-import type { QuestNarrationRequest, QuestNarrationResponse } from '@questia/shared';
 
 export async function generateQuestNarration(
   request: QuestNarrationRequest,
@@ -217,13 +442,15 @@ export async function generateQuestNarration(
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      messages: [{
-        role: 'user',
-        content: `Génère une narration courte et motivante pour cette quête.
+      messages: [
+        {
+          role: 'user',
+          content: `Génère une narration courte et motivante pour cette quête.
 Quête: "${questModel.title}" - ${questModel.description}
-Jour ${anonymizedProfile.dayNumber}, phase ${anonymizedProfile.phase}.
+Jour ${anonymizedProfile.dayNumber}, phase ${anonymizedProfile.phase}, écart identité-actions (indicateur) ${anonymizedProfile.congruenceDelta.toFixed(2)}.
 JSON: { "title": "...", "narrative": "...", "motivationalHook": "...", "estimatedDuration": "...", "safetyReminders": [] }`,
-      }],
+        },
+      ],
       response_format: { type: 'json_object' },
       temperature: 0.8,
       max_tokens: 300,

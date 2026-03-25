@@ -1,4 +1,4 @@
-import type { PersonalityVector, QuestLog, QuestModel } from '../types';
+import type { PersonalityVector, PsychologicalCategory, QuestLog, QuestModel } from '../types';
 import { ACTIVITY_PERSONALITY_CORRELATION, PERSONALITY_KEYS } from '../constants/personality';
 import { QUEST_TAXONOMY } from '../constants/quests';
 
@@ -128,12 +128,14 @@ export function scoreQuestFit(
 /**
  * Picks the best quest for the user given their profile and phase.
  * Filters out recently assigned quests and respects outdoor/weather constraints.
+ * @param categoryBias — optionnel : valeurs positives réduisent le score (favorisent la catégorie), ex. questionnaire de raffinement.
  */
 export function selectQuest(
   declared: PersonalityVector,
   phase: 'calibration' | 'expansion' | 'rupture',
   recentQuestIds: number[],
   allowOutdoor: boolean,
+  categoryBias?: Partial<Record<PsychologicalCategory, number>>,
 ): QuestModel | null {
   const targetDelta = getTargetDelta(phase);
   const candidates = QUEST_TAXONOMY
@@ -142,8 +144,14 @@ export function selectQuest(
 
   if (candidates.length === 0) return null;
 
+  const bias = categoryBias ?? {};
   const scored = candidates
-    .map((q) => ({ quest: q, score: scoreQuestFit(q, declared, targetDelta) }))
+    .map((q) => {
+      let score = scoreQuestFit(q, declared, targetDelta);
+      const b = bias[q.category];
+      if (b !== undefined) score -= b;
+      return { quest: q, score };
+    })
     .sort((a, b) => a.score - b.score);
 
   return scored[0].quest;

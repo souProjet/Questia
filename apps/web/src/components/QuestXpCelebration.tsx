@@ -31,22 +31,22 @@ function usePrefersReducedMotion(): boolean {
   );
 }
 
-function confettiParticle(i: number) {
+function confettiParticle(i: number, origin: 'center' | 'high' = 'center') {
   const s = (n: number) => {
     const x = Math.sin(n * 12.9898 + i * 3.1415) * 43758.5453;
     return x - Math.floor(x);
   };
-  const dx = (s(1) - 0.5) * 260;
-  const dy = 160 + s(2) * 140;
-  const spin = 400 + s(3) * 500;
-  const delay = `${s(4) * 0.35}s`;
-  const dur = `${1.75 + s(5) * 0.45}s`;
+  const dx = (s(1) - 0.5) * 300;
+  const dy = (origin === 'high' ? 120 : 180) + s(2) * 200;
+  const spin = 520 + s(3) * 620;
+  const delay = `${s(4) * 0.42}s`;
+  const dur = `${1.95 + s(5) * 0.55}s`;
   const hue = Math.floor(s(6) * 360);
-  const ox = (s(7) - 0.5) * 40;
-  const oy = (s(8) - 0.5) * 28;
-  const w = 5 + (i % 4);
-  const h = 7 + (i % 3);
-  return { dx, dy, spin, delay, dur, hue, ox, oy, w, h, id: i };
+  const ox = (s(7) - 0.5) * 52;
+  const oy = (s(8) - 0.5) * 36;
+  const w = 5 + (i % 5);
+  const h = 7 + (i % 4);
+  return { dx, dy, spin, delay, dur, hue, ox, oy, w, h, id: i, origin };
 }
 
 export function QuestXpCelebration({
@@ -69,7 +69,14 @@ export function QuestXpCelebration({
     };
   }, [xpGain.newTotal, xpGain.previousTotal]);
 
-  const particles = useMemo(() => Array.from({ length: reducedMotion ? 0 : 40 }, (_, i) => confettiParticle(i)), [reducedMotion]);
+  const particles = useMemo(() => {
+    if (reducedMotion) return [];
+    const n = 36;
+    return [
+      ...Array.from({ length: n }, (_, i) => confettiParticle(i, 'center')),
+      ...Array.from({ length: n }, (_, i) => confettiParticle(n + i, 'high')),
+    ];
+  }, [reducedMotion]);
 
   if (!open) return null;
 
@@ -77,36 +84,54 @@ export function QuestXpCelebration({
     <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm motion-safe:animate-fadeIn motion-reduce:animate-none"
+        className="absolute inset-0 bg-slate-900/55 backdrop-blur-md motion-safe:animate-fadeIn motion-reduce:animate-none"
         aria-label="Fermer"
         onClick={() => onOpenChange(false)}
       />
-      <div
-        className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border-2 border-orange-300/40 bg-gradient-to-br from-amber-50 via-white to-cyan-50 shadow-[0_24px_80px_-12px_rgba(249,115,22,.35)] motion-safe:animate-fade-up-slow motion-reduce:animate-none"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="xp-celebration-title"
-      >
+      {/* Impact plein écran (style « boss vaincu ») */}
+      {!reducedMotion ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-[56] bg-gradient-to-b from-amber-200/50 via-cyan-200/35 to-violet-400/25 motion-safe:animate-quest-victory-screen-flash motion-reduce:hidden"
+          aria-hidden
+        />
+      ) : null}
+      <div className="motion-safe:animate-quest-modal-shake motion-reduce:animate-none relative z-[60] flex w-full max-w-md justify-center">
+        <div
+          className="relative w-full overflow-hidden rounded-3xl border-2 border-orange-300/50 bg-gradient-to-br from-amber-50 via-white to-cyan-50 shadow-[0_24px_80px_-12px_rgba(249,115,22,.42),0_0_0_1px_rgba(255,255,255,0.5)_inset] motion-safe:animate-quest-modal-pop motion-reduce:animate-none"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="xp-celebration-title"
+        >
+        {/* Anneaux d’impact */}
+        {!reducedMotion ? (
+          <div className="pointer-events-none absolute left-1/2 top-[36%] z-0 h-48 w-48 -translate-x-1/2 -translate-y-1/2 motion-reduce:hidden" aria-hidden>
+            <div className="absolute inset-0 rounded-full border-4 border-amber-400/50 motion-safe:animate-quest-ring-pulse motion-reduce:hidden [animation-delay:0ms]" />
+            <div className="absolute inset-0 rounded-full border-2 border-cyan-400/40 motion-safe:animate-quest-ring-pulse motion-reduce:hidden [animation-delay:120ms]" />
+            <div className="absolute inset-[-12px] rounded-full border border-orange-300/30 motion-safe:animate-quest-ring-pulse motion-reduce:hidden [animation-delay:220ms]" />
+          </div>
+        ) : null}
+
         {/* Fond animé léger */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.45] motion-safe:animate-celebrate-shimmer motion-reduce:opacity-30"
+          className="pointer-events-none absolute inset-0 opacity-[0.5] motion-safe:animate-celebrate-shimmer motion-reduce:opacity-30"
           style={{
             background:
-              'radial-gradient(ellipse 80% 55% at 50% -10%, rgba(34,211,238,0.35), transparent 55%), radial-gradient(ellipse 70% 50% at 100% 100%, rgba(249,115,22,0.18), transparent 50%)',
+              'radial-gradient(ellipse 80% 55% at 50% -10%, rgba(34,211,238,0.42), transparent 55%), radial-gradient(ellipse 70% 50% at 100% 100%, rgba(249,115,22,0.22), transparent 50%)',
           }}
         />
 
         {/* Confettis */}
         {!reducedMotion && particles.length > 0 ? (
           <div
-            className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl motion-reduce:hidden"
+            className="pointer-events-none absolute inset-0 z-[1] overflow-hidden rounded-3xl motion-reduce:hidden"
             aria-hidden
           >
             {particles.map((p) => (
               <span
-                key={p.id}
-                className="absolute left-1/2 top-[38%] rounded-[2px] motion-safe:animate-celebrate-confetti"
+                key={`${p.origin}-${p.id}`}
+                className="absolute left-1/2 rounded-[2px] motion-safe:animate-celebrate-confetti"
                 style={{
+                  top: p.origin === 'high' ? '18%' : '38%',
                   width: p.w,
                   height: p.h,
                   marginLeft: p.ox,
@@ -235,6 +260,7 @@ export function QuestXpCelebration({
             Continuer →
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

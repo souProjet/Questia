@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Linking,
   useWindowDimensions,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/expo';
@@ -20,6 +22,7 @@ import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/QuestRewardOverlay';
+import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
 
 interface ProgressionPayload {
   totalXp: number;
@@ -62,6 +65,12 @@ interface DailyQuest {
   bonusRerollCredits?: number;
   equippedTitleId?: string | null;
   xpBonusCharges?: number;
+  refinement?: {
+    due: boolean;
+    schemaVersion: number;
+    questions?: RefinementQuestionUi[];
+    consentNotice?: string;
+  };
 }
 
 const PHASE_LABEL: Record<EscalationPhase, { text: string; emoji: string }> = {
@@ -166,6 +175,7 @@ export default function DashboardScreen() {
   }, [getToken]);
 
   const [quest, setQuest] = useState<DailyQuest | null>(null);
+  const [showRefinement, setShowRefinement] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
@@ -175,6 +185,7 @@ export default function DashboardScreen() {
   const [rerollsRemaining, setRerollsRemaining] = useState(1);
   const [reward, setReward] = useState<QuestRewardPayload | null>(null);
   const [showReward, setShowReward] = useState(false);
+  const acceptFlashOp = useRef(new Animated.Value(0)).current;
 
   const ensureProfile = useCallback(async (token: string | null): Promise<{ ok: boolean; error?: string }> => {
     try {
@@ -226,6 +237,11 @@ export default function DashboardScreen() {
         const data = await res.json() as DailyQuest;
         setQuest(data);
         setRerollsRemaining(data.rerollsRemaining ?? 1);
+        if (data.refinement?.due && data.refinement.questions?.length) {
+          setShowRefinement(true);
+        } else {
+          setShowRefinement(false);
+        }
         return true;
       } catch (e) {
         if (!silent) {
@@ -278,11 +294,16 @@ export default function DashboardScreen() {
         const data = await res.json() as Partial<DailyQuest>;
         setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? prev.status) as DailyQuest['status'] } : null));
         setShowSafety(false);
+        acceptFlashOp.setValue(0);
+        Animated.sequence([
+          Animated.timing(acceptFlashOp, { toValue: 1, duration: 72, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(acceptFlashOp, { toValue: 0, duration: 620, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+        ]).start();
       }
     } finally {
       setAccepting(false);
     }
-  }, [quest, getToken]);
+  }, [quest, getToken, acceptFlashOp]);
 
   const doComplete = useCallback(async () => {
     if (!quest) return;
@@ -418,6 +439,32 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            zIndex: 40,
+            opacity: acceptFlashOp,
+            backgroundColor: 'rgba(16, 185, 129, 0.42)',
+          },
+        ]}
+      />
+      {quest?.refinement?.questions && quest.refinement.questions.length > 0 ? (
+        <ProfileRefinementSheet
+          visible={showRefinement}
+          questions={quest.refinement.questions}
+          consentNotice={
+            quest.refinement.consentNotice ??
+            'Ces réponses servent uniquement à adapter tes quêtes. Tu peux demander leur suppression conformément à notre politique de confidentialité.'
+          }
+          getToken={() => getTokenRef.current()}
+          onDone={() => {
+            setShowRefinement(false);
+            void loadQuest(undefined, undefined, { silent: true });
+          }}
+        />
+      ) : null}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[

@@ -41,7 +41,9 @@ export function QuestDashboard({
   congruenceDelta = 0,
   apiBaseUrl = '',
 }: QuestDashboardProps) {
-  const [currentQuest, setCurrentQuest] = useState<QuestModel>(QUEST_TAXONOMY[12]);
+  const [currentQuest, setCurrentQuest] = useState<QuestModel>(
+    QUEST_TAXONOMY[QUEST_TAXONOMY.length - 1]!,
+  );
   const [rerollsLeft, setRerollsLeft] = useState(initialRerolls);
   const [showConsent, setShowConsent] = useState(false);
   const [showNarration, setShowNarration] = useState(false);

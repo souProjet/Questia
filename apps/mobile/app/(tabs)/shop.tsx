@@ -272,6 +272,7 @@ export default function ShopScreen() {
   const balanceScale = useRef(new Animated.Value(1)).current;
   const celebrateOverlay = useRef(new Animated.Value(0)).current;
   const bumpScale = useRef(new Animated.Value(1)).current;
+  const screenShake = useRef(new Animated.Value(0)).current;
 
   /** `sku` omis = retour recharge Stripe (flash solde sans bump carte). */
   const runPurchaseCelebration = useCallback(
@@ -290,6 +291,14 @@ export default function ShopScreen() {
         ]).start();
       }
 
+      screenShake.setValue(0);
+      Animated.sequence([
+        Animated.timing(screenShake, { toValue: 10, duration: 42, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(screenShake, { toValue: -9, duration: 42, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(screenShake, { toValue: 5, duration: 36, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(screenShake, { toValue: 0, duration: 36, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]).start();
+
       balanceScale.setValue(1);
       Animated.sequence([
         Animated.timing(balanceScale, {
@@ -307,17 +316,17 @@ export default function ShopScreen() {
         Animated.spring(balanceScale, { toValue: 1, friction: 6, tension: 200, useNativeDriver: true }),
       ]).start();
 
-      celebrateOverlay.setValue(sku ? 0.42 : 0.32);
+      celebrateOverlay.setValue(sku ? 0.52 : 0.4);
       Animated.timing(celebrateOverlay, {
         toValue: 0,
-        duration: 900,
+        duration: 1650,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }).start();
 
       if (sku) setTimeout(() => setPurchaseHighlightSku(null), 1300);
     },
-    [balanceScale, bumpScale, celebrateOverlay],
+    [balanceScale, bumpScale, celebrateOverlay, screenShake],
   );
 
   const themeOptions = useMemo(() => {
@@ -572,11 +581,12 @@ export default function ShopScreen() {
           StyleSheet.absoluteFillObject,
           {
             zIndex: 40,
-            backgroundColor: 'rgba(251, 191, 36, 0.32)',
+            backgroundColor: 'rgba(251, 191, 36, 0.38)',
             opacity: celebrateOverlay,
           },
         ]}
       />
+      <Animated.View style={{ flex: 1, transform: [{ translateX: screenShake }] }}>
       <View style={styles.topBar}>
         <View style={{ width: 72 }} />
         <Text style={[styles.topTitle, styles.topTitleCenter]}>Boutique</Text>
@@ -1099,6 +1109,7 @@ export default function ShopScreen() {
           </View>
         </Modal>
       ) : null}
+      </Animated.View>
     </SafeAreaView>
   );
 }

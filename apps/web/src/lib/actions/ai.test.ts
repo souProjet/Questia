@@ -1,5 +1,16 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { QUEST_TAXONOMY } from '@questia/shared';
+import type { PersonalityVector } from '@questia/shared';
+
+const uniformPersonality = (v: number): PersonalityVector => ({
+  openness: v,
+  conscientiousness: v,
+  extraversion: v,
+  agreeableness: v,
+  emotionalStability: v,
+  thrillSeeking: v,
+  boredomSusceptibility: v,
+});
 
 const createMock = vi.hoisted(() => vi.fn());
 
@@ -26,9 +37,10 @@ describe('ai actions', () => {
           message: {
             content: JSON.stringify({
               icon: 'Target',
-              title: 'T',
-              mission: 'M',
-              hook: 'H',
+              title: 'Test quête intérieure',
+              mission:
+                'À Paris, ouvre ton carnet et écris trois phrases sur ce qui t’attire aujourd’hui. Ferme les yeux une minute puis relis. Ne sors pas : reste chez toi ou dans un lieu couvert.',
+              hook: 'Paris commence dans ta tête, un mot à la fois.',
               duration: '1h',
               isOutdoor: false,
               safetyNote: null,
@@ -46,10 +58,12 @@ describe('ai actions', () => {
       {
         phase: 'calibration',
         day: 1,
-        delta: 0.1,
+        congruenceDelta: 0.1,
         explorerAxis: 'explorer',
         riskAxis: 'cautious',
         questDateIso: '2026-03-24',
+        declaredPersonality: uniformPersonality(0.5),
+        exhibitedPersonality: uniformPersonality(0),
       },
       archetype,
       {
@@ -61,7 +75,7 @@ describe('ai actions', () => {
         isOutdoorFriendly: true,
       },
     );
-    expect(q.title).toBe('T');
+    expect(q.title).toBe('Test quête intérieure');
     expect(q.icon).toBe('Target');
   });
 
@@ -74,10 +88,12 @@ describe('ai actions', () => {
       {
         phase: 'calibration',
         day: 1,
-        delta: 0.1,
+        congruenceDelta: 0.1,
         explorerAxis: 'explorer',
         riskAxis: 'cautious',
         questDateIso: '2026-03-24',
+        declaredPersonality: uniformPersonality(0.5),
+        exhibitedPersonality: uniformPersonality(0),
       },
       archetype,
       {

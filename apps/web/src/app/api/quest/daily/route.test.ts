@@ -89,6 +89,9 @@ const profileRow = {
   badgesEarned: [],
   totalXp: 0,
   flagNextQuestAfterReroll: false,
+  refinementSchemaVersion: 0,
+  refinementSkippedAt: null,
+  refinementAnswers: {},
 };
 
 const logRow = {
@@ -123,6 +126,8 @@ describe('/api/quest/daily', () => {
     prismaMock.profile.findUnique.mockReset();
     prismaMock.questLog.findUnique.mockReset();
     prismaMock.questLog.findMany.mockReset();
+    prismaMock.questLog.count.mockReset();
+    prismaMock.questLog.count.mockResolvedValue(0);
     prismaMock.$transaction.mockReset();
     prismaMock.questLog.create.mockReset();
     prismaMock.questLog.update.mockReset();

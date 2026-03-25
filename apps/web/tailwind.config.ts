@@ -31,7 +31,7 @@ const config: Config = {
         'glow-soft': 'glowSoft 14s ease-in-out infinite',
         'share-shimmer': 'shareShimmer 2.5s ease-in-out infinite',
         /** Célébration quête / badges / niveau */
-        'celebrate-confetti': 'celebrateConfetti 2.1s ease-out forwards',
+        'celebrate-confetti': 'celebrateConfetti 2.45s cubic-bezier(0.22, 1, 0.36, 1) forwards',
         'badge-reveal': 'badgeReveal 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both',
         'xp-number-pop': 'xpNumberPop 0.65s cubic-bezier(0.22, 1, 0.36, 1) both',
         'level-banner-in': 'levelBannerIn 0.75s cubic-bezier(0.22, 1, 0.36, 1) both',
@@ -43,6 +43,16 @@ const config: Config = {
         'shop-card-bump': 'shopCardBump 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both',
         'shop-btn-pulse': 'shopBtnPulse 0.45s ease-out both',
         'shop-sparkle': 'shopSparkle 1.2s ease-out forwards',
+        /** Feedback « jeu » — acceptation quête, impact boutique */
+        'quest-accept-flash': 'questAcceptFlash 0.78s ease-out forwards',
+        'quest-victory-screen-flash': 'questVictoryScreenFlash 0.55s ease-out forwards',
+        'quest-ring-pulse': 'questRingPulse 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+        'quest-modal-pop': 'questModalPop 0.58s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+        'quest-modal-shake': 'questModalShake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) both',
+        'shop-celebration-overlay': 'shopCelebrationOverlay 2.15s ease-out forwards',
+        'shop-screen-shake': 'shopScreenShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both',
+        'shop-coin-burst': 'shopCoinBurst 1.9s ease-out forwards',
+        'shop-sparkle-orbit': 'shopSparkleOrbit 2s ease-out forwards',
       },
       keyframes: {
         fadeIn: {
@@ -73,19 +83,20 @@ const config: Config = {
           '0%': { transform: 'translate3d(0, 0, 0) rotate(0deg)', opacity: '1' },
           '100%': {
             transform:
-              'translate3d(calc(var(--dx, 0px)), calc(var(--dy, 220px)), 0) rotate(calc(var(--spin, 540deg)))',
+              'translate3d(calc(var(--dx, 0px)), calc(var(--dy, 260px)), 0) rotate(calc(var(--spin, 720deg)))',
             opacity: '0',
           },
         },
         badgeReveal: {
-          '0%': { opacity: '0', transform: 'scale(0.65) translateY(12px)' },
-          '70%': { opacity: '1', transform: 'scale(1.04) translateY(0)' },
-          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+          '0%': { opacity: '0', transform: 'scale(0.5) translateY(18px) rotate(-4deg)' },
+          '65%': { opacity: '1', transform: 'scale(1.08) translateY(-2px) rotate(1deg)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0) rotate(0deg)' },
         },
         xpNumberPop: {
-          '0%': { opacity: '0', transform: 'scale(0.5)' },
-          '55%': { opacity: '1', transform: 'scale(1.12)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
+          '0%': { opacity: '0', transform: 'scale(0.35) rotate(-5deg)' },
+          '48%': { opacity: '1', transform: 'scale(1.2) rotate(2deg)' },
+          '72%': { transform: 'scale(0.94) rotate(0deg)' },
+          '100%': { opacity: '1', transform: 'scale(1) rotate(0deg)' },
         },
         levelBannerIn: {
           '0%': { opacity: '0', transform: 'scale(0.85) translateY(12px)' },
@@ -102,7 +113,8 @@ const config: Config = {
           '100%': { transform: 'scale(1)', filter: 'brightness(1)' },
         },
         shopGoldFlash: {
-          '0%': { opacity: '0.5' },
+          '0%': { opacity: '0.72' },
+          '35%': { opacity: '0.38' },
           '100%': { opacity: '0' },
         },
         shopModalIn: {
@@ -123,6 +135,54 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'scale(0.4) rotate(-8deg)' },
           '30%': { opacity: '1', transform: 'scale(1.05) rotate(4deg)' },
           '100%': { opacity: '0', transform: 'scale(1.2) rotate(12deg)' },
+        },
+        questAcceptFlash: {
+          '0%': { opacity: '0' },
+          '12%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+        questVictoryScreenFlash: {
+          '0%': { opacity: '0', filter: 'brightness(1)' },
+          '18%': { opacity: '1', filter: 'brightness(1.35)' },
+          '100%': { opacity: '0', filter: 'brightness(1)' },
+        },
+        questRingPulse: {
+          '0%': { transform: 'scale(0.35)', opacity: '0.85' },
+          '100%': { transform: 'scale(2.15)', opacity: '0' },
+        },
+        questModalPop: {
+          '0%': { opacity: '0', transform: 'scale(0.72) rotate(-4deg)' },
+          '65%': { opacity: '1', transform: 'scale(1.06) rotate(1deg)' },
+          '100%': { opacity: '1', transform: 'scale(1) rotate(0deg)' },
+        },
+        questModalShake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '12%': { transform: 'translateX(-8px) rotate(-0.5deg)' },
+          '24%': { transform: 'translateX(7px) rotate(0.5deg)' },
+          '36%': { transform: 'translateX(-5px)' },
+          '48%': { transform: 'translateX(4px)' },
+          '60%': { transform: 'translateX(-2px)' },
+        },
+        shopCelebrationOverlay: {
+          '0%': { opacity: '0.55' },
+          '18%': { opacity: '0.42' },
+          '100%': { opacity: '0' },
+        },
+        shopScreenShake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '15%': { transform: 'translateX(-5px)' },
+          '30%': { transform: 'translateX(5px)' },
+          '45%': { transform: 'translateX(-3px)' },
+        },
+        shopCoinBurst: {
+          '0%': { opacity: '0', transform: 'translate(-50%, 0) scale(0.3)' },
+          '22%': { opacity: '1', transform: 'translate(-50%, -18px) scale(1.15)' },
+          '100%': { opacity: '0', transform: 'translate(-50%, -120px) scale(0.85)' },
+        },
+        shopSparkleOrbit: {
+          '0%': { opacity: '0', transform: 'rotate(-12deg) scale(0.5)' },
+          '25%': { opacity: '1', transform: 'rotate(8deg) scale(1.05)' },
+          '100%': { opacity: '0', transform: 'rotate(24deg) scale(1.25)' },
         },
       },
       boxShadow: {

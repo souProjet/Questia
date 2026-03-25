@@ -7,6 +7,10 @@ import { Navbar } from '@/components/Navbar';
 import { Icon } from '@/components/Icons';
 import { QuestShareComposer } from '@/components/QuestShareComposer';
 import { QuestXpCelebration } from '@/components/QuestXpCelebration';
+import {
+  ProfileRefinementModal,
+  type RefinementQuestionUi,
+} from '@/components/ProfileRefinementModal';
 import type { DisplayBadge, EscalationPhase, XpBreakdown } from '@questia/shared';
 import { questDisplayEmoji, questFamilyLabel, getTitleDefinition } from '@questia/shared';
 
@@ -65,6 +69,12 @@ interface DailyQuest {
   activeThemeId?: string;
   equippedTitleId?: string | null;
   xpBonusCharges?: number;
+  refinement?: {
+    due: boolean;
+    schemaVersion: number;
+    questions?: RefinementQuestionUi[];
+    consentNotice?: string;
+  };
 }
 
 // ── Phase → friendly label ─────────────────────────────────────────────────────
@@ -177,6 +187,9 @@ export default function AppPage() {
     };
     badgesUnlocked: DisplayBadge[];
   } | null>(null);
+  /** Flash plein écran court après acceptation de la quête (feedback « jeu »). */
+  const [acceptQuestFlash, setAcceptQuestFlash] = useState(false);
+  const [showRefinement, setShowRefinement] = useState(false);
 
   // ── Ensure profile exists (get-or-create from onboarding localStorage) ───────
 
@@ -225,6 +238,11 @@ export default function AppPage() {
         if (!res.ok) throw new Error('Erreur serveur');
         const data = await res.json() as DailyQuest;
         setQuest(data);
+        if (data.refinement?.due && data.refinement.questions?.length) {
+          setShowRefinement(true);
+        } else {
+          setShowRefinement(false);
+        }
         return true;
       } catch (e: unknown) {
         if (!silent) {
@@ -288,6 +306,8 @@ export default function AppPage() {
       }
       const data = await res.json() as Partial<DailyQuest>;
       setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? prev.status) as DailyQuest['status'] } : null));
+      setAcceptQuestFlash(true);
+      window.setTimeout(() => setAcceptQuestFlash(false), 780);
     } finally {
       setAccepting(false);
       setShowSafety(false);
@@ -447,6 +467,27 @@ export default function AppPage() {
   return (
     <div className="min-h-screen bg-adventure relative">
       <Navbar />
+
+      {acceptQuestFlash ? (
+        <div
+          className="pointer-events-none fixed inset-0 z-[85] bg-gradient-to-br from-emerald-300/45 via-amber-200/35 to-cyan-300/40 motion-safe:animate-quest-accept-flash motion-reduce:hidden"
+          aria-hidden
+        />
+      ) : null}
+
+      {showRefinement && quest?.refinement?.questions && quest.refinement.questions.length > 0 ? (
+        <ProfileRefinementModal
+          questions={quest.refinement.questions}
+          consentNotice={
+            quest.refinement.consentNotice ??
+            'Ces réponses servent uniquement à adapter tes quêtes. Tu peux demander leur suppression conformément à notre politique de confidentialité.'
+          }
+          onDone={() => {
+            setShowRefinement(false);
+            void loadQuest(userPosition?.lat, userPosition?.lon, { silent: true });
+          }}
+        />
+      ) : null}
 
       {/* Décors « plateau » comme la landing */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden>
