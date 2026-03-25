@@ -80,7 +80,6 @@ export default function AdminConsoleClient() {
   const [godBusy, setGodBusy] = useState(false);
 
   const [targetClerkId, setTargetClerkId] = useState('');
-  const [_targetLabel, setTargetLabel] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchHit[]>([]);
@@ -132,7 +131,6 @@ export default function AdminConsoleClient() {
         const j = await res.json().catch(() => ({}));
         if (res.status === 404 && t) {
           setTargetClerkId('');
-          setTargetLabel('');
           const res2 = await fetch('/api/admin/overview', { cache: 'no-store' });
           if (!res2.ok) {
             const j2 = await res2.json().catch(() => ({}));
@@ -316,7 +314,6 @@ export default function AdminConsoleClient() {
                 className="btn btn-ghost btn-sm font-black"
                 onClick={() => {
                   setTargetClerkId('');
-                  setTargetLabel('');
                   setProfilePreview(null);
                 }}
               >
@@ -403,7 +400,6 @@ export default function AdminConsoleClient() {
                       }
                       setSearchErr(null);
                       setTargetClerkId(h.clerkId);
-                      setTargetLabel(h.label);
                       setProfilePreview(null);
                     }}
                   >
