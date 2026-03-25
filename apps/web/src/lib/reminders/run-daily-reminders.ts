@@ -26,7 +26,7 @@ export async function runDailyReminders(now: Date): Promise<{
   skipped: number;
 }> {
   const todayUtc = utcCalendarDateString(now);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questia.app';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questia.fr';
 
   const profiles = await prisma.profile.findMany({
     where: {

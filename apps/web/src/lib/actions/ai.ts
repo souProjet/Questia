@@ -16,6 +16,7 @@ import {
   describeArchetypeTargetTraits,
 } from './questGenerationPrompt';
 import { logStructured, logStructuredError } from '../observability';
+import { QUEST_SYSTEM_GUARDRAILS, truncateForPrompt } from '../ai/promptGuardrails';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
 
@@ -303,6 +304,7 @@ RÈGLES ABSOLUES :
 7. isOutdoor doit être EXACTEMENT : ${computedIsOutdoor}
 8. ${computedIsOutdoor ? `Si isOutdoor true : UN lieu public réel à ${context.city} ; destinationQuery = "Lieu, ${context.city}, ${context.country}"` : 'Si isOutdoor false : destinationLabel et destinationQuery à null.'}
 ${archetype.requiresSocial ? '9. Cette famille implique une interaction sociale réelle (inconnu, proche, message, appel…) — intègre-la dans la mission.\n' : ''}
+10. Respecte les garde-fous de sécurité : pas de danger physique, pas de conseils médicaux ou thérapeutiques, pas d’incitation à l’illégalité ou à la haine.
 
 Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[...ICON_ALLOWLIST].join(', ')}.
 {
@@ -379,7 +381,18 @@ export async function generateDailyQuest(
   archetype: QuestModel,
   context: QuestContext,
 ): Promise<GeneratedDailyQuest> {
-  const system = `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d’exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores.`;
+  const safeProfile: DailyQuestProfileInput = {
+    ...profile,
+    refinementContext:
+      truncateForPrompt(profile.refinementContext ?? undefined, 1500) ??
+      profile.refinementContext ??
+      null,
+    narrationDirective: truncateForPrompt(profile.narrationDirective, 2500),
+  };
+
+  const system = `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d’exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores.
+
+${QUEST_SYSTEM_GUARDRAILS}`;
 
   const computedIsOutdoor = context.isOutdoorFriendly && archetype.requiresOutdoor;
   const personalityBlock = buildPersonalityPromptBlock(
@@ -395,7 +408,7 @@ export async function generateDailyQuest(
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const user = buildUserPrompt(
-        profile,
+        safeProfile,
         archetype,
         context,
         computedIsOutdoor,
@@ -500,6 +513,10 @@ export async function generateQuestNarration(
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [
+        {
+          role: 'system',
+          content: `Tu produis des textes courts pour une app de quêtes ludiques. Pas de conseils médicaux ni psychothérapeutiques. ${QUEST_SYSTEM_GUARDRAILS}`,
+        },
         {
           role: 'user',
           content: `Génère une narration courte et motivante pour cette quête.

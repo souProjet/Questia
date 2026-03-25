@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   useWindowDimensions,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -19,12 +20,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { captureRef } from 'react-native-view-shot';
 import {
   QUEST_SHARE_BACKGROUNDS,
+  buildQuestShareMessage,
+  buildWebAppQuestUrl,
   formatQuestDateFr,
   getQuestShareBackgroundById,
   questDisplayEmoji,
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
+
+const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
 
 interface DailyQuest {
   questDate: string;
@@ -189,6 +194,17 @@ export default function ShareCardScreen() {
       Alert.alert('Erreur', e instanceof Error ? e.message : 'Export impossible');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const shareWebLink = async () => {
+    if (!quest) return;
+    const webUrl = buildWebAppQuestUrl(SITE_PUBLIC, quest.questDate);
+    const message = buildQuestShareMessage({ title: quest.title, webUrl });
+    try {
+      await Share.share({ message, title: 'Questia' });
+    } catch {
+      /* annulé */
     }
   };
 
@@ -365,6 +381,9 @@ export default function ShareCardScreen() {
           disabled={exporting}
         >
           <Text style={styles.shareBtnText}>{exporting ? '…' : '📤 Partager / enregistrer'}</Text>
+        </Pressable>
+        <Pressable style={styles.linkShareBtn} onPress={() => void shareWebLink()}>
+          <Text style={styles.linkShareBtnText}>🔗 Partager le lien (questia.fr)</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -561,6 +580,16 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     elevation: 6,
   },
   shareBtnText: { color: '#fff', fontWeight: '900', fontSize: 16 },
+  linkShareBtn: {
+    marginTop: 12,
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.45),
+    backgroundColor: colorWithAlpha(p.cyan, 0.1),
+  },
+  linkShareBtnText: { color: p.cyan, fontWeight: '800', fontSize: 14 },
   primaryBtn: {
     backgroundColor: p.cyan,
     paddingVertical: 14,

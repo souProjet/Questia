@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -23,6 +24,9 @@ import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
+const LEGAL_PRIVACY_URL = `${SITE_PUBLIC}/legal/confidentialite`;
+const LEGAL_WELLBEING_URL = `${SITE_PUBLIC}/legal/bien-etre`;
 
 async function apiFetch(
   url: string,
@@ -223,6 +227,29 @@ export default function ProfileScreen() {
             ))}
           </View>
 
+          <Text style={styles.section}>Informations légales</Text>
+          <Text style={styles.hint}>
+            Politique de confidentialité et page bien-être (limites d’usage, stores) sur le site public.
+          </Text>
+          <View style={styles.legalRow}>
+            <Pressable
+              onPress={() => void Linking.openURL(LEGAL_PRIVACY_URL)}
+              style={({ pressed }) => [styles.legalBtn, pressed && styles.legalBtnPressed]}
+              accessibilityRole="link"
+              accessibilityLabel="Ouvrir la politique de confidentialité"
+            >
+              <Text style={styles.legalBtnText}>Confidentialité</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => void Linking.openURL(LEGAL_WELLBEING_URL)}
+              style={({ pressed }) => [styles.legalBtn, pressed && styles.legalBtnPressed]}
+              accessibilityRole="link"
+              accessibilityLabel="Ouvrir la page bien-être et limites"
+            >
+              <Text style={styles.legalBtnText}>Bien-être</Text>
+            </Pressable>
+          </View>
+
           <Pressable
             style={({ pressed }) => [styles.signOutBtn, pressed && styles.signOutBtnPressed]}
             onPress={() => void signOut()}
@@ -258,6 +285,20 @@ function createProfileStyles(p: ThemePalette) {
   },
   topTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 2, color: C.muted },
   topTitleCenter: { flex: 1, textAlign: 'center' },
+  legalRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
+  legalBtn: {
+    flex: 1,
+    minWidth: 140,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.45),
+    backgroundColor: colorWithAlpha(p.cyan, 0.08),
+  },
+  legalBtnPressed: { opacity: 0.88 },
+  legalBtnText: { fontSize: 14, fontWeight: '800', color: p.cyan },
   signOutBtn: {
     marginTop: 28,
     marginBottom: 8,

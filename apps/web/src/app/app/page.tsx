@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Navbar } from '@/components/Navbar';
 import { Icon } from '@/components/Icons';
@@ -12,7 +14,7 @@ import {
   type RefinementQuestionUi,
 } from '@/components/ProfileRefinementModal';
 import type { DisplayBadge, EscalationPhase, XpBreakdown } from '@questia/shared';
-import { questDisplayEmoji, questFamilyLabel, getTitleDefinition } from '@questia/shared';
+import { questDisplayEmoji, questFamilyLabel, getTitleDefinition, isValidQuestDateIso } from '@questia/shared';
 
 const QuestDestinationMap = dynamic(
   () => import('@/components/QuestDestinationMap'),
@@ -165,8 +167,16 @@ function SafetySheet({ quest, onConfirm, onClose }: {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-export default function AppPage() {
+function AppPageContent() {
   const { user, isLoaded } = useUser();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const questDateFromUrl = useMemo(() => {
+    const raw = searchParams.get('questDate') ?? searchParams.get('date');
+    if (!raw) return null;
+    return isValidQuestDateIso(raw) ? raw : null;
+  }, [searchParams]);
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const [quest, setQuest] = useState<DailyQuest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -217,7 +227,7 @@ export default function AppPage() {
   // ── Load daily quest ──────────────────────────────────────────────────────
 
   const loadQuest = useCallback(
-    async (lat?: number, lon?: number, opts?: { silent?: boolean }): Promise<boolean> => {
+    async (lat?: number, lon?: number, opts?: { silent?: boolean; questDate?: string }): Promise<boolean> => {
       const silent = opts?.silent ?? false;
       if (!silent) {
         setLoading(true);
@@ -229,8 +239,15 @@ export default function AppPage() {
           if (!silent) setError('Crée d\'abord ton profil via l\'onboarding.');
           return false;
         }
-        const params = lat && lon ? `?lat=${lat}&lon=${lon}` : '';
-        const res = await fetch(`/api/quest/daily${params}`, { cache: 'no-store' });
+        const qd = opts?.questDate ?? questDateFromUrl ?? undefined;
+        const sp = new URLSearchParams();
+        if (lat != null && lon != null) {
+          sp.set('lat', String(lat));
+          sp.set('lon', String(lon));
+        }
+        if (qd) sp.set('questDate', qd);
+        const qs = sp.toString() ? `?${sp.toString()}` : '';
+        const res = await fetch(`/api/quest/daily${qs}`, { cache: 'no-store' });
         if (res.status === 404) {
           if (!silent) setError('Crée d\'abord ton profil via l\'onboarding.');
           return false;
@@ -254,21 +271,24 @@ export default function AppPage() {
         if (!silent) setLoading(false);
       }
     },
-    [ensureProfile],
+    [ensureProfile, questDateFromUrl],
   );
 
   useEffect(() => {
     if (!isLoaded) return;
     let cancelled = false;
     (async () => {
-      const ok = await loadQuest();
+      const ok = await loadQuest(undefined, undefined, { questDate: questDateFromUrl ?? undefined });
       if (cancelled || !ok) return;
       if (!navigator.geolocation) return;
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           if (cancelled) return;
           setUserPosition({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-          void loadQuest(pos.coords.latitude, pos.coords.longitude, { silent: true });
+          void loadQuest(pos.coords.latitude, pos.coords.longitude, {
+            silent: true,
+            questDate: questDateFromUrl ?? undefined,
+          });
         },
         () => {},
         { maximumAge: 300_000, timeout: 2_500 },
@@ -277,7 +297,20 @@ export default function AppPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, loadQuest]);
+  }, [isLoaded, loadQuest, questDateFromUrl]);
+
+  /** Aligne la barre d’adresse avec la quête affichée (partage / deep link). */
+  const questDateLoaded = quest?.questDate;
+  useEffect(() => {
+    if (!questDateLoaded) return;
+    const qd = questDateLoaded;
+    const cur = searchParams.get('questDate') ?? searchParams.get('date');
+    if (qd === todayStr) {
+      if (cur) router.replace('/app', { scroll: false });
+    } else if (cur !== qd) {
+      router.replace(`/app?questDate=${encodeURIComponent(qd)}`, { scroll: false });
+    }
+  }, [questDateLoaded, todayStr, router, searchParams]);
 
   useEffect(() => {
     const t = quest?.activeThemeId ?? 'default';
@@ -395,7 +428,10 @@ export default function AppPage() {
         return;
       }
       // Rechargement immédiat (pas d’attente géoloc : évite plusieurs secondes sans retour visible).
-      const ok = await loadQuest(userPosition?.lat, userPosition?.lon, { silent: true });
+      const ok = await loadQuest(userPosition?.lat, userPosition?.lon, {
+        silent: true,
+        questDate: quest.questDate,
+      });
       if (!ok) {
         setBannerError('Impossible de charger la nouvelle quête. Réessaie.');
       }
@@ -480,11 +516,14 @@ export default function AppPage() {
           questions={quest.refinement.questions}
           consentNotice={
             quest.refinement.consentNotice ??
-            'Ces réponses servent uniquement à adapter tes quêtes. Tu peux demander leur suppression conformément à notre politique de confidentialité.'
+            'Ces réponses servent uniquement à adapter tes quêtes. Voir la politique de confidentialité (lien dans Profil ou pied de page du site).'
           }
           onDone={() => {
             setShowRefinement(false);
-            void loadQuest(userPosition?.lat, userPosition?.lon, { silent: true });
+            void loadQuest(userPosition?.lat, userPosition?.lon, {
+              silent: true,
+              questDate: questDateFromUrl ?? undefined,
+            });
           }}
         />
       ) : null}
@@ -653,6 +692,16 @@ export default function AppPage() {
                       </span>
                     </p>
                   ) : null}
+                  <p className="mt-2 text-[10px] leading-snug text-[var(--on-cream-subtle)]">
+                    Contenu généré par IA, adapté à ton profil —{' '}
+                    <Link
+                      href="/legal/confidentialite"
+                      className="font-semibold text-[var(--link-on-bg)] underline underline-offset-2"
+                    >
+                      transparence et limites
+                    </Link>
+                    .
+                  </p>
                 </div>
               </div>
 
@@ -830,5 +879,30 @@ export default function AppPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AppPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-adventure">
+          <Navbar />
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="max-w-2xl mx-auto px-4 pt-24 pb-20 outline-none"
+          >
+            <div className="animate-pulse space-y-5 mt-4">
+              <div className="h-5 rounded-xl w-40 bg-[color:var(--progress-track)]" />
+              <div className="h-10 rounded-xl w-72 bg-[color:var(--progress-track)]" />
+              <div className="h-80 rounded-3xl bg-[color:var(--progress-track)]" />
+            </div>
+          </main>
+        </div>
+      }
+    >
+      <AppPageContent />
+    </Suspense>
   );
 }

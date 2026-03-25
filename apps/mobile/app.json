@@ -10,6 +10,27 @@
     "splash": {
       "backgroundColor": "#0a0a0f"
     },
+    "ios": {
+      "bundleIdentifier": "fr.questia.app",
+      "associatedDomains": ["applinks:questia.fr"]
+    },
+    "android": {
+      "package": "fr.questia.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "questia.fr",
+              "pathPrefix": "/app"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
     "extra": {
       "eas": {
         "projectId": "REPLACE_WITH_EAS_PROJECT_ID"

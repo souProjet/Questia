@@ -3,6 +3,15 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   transpilePackages: ['@questia/shared', '@questia/ui', 'solito', 'react-native', 'react-native-web'],
   serverExternalPackages: ['@prisma/client', 'prisma'],
+  /** Apple exige le type JSON pour les Universal Links */
+  async headers() {
+    return [
+      {
+        source: '/.well-known/apple-app-site-association',
+        headers: [{ key: 'Content-Type', value: 'application/json' }],
+      },
+    ];
+  },
   /** Ancienne route partage : tout passe par la modal sur /app */
   async redirects() {
     return [{ source: '/app/share', destination: '/app', permanent: false }];

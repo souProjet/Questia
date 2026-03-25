@@ -23,6 +23,12 @@ Questia/
 └── package.json
 ```
 
+Fiches **App Store / Google Play** (textes, captures, guidelines, confidentialité) : voir [`docs/store-app-play-compliance.md`](docs/store-app-play-compliance.md).
+
+**Deep links & partage** (`/app?questDate=…`, Universal Links) : [`docs/deep-links.md`](docs/deep-links.md).
+
+**Publication** (infra, stores, légal, QA) : [`docs/publication-checklist.md`](docs/publication-checklist.md).
+
 ## Stack Technique
 
 | Couche | Technologie |

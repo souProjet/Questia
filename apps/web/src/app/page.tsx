@@ -469,6 +469,12 @@ export default function HomePage() {
               <Link href="/sign-in" className="hover:text-slate-900 transition-colors">
                 Connexion
               </Link>
+              <Link href="/legal/confidentialite" className="hover:text-slate-900 transition-colors">
+                Confidentialité
+              </Link>
+              <Link href="/legal/bien-etre" className="hover:text-slate-900 transition-colors">
+                Bien-être
+              </Link>
             </nav>
           </div>
           <p className="mt-10 pt-8 border-t border-slate-200/80 text-center text-xs text-slate-500">

@@ -33,6 +33,10 @@ type ProfileRes = {
 export default function ProfilePage() {
   const [data, setData] = useState<ProfileRes | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -52,6 +56,60 @@ export default function ProfilePage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const handleExport = useCallback(async () => {
+    setExporting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/user/data-export', { credentials: 'include' });
+      if (!res.ok) {
+        setError(res.status === 401 ? 'Non connecté.' : 'Export impossible pour le moment.');
+        return;
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition');
+      let name = 'questia-export.json';
+      const m = cd?.match(/filename="([^"]+)"/);
+      if (m?.[1]) name = m[1];
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Export impossible.');
+    } finally {
+      setExporting(false);
+    }
+  }, []);
+
+  const handleDeleteAccount = useCallback(async () => {
+    setDeleteError(null);
+    if (deleteConfirm !== 'SUPPRIMER') {
+      setDeleteError('Tape exactement SUPPRIMER pour confirmer.');
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/user/account', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation: 'SUPPRIMER' }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
+      if (!res.ok) {
+        setDeleteError(json.error ?? json.detail ?? 'Échec de la suppression.');
+        return;
+      }
+      window.location.href = '/sign-in';
+    } catch {
+      setDeleteError('Échec de la suppression.');
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleteConfirm]);
 
   useEffect(() => {
     const t = data?.shop?.activeThemeId ?? 'default';
@@ -206,6 +264,74 @@ export default function ProfilePage() {
                 </li>
               ))}
             </ul>
+
+            <section className="mt-12 rounded-3xl border-2 border-slate-300/50 bg-[var(--surface)]/95 p-6 shadow-inner">
+              <h2 className="label mb-3">Données personnelles et IA</h2>
+              <p className="text-sm text-[var(--muted)] mb-4 leading-relaxed">
+                Les textes de quête sont générés par intelligence artificielle à partir de ton profil, du contexte
+                (météo, lieu) et de règles internes. Ce contenu est une{' '}
+                <strong className="text-[var(--text)]">suggestion ludique</strong>, pas un conseil médical ou
+                psychologique. Tu peux consulter le détail des traitements et tes droits dans la politique de
+                confidentialité.
+              </p>
+              <p className="mb-4 flex flex-col sm:flex-row sm:flex-wrap gap-x-4 gap-y-2">
+                <Link
+                  href="/legal/confidentialite"
+                  className="text-sm font-bold text-orange-600 hover:underline underline-offset-2"
+                >
+                  Politique de confidentialité (RGPD)
+                </Link>
+                <Link
+                  href="/legal/bien-etre"
+                  className="text-sm font-bold text-cyan-700 hover:underline underline-offset-2"
+                >
+                  Bien-être et limites (App Store / Play)
+                </Link>
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+                <button
+                  type="button"
+                  onClick={() => void handleExport()}
+                  disabled={exporting}
+                  className="inline-flex justify-center items-center rounded-2xl border-2 border-cyan-400/60 bg-[var(--card)] px-4 py-3 text-sm font-black text-[var(--text)] hover:bg-cyan-50/80 disabled:opacity-50"
+                >
+                  {exporting ? 'Préparation…' : 'Télécharger mes données (JSON)'}
+                </button>
+              </div>
+
+              <div className="border-t border-slate-200/80 pt-6">
+                <h3 className="text-sm font-black uppercase tracking-wider text-red-900/90 mb-2">Supprimer le compte</h3>
+                <p className="text-sm text-[var(--muted)] mb-3 leading-relaxed">
+                  Efface définitivement ton profil Questia, ton historique (quêtes, boutique) et ton compte
+                  d&apos;authentification. Cette action est irréversible.
+                </p>
+                <label htmlFor="delete-confirm" className="sr-only">
+                  Confirmation de suppression
+                </label>
+                <input
+                  id="delete-confirm"
+                  type="text"
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                  placeholder="Tape SUPPRIMER pour confirmer"
+                  className="w-full max-w-md rounded-xl border-2 border-[color:color-mix(in_srgb,var(--text)_18%,transparent)] bg-white px-3 py-2 text-sm font-semibold text-[var(--text)] mb-3"
+                  autoComplete="off"
+                />
+                {deleteError && (
+                  <p className="text-sm font-semibold text-red-700 mb-2" role="alert">
+                    {deleteError}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteAccount()}
+                  disabled={deleting}
+                  className="rounded-2xl border-2 border-red-500/70 bg-red-50 px-4 py-3 text-sm font-black text-red-900 hover:bg-red-100 disabled:opacity-50"
+                >
+                  {deleting ? 'Suppression…' : 'Supprimer mon compte et mes données'}
+                </button>
+              </div>
+            </section>
           </>
         )}
       </main>

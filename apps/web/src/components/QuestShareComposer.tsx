@@ -5,11 +5,14 @@ import html2canvas from 'html2canvas';
 import { Icon } from '@/components/Icons';
 import {
   QUEST_SHARE_BACKGROUNDS,
+  buildQuestShareMessage,
+  buildWebAppQuestUrl,
   formatQuestDateFr,
   getQuestShareBackgroundById,
   questDisplayEmoji,
   type QuestShareBackground,
 } from '@questia/shared';
+import { siteUrl } from '@/config/marketing';
 
 export interface QuestSharePayload {
   questDate: string;
@@ -377,6 +380,8 @@ export function QuestShareComposer({
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const background = getQuestShareBackgroundById(bgId);
+  const shareWebUrl = buildWebAppQuestUrl(siteUrl, payload.questDate);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useLayoutEffect(() => {
     if (open) {
@@ -494,11 +499,15 @@ export function QuestShareComposer({
       const filename = `questia-quete-${payload.questDate}.png`;
       const file = new File([blob], filename, { type: 'image/png' });
 
+      const shareText = buildQuestShareMessage({
+        title: payload.title,
+        webUrl: shareWebUrl,
+      });
       if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: 'Ma quête Questia',
-          text: `${payload.title}`,
+          text: shareText,
         });
       } else {
         const url = URL.createObjectURL(blob);
@@ -511,7 +520,17 @@ export function QuestShareComposer({
     } finally {
       setExporting(false);
     }
-  }, [payload.questDate, payload.title]);
+  }, [payload.questDate, payload.title, shareWebUrl]);
+
+  const copyShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareWebUrl);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      /* navigateur sans presse-papiers */
+    }
+  }, [shareWebUrl]);
 
   if (!layerMounted && !open) return null;
 
@@ -650,6 +669,13 @@ export function QuestShareComposer({
                 </>
               )}
             </span>
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-2xl border border-cyan-300/60 bg-cyan-50/90 py-3 text-sm font-black text-cyan-950 shadow-sm transition-colors hover:bg-cyan-100/90"
+            onClick={() => void copyShareLink()}
+          >
+            {linkCopied ? 'Lien copié ✓' : 'Copier le lien (ouvre la quête sur questia.fr)'}
           </button>
           <button
             type="button"

@@ -6,7 +6,7 @@
 - accessibilité : contrastes, tailles de texte, lecteur d'écran web et mobile : OK
 - tests (moteur psychologique, chemins critiques quête / complétion) + CI (lint, build, tests) : OK
 - observabilité : suivi des erreurs, logs structurés sur IA / géo / météo : OK
-- RGPD : politique de confidentialité, export et suppression compte / données
-- transparence contenu généré par IA et garde-fous sur les prompts
-- fiches et conformité App Store / Play (captures, bien-être, guidelines)
+- RGPD : politique de confidentialité, export et suppression compte / données : OK
+- transparence contenu généré par IA et garde-fous sur les prompts : OK
+- fiches et conformité App Store / Play (captures, bien-être, guidelines) : OK
 - deep links et partage cohérents entre web et mobile

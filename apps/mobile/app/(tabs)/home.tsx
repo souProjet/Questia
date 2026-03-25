@@ -13,16 +13,19 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/expo';
-import { useRouter, Link } from 'expo-router';
+import { useRouter, Link, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
-import { questDisplayEmoji, questFamilyLabel, getTitleDefinition } from '@questia/shared';
+import { questDisplayEmoji, questFamilyLabel, getTitleDefinition, isValidQuestDateIso } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/QuestRewardOverlay';
 import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
+
+const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
+const PRIVACY_URL = `${SITE_PUBLIC}/legal/confidentialite`;
 
 interface ProgressionPayload {
   totalXp: number;
@@ -164,6 +167,12 @@ export default function DashboardScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const compact = windowWidth < 400;
   const narrow = windowWidth < 360;
+  const routeParams = useLocalSearchParams<{ questDate?: string | string[]; date?: string | string[] }>();
+  const qRaw = routeParams.questDate ?? routeParams.date;
+  const questDateParam = Array.isArray(qRaw) ? qRaw[0] : qRaw;
+  const questDateFromRoute =
+    typeof questDateParam === 'string' && isValidQuestDateIso(questDateParam) ? questDateParam : null;
+
   const { getToken, isLoaded: authLoaded } = useAuth();
   const { user } = useUser();
   const router = useRouter();
@@ -211,7 +220,7 @@ export default function DashboardScreen() {
   }, []);
 
   const loadQuest = useCallback(
-    async (lat?: number, lon?: number, opts?: { silent?: boolean }): Promise<boolean> => {
+    async (lat?: number, lon?: number, opts?: { silent?: boolean; questDate?: string }): Promise<boolean> => {
       const silent = opts?.silent ?? false;
       if (!silent) {
         setLoading(true);
@@ -224,10 +233,15 @@ export default function DashboardScreen() {
           if (!silent) setError(result.error ?? 'Complète l\'onboarding d\'abord.');
           return false;
         }
-        let url = `${API_BASE_URL}/api/quest/daily`;
+        const qd = opts?.questDate ?? questDateFromRoute ?? undefined;
+        const sp = new URLSearchParams();
         if (lat != null && lon != null) {
-          url += `?lat=${lat}&lon=${lon}`;
+          sp.set('lat', String(lat));
+          sp.set('lon', String(lon));
         }
+        if (qd) sp.set('questDate', qd);
+        const qs = sp.toString();
+        const url = `${API_BASE_URL}/api/quest/daily${qs ? `?${qs}` : ''}`;
         const res = await apiFetch(url, token);
         if (res.status === 404) {
           if (!silent) setError('Profil introuvable. Complète l\'onboarding.');
@@ -252,7 +266,7 @@ export default function DashboardScreen() {
         if (!silent) setLoading(false);
       }
     },
-    [ensureProfile],
+    [ensureProfile, questDateFromRoute],
   );
 
   const enrichQuestWithLocation = useCallback(async () => {
@@ -262,24 +276,27 @@ export default function DashboardScreen() {
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      await loadQuest(loc.coords.latitude, loc.coords.longitude, { silent: true });
+      await loadQuest(loc.coords.latitude, loc.coords.longitude, {
+        silent: true,
+        questDate: questDateFromRoute ?? undefined,
+      });
     } catch {
       /* géoloc refusée ou indisponible — la quête sans météo locale reste affichée */
     }
-  }, [loadQuest]);
+  }, [loadQuest, questDateFromRoute]);
 
   useEffect(() => {
     if (!authLoaded) return;
     let cancelled = false;
     (async () => {
-      const ok = await loadQuest();
+      const ok = await loadQuest(undefined, undefined, { questDate: questDateFromRoute ?? undefined });
       if (cancelled || !ok) return;
       await enrichQuestWithLocation();
     })();
     return () => {
       cancelled = true;
     };
-  }, [authLoaded, loadQuest, enrichQuestWithLocation]);
+  }, [authLoaded, loadQuest, enrichQuestWithLocation, questDateFromRoute]);
 
   const doAccept = useCallback(async () => {
     if (!quest) return;
@@ -456,7 +473,7 @@ export default function DashboardScreen() {
           questions={quest.refinement.questions}
           consentNotice={
             quest.refinement.consentNotice ??
-            'Ces réponses servent uniquement à adapter tes quêtes. Tu peux demander leur suppression conformément à notre politique de confidentialité.'
+            `Ces réponses servent uniquement à adapter tes quêtes. Politique de confidentialité : ${PRIVACY_URL}`
           }
           getToken={() => getTokenRef.current()}
           onDone={() => {
@@ -732,6 +749,9 @@ export default function DashboardScreen() {
                     </View>
                   )}
                 </View>
+                <Pressable onPress={() => void Linking.openURL(PRIVACY_URL)} style={styles.aiNoticePress}>
+                  <Text style={styles.aiNoticeText}>Contenu généré par IA · Transparence et limites</Text>
+                </Pressable>
               </LinearGradient>
 
               {quest.isOutdoor && quest.destination ? (
@@ -1076,6 +1096,13 @@ function buildDashboardStyles(p: ThemePalette) {
     paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: colorWithAlpha(p.cyan, 0.35),
+  },
+  aiNoticePress: { marginTop: 10, alignSelf: 'flex-start' },
+  aiNoticeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colorWithAlpha(p.onCream, 0.55),
+    textDecorationLine: 'underline',
   },
   durationPill: {
     backgroundColor: colorWithAlpha(p.gold, 0.28),
