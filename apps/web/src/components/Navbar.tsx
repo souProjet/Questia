@@ -3,11 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth, UserButton } from '@clerk/nextjs';
+import { AdminNavLink } from '@/components/AdminNavLink';
 
 export function Navbar() {
   const pathname = usePathname();
   const { isSignedIn } = useAuth();
-  const isAppRoute = pathname?.startsWith('/app');
+  const isAppRoute = pathname?.startsWith('/app') ?? false;
+  const isAdminRoute = pathname?.startsWith('/admin') ?? false;
+  /** Landing : ancres + CTA app. Exclure /app et /admin (console). */
+  const showMarketingNav = !isAppRoute && !isAdminRoute;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-3 pt-3">
@@ -38,7 +42,7 @@ export function Navbar() {
         </Link>
 
         {/* Nav links */}
-        {!isAppRoute && (
+        {showMarketingNav && (
           <div className="hidden md:flex items-center gap-2 text-sm">
             <a href="#hero-examples" className="px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all">🗺️ Exemples</a>
             <a href="#how" className="px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-emerald-300/60 transition-all">⚡ Fonctionnement</a>
@@ -54,7 +58,7 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {isSignedIn ? (
             <>
-              {!isAppRoute && (
+              {showMarketingNav && (
                 <Link href="/app" className="btn-primary text-sm py-2 px-5">
                   Ouvrir l&apos;app
                 </Link>
@@ -79,6 +83,7 @@ export function Navbar() {
                   >
                     Profil
                   </Link>
+                  <AdminNavLink />
                 </>
               )}
               <UserButton

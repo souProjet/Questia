@@ -33,9 +33,15 @@ enum QuestStatus {
   abandoned
 }
 
+enum UserRole {
+  user
+  admin
+}
+
 model Profile {
   id                    String          @id @default(cuid())
   clerkId               String          @unique @map("clerk_id")
+  role                  UserRole        @default(user) @map("role")
   explorerAxis          ExplorerAxis    @map("explorer_axis")
   riskAxis              RiskAxis        @map("risk_axis")
   declaredPersonality   Json            @map("declared_personality")
