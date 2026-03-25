@@ -30,6 +30,7 @@ enum QuestStatus {
   completed
   rejected
   replaced
+  abandoned
 }
 
 model Profile {
@@ -50,6 +51,10 @@ model Profile {
   totalXp               Int             @default(0) @map("total_xp")
   badgesEarned          Json            @default("[]") @map("badges_earned")
   flagNextQuestAfterReroll Boolean      @default(false) @map("flag_next_quest_after_reroll")
+  /** Après « Reporter » : la prochaine génération impose un archétype instantané */
+  flagNextQuestInstantOnly Boolean      @default(false) @map("flag_next_quest_instant_only")
+  /** Date (YYYY-MM-DD) choisie pour reprendre une quête plus lourde / sociale — rappel UX */
+  deferredSocialUntil   String?         @map("deferred_social_until")
   /** Thème UI actif : default | midnight | aurora | parchment */
   activeThemeId         String          @default("default") @map("active_theme_id")
   /** Liste des ids de thèmes possédés (JSON string[]) */

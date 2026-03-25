@@ -163,4 +163,11 @@ describe('selectQuest', () => {
     const fb = QUEST_TAXONOMY.find((q) => q.id === FALLBACK_QUEST_ID);
     expect(fb).toBeDefined();
   });
+
+  it('instantOnly exclut les archétypes planifiés', () => {
+    const allIds: number[] = [];
+    const r = selectQuest(uniform(0.5), 'calibration', allIds, true, undefined, true);
+    expect(r).not.toBeNull();
+    expect(r!.questPace).toBe('instant');
+  });
 });

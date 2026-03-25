@@ -3,7 +3,7 @@ import { HISTORY_PAGE_SIZE } from './historyPagination';
 import { formatQuestDateFr } from './formatQuestDateFr';
 import { questDisplayEmoji, QUEST_LUCIDE_ICON_TO_EMOJI } from './questDisplayEmoji';
 import { QUEST_SHARE_BACKGROUNDS, getQuestShareBackgroundById } from './questShareBackgrounds';
-import { QUEST_TAXONOMY, questFamilyLabel } from './constants/quests';
+import { QUEST_TAXONOMY, questFamilyLabel, isValidReportDeferredDate } from './constants/quests';
 import { QUADRANT_DEFAULTS } from './constants/personality';
 
 describe('historyPagination', () => {
@@ -45,6 +45,17 @@ describe('questShareBackgrounds', () => {
     expect(QUEST_SHARE_BACKGROUNDS.length).toBeGreaterThan(0);
     expect(getQuestShareBackgroundById('nope').id).toBe(QUEST_SHARE_BACKGROUNDS[0]!.id);
     expect(getQuestShareBackgroundById('night').darkForeground).toBe(true);
+  });
+});
+
+describe('isValidReportDeferredDate', () => {
+  it('accepte aujourd’hui et la borne +14 jours', () => {
+    expect(isValidReportDeferredDate('2026-03-24', '2026-03-24')).toBe(true);
+    expect(isValidReportDeferredDate('2026-04-07', '2026-03-24')).toBe(true);
+  });
+  it('refuse hors fenêtre', () => {
+    expect(isValidReportDeferredDate('2026-03-23', '2026-03-24')).toBe(false);
+    expect(isValidReportDeferredDate('2026-04-08', '2026-03-24')).toBe(false);
   });
 });
 

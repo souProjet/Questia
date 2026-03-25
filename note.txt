@@ -9,4 +9,4 @@
 - RGPD : politique de confidentialité, export et suppression compte / données : OK
 - transparence contenu généré par IA et garde-fous sur les prompts : OK
 - fiches et conformité App Store / Play (captures, bien-être, guidelines) : OK
-- deep links et partage cohérents entre web et mobile
+- deep links et partage cohérents entre web et mobile : OK

@@ -20,7 +20,11 @@ import { QUEST_SYSTEM_GUARDRAILS, truncateForPrompt } from '../ai/promptGuardrai
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
 
-const OPENAI_MODEL = 'gpt-4o-mini' as const;
+/** Modèle OpenAI (`chat.completions`). Surchargeable sans redéploiement de code via `OPENAI_MODEL`. */
+const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini';
+const OPENAI_MODEL =
+  (typeof process.env.OPENAI_MODEL === 'string' ? process.env.OPENAI_MODEL.trim() : '') ||
+  DEFAULT_OPENAI_MODEL;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -67,6 +71,8 @@ export interface DailyQuestProfileInput {
   narrationDirective?: string;
   /** Relance du jour : exiger une formulation nettement différente */
   isRerollGeneration?: boolean;
+  /** Après « Reporter » : quête de remplacement 100 % instantanée (message + contraintes) */
+  substitutedInstantAfterDefer?: boolean;
   /** Préférences issues du questionnaire de raffinement (optionnel) */
   refinementContext?: string | null;
 }
@@ -257,6 +263,17 @@ function buildUserPrompt(
     ? `\nIMPORTANT : c’est une RELANCE — la formulation (titre, mission, hook) doit être NETTEMENT différente d’une première proposition, tout en restant dans le même archétype.\n`
     : '';
 
+  const deferInstantBlock = profile.substitutedInstantAfterDefer
+    ? `\nCONTEXTE : l’utilisateur a utilisé une relance pour « reporter » une quête trop lourde ou mal calée. Cette mission doit être 100 % réalisable aujourd’hui, sans multi-jours ni grosse synchro sociale — une victoire rapide et honnête.\n`
+    : '';
+
+  const paceBlock =
+    profile.substitutedInstantAfterDefer
+      ? ''
+      : archetype.questPace === 'planned'
+        ? `\nRythme « planifié » : l’intention peut être ambitieuse — propose une première étape CONCRÈTE faisable aujourd’hui (idéalement 15–45 min) et, si utile, une phrase courte sur comment poursuivre plus tard (sans culpabiliser).\n`
+        : `\nRythme « instantané » : mission tenable dans la journée, sans calendrier lourd.\n`;
+
   const repairBlock = repairHint
     ? `\nCORRECTION DEMANDÉE (la proposition précédente était invalide) :\n${repairHint}\nRéécris entièrement title, mission, hook${computedIsOutdoor ? ', destinationLabel, destinationQuery' : ''}.\n`
     : '';
@@ -266,7 +283,7 @@ function buildUserPrompt(
   return `Génère une quête quotidienne unique pour aujourd'hui.
 
 VARIATION (évite la copie) : ${variationSalt}
-${rerollBlock}${repairBlock}
+${rerollBlock}${deferInstantBlock}${paceBlock}${repairBlock}
 DATE DU JOUR : ${profile.questDateIso}
 - Le champ "hook" : phrase courte (max 15 mots), DIFFÉRENTE d'un jour à l'autre.
 - Évite les formules creuses (« Sois toi-même », « Crois en tes rêves »).

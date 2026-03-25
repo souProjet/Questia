@@ -39,6 +39,7 @@ export function computeExhibitedPersonality(logs: QuestLog[]): PersonalityVector
       log.status === 'completed' ? 1.0 :
       log.status === 'accepted'  ? 0.3 :
       log.status === 'rejected'  ? -0.5 :
+      log.status === 'abandoned' ? 0 :
       0;
 
     if (weight === 0) continue;
@@ -129,6 +130,7 @@ export function scoreQuestFit(
  * Picks the best quest for the user given their profile and phase.
  * Filters out recently assigned quests and respects outdoor/weather constraints.
  * @param categoryBias — optionnel : valeurs positives réduisent le score (favorisent la catégorie), ex. questionnaire de raffinement.
+ * @param instantOnly — si true, uniquement des archétypes « instant » (après report + relance).
  */
 export function selectQuest(
   declared: PersonalityVector,
@@ -136,11 +138,13 @@ export function selectQuest(
   recentQuestIds: number[],
   allowOutdoor: boolean,
   categoryBias?: Partial<Record<PsychologicalCategory, number>>,
+  instantOnly?: boolean,
 ): QuestModel | null {
   const targetDelta = getTargetDelta(phase);
   const candidates = QUEST_TAXONOMY
     .filter((q) => !recentQuestIds.includes(q.id))
-    .filter((q) => allowOutdoor || !q.requiresOutdoor);
+    .filter((q) => allowOutdoor || !q.requiresOutdoor)
+    .filter((q) => !instantOnly || q.questPace === 'instant');
 
   if (candidates.length === 0) return null;
 

@@ -17,6 +17,7 @@ import {
   refinementAnswersToCategoryBias,
   parseValidRefinementAnswers,
   buildRefinementContextForPrompt,
+  isValidReportDeferredDate,
 } from '@questia/shared';
 import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@questia/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
@@ -127,11 +128,12 @@ export async function GET(request: NextRequest) {
           }
         : undefined;
     return NextResponse.json({
-      ...toQuestResponse(historical),
+      ...toQuestResponse(historical, profile),
       fromCache: true,
       day: profile.currentDay,
       streak: profile.streakCount,
       phase: profile.currentPhase,
+      deferredSocialUntil: profile.deferredSocialUntil ?? null,
       ...shopClientPayload(profile),
       progression: progressionPayload(profile),
       refinement: refinementSurvey,
@@ -146,11 +148,12 @@ export async function GET(request: NextRequest) {
 
   if (existing) {
     return NextResponse.json({
-      ...toQuestResponse(existing),
+      ...toQuestResponse(existing, profile),
       fromCache: true,
       day: profile.currentDay,
       streak: profile.streakCount,
       phase: profile.currentPhase,
+      deferredSocialUntil: profile.deferredSocialUntil ?? null,
       ...shopClientPayload(profile),
       progression: progressionPayload(profile),
       refinement: refinementSurvey,
@@ -196,6 +199,8 @@ export async function GET(request: NextRequest) {
   const categoryBias = refinementAnswersToCategoryBias(storedRefinementAnswers);
   const refinementContext = buildRefinementContextForPrompt(storedRefinementAnswers);
 
+  const instantOnly = profile.flagNextQuestInstantOnly === true;
+
   // Select archetype via moteur Delta de congruence (+ biais questionnaire)
   let archetype = selectQuest(
     declaredPersonality,
@@ -203,7 +208,22 @@ export async function GET(request: NextRequest) {
     recentIds,
     context.isOutdoorFriendly,
     categoryBias,
+    instantOnly,
   );
+
+  if (!archetype && instantOnly) {
+    const pool = QUEST_TAXONOMY.filter(
+      (q) =>
+        q.questPace === 'instant' &&
+        !recentIds.includes(q.id) &&
+        (context.isOutdoorFriendly || !q.requiresOutdoor),
+    );
+    archetype =
+      pool[0] ??
+      QUEST_TAXONOMY.find((q) => q.id === FALLBACK_QUEST_ID) ??
+      QUEST_TAXONOMY[0] ??
+      null;
+  }
 
   // Fallback météo si quête extérieure non recommandée
   let wasWeatherFallback = false;
@@ -235,6 +255,7 @@ export async function GET(request: NextRequest) {
       declaredPersonality,
       exhibitedPersonality: exhibited,
       isRerollGeneration: profile.flagNextQuestAfterReroll === true,
+      substitutedInstantAfterDefer: instantOnly,
       refinementContext,
     },
     archetype,
@@ -264,8 +285,13 @@ export async function GET(request: NextRequest) {
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
+  const isSameDayRegen = lastDate === today;
   const isConsecutive = lastDate === yesterdayStr;
-  const newStreak = isConsecutive ? profile.streakCount + 1 : 1;
+  const newStreak = isSameDayRegen
+    ? profile.streakCount
+    : isConsecutive
+      ? profile.streakCount + 1
+      : 1;
   const newDay = profile.currentDay + (lastDate !== today ? 1 : 0);
   const newPhase: EscalationPhase = newDay <= 3 ? 'calibration' : newDay <= 10 ? 'expansion' : 'rupture';
 
@@ -307,6 +333,7 @@ export async function GET(request: NextRequest) {
         rerollsRemaining: 1,
         congruenceDelta:  congruenceDelta,
         flagNextQuestAfterReroll: false,
+        flagNextQuestInstantOnly: false,
       },
     }),
   ]);
@@ -315,11 +342,12 @@ export async function GET(request: NextRequest) {
   const p = freshProfile ?? profile;
 
   return NextResponse.json({
-    ...toQuestResponse(questLog),
+    ...toQuestResponse(questLog, p),
     fromCache: false,
     day: newDay,
     streak: newStreak,
     phase: newPhase,
+    deferredSocialUntil: p.deferredSocialUntil ?? null,
     context,
     ...shopClientPayload(p),
     progression: progressionPayload(p),
@@ -343,13 +371,139 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({})) as {
     questDate?: string;
     safetyConsentGiven?: boolean;
-    action?: 'reroll' | 'replace' | 'complete';
+    action?: 'reroll' | 'replace' | 'complete' | 'abandon' | 'report';
+    deferredUntil?: string;
   };
 
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
   if (!profile) return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
 
   const today = body.questDate ?? todayStr();
+
+  // ── Report: relance + quête instantanée + date de reprise (consomme une relance) ──
+  if (body.action === 'report') {
+    const deferredUntil = typeof body.deferredUntil === 'string' ? body.deferredUntil.trim() : '';
+    if (!isValidReportDeferredDate(deferredUntil, today)) {
+      return NextResponse.json(
+        {
+          error: `Choisis une date entre aujourd’hui et ${today} + 14 jours (format AAAA-MM-JJ).`,
+        },
+        { status: 400 },
+      );
+    }
+
+    const existing = await prisma.questLog.findUnique({
+      where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+    });
+    if (!existing || existing.status !== 'pending') {
+      return NextResponse.json(
+        { error: 'Reporter n’est possible que tant que la quête n’est pas acceptée.' },
+        { status: 400 },
+      );
+    }
+
+    const reportArchetype = QUEST_TAXONOMY.find((q) => q.id === existing.archetypeId);
+    if (!reportArchetype || reportArchetype.questPace === 'instant') {
+      return NextResponse.json(
+        {
+          error:
+            'Reporter sert à échanger une quête « à caler » contre une mission courte. Pour une autre quête du jour, utilise « Changer de quête ».',
+        },
+        { status: 400 },
+      );
+    }
+
+    const daily = profile.rerollsRemaining;
+    const bonus = profile.bonusRerollCredits ?? 0;
+
+    if (daily <= 0 && bonus <= 0) {
+      return NextResponse.json(
+        { error: 'Plus de relances disponibles. La boutique propose des packs de relances bonus.' },
+        { status: 400 },
+      );
+    }
+
+    const updatedProfile =
+      daily > 0
+        ? await prisma.$transaction(async (tx) => {
+            await tx.questLog.delete({
+              where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+            });
+            return tx.profile.update({
+              where: { id: profile.id },
+              data: {
+                rerollsRemaining: Math.max(0, daily - 1),
+                flagNextQuestAfterReroll: true,
+                flagNextQuestInstantOnly: true,
+                deferredSocialUntil: deferredUntil,
+              },
+            });
+          })
+        : await prisma.$transaction(async (tx) => {
+            await tx.questLog.delete({
+              where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+            });
+            return tx.profile.update({
+              where: { id: profile.id },
+              data: {
+                bonusRerollCredits: bonus - 1,
+                flagNextQuestAfterReroll: true,
+                flagNextQuestInstantOnly: true,
+                deferredSocialUntil: deferredUntil,
+              },
+            });
+          });
+
+    return NextResponse.json({
+      reported: true,
+      deferredUntil,
+      ...shopClientPayload(updatedProfile),
+      progression: progressionPayload(updatedProfile),
+      deferredSocialUntil: updatedProfile.deferredSocialUntil ?? null,
+    });
+  }
+
+  // ── Abandon: sans pénalité XP — série remise à zéro ────────────────────────
+  if (body.action === 'abandon') {
+    const existing = await prisma.questLog.findUnique({
+      where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Aucune quête pour cette date.' }, { status: 404 });
+    }
+    if (existing.status === 'completed' || existing.status === 'abandoned') {
+      return NextResponse.json(
+        { error: existing.status === 'completed' ? 'Quête déjà validée.' : 'Quête déjà passée.' },
+        { status: 400 },
+      );
+    }
+
+    const [updated] = await prisma.$transaction([
+      prisma.questLog.update({
+        where: { profileId_questDate: { profileId: profile.id, questDate: today } },
+        data: { status: 'abandoned' },
+      }),
+      prisma.profile.update({
+        where: { id: profile.id },
+        data: {
+          streakCount: 0,
+          deferredSocialUntil: null,
+        },
+      }),
+    ]);
+
+    const profileAfter = await prisma.profile.findUnique({ where: { id: profile.id } });
+    const p = profileAfter ?? profile;
+
+    return NextResponse.json({
+      ...toQuestResponse(updated, p),
+      abandoned: true,
+      streak: p.streakCount,
+      deferredSocialUntil: null,
+      ...shopClientPayload(p),
+      progression: progressionPayload(p),
+    });
+  }
 
   // ── Reroll: relance quotidienne ou crédit bonus (boutique) ──────────────────
   if (body.action === 'reroll' || body.action === 'replace') {
@@ -411,6 +565,9 @@ export async function POST(request: NextRequest) {
     });
     if (!existing) {
       return NextResponse.json({ error: 'Aucune quête pour cette date.' }, { status: 404 });
+    }
+    if (existing.status === 'abandoned') {
+      return NextResponse.json({ error: 'Cette quête a été passée.' }, { status: 400 });
     }
     if (existing.status !== 'accepted') {
       return NextResponse.json(
@@ -487,6 +644,7 @@ export async function POST(request: NextRequest) {
           totalXp: newTotalXp,
           badgesEarned: mergedBadges as unknown as Prisma.InputJsonValue,
           xpBonusCharges: xpBonusChargesAfter,
+          deferredSocialUntil: null,
         } as unknown as Prisma.ProfileUpdateInput,
       }),
     ]);
@@ -497,7 +655,7 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({
-      ...toQuestResponse(updated),
+      ...toQuestResponse(updated, profileAfter),
       progression: prog,
       ...shopClientPayload(profileAfter),
       xpGain: {
@@ -520,9 +678,12 @@ export async function POST(request: NextRequest) {
   if (logForAccept.status === 'completed') {
     return NextResponse.json({ error: 'Quête déjà validée.' }, { status: 400 });
   }
+  if (logForAccept.status === 'abandoned') {
+    return NextResponse.json({ error: 'Cette quête a été passée. Demain une nouvelle carte t’attend.' }, { status: 400 });
+  }
   if (logForAccept.status === 'accepted') {
     return NextResponse.json({
-      ...toQuestResponse(logForAccept),
+      ...toQuestResponse(logForAccept, profile),
       ...shopClientPayload(profile),
     });
   }
@@ -537,34 +698,37 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({
-    ...toQuestResponse(updated),
+    ...toQuestResponse(updated, profile),
     ...shopClientPayload(profile),
   });
 }
 
 // ── Helper: shape the response ─────────────────────────────────────────────────
 
-function toQuestResponse(log: {
-  questDate: string;
-  archetypeId: number;
-  generatedEmoji: string;
-  generatedTitle: string;
-  generatedMission: string;
-  generatedHook: string;
-  generatedDuration: string;
-  generatedSafetyNote: string | null;
-  isOutdoor: boolean;
-  destinationLabel: string | null;
-  destinationLat: number | null;
-  destinationLon: number | null;
-  locationCity: string | null;
-  weatherDescription: string | null;
-  weatherTemp: number | null;
-  status: string;
-  wasRerolled?: boolean;
-  wasFallback?: boolean;
-  xpAwarded?: number | null;
-}) {
+function toQuestResponse(
+  log: {
+    questDate: string;
+    archetypeId: number;
+    generatedEmoji: string;
+    generatedTitle: string;
+    generatedMission: string;
+    generatedHook: string;
+    generatedDuration: string;
+    generatedSafetyNote: string | null;
+    isOutdoor: boolean;
+    destinationLabel: string | null;
+    destinationLat: number | null;
+    destinationLon: number | null;
+    locationCity: string | null;
+    weatherDescription: string | null;
+    weatherTemp: number | null;
+    status: string;
+    wasRerolled?: boolean;
+    wasFallback?: boolean;
+    xpAwarded?: number | null;
+  },
+  profile?: { deferredSocialUntil?: string | null } | null,
+) {
   const archetype = QUEST_TAXONOMY.find((q) => q.id === log.archetypeId);
   const destination =
     log.destinationLabel && log.isOutdoor
@@ -594,5 +758,7 @@ function toQuestResponse(log: {
     wasRerolled: log.wasRerolled ?? false,
     wasFallback: log.wasFallback ?? false,
     xpAwarded: log.xpAwarded ?? null,
+    questPace: archetype?.questPace ?? 'instant',
+    deferredSocialUntil: profile?.deferredSocialUntil ?? null,
   };
 }

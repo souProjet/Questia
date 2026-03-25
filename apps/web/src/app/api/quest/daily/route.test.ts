@@ -92,6 +92,8 @@ const profileRow = {
   refinementSchemaVersion: 0,
   refinementSkippedAt: null,
   refinementAnswers: {},
+  flagNextQuestInstantOnly: false,
+  deferredSocialUntil: null,
 };
 
 const logRow = {
@@ -219,5 +221,77 @@ describe('/api/quest/daily', () => {
       }),
     );
     expect(res.status).toBe(200);
+  });
+
+  it('POST report consomme une relance et pose les flags', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({
+      ...profileRow,
+      rerollsRemaining: 1,
+      bonusRerollCredits: 0,
+    });
+    prismaMock.questLog.findUnique.mockResolvedValue({
+      ...logRow,
+      questDate: '2026-03-24',
+      status: 'pending',
+    });
+    prismaMock.questLog.delete.mockResolvedValue({});
+    prismaMock.profile.update.mockResolvedValue({
+      ...profileRow,
+      rerollsRemaining: 0,
+      flagNextQuestAfterReroll: true,
+      flagNextQuestInstantOnly: true,
+      deferredSocialUntil: '2026-03-30',
+    });
+    prismaMock.$transaction.mockImplementation(
+      async (fn: (tx: {
+        questLog: { delete: typeof prismaMock.questLog.delete };
+        profile: { update: typeof prismaMock.profile.update };
+      }) => Promise<unknown>) =>
+        fn({
+          questLog: { delete: prismaMock.questLog.delete },
+          profile: { update: prismaMock.profile.update },
+        }),
+    );
+
+    const res = await POST(
+      new NextRequest('http://localhost/api/quest/daily', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'report',
+          questDate: '2026-03-24',
+          deferredUntil: '2026-03-30',
+        }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.reported).toBe(true);
+    expect(json.deferredUntil).toBe('2026-03-30');
+  });
+
+  it('POST abandon met le statut abandoned et série à 0', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({ ...profileRow, streakCount: 3 });
+    prismaMock.questLog.findUnique.mockResolvedValue({
+      ...logRow,
+      questDate: '2026-03-24',
+      status: 'pending',
+    });
+    prismaMock.$transaction.mockResolvedValue([
+      { ...logRow, status: 'abandoned' },
+      { ...profileRow, streakCount: 0, deferredSocialUntil: null },
+    ]);
+
+    const res = await POST(
+      new NextRequest('http://localhost/api/quest/daily', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'abandon', questDate: '2026-03-24' }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.abandoned).toBe(true);
+    expect(json.status).toBe('abandoned');
   });
 });

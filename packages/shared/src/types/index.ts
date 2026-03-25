@@ -44,6 +44,9 @@ export type PsychologicalCategory =
 // Comfort zone exit level
 export type ComfortLevel = 'low' | 'moderate' | 'high' | 'extreme';
 
+/** Rythme d’archétype : faisable dans la journée vs à planifier (social, longue durée, etc.) */
+export type QuestPace = 'instant' | 'planned';
+
 // Quest model (entrée de la taxonomie des quêtes)
 export interface QuestModel {
   id: number;
@@ -56,6 +59,8 @@ export interface QuestModel {
   requiresSocial: boolean;
   minimumDurationMinutes: number;
   fallbackQuestId?: number;
+  /** Dérivé de la taxonomie (social ou durée longue → planned) */
+  questPace: QuestPace;
 }
 
 // Escalation phases
@@ -82,7 +87,7 @@ export interface QuestLog {
   userId: string;
   questId: number;
   assignedAt: string;
-  status: 'pending' | 'accepted' | 'completed' | 'rejected' | 'replaced';
+  status: 'pending' | 'accepted' | 'completed' | 'rejected' | 'replaced' | 'abandoned';
   completedAt?: string;
   congruenceDeltaAtAssignment: number;
   phaseAtAssignment: EscalationPhase;

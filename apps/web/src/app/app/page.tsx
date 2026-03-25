@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Navbar } from '@/components/Navbar';
@@ -14,7 +13,14 @@ import {
   type RefinementQuestionUi,
 } from '@/components/ProfileRefinementModal';
 import type { DisplayBadge, EscalationPhase, XpBreakdown } from '@questia/shared';
-import { questDisplayEmoji, questFamilyLabel, getTitleDefinition, isValidQuestDateIso } from '@questia/shared';
+import {
+  questDisplayEmoji,
+  questFamilyLabel,
+  getTitleDefinition,
+  isValidQuestDateIso,
+  formatQuestDateFr,
+  REPORT_DEFER_MAX_DAYS,
+} from '@questia/shared';
 
 const QuestDestinationMap = dynamic(
   () => import('@/components/QuestDestinationMap'),
@@ -43,7 +49,10 @@ interface DailyQuest {
   city: string | null;
   weather: string | null;
   weatherTemp: number | null;
-  status: 'pending' | 'accepted' | 'completed' | 'rejected' | 'replaced';
+  status: 'pending' | 'accepted' | 'completed' | 'rejected' | 'replaced' | 'abandoned';
+  questPace?: 'instant' | 'planned';
+  /** Après report : date notée pour une quête plus ambitieuse (rappel) */
+  deferredSocialUntil?: string | null;
   day: number;
   streak: number;
   phase: EscalationPhase;
@@ -177,6 +186,11 @@ function AppPageContent() {
     return isValidQuestDateIso(raw) ? raw : null;
   }, [searchParams]);
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const reportDateMax = useMemo(() => {
+    const d = new Date(`${todayStr}T12:00:00.000Z`);
+    d.setUTCDate(d.getUTCDate() + REPORT_DEFER_MAX_DAYS);
+    return d.toISOString().slice(0, 10);
+  }, [todayStr]);
 
   const [quest, setQuest] = useState<DailyQuest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -185,6 +199,11 @@ function AppPageContent() {
   const [completing, setCompleting] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
   const [rerolling, setRerolling] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportDeferredDate, setReportDeferredDate] = useState(todayStr);
+  const [reporting, setReporting] = useState(false);
+  const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
+  const [abandoning, setAbandoning] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<{ lat: number; lon: number } | null>(null);
   const [showShareCard, setShowShareCard] = useState(false);
@@ -407,7 +426,7 @@ function AppPageContent() {
     if (!quest || rerolling) return;
     // Aligné sur l’UI : boutons visibles si pas acceptée / terminée. Ne pas exiger === 'pending'
     // (réponse API sans status, typo de casse, etc. — sinon clic sans effet ni message).
-    if (quest.status === 'accepted' || quest.status === 'completed') return;
+    if (quest.status === 'accepted' || quest.status === 'completed' || quest.status === 'abandoned') return;
 
     const daily = quest.rerollsRemaining ?? 1;
     const bonus = quest.bonusRerollCredits ?? 0;
@@ -440,6 +459,73 @@ function AppPageContent() {
     }
   };
 
+  const handleReportConfirm = async () => {
+    if (!quest || reporting) return;
+    if (quest.status !== 'pending') return;
+    if ((quest.questPace ?? 'instant') !== 'planned') return;
+    setReporting(true);
+    setBannerError(null);
+    try {
+      const res = await fetch('/api/quest/daily', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'report',
+          questDate: quest.questDate,
+          deferredUntil: reportDeferredDate,
+        }),
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        setBannerError(data.error ?? 'Impossible de reporter.');
+        return;
+      }
+      setShowReportModal(false);
+      const ok = await loadQuest(userPosition?.lat, userPosition?.lon, {
+        silent: true,
+        questDate: quest.questDate,
+      });
+      if (!ok) setBannerError('Impossible de charger la nouvelle quête. Réessaie.');
+    } finally {
+      setReporting(false);
+    }
+  };
+
+  const confirmAbandon = async () => {
+    if (!quest || abandoning) return;
+    if (quest.status !== 'pending' && quest.status !== 'accepted') return;
+    setAbandoning(true);
+    setBannerError(null);
+    try {
+      const res = await fetch('/api/quest/daily', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'abandon', questDate: quest.questDate }),
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        setBannerError(data.error ?? 'Impossible d’enregistrer ton choix.');
+        return;
+      }
+      const data = (await res.json()) as Partial<DailyQuest>;
+      setQuest((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...data,
+              status: (data.status ?? 'abandoned') as DailyQuest['status'],
+              streak: data.streak ?? 0,
+            }
+          : null,
+      );
+      setShowAbandonConfirm(false);
+    } finally {
+      setAbandoning(false);
+    }
+  };
+
   // ── Phase label ───────────────────────────────────────────────────────────
 
   const phase = quest?.phase ?? 'calibration';
@@ -456,6 +542,7 @@ function AppPageContent() {
     quest &&
     quest.status !== 'accepted' &&
     quest.status !== 'completed' &&
+    quest.status !== 'abandoned' &&
     rerollDaily + rerollBonus > 0;
 
   // ── Skeleton ──────────────────────────────────────────────────────────────
@@ -499,6 +586,9 @@ function AppPageContent() {
   const isPending = questStatus === 'pending';
   const isAccepted = questStatus === 'accepted';
   const isCompleted = questStatus === 'completed';
+  const isAbandoned = questStatus === 'abandoned';
+  const questPace = quest?.questPace ?? 'instant';
+  const isPlannedQuest = questPace === 'planned';
 
   return (
     <div className="min-h-screen bg-adventure relative">
@@ -587,7 +677,7 @@ function AppPageContent() {
             {(quest?.streak ?? 0) > 0 && (
               <span
                 className="streak-badge text-xs shadow-sm"
-                title="Nombre de jours calendaires d’affilée où tu as une quête Questia."
+                title="Série : jours d’affilée avec une quête générée. Un abandon remet la série à zéro ; reporter ou relancer ne casse pas la série."
               >
                 <span aria-hidden>🔥</span>
                 <span className="font-black">{quest?.streak}</span>
@@ -670,9 +760,11 @@ function AppPageContent() {
         {quest && (
           <article
             className={`quest-slider-embedded overflow-hidden ring-1 transition-shadow duration-300 motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:110ms] [animation-fill-mode:backwards] ${
-              isAccepted || isCompleted
-                ? 'ring-emerald-400/40 shadow-[0_12px_40px_-8px_rgba(16,185,129,.2)]'
-                : 'ring-orange-400/25'
+              isAbandoned
+                ? 'ring-slate-400/35'
+                : isAccepted || isCompleted
+                  ? 'ring-emerald-400/40 shadow-[0_12px_40px_-8px_rgba(16,185,129,.2)]'
+                  : 'ring-orange-400/25'
             }`}
           >
             <div className="px-4 pb-5 pt-5 sm:px-6 sm:pt-6">
@@ -685,23 +777,25 @@ function AppPageContent() {
                   <h2 className="font-display text-lg font-black leading-tight text-[var(--on-cream)] sm:text-xl">
                     {quest.title}
                   </h2>
-                  {questFamily ? (
-                    <p className="mt-2 text-[11px] text-[var(--on-cream-subtle)]">
-                      <span className="rounded-full border border-[color:color-mix(in_srgb,var(--on-cream)_16%,transparent)] bg-white/90 px-2.5 py-0.5 font-semibold text-[var(--on-cream-muted)] shadow-sm">
-                        {questFamily}
+                  {(questFamily || questPace) ? (
+                    <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--on-cream-subtle)]">
+                      {questFamily ? (
+                        <span className="rounded-full border border-[color:color-mix(in_srgb,var(--on-cream)_16%,transparent)] bg-white/90 px-2.5 py-0.5 font-semibold text-[var(--on-cream-muted)] shadow-sm">
+                          {questFamily}
+                        </span>
+                      ) : null}
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 font-semibold shadow-sm ${
+                          questPace === 'planned'
+                            ? 'border-violet-300/70 bg-violet-50/95 text-violet-950'
+                            : 'border-cyan-300/60 bg-cyan-50/95 text-cyan-950'
+                        }`}
+                        title={questPace === 'planned' ? 'Peut demander du calendrier ou d’autres personnes — une première étape reste faisable vite.' : 'Pensée pour être bouclée dans la journée.'}
+                      >
+                        {questPace === 'planned' ? 'Rythme : à caler' : 'Rythme : aujourd’hui'}
                       </span>
                     </p>
                   ) : null}
-                  <p className="mt-2 text-[10px] leading-snug text-[var(--on-cream-subtle)]">
-                    Contenu généré par IA, adapté à ton profil —{' '}
-                    <Link
-                      href="/legal/confidentialite"
-                      className="font-semibold text-[var(--link-on-bg)] underline underline-offset-2"
-                    >
-                      transparence et limites
-                    </Link>
-                    .
-                  </p>
                 </div>
               </div>
 
@@ -722,6 +816,13 @@ function AppPageContent() {
                 <p className="font-display text-[1.15rem] font-black leading-[1.35] text-[var(--on-cream)] sm:text-xl md:text-[1.35rem] md:leading-snug">
                   {quest.mission}
                 </p>
+                {quest.deferredSocialUntil && isPending && (
+                  <p className="mt-4 rounded-xl border border-dashed border-violet-200/80 bg-violet-50/60 px-3 py-2.5 text-xs font-semibold leading-relaxed text-violet-950">
+                    📅 Pour un défi plus ambitieux ou social, tu t’étais fixé·e le{' '}
+                    <span className="font-black">{formatQuestDateFr(quest.deferredSocialUntil)}</span> — c’est un repère,
+                    pas une obligation.
+                  </p>
+                )}
                 <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-cyan-200/60 pt-4">
                   <span className="inline-flex items-center gap-1.5 rounded-lg border border-orange-300/70 bg-orange-100/95 px-3 py-1.5 text-xs font-black text-orange-950">
                     <span aria-hidden>⏱️</span>
@@ -795,6 +896,15 @@ function AppPageContent() {
                     </button>
                   </div>
                 </div>
+              ) : isAbandoned ? (
+                <div className="text-center space-y-2 text-[var(--on-cream-muted)]">
+                  <p className="font-display text-lg font-black text-slate-700">
+                    Pas cette fois — c’est noté.
+                  </p>
+                  <p className="text-sm">
+                    Aucun jugement : ta série est repartie à zéro, demain est une nouvelle carte.
+                  </p>
+                </div>
               ) : isAccepted ? (
                 completing ? (
                   <div className="flex items-center justify-center gap-3 py-4">
@@ -809,6 +919,13 @@ function AppPageContent() {
                     <p className="text-center text-xs text-[var(--on-cream-muted)]">
                       Quand c&apos;est fait dans la vraie vie, valide ici pour cocher ta mission.
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAbandonConfirm(true)}
+                      className="mx-auto mt-2 text-center text-[11px] font-semibold text-[var(--muted)] underline-offset-2 hover:underline"
+                    >
+                      Je ne peux plus la faire — passer cette carte
+                    </button>
                   </>
                 )
               ) : accepting ? (
@@ -821,6 +938,35 @@ function AppPageContent() {
                   <button type="button" onClick={handleAccept} className="btn btn-cta btn-lg w-full text-base font-black">
                     ⚔️ Je relève le défi !
                   </button>
+                  <div
+                    className={`flex flex-col gap-2 sm:flex-row sm:justify-center ${!isPlannedQuest ? 'sm:max-w-md sm:mx-auto' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setShowAbandonConfirm(true)}
+                      className={`btn btn-ghost btn-sm font-semibold text-[var(--muted)] ${isPlannedQuest ? 'w-full sm:flex-1' : 'w-full'}`}
+                    >
+                      Ce n’est pas pour moi
+                    </button>
+                    {isPlannedQuest ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReportDeferredDate(todayStr);
+                          setShowReportModal(true);
+                        }}
+                        disabled={!canReroll}
+                        className="btn btn-ghost btn-sm w-full sm:flex-1 font-semibold text-cyan-900 disabled:opacity-40"
+                      >
+                        Reporter → quête courte
+                      </button>
+                    ) : null}
+                  </div>
+                  {isPlannedQuest ? (
+                    <p className="text-center text-[11px] text-[var(--on-cream-subtle)]">
+                      Reporter utilise une relance comme « Changer de quête », puis te propose une mission faisable vite.
+                    </p>
+                  ) : null}
                   <button
                     type="button"
                     onClick={handleReroll}
@@ -844,6 +990,92 @@ function AppPageContent() {
 
       {showSafety && quest && (
         <SafetySheet quest={quest} onConfirm={doAccept} onClose={() => setShowSafety(false)} />
+      )}
+
+      {showReportModal && quest && (quest.questPace ?? 'instant') === 'planned' && (
+        <div
+          className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="report-title"
+        >
+          <div className="max-w-md w-full rounded-2xl border border-cyan-200/80 bg-white p-6 shadow-2xl">
+            <h3 id="report-title" className="font-display text-lg font-black text-slate-900">
+              Reporter avec une relance
+            </h3>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Comme « Changer de quête », cela consomme une relance du jour ou un crédit bonus. Tu recevras une mission
+              courte, faisable aujourd’hui. Choisis une date repère (dans les {REPORT_DEFER_MAX_DAYS} prochains jours) pour
+              un défi plus ambitieux ou social — sans obligation.
+            </p>
+            <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500" htmlFor="report-date">
+              Date repère
+            </label>
+            <input
+              id="report-date"
+              type="date"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900"
+              min={todayStr}
+              max={reportDateMax}
+              value={reportDeferredDate}
+              onChange={(e) => setReportDeferredDate(e.target.value)}
+            />
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost btn-md flex-1"
+                onClick={() => setShowReportModal(false)}
+                disabled={reporting}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-md flex-[2] font-black"
+                onClick={() => void handleReportConfirm()}
+                disabled={reporting || !canReroll}
+              >
+                {reporting ? '…' : 'Confirmer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAbandonConfirm && quest && (
+        <div
+          className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="abandon-title"
+        >
+          <div className="max-w-md w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 id="abandon-title" className="font-display text-lg font-black text-slate-900">
+              Passer cette carte ?
+            </h3>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Aucun problème : ta série repart à zéro, sans mauvaise note. Demain, une nouvelle quête t’attend.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost btn-md flex-1"
+                onClick={() => setShowAbandonConfirm(false)}
+                disabled={abandoning}
+              >
+                Retour
+              </button>
+              <button
+                type="button"
+                className="btn btn-md flex-[2] border border-slate-300 bg-slate-100 font-black text-slate-900"
+                onClick={() => void confirmAbandon()}
+                disabled={abandoning}
+              >
+                {abandoning ? '…' : 'Confirmer'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {xpCelebration && (

@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
   Animated,
   Easing,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/expo';
@@ -17,7 +18,14 @@ import { useRouter, Link, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
-import { questDisplayEmoji, questFamilyLabel, getTitleDefinition, isValidQuestDateIso } from '@questia/shared';
+import {
+  questDisplayEmoji,
+  questFamilyLabel,
+  getTitleDefinition,
+  isValidQuestDateIso,
+  formatQuestDateFr,
+  REPORT_DEFER_MAX_DAYS,
+} from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
 import { useAppTheme } from '../../contexts/AppThemeContext';
@@ -51,7 +59,9 @@ interface DailyQuest {
   city: string | null;
   weather: string | null;
   weatherTemp: number | null;
-  status: 'pending' | 'accepted' | 'completed' | 'rejected' | 'replaced';
+  status: 'pending' | 'accepted' | 'completed' | 'rejected' | 'replaced' | 'abandoned';
+  questPace?: 'instant' | 'planned';
+  deferredSocialUntil?: string | null;
   day: number;
   streak: number;
   phase: EscalationPhase;
@@ -195,6 +205,23 @@ export default function DashboardScreen() {
   const [reward, setReward] = useState<QuestRewardPayload | null>(null);
   const [showReward, setShowReward] = useState(false);
   const acceptFlashOp = useRef(new Animated.Value(0)).current;
+
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const reportDateOptions = useMemo(() => {
+    const out: string[] = [];
+    for (let i = 0; i <= REPORT_DEFER_MAX_DAYS; i++) {
+      const d = new Date(`${todayStr}T12:00:00.000Z`);
+      d.setUTCDate(d.getUTCDate() + i);
+      out.push(d.toISOString().slice(0, 10));
+    }
+    return out;
+  }, [todayStr]);
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportDeferredDate, setReportDeferredDate] = useState(todayStr);
+  const [reporting, setReporting] = useState(false);
+  const [showAbandonModal, setShowAbandonModal] = useState(false);
+  const [abandoning, setAbandoning] = useState(false);
 
   const ensureProfile = useCallback(async (token: string | null): Promise<{ ok: boolean; error?: string }> => {
     try {
@@ -375,7 +402,9 @@ export default function DashboardScreen() {
   const isPending = qs === 'pending';
   const isAccepted = qs === 'accepted';
   const isCompleted = qs === 'completed';
+  const isAbandoned = qs === 'abandoned';
   const questFamily = quest ? questFamilyLabel(quest.archetypeCategory) : null;
+  const questPace = quest?.questPace ?? 'instant';
 
   const phase = quest?.phase ?? 'calibration';
   const phaseInfo = PHASE_LABEL[phase];
@@ -423,6 +452,70 @@ export default function DashboardScreen() {
       setRerolling(false);
     }
   };
+
+  const handleReportConfirm = async () => {
+    if (!quest || reporting || !canRerollQuest) return;
+    setReporting(true);
+    setError(null);
+    try {
+      const token = await getToken();
+      const res = await apiFetch(`${API_BASE_URL}/api/quest/daily`, token, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'report',
+          questDate: quest.questDate,
+          deferredUntil: reportDeferredDate,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error ?? 'Erreur report');
+        return;
+      }
+      setShowReportModal(false);
+      const ok = await loadQuest();
+      if (ok) await enrichQuestWithLocation();
+    } finally {
+      setReporting(false);
+    }
+  };
+
+  const confirmAbandon = async () => {
+    if (!quest || abandoning) return;
+    if (quest.status !== 'pending' && quest.status !== 'accepted') return;
+    setAbandoning(true);
+    setError(null);
+    try {
+      const token = await getToken();
+      const res = await apiFetch(`${API_BASE_URL}/api/quest/daily`, token, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'abandon', questDate: quest.questDate }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error ?? 'Erreur abandon');
+        return;
+      }
+      const data = (await res.json()) as Partial<DailyQuest>;
+      setQuest((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...data,
+              status: (data.status ?? 'abandoned') as DailyQuest['status'],
+              streak: data.streak ?? 0,
+            }
+          : null,
+      );
+      setShowAbandonModal(false);
+    } finally {
+      setAbandoning(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showReportModal) setReportDeferredDate(todayStr);
+  }, [showReportModal, todayStr]);
 
   const { palette } = useAppTheme();
   const styles = useMemo(() => buildDashboardStyles(palette), [palette]);
@@ -493,6 +586,14 @@ export default function DashboardScreen() {
         keyboardShouldPersistTaps="handled"
         bounces
       >
+        {quest && error ? (
+          <View style={styles.inlineErrorBanner}>
+            <Text style={styles.inlineErrorText}>{error}</Text>
+            <Pressable onPress={() => setError(null)} hitSlop={8}>
+              <Text style={styles.inlineErrorDismiss}>OK</Text>
+            </Pressable>
+          </View>
+        ) : null}
         <View
           style={[
             styles.heroBand,
@@ -715,6 +816,7 @@ export default function DashboardScreen() {
             style={[
               styles.questSliderEmbedded,
               (isAccepted || isCompleted) && styles.questSliderEmbeddedDone,
+              isAbandoned && styles.questSliderEmbeddedAbandoned,
             ]}
           >
             <View style={[styles.questCardBody, compact && styles.questCardBodyCompact]}>
@@ -725,6 +827,14 @@ export default function DashboardScreen() {
                 <View style={styles.titleBlockText}>
                   <Text style={[styles.questTitle, compact && styles.questTitleCompact]}>{quest.title}</Text>
                   {questFamily ? <Text style={styles.questCategory}>{questFamily}</Text> : null}
+                  <Text
+                    style={[
+                      styles.questPacePill,
+                      questPace === 'planned' ? styles.questPacePillPlanned : styles.questPacePillInstant,
+                    ]}
+                  >
+                    {questPace === 'planned' ? 'Rythme : à caler' : 'Rythme : aujourd’hui'}
+                  </Text>
                 </View>
               </View>
 
@@ -739,6 +849,12 @@ export default function DashboardScreen() {
                   <Text style={styles.missionLabel}>Ta mission — quoi faire</Text>
                 </View>
                 <Text style={[styles.missionText, compact && styles.missionTextCompact]}>{quest.mission}</Text>
+                {quest.deferredSocialUntil && isPending ? (
+                  <Text style={styles.deferNote}>
+                    📅 Pour un défi plus ambitieux ou social, repère :{' '}
+                    {formatQuestDateFr(quest.deferredSocialUntil)} — optionnel.
+                  </Text>
+                ) : null}
                 <View style={styles.missionMetaRow}>
                   <View style={styles.durationPill}>
                     <Text style={styles.durationPillText}>⏱️ {quest.duration}</Text>
@@ -749,9 +865,6 @@ export default function DashboardScreen() {
                     </View>
                   )}
                 </View>
-                <Pressable onPress={() => void Linking.openURL(PRIVACY_URL)} style={styles.aiNoticePress}>
-                  <Text style={styles.aiNoticeText}>Contenu généré par IA · Transparence et limites</Text>
-                </Pressable>
               </LinearGradient>
 
               {quest.isOutdoor && quest.destination ? (
@@ -812,6 +925,13 @@ export default function DashboardScreen() {
                     </Pressable>
                   </Link>
                 </View>
+              ) : isAbandoned ? (
+                <View style={styles.footerActionsInner}>
+                  <Text style={styles.abandonedFooterTitle}>Pas cette fois — c’est noté.</Text>
+                  <Text style={styles.abandonedFooterSub}>
+                    Ta série repart à zéro ; demain, une nouvelle carte t’attend.
+                  </Text>
+                </View>
               ) : isAccepted ? (
                 <View style={styles.footerActionsInner}>
                   <Pressable style={styles.acceptBtn} onPress={doComplete} disabled={completing}>
@@ -822,6 +942,9 @@ export default function DashboardScreen() {
                   <Text style={styles.acceptedHint}>
                     {`Quand c'est fait dans la vraie vie, valide ici pour cocher ta mission.`}
                   </Text>
+                  <Pressable onPress={() => setShowAbandonModal(true)}>
+                    <Text style={styles.abandonLink}>Je ne peux plus la faire — passer cette carte</Text>
+                  </Pressable>
                 </View>
               ) : (
                 <View style={styles.footerActionsInner}>
@@ -830,6 +953,27 @@ export default function DashboardScreen() {
                       {accepting ? 'Confirmation…' : '⚔️  Je relève le défi !'}
                     </Text>
                   </Pressable>
+                  <View style={styles.secondaryRow}>
+                    <Pressable
+                      style={styles.secondaryGhostBtn}
+                      onPress={() => setShowAbandonModal(true)}
+                    >
+                      <Text style={styles.secondaryGhostText}>Ce n’est pas pour moi</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.secondaryCtaBtn, !canRerollQuest && styles.rerollBtnDisabled]}
+                      onPress={() => {
+                        setReportDeferredDate(todayStr);
+                        setShowReportModal(true);
+                      }}
+                      disabled={!canRerollQuest}
+                    >
+                      <Text style={styles.secondaryCtaText}>Reporter → courte</Text>
+                    </Pressable>
+                  </View>
+                  <Text style={styles.reportHint}>
+                    Reporter utilise une relance comme « Changer de quête », puis une mission faisable vite.
+                  </Text>
                   {API_BASE_URL.includes('localhost') && (
                     <View style={styles.localhostWarning}>
                       <Text style={styles.localhostWarningText}>
@@ -861,6 +1005,75 @@ export default function DashboardScreen() {
         <SafetySheet quest={quest} onConfirm={doAccept} onClose={() => setShowSafety(false)} />
       )}
 
+      <Modal visible={showReportModal} transparent animationType="fade" onRequestClose={() => setShowReportModal(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Reporter avec une relance</Text>
+            <Text style={styles.modalBody}>
+              Comme « Changer de quête », cela consomme une relance. Tu recevras une mission courte pour aujourd’hui.
+              Choisis une date repère (max {REPORT_DEFER_MAX_DAYS} jours) pour un défi plus ambitieux — optionnel.
+            </Text>
+            <Text style={styles.modalLabel}>Date repère</Text>
+            <ScrollView style={styles.datePickScroll} nestedScrollEnabled>
+              {reportDateOptions.map((iso) => (
+                <Pressable
+                  key={iso}
+                  onPress={() => setReportDeferredDate(iso)}
+                  style={[
+                    styles.datePickRow,
+                    reportDeferredDate === iso && styles.datePickRowActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.datePickRowText,
+                      reportDeferredDate === iso && styles.datePickRowTextActive,
+                    ]}
+                  >
+                    {formatQuestDateFr(iso)}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <View style={styles.modalActions}>
+              <Pressable style={styles.modalBtnGhost} onPress={() => setShowReportModal(false)} disabled={reporting}>
+                <Text style={styles.modalBtnGhostText}>Annuler</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalBtnPrimary, (!canRerollQuest || reporting) && styles.rerollBtnDisabled]}
+                onPress={() => void handleReportConfirm()}
+                disabled={!canRerollQuest || reporting}
+              >
+                <Text style={styles.modalBtnPrimaryText}>{reporting ? '…' : 'Confirmer'}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showAbandonModal} transparent animationType="fade" onRequestClose={() => setShowAbandonModal(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Passer cette carte ?</Text>
+            <Text style={styles.modalBody}>
+              Ta série repart à zéro — sans jugement. Demain, une nouvelle quête t’attend.
+            </Text>
+            <View style={styles.modalActions}>
+              <Pressable style={styles.modalBtnGhost} onPress={() => setShowAbandonModal(false)} disabled={abandoning}>
+                <Text style={styles.modalBtnGhostText}>Retour</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalBtnAbandon, abandoning && styles.rerollBtnDisabled]}
+                onPress={() => void confirmAbandon()}
+                disabled={abandoning}
+              >
+                <Text style={styles.modalBtnAbandonText}>{abandoning ? '…' : 'Confirmer'}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <QuestRewardOverlay visible={showReward} payload={reward} onContinue={finishRewardAndShare} />
     </SafeAreaView>
   );
@@ -881,6 +1094,21 @@ function buildDashboardStyles(p: ThemePalette) {
   return StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
+  inlineErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(248,113,113,0.45)',
+    backgroundColor: 'rgba(254,242,242,0.95)',
+  },
+  inlineErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#991b1b' },
+  inlineErrorDismiss: { fontSize: 13, fontWeight: '800', color: '#991b1b', textDecorationLine: 'underline' },
   content: { padding: 20, paddingTop: 14, paddingBottom: 24 },
   contentCompact: { paddingHorizontal: 16, paddingTop: 10 },
   loadingFull: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
@@ -1051,6 +1279,10 @@ function buildDashboardStyles(p: ThemePalette) {
     shadowColor: '#047857',
     shadowOpacity: 0.18,
   },
+  questSliderEmbeddedAbandoned: {
+    borderColor: 'rgba(100,116,139,0.4)',
+    opacity: 0.96,
+  },
   questCardBody: { paddingHorizontal: 18, paddingTop: 20, paddingBottom: 8 },
   questCardBodyCompact: { paddingHorizontal: 14, paddingTop: 16 },
   mapCta: {
@@ -1097,13 +1329,6 @@ function buildDashboardStyles(p: ThemePalette) {
     borderTopWidth: 1,
     borderTopColor: colorWithAlpha(p.cyan, 0.35),
   },
-  aiNoticePress: { marginTop: 10, alignSelf: 'flex-start' },
-  aiNoticeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colorWithAlpha(p.onCream, 0.55),
-    textDecorationLine: 'underline',
-  },
   durationPill: {
     backgroundColor: colorWithAlpha(p.gold, 0.28),
     paddingHorizontal: 12,
@@ -1146,6 +1371,39 @@ function buildDashboardStyles(p: ThemePalette) {
     borderWidth: 1,
     borderColor: colorWithAlpha(p.onCream, 0.14),
     backgroundColor: 'rgba(255,255,255,0.92)',
+  },
+  questPacePill: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  questPacePillPlanned: {
+    borderColor: 'rgba(139,92,246,0.45)',
+    backgroundColor: 'rgba(245,243,255,0.95)',
+    color: '#5b21b6',
+  },
+  questPacePillInstant: {
+    borderColor: colorWithAlpha(p.cyan, 0.4),
+    backgroundColor: colorWithAlpha(p.cyan, 0.1),
+    color: '#155e75',
+  },
+  deferNote: {
+    marginTop: 12,
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 18,
+    color: '#5b21b6',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(139,92,246,0.35)',
+    backgroundColor: 'rgba(245,243,255,0.65)',
   },
   questTitle: { fontSize: 19, fontWeight: '900', color: C.text, lineHeight: 24 },
   questTitleCompact: { fontSize: 17, lineHeight: 22 },
@@ -1214,6 +1472,38 @@ function buildDashboardStyles(p: ThemePalette) {
   },
   completedFooterSub: { fontSize: 13, color: p.onCreamMuted, textAlign: 'center', marginBottom: 4 },
   acceptedHint: { fontSize: 12, color: p.onCreamMuted, textAlign: 'center', lineHeight: 18, marginTop: 2 },
+  abandonLink: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: p.muted,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+    marginTop: 8,
+  },
+  secondaryRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  secondaryGhostBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.onCream, 0.2),
+    alignItems: 'center',
+    backgroundColor: p.surface,
+  },
+  secondaryGhostText: { fontSize: 12, fontWeight: '700', color: p.muted },
+  secondaryCtaBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.4),
+    alignItems: 'center',
+    backgroundColor: colorWithAlpha(p.cyan, 0.08),
+  },
+  secondaryCtaText: { fontSize: 12, fontWeight: '800', color: '#155e75' },
+  reportHint: { fontSize: 10, color: p.onCreamMuted, textAlign: 'center', lineHeight: 14 },
+  abandonedFooterTitle: { fontSize: 17, fontWeight: '900', color: '#475569', textAlign: 'center' },
+  abandonedFooterSub: { fontSize: 13, color: p.onCreamMuted, textAlign: 'center', lineHeight: 18 },
   rerollBtn: { backgroundColor: p.surface, borderWidth: 1, borderColor: C.border, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   rerollBtnDisabled: { opacity: 0.4 },
   rerollText: { color: C.accent, fontWeight: '700', fontSize: 14 },
@@ -1240,6 +1530,65 @@ function buildDashboardStyles(p: ThemePalette) {
     alignItems: 'center',
   },
   shareLinkText: { fontWeight: '900', fontSize: 15, color: p.linkOnBg },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.55)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: '88%',
+  },
+  modalTitle: { fontSize: 18, fontWeight: '900', color: p.text, marginBottom: 8 },
+  modalBody: { fontSize: 14, color: p.muted, lineHeight: 20, marginBottom: 12 },
+  modalLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: p.muted,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  datePickScroll: { maxHeight: 220, marginBottom: 12 },
+  datePickRow: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.25),
+  },
+  datePickRowActive: { borderColor: C.accent, backgroundColor: colorWithAlpha(p.cyan, 0.12) },
+  datePickRowText: { fontSize: 14, fontWeight: '600', color: p.text },
+  datePickRowTextActive: { fontWeight: '900', color: '#155e75' },
+  modalActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  modalBtnGhost: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: p.border,
+    alignItems: 'center',
+  },
+  modalBtnGhostText: { fontWeight: '700', color: p.muted },
+  modalBtnPrimary: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: C.accent,
+    alignItems: 'center',
+  },
+  modalBtnPrimaryText: { fontWeight: '900', color: '#fff' },
+  modalBtnAbandon: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#e2e8f0',
+    alignItems: 'center',
+  },
+  modalBtnAbandonText: { fontWeight: '900', color: '#0f172a' },
   footerTeaser: {
     marginTop: 8,
     textAlign: 'center',

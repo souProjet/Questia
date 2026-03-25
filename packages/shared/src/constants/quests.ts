@@ -1,6 +1,33 @@
-import type { PsychologicalCategory, QuestModel } from '../types';
+import type { PsychologicalCategory, QuestModel, QuestPace } from '../types';
 
-export const QUEST_TAXONOMY: QuestModel[] = [
+/** Fenêtre max pour reporter une quête « planifiée » (choix de date côté client + API). */
+export const REPORT_DEFER_MAX_DAYS = 14;
+
+/**
+ * Rythme d’archétype : social ou durée ≥ 6 h → planifiée ; sinon instantanée (faisable dans la journée).
+ */
+export function archetypeQuestPace(q: {
+  requiresSocial: boolean;
+  minimumDurationMinutes: number;
+}): QuestPace {
+  if (q.requiresSocial) return 'planned';
+  if (q.minimumDurationMinutes >= 360) return 'planned';
+  return 'instant';
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Date de report (YYYY-MM-DD) dans [today, today+REPORT_DEFER_MAX_DAYS] (référence midi UTC). */
+export function isValidReportDeferredDate(dateIso: string, todayIso: string): boolean {
+  if (!ISO_DATE.test(dateIso) || !ISO_DATE.test(todayIso)) return false;
+  const t0 = Date.parse(`${todayIso}T12:00:00.000Z`);
+  const t1 = Date.parse(`${dateIso}T12:00:00.000Z`);
+  if (Number.isNaN(t0) || Number.isNaN(t1)) return false;
+  const max = t0 + REPORT_DEFER_MAX_DAYS * 86400000;
+  return t1 >= t0 && t1 <= max;
+}
+
+const _QUEST_TAXONOMY_RAW: ReadonlyArray<Omit<QuestModel, 'questPace'>> = [
   {
     id: 1,
     title: 'Le Voyage Aléatoire',
@@ -430,6 +457,11 @@ export const QUEST_TAXONOMY: QuestModel[] = [
     fallbackQuestId: 13,
   },
 ];
+
+export const QUEST_TAXONOMY: QuestModel[] = _QUEST_TAXONOMY_RAW.map((q) => ({
+  ...q,
+  questPace: archetypeQuestPace(q),
+}));
 
 export const INDOOR_QUEST_IDS = QUEST_TAXONOMY
   .filter((q) => !q.requiresOutdoor)
