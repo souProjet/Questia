@@ -1,6 +1,7 @@
 'use server';
 
 import type { WeatherCheck } from '@questia/shared';
+import { logStructured, logStructuredError } from '../observability';
 import type { QuestContext } from './ai';
 
 const KEY = process.env.OPENWEATHER_API_KEY ?? '';
@@ -46,13 +47,34 @@ function frenchDescription(main: string, description: string): string {
 }
 
 export async function checkWeatherSafety(lat: number, lon: number): Promise<WeatherCheck> {
-  if (!KEY) return { safe: true, temperature: 20, alerts: [], windSpeed: 0, precipitation: 0 };
+  const t0 = performance.now();
+  if (!KEY) {
+    logStructured({
+      domain: 'weather',
+      operation: 'owm.safety',
+      level: 'info',
+      outcome: 'skipped',
+      meta: { reason: 'no_api_key' },
+    });
+    return { safe: true, temperature: 20, alerts: [], windSpeed: 0, precipitation: 0 };
+  }
   try {
     const res = await fetch(
       `${BASE}/weather?lat=${lat}&lon=${lon}&units=metric&lang=fr&appid=${KEY}`,
       { next: { revalidate: 1800 } },
     );
-    if (!res.ok) return { safe: true, temperature: 20, alerts: [], windSpeed: 0, precipitation: 0 };
+    const durationMs = Math.round(performance.now() - t0);
+    if (!res.ok) {
+      logStructured({
+        domain: 'weather',
+        operation: 'owm.safety',
+        level: 'warn',
+        outcome: 'fallback',
+        durationMs,
+        meta: { httpStatus: res.status },
+      });
+      return { safe: true, temperature: 20, alerts: [], windSpeed: 0, precipitation: 0 };
+    }
 
     const d: OWMResponse = await res.json();
     const temperature = d.main.temp;
@@ -60,15 +82,44 @@ export async function checkWeatherSafety(lat: number, lon: number): Promise<Weat
     const precipitation = (d.rain?.['1h'] ?? 0) + (d.snow?.['1h'] ?? 0);
     const alerts = d.alerts?.map((a) => a.event) ?? [];
     const safe = temperature > -5 && temperature < 42 && windSpeed < 20 && precipitation < 10 && alerts.length === 0;
+    logStructured({
+      domain: 'weather',
+      operation: 'owm.safety',
+      level: 'info',
+      outcome: 'ok',
+      durationMs,
+      meta: {
+        httpStatus: res.status,
+        weatherMain: d.weather[0]?.main ?? 'unknown',
+        safe,
+      },
+    });
     return { safe, temperature, alerts, windSpeed, precipitation };
-  } catch {
+  } catch (err) {
+    const durationMs = Math.round(performance.now() - t0);
+    logStructuredError('weather', 'owm.safety', err, {
+      durationMs,
+      outcome: 'fallback',
+    });
     return { safe: true, temperature: 20, alerts: [], windSpeed: 0, precipitation: 0 };
   }
 }
 
 /** Full weather + location context for quest generation */
 export async function getQuestContext(lat?: number, lon?: number): Promise<QuestContext> {
+  const t0 = performance.now();
   if (!lat || !lon || !KEY) {
+    logStructured({
+      domain: 'weather',
+      operation: 'owm.questContext',
+      level: 'info',
+      outcome: 'skipped',
+      durationMs: Math.round(performance.now() - t0),
+      meta: {
+        hasCoords: Boolean(lat && lon),
+        hasApiKey: Boolean(KEY),
+      },
+    });
     return {
       city: 'ta ville',
       country: '',
@@ -83,7 +134,18 @@ export async function getQuestContext(lat?: number, lon?: number): Promise<Quest
       `${BASE}/weather?lat=${lat}&lon=${lon}&units=metric&lang=fr&appid=${KEY}`,
       { next: { revalidate: 1800 } },
     );
-    if (!res.ok) throw new Error('fetch failed');
+    if (!res.ok) {
+      const durationMs = Math.round(performance.now() - t0);
+      logStructured({
+        domain: 'weather',
+        operation: 'owm.questContext',
+        level: 'warn',
+        outcome: 'fallback',
+        durationMs,
+        meta: { httpStatus: res.status },
+      });
+      throw new Error('fetch failed');
+    }
 
     const d: OWMResponse = await res.json();
     const main = d.weather[0]?.main ?? 'Clear';
@@ -96,6 +158,21 @@ export async function getQuestContext(lat?: number, lon?: number): Promise<Quest
       temp > 0 && temp < 40 && wind < 15 && precip < 5
       && !['Thunderstorm', 'Snow'].includes(main);
 
+    const durationMs = Math.round(performance.now() - t0);
+    logStructured({
+      domain: 'weather',
+      operation: 'owm.questContext',
+      level: 'info',
+      outcome: 'ok',
+      durationMs,
+      meta: {
+        httpStatus: res.status,
+        weatherMain: main,
+        isOutdoorFriendly,
+        tempBucket: temp < 5 ? 'cold' : temp > 30 ? 'hot' : 'mild',
+      },
+    });
+
     return {
       city: d.name || 'ta ville',
       country: d.sys.country || '',
@@ -104,7 +181,15 @@ export async function getQuestContext(lat?: number, lon?: number): Promise<Quest
       temp,
       isOutdoorFriendly,
     };
-  } catch {
+  } catch (err) {
+    const durationMs = Math.round(performance.now() - t0);
+    if (err instanceof Error && err.message === 'fetch failed') {
+      return { city: 'ta ville', country: '', weatherDescription: 'Variable', weatherIcon: 'CloudSun', temp: 18, isOutdoorFriendly: true };
+    }
+    logStructuredError('weather', 'owm.questContext', err, {
+      durationMs,
+      outcome: 'fallback',
+    });
     return { city: 'ta ville', country: '', weatherDescription: 'Variable', weatherIcon: 'CloudSun', temp: 18, isOutdoorFriendly: true };
   }
 }

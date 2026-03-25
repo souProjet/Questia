@@ -15,8 +15,11 @@ import {
   buildPersonalityPromptBlock,
   describeArchetypeTargetTraits,
 } from './questGenerationPrompt';
+import { logStructured, logStructuredError } from '../observability';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
+
+const OPENAI_MODEL = 'gpt-4o-mini' as const;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -221,11 +224,7 @@ function validateGeneratedPayload(
   return { ok: true };
 }
 
-function applyComputedOutdoor(
-  parsed: GeneratedDailyQuest,
-  computedIsOutdoor: boolean,
-  context: QuestContext,
-): GeneratedDailyQuest {
+function applyComputedOutdoor(parsed: GeneratedDailyQuest, computedIsOutdoor: boolean): GeneratedDailyQuest {
   if (!computedIsOutdoor) {
     return {
       ...parsed,
@@ -320,19 +319,57 @@ Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[.
 }
 
 async function callModel(user: string, system: string, temperature: number): Promise<string> {
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user },
-    ],
-    response_format: { type: 'json_object' },
-    temperature,
-    max_tokens: 600,
-  });
-  const raw = completion.choices[0]?.message?.content;
-  if (!raw) throw new Error('Empty response');
-  return raw;
+  const t0 = performance.now();
+  try {
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+      response_format: { type: 'json_object' },
+      temperature,
+      max_tokens: 600,
+    });
+    const durationMs = Math.round(performance.now() - t0);
+    const raw = completion.choices[0]?.message?.content;
+    if (!raw) {
+      logStructured({
+        domain: 'ai',
+        operation: 'chat.completions.dailyQuest',
+        level: 'error',
+        outcome: 'miss',
+        durationMs,
+        meta: { model: OPENAI_MODEL, emptyChoices: true, temperature },
+      });
+      throw new Error('Empty response');
+    }
+    const u = completion.usage;
+    logStructured({
+      domain: 'ai',
+      operation: 'chat.completions.dailyQuest',
+      level: 'info',
+      outcome: 'ok',
+      durationMs,
+      meta: {
+        model: OPENAI_MODEL,
+        temperature,
+        promptTokens: u?.prompt_tokens,
+        completionTokens: u?.completion_tokens,
+        totalTokens: u?.total_tokens,
+      },
+    });
+    return raw;
+  } catch (err) {
+    const durationMs = Math.round(performance.now() - t0);
+    if (err instanceof Error && err.message === 'Empty response') throw err;
+    logStructuredError('ai', 'chat.completions.dailyQuest', err, {
+      durationMs,
+      outcome: 'degraded',
+      meta: { model: OPENAI_MODEL, temperature },
+    });
+    throw err;
+  }
 }
 
 // ── Main: generate a full unique daily quest ──────────────────────────────────
@@ -390,7 +427,7 @@ export async function generateDailyQuest(
           typeof parsedRaw.destinationQuery === 'string' ? parsedRaw.destinationQuery.trim() : '',
       } as GeneratedDailyQuest;
 
-      const normalized = applyComputedOutdoor(parsed, computedIsOutdoor, context);
+      const normalized = applyComputedOutdoor(parsed, computedIsOutdoor);
       const v = validateGeneratedPayload(
         {
           title: normalized.title,
@@ -405,6 +442,17 @@ export async function generateDailyQuest(
       );
       if (v.ok) {
         const note = normalized.safetyNote;
+        logStructured({
+          domain: 'ai',
+          operation: 'generateDailyQuest',
+          level: 'info',
+          outcome: 'ok',
+          meta: {
+            archetypeId: archetype.id,
+            attempt: attempt + 1,
+            isOutdoor: computedIsOutdoor,
+          },
+        });
         return {
           ...normalized,
           safetyNote:
@@ -418,6 +466,14 @@ export async function generateDailyQuest(
       repairHint = repairHint ?? 'JSON incomplet ou invalide — réessaie avec tous les champs requis.';
     }
   }
+
+  logStructured({
+    domain: 'ai',
+    operation: 'generateDailyQuest',
+    level: 'warn',
+    outcome: 'fallback',
+    meta: { archetypeId: archetype.id, attempts: 2, isOutdoor: computedIsOutdoor },
+  });
 
   return {
     icon: 'Swords',
@@ -439,9 +495,10 @@ export async function generateQuestNarration(
   request: QuestNarrationRequest,
 ): Promise<QuestNarrationResponse> {
   const { anonymizedProfile, questModel } = request;
+  const t0 = performance.now();
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: OPENAI_MODEL,
       messages: [
         {
           role: 'user',
@@ -457,8 +514,41 @@ JSON: { "title": "...", "narrative": "...", "motivationalHook": "...", "estimate
     });
     const raw = completion.choices[0]?.message?.content;
     if (!raw) throw new Error('empty');
+    const durationMs = Math.round(performance.now() - t0);
+    const u = completion.usage;
+    logStructured({
+      domain: 'ai',
+      operation: 'chat.completions.narration',
+      level: 'info',
+      outcome: 'ok',
+      durationMs,
+      meta: {
+        model: OPENAI_MODEL,
+        questId: questModel.id,
+        promptTokens: u?.prompt_tokens,
+        completionTokens: u?.completion_tokens,
+        totalTokens: u?.total_tokens,
+      },
+    });
     return JSON.parse(raw) as QuestNarrationResponse;
-  } catch {
+  } catch (err) {
+    const durationMs = Math.round(performance.now() - t0);
+    if (err instanceof Error && err.message === 'empty') {
+      logStructured({
+        domain: 'ai',
+        operation: 'chat.completions.narration',
+        level: 'warn',
+        outcome: 'fallback',
+        durationMs,
+        meta: { model: OPENAI_MODEL, questId: questModel.id, reason: 'empty_choices' },
+      });
+    } else {
+      logStructuredError('ai', 'chat.completions.narration', err, {
+        durationMs,
+        outcome: 'fallback',
+        meta: { model: OPENAI_MODEL, questId: questModel.id },
+      });
+    }
     return {
       title: questModel.title,
       narrative: questModel.description,
