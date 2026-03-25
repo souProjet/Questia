@@ -70,11 +70,21 @@ describe('structuredLog', () => {
     const line = JSON.parse(errorSpy.mock.calls[0][0] as string);
     expect(line.error.message).toBe('string err');
   });
+
+  it('logStructuredError tronque un message très long', () => {
+    const long = 'x'.repeat(500);
+    logStructuredError('ai', 'x', new Error(long));
+    const line = JSON.parse(errorSpy.mock.calls[0][0] as string);
+    expect(line.error.message.length).toBeLessThanOrEqual(402);
+    expect(line.error.message.endsWith('…')).toBe(true);
+  });
 });
 
 describe('withTiming', () => {
+  let logSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
@@ -85,6 +95,19 @@ describe('withTiming', () => {
   it('retourne le résultat et log success', async () => {
     const r = await withTiming('ai', 'op', async () => 42);
     expect(r).toBe(42);
+    expect(logSpy).toHaveBeenCalled();
+  });
+
+  it('withTiming logSuccess false ne log pas le succès', async () => {
+    logSpy.mockClear();
+    const r = await withTiming(
+      'ai',
+      'silent',
+      async () => 1,
+      { logSuccess: false },
+    );
+    expect(r).toBe(1);
+    expect(logSpy).not.toHaveBeenCalled();
   });
 
   it('relance l’erreur après log', async () => {

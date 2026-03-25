@@ -27,6 +27,11 @@ describe('geocodeNominatim', () => {
     expect(await geocodeNominatim('x')).toBeNull();
   });
 
+  it('null si fetch lève', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')));
+    expect(await geocodeNominatim('Paris')).toBeNull();
+  });
+
   it('null si tableau vide ou coords invalides', async () => {
     vi.stubGlobal(
       'fetch',
