@@ -23,6 +23,9 @@ Document interne pour préparer les soumissions, les captures d’écran et les 
 **Référence web** (à indiquer si la plateforme demande une URL de politique ou d’avertissement) :
 
 - Politique de confidentialité : `https://questia.fr/legal/confidentialite`
+- Mentions légales : `https://questia.fr/legal/mentions-legales`
+- CGU : `https://questia.fr/legal/cgu`
+- CGV : `https://questia.fr/legal/cgv`
 - Bien-être et limites : `https://questia.fr/legal/bien-etre`
 
 ---

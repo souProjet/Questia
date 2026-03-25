@@ -472,6 +472,15 @@ export default function HomePage() {
               <Link href="/legal/confidentialite" className="hover:text-slate-900 transition-colors">
                 Confidentialité
               </Link>
+              <Link href="/legal/mentions-legales" className="hover:text-slate-900 transition-colors">
+                Mentions légales
+              </Link>
+              <Link href="/legal/cgu" className="hover:text-slate-900 transition-colors">
+                CGU
+              </Link>
+              <Link href="/legal/cgv" className="hover:text-slate-900 transition-colors">
+                CGV
+              </Link>
               <Link href="/legal/bien-etre" className="hover:text-slate-900 transition-colors">
                 Bien-être
               </Link>

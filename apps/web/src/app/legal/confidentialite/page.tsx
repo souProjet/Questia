@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { legalPublisher } from '@/config/legal';
 import { siteUrl } from '@/config/marketing';
+import { IncompleteNotice } from '@/components/legal/LegalLayout';
 
 export const metadata: Metadata = {
   title: 'Politique de confidentialité',
@@ -30,15 +32,59 @@ export default function ConfidentialitePage() {
           </a>
         </p>
 
+        {!legalPublisher.companyName || !legalPublisher.contactEmail ? <IncompleteNotice /> : null}
+
         <div className="prose prose-slate max-w-none space-y-10 text-slate-800">
           <section>
             <h2 className="text-xl font-black text-slate-900 mt-0">1. Responsable du traitement</h2>
             <p>
-              L’application Questia (site web et applications mobiles associées) est éditée par son responsable de
-              traitement identifiable au sein de l’organisation exploitant le service. Pour toute question relative à
-              cette politique ou à tes droits, tu peux nous contacter via les coordonnées indiquées sur le site ou dans
-              l’application (section contact / support).
+              Le responsable du traitement des données personnelles collectées dans le cadre de Questia est l’éditeur du
+              service, tel qu’identifié dans les{' '}
+              <Link href="/legal/mentions-legales" className="font-semibold text-orange-600 hover:underline">
+                mentions légales
+              </Link>
+              .
             </p>
+            <ul className="list-none space-y-2 pl-0 text-slate-800">
+              <li>
+                <strong>Dénomination :</strong>{' '}
+                {legalPublisher.companyName ?? (
+                  <span className="rounded bg-amber-100 px-1.5 py-0.5 text-amber-950">
+                    [À compléter : NEXT_PUBLIC_LEGAL_COMPANY_NAME]
+                  </span>
+                )}
+              </li>
+              <li>
+                <strong>Adresse :</strong>{' '}
+                {legalPublisher.address ? (
+                  <span className="whitespace-pre-line">{legalPublisher.address}</span>
+                ) : (
+                  <span className="text-amber-800">[À compléter : NEXT_PUBLIC_LEGAL_ADDRESS]</span>
+                )}
+              </li>
+              <li>
+                <strong>Contact (données personnelles) :</strong>{' '}
+                {legalPublisher.contactEmail ? (
+                  <a href={`mailto:${legalPublisher.contactEmail}`} className="font-semibold text-orange-600 hover:underline">
+                    {legalPublisher.contactEmail}
+                  </a>
+                ) : (
+                  <span className="text-amber-800">[À compléter : NEXT_PUBLIC_LEGAL_CONTACT_EMAIL]</span>
+                )}
+              </li>
+              <li>
+                <strong>Délégué à la protection des données (DPO) :</strong>{' '}
+                {legalPublisher.dpoEmail ? (
+                  <a href={`mailto:${legalPublisher.dpoEmail}`} className="font-semibold text-orange-600 hover:underline">
+                    {legalPublisher.dpoEmail}
+                  </a>
+                ) : (
+                  <span className="text-slate-600">
+                    Non désigné — pour toute demande relative à tes données, utilise le contact ci-dessus.
+                  </span>
+                )}
+              </li>
+            </ul>
           </section>
 
           <section>
@@ -158,12 +204,19 @@ export default function ConfidentialitePage() {
             </p>
           </section>
 
-          <section>
+          <section id="cookies">
             <h2 className="text-xl font-black text-slate-900">8. Cookies et traceurs</h2>
             <p>
               Le site utilise des cookies ou stockages locaux nécessaires au fonctionnement (session, préférences) et,
-              le cas échéant, à la mesure d’audience. Les bandeaux ou paramètres de navigateur te permettent d’ajuster
-              ton choix lorsque la loi l’exige.
+              le cas échéant, à la mesure d’audience. Un bandeau d’information peut s’afficher lors de ta première
+              visite. Les paramètres de ton navigateur te permettent de limiter les cookies lorsque la loi l’autorise.
+            </p>
+            <p>
+              Si tu acceptes le <strong>non essentiel</strong> via le bandeau, des cookies ou identifiants peuvent être
+              déposés par des prestataires tiers pour la mesure d’audience (ex. Google Analytics 4 — directement ou via
+              Google Tag Manager) et/ou la publicité et le remarketing (ex. Meta Pixel, tags publicitaires
+              configurés dans GTM). Ces choix sont stockés localement dans ton navigateur et peuvent être modifiés en
+              effaçant les données du site ou via les paramètres du navigateur.
             </p>
           </section>
 
@@ -182,6 +235,32 @@ export default function ConfidentialitePage() {
               Cette politique peut être mise à jour. La date en tête de page indique la dernière révision. En cas de
               changement majeur, nous pourrons t’en informer par un message dans l’app ou par e-mail.
             </p>
+          </section>
+
+          <section className="border-t border-slate-200 pt-8">
+            <h2 className="text-xl font-black text-slate-900">Documents associés</h2>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                <Link href="/legal/mentions-legales" className="font-semibold text-orange-600 hover:underline">
+                  Mentions légales
+                </Link>
+              </li>
+              <li>
+                <Link href="/legal/cgu" className="font-semibold text-orange-600 hover:underline">
+                  Conditions générales d’utilisation
+                </Link>
+              </li>
+              <li>
+                <Link href="/legal/cgv" className="font-semibold text-orange-600 hover:underline">
+                  Conditions générales de vente
+                </Link>
+              </li>
+              <li>
+                <Link href="/legal/bien-etre" className="font-semibold text-orange-600 hover:underline">
+                  Bien-être et limites d’usage
+                </Link>
+              </li>
+            </ul>
           </section>
         </div>
       </div>

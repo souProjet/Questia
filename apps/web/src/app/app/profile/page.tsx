@@ -274,18 +274,30 @@ export default function ProfilePage() {
                 psychologique. Tu peux consulter le détail des traitements et tes droits dans la politique de
                 confidentialité.
               </p>
-              <p className="mb-4 flex flex-col sm:flex-row sm:flex-wrap gap-x-4 gap-y-2">
+              <p className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-4">
                 <Link
                   href="/legal/confidentialite"
                   className="text-sm font-bold text-orange-600 hover:underline underline-offset-2"
                 >
-                  Politique de confidentialité (RGPD)
+                  Confidentialité
+                </Link>
+                <Link
+                  href="/legal/mentions-legales"
+                  className="text-sm font-bold text-slate-700 hover:underline underline-offset-2"
+                >
+                  Mentions légales
+                </Link>
+                <Link href="/legal/cgu" className="text-sm font-bold text-slate-700 hover:underline underline-offset-2">
+                  CGU
+                </Link>
+                <Link href="/legal/cgv" className="text-sm font-bold text-slate-700 hover:underline underline-offset-2">
+                  CGV
                 </Link>
                 <Link
                   href="/legal/bien-etre"
                   className="text-sm font-bold text-cyan-700 hover:underline underline-offset-2"
                 >
-                  Bien-être et limites (App Store / Play)
+                  Bien-être et limites
                 </Link>
               </p>
               <div className="flex flex-col sm:flex-row gap-3 mb-8">

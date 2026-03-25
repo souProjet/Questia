@@ -4,6 +4,8 @@ import { frFR } from '@clerk/localizations';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import { siteUrl } from '@/config/marketing';
 import './globals.css';
+import { CookieNotice } from '@/components/CookieNotice';
+import { MarketingScripts } from '@/components/analytics/MarketingScripts';
 import { SkipLink } from '@/components/SkipLink';
 
 const inter = Inter({
@@ -48,9 +50,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider localization={frFR}>
       <html lang="fr" className={`${inter.variable} ${spaceGrotesk.variable}`}>
         {/* Pas de text-white / fond sombre sur body : ça forçait du texte blanc partout (Clerk + auth illisibles). globals.css définit déjà --text / --bg. */}
-        <body className="font-sans antialiased">
+        <body className="pb-28 font-sans antialiased md:pb-24">
           <SkipLink />
           {children}
+          <CookieNotice />
+          <MarketingScripts />
         </body>
       </html>
     </ClerkProvider>
