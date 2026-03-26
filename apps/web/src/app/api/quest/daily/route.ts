@@ -195,6 +195,8 @@ export async function GET(request: NextRequest) {
 
   // Get weather + location context
   const context = await getQuestContext(lat, lon);
+  /** Sans GPS : pas d’archétype extérieur ni de lieu nommé / carte */
+  const allowOutdoorQuests = context.isOutdoorFriendly && context.hasUserLocation;
 
   // Get recent logs for Delta de congruence
   const recentLogs = await prisma.questLog.findMany({
@@ -241,7 +243,7 @@ export async function GET(request: NextRequest) {
     declaredPersonality,
     effectivePhase,
     recentIdsForSelect,
-    context.isOutdoorFriendly,
+    allowOutdoorQuests,
     categoryBias,
     instantOnly,
   );
@@ -251,7 +253,7 @@ export async function GET(request: NextRequest) {
       (q) =>
         q.questPace === 'instant' &&
         !recentIdsForSelect.includes(q.id) &&
-        (context.isOutdoorFriendly || !q.requiresOutdoor),
+        (allowOutdoorQuests || !q.requiresOutdoor),
     );
     archetype =
       pool[0] ??
@@ -300,7 +302,7 @@ export async function GET(request: NextRequest) {
   let destinationLabel: string | null = null;
   let destinationLat: number | null = null;
   let destinationLon: number | null = null;
-  if (generated.isOutdoor) {
+  if (generated.isOutdoor && context.hasUserLocation) {
     let rawLabel = generated.destinationLabel?.trim() || null;
     if (rawLabel && isPlaceholderDestinationLabel(rawLabel)) {
       rawLabel = null;
@@ -367,7 +369,7 @@ export async function GET(request: NextRequest) {
         destinationLabel,
         destinationLat,
         destinationLon,
-        locationCity:       context.city,
+        locationCity:       context.hasUserLocation ? context.city : null,
         weatherDescription: context.weatherDescription,
         weatherTemp:        context.temp,
         phaseAtAssignment:  profile.currentPhase as EscalationPhase,

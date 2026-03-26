@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { QuestExamplesSlider, type ExampleQuestSlide } from '@/components/QuestExamplesSlider';
 import { AppStoreButtons } from '@/components/AppStoreButtons';
@@ -130,7 +131,7 @@ export default function HomePage() {
         <main id="main-content" tabIndex={-1} className="outline-none">
         <section
           id="hero"
-          className="relative pt-[max(7.25rem,calc(env(safe-area-inset-top,0px)+5.75rem))] sm:pt-36 md:pt-44 pb-20 sm:pb-24 md:pb-32 lg:pb-36 px-3 sm:px-4 sm:px-6 overflow-hidden"
+          className="relative min-h-[100dvh] flex flex-col justify-center pt-[max(7.25rem,calc(env(safe-area-inset-top,0px)+5.75rem))] pb-[max(1.25rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))] sm:py-14 md:py-16 pl-[max(0.75rem,env(safe-area-inset-left,0px))] pr-[max(0.75rem,env(safe-area-inset-right,0px))] sm:px-5 md:px-6 lg:px-8 xl:px-10 overflow-hidden"
           aria-labelledby="hero-heading"
         >
           <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
@@ -145,11 +146,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,440px)] xl:grid-cols-[minmax(0,1.05fr)_minmax(300px,480px)] gap-8 sm:gap-10 lg:gap-14 xl:gap-16 lg:items-center">
-            <div className="space-y-6 sm:space-y-8">
+          <div className="relative w-full max-w-[min(100%,88rem)] mx-auto">
+            <div className="landing-hero-panel p-4 sm:p-6 md:p-8 lg:p-10 xl:p-11 2xl:p-12 motion-safe:animate-fade-up motion-reduce:opacity-100">
+              <div className="relative z-[1] grid grid-cols-1 lg:grid-cols-[minmax(0,1.06fr)_minmax(280px,min(520px,42vw))] xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,540px)] 2xl:grid-cols-[minmax(0,1.14fr)_minmax(320px,560px)] gap-7 sm:gap-9 md:gap-10 lg:gap-12 xl:gap-14 2xl:gap-16 lg:items-center">
+            <div className="space-y-5 sm:space-y-7 md:space-y-8 min-w-0">
               <h1
                 id="hero-heading"
-                className="font-display font-black text-[clamp(1.625rem,4.5vw+0.65rem,2.5rem)] sm:text-4xl md:text-5xl lg:text-[3.35rem] leading-[1.1] sm:leading-[1.12] text-slate-900 mb-2 motion-safe:animate-fade-up motion-reduce:opacity-100 [overflow-wrap:anywhere]"
+                className="font-display font-black text-[clamp(1.5rem,3.2vw+0.85rem,2.75rem)] sm:text-[clamp(1.85rem,2.2vw+1.1rem,2.5rem)] md:text-5xl lg:text-[clamp(2.5rem,2vw+1.75rem,3.5rem)] xl:text-[3.5rem] leading-[1.08] sm:leading-[1.1] text-[var(--on-cream)] mb-1 sm:mb-2 motion-safe:animate-fade-up motion-reduce:opacity-100 [overflow-wrap:anywhere] text-balance"
               >
               L'app de{' '}
               <span className="text-gradient-pop text-[1.06em] md:text-[1.1em] lg:text-[1.12em] tracking-[-0.02em]">
@@ -159,9 +162,9 @@ export default function HomePage() {
               dans la vraie vie <span aria-hidden>🗺️</span>
             </h1>
 
-            <div className="space-y-4 max-w-xl motion-safe:animate-fade-up motion-safe:delay-100 motion-reduce:opacity-100">
-              <p className="text-base sm:text-lg md:text-xl font-medium text-slate-800 leading-relaxed">
-                Une mission chaque matin, <strong className="text-slate-900">ajustée à ton profil</strong> et à ton
+            <div className="space-y-4 max-w-xl lg:max-w-2xl xl:max-w-[44rem] motion-safe:animate-fade-up motion-safe:delay-100 motion-reduce:opacity-100">
+              <p className="text-[0.9375rem] sm:text-lg md:text-xl font-medium text-[var(--on-cream-muted)] leading-[1.55] sm:leading-relaxed">
+                Une mission chaque matin, <strong className="text-[var(--on-cream)]">ajustée à ton profil</strong> et à ton
                 rythme — pour sortir un peu plus, sans te mettre la pression.
               </p>
             </div>
@@ -170,8 +173,8 @@ export default function HomePage() {
               {storesReady ? (
                 <>
                   <AppStoreButtons className="w-full sm:justify-start" />
-                  <div className="flex flex-col gap-2 pt-1 border-t border-slate-200/80">
-                    <p className="text-xs text-slate-500">
+                  <div className="flex flex-col gap-2 pt-1 border-t border-orange-200/45">
+                    <p className="text-xs text-[var(--on-cream-subtle)]">
                       Tu préfères le web ?{' '}
                       <Link href="/onboarding" className="font-semibold text-cyan-800 underline-offset-2 hover:underline">
                         Continuer dans le navigateur
@@ -182,7 +185,7 @@ export default function HomePage() {
               ) : (
                 <>
                   <div className="space-y-2">
-                    <p className="text-sm text-slate-600 leading-snug">
+                    <p className="text-sm text-[var(--on-cream-muted)] leading-snug">
                       Commence sur le web — quand l’app sort, tu te connectes avec le même compte.
                     </p>
                   </div>
@@ -211,17 +214,19 @@ export default function HomePage() {
 
           <aside
             id="hero-examples"
-            className="flex w-full max-w-md mx-auto justify-center items-center self-stretch lg:max-w-none lg:mx-0 scroll-mt-[5.5rem] sm:scroll-mt-28 motion-safe:animate-fade-up motion-safe:delay-300 motion-reduce:opacity-100 min-w-0"
+            className="flex w-full max-w-lg mx-auto justify-center items-stretch lg:max-w-none lg:mx-0 lg:justify-end scroll-mt-[5.5rem] sm:scroll-mt-28 motion-safe:animate-fade-up motion-safe:delay-300 motion-reduce:opacity-100 min-w-0 pt-1 lg:pt-0"
             aria-label="Missions en carrousel"
           >
-            <div className="w-full min-w-0 max-w-[min(100%,27rem)] xl:max-w-[30rem]">
-              <QuestExamplesSlider quests={EXAMPLE_QUESTS} variant="embedded" />
+            <div className="w-full min-w-0 max-w-[min(100%,28rem)] sm:max-w-[min(100%,30rem)] xl:max-w-[min(100%,34rem)] 2xl:max-w-[min(100%,36rem)]">
+              <QuestExamplesSlider quests={EXAMPLE_QUESTS} variant="embedded" nestedInPanel />
             </div>
           </aside>
+              </div>
+            </div>
         </div>
       </section>
 
-      <section id="how" className="section-band-how py-16 sm:py-20 md:py-28 lg:py-36 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24" aria-labelledby="how-heading">
+      <section id="how" className="section-band-how min-h-[100dvh] flex flex-col justify-center py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24" aria-labelledby="how-heading">
         <LandingReveal>
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10 sm:mb-14 md:mb-20 space-y-4 sm:space-y-5">
@@ -264,7 +269,7 @@ export default function HomePage() {
 
       <section
         id="telecharger"
-        className="py-16 sm:py-20 md:py-28 lg:py-36 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-y-2 border-cyan-300/25 bg-gradient-to-b from-white/40 to-cyan-50/30"
+        className="min-h-[100dvh] flex flex-col justify-center py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-y-2 border-cyan-300/25 bg-gradient-to-b from-white/40 to-cyan-50/30"
         aria-labelledby="download-heading"
       >
         <LandingReveal delayMs={40}>
@@ -290,7 +295,7 @@ export default function HomePage() {
         </LandingReveal>
       </section>
 
-      <section id="testimonials" className="section-band-social py-16 sm:py-20 md:py-28 lg:py-36 px-3 sm:px-4 sm:px-6 relative scroll-mt-20 sm:scroll-mt-24" aria-labelledby="testimonials-heading">
+      <section id="testimonials" className="section-band-social min-h-[100dvh] flex flex-col justify-center py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 relative scroll-mt-20 sm:scroll-mt-24" aria-labelledby="testimonials-heading">
         <LandingReveal delayMs={40}>
         <div className="max-w-5xl mx-auto relative">
           <div className="text-center mb-10 sm:mb-12 md:mb-16 space-y-3 sm:space-y-4 px-1">
@@ -330,7 +335,7 @@ export default function HomePage() {
         </LandingReveal>
       </section>
 
-      <section id="faq" className="py-16 sm:py-20 md:py-28 lg:py-36 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 bg-white/30" aria-labelledby="faq-heading">
+      <section id="faq" className="min-h-[100dvh] py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 bg-white/30" aria-labelledby="faq-heading">
         <LandingReveal delayMs={40}>
         <div className="max-w-2xl mx-auto min-w-0">
           <div className="text-center mb-8 sm:mb-10 md:mb-12 space-y-2 sm:space-y-3 px-1">
@@ -379,7 +384,7 @@ export default function HomePage() {
 
       <section
         id="cta"
-        className="section-band-cta py-16 sm:py-20 md:py-24 lg:py-32 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-t-2 border-orange-200/40"
+        className="section-band-cta min-h-[100dvh] flex flex-col justify-center py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-t-2 border-orange-200/40"
         aria-labelledby="cta-heading"
       >
         <LandingReveal delayMs={40}>
@@ -417,9 +422,14 @@ export default function HomePage() {
                   <div className="flex justify-center">
                     <Link
                       href="/onboarding"
-                      className="btn btn-ghost btn-lg text-base w-full sm:w-auto min-w-[min(100%,16rem)] font-bold border-2 border-white/80 bg-white/55 backdrop-blur-sm shadow-sm hover:border-cyan-300/50 hover:bg-white/90"
+                      className="group inline-flex items-center justify-center gap-1.5 rounded-xl border border-cyan-400/30 bg-white/65 px-4 py-2.5 text-sm font-semibold text-cyan-950 transition-colors hover:border-cyan-500/40 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/35 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                     >
                       Continuer sur le web
+                      <ArrowRight
+                        className="h-4 w-4 text-cyan-700/70 transition-transform group-hover:translate-x-px motion-reduce:transition-none"
+                        strokeWidth={2.25}
+                        aria-hidden
+                      />
                     </Link>
                   </div>
                 </div>

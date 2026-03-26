@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Navbar } from '@/components/Navbar';
+import { QuestHomeLoading } from '@/components/QuestHomeLoading';
 import { Icon } from '@/components/Icons';
 import { QuestShareComposer } from '@/components/QuestShareComposer';
 import { QuestXpCelebration } from '@/components/QuestXpCelebration';
@@ -20,6 +21,7 @@ import {
   isValidQuestDateIso,
   formatQuestDateFr,
   REPORT_DEFER_MAX_DAYS,
+  QUEST_LOADER_DAY_STORAGE_KEY,
 } from '@questia/shared';
 
 const QuestDestinationMap = dynamic(
@@ -185,12 +187,15 @@ function AppPageContent() {
     if (!raw) return null;
     return isValidQuestDateIso(raw) ? raw : null;
   }, [searchParams]);
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  /** Jour calendaire courant (mis à jour au passage de minuit / retour sur l’onglet) — évite l’état « figé » si l’onglet reste ouvert. */
+  const [calendarDay, setCalendarDay] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
   const reportDateMax = useMemo(() => {
-    const d = new Date(`${todayStr}T12:00:00.000Z`);
+    const d = new Date(`${calendarDay}T12:00:00.000Z`);
     d.setUTCDate(d.getUTCDate() + REPORT_DEFER_MAX_DAYS);
     return d.toISOString().slice(0, 10);
-  }, [todayStr]);
+  }, [calendarDay]);
 
   const [quest, setQuest] = useState<DailyQuest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -202,7 +207,9 @@ function AppPageContent() {
   /** Incrémenté après relance/report pour remonter la carte quête (animation / nouveau contenu). */
   const [questCardSwapKey, setQuestCardSwapKey] = useState(0);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportDeferredDate, setReportDeferredDate] = useState(todayStr);
+  const [reportDeferredDate, setReportDeferredDate] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
   const [reporting, setReporting] = useState(false);
   const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
   const [abandoning, setAbandoning] = useState(false);
@@ -248,7 +255,11 @@ function AppPageContent() {
   // ── Load daily quest ──────────────────────────────────────────────────────
 
   const loadQuest = useCallback(
-    async (lat?: number, lon?: number, opts?: { silent?: boolean; questDate?: string }): Promise<boolean> => {
+    async (
+      lat?: number,
+      lon?: number,
+      opts?: { silent?: boolean; questDate?: string; ignoreUrlQuestDate?: boolean },
+    ): Promise<boolean> => {
       const silent = opts?.silent ?? false;
       if (!silent) {
         setLoading(true);
@@ -260,7 +271,9 @@ function AppPageContent() {
           if (!silent) setError('Crée d\'abord ton profil via l\'onboarding.');
           return false;
         }
-        const qd = opts?.questDate ?? questDateFromUrl ?? undefined;
+        const qd = opts?.ignoreUrlQuestDate
+          ? opts.questDate ?? undefined
+          : opts?.questDate ?? questDateFromUrl ?? undefined;
         const sp = new URLSearchParams();
         if (lat != null && lon != null) {
           sp.set('lat', String(lat));
@@ -320,18 +333,73 @@ function AppPageContent() {
     };
   }, [isLoaded, loadQuest, questDateFromUrl]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncDay = () => {
+      const d = new Date().toISOString().slice(0, 10);
+      setCalendarDay((prev) => (prev !== d ? d : prev));
+    };
+    const id = window.setInterval(syncDay, 60_000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') syncDay();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('focus', syncDay);
+    syncDay();
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('focus', syncDay);
+    };
+  }, []);
+
+  /** Marque le jour calendaire comme « déjà ouvert » pour les textes du loader (reprise vs première ouverture). */
+  useEffect(() => {
+    if (!quest || typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(QUEST_LOADER_DAY_STORAGE_KEY, new Date().toISOString().slice(0, 10));
+    } catch {
+      /* quota / navigation privée */
+    }
+  }, [quest]);
+
+  const prevCalendarDayRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (prevCalendarDayRef.current === null) {
+      prevCalendarDayRef.current = calendarDay;
+      return;
+    }
+    if (prevCalendarDayRef.current === calendarDay) return;
+    prevCalendarDayRef.current = calendarDay;
+    const urlPast = questDateFromUrl != null && questDateFromUrl < calendarDay;
+    if (urlPast) router.replace('/app', { scroll: false });
+    void loadQuest(userPosition?.lat, userPosition?.lon, {
+      silent: true,
+      ignoreUrlQuestDate: urlPast,
+    });
+  }, [
+    isLoaded,
+    calendarDay,
+    questDateFromUrl,
+    router,
+    loadQuest,
+    userPosition?.lat,
+    userPosition?.lon,
+  ]);
+
   /** Aligne la barre d’adresse avec la quête affichée (partage / deep link). */
   const questDateLoaded = quest?.questDate;
   useEffect(() => {
     if (!questDateLoaded) return;
     const qd = questDateLoaded;
     const cur = searchParams.get('questDate') ?? searchParams.get('date');
-    if (qd === todayStr) {
+    if (qd === calendarDay) {
       if (cur) router.replace('/app', { scroll: false });
     } else if (cur !== qd) {
       router.replace(`/app?questDate=${encodeURIComponent(qd)}`, { scroll: false });
     }
-  }, [questDateLoaded, todayStr, router, searchParams]);
+  }, [questDateLoaded, calendarDay, router, searchParams]);
 
   useEffect(() => {
     const t = quest?.activeThemeId ?? 'default';
@@ -550,19 +618,53 @@ function AppPageContent() {
     quest.status !== 'abandoned' &&
     rerollDaily + rerollBonus > 0;
 
+  const questStatusDisplay = useMemo(() => {
+    if (!quest) return null;
+    const map: Record<
+      DailyQuest['status'],
+      { label: string; emoji: string; pillClass: string }
+    > = {
+      pending: {
+        label: 'En attente de ton choix',
+        emoji: '⏳',
+        pillClass: 'border-amber-300/60 bg-amber-50/95 text-amber-950',
+      },
+      accepted: {
+        label: 'En cours',
+        emoji: '⚔️',
+        pillClass: 'border-emerald-400/50 bg-emerald-50/95 text-emerald-950',
+      },
+      completed: {
+        label: 'Validée',
+        emoji: '✅',
+        pillClass: 'border-emerald-500/45 bg-emerald-100/90 text-emerald-950',
+      },
+      abandoned: {
+        label: 'Passée',
+        emoji: '🌙',
+        pillClass: 'border-slate-400/75 bg-slate-100/98 text-slate-900 ring-1 ring-slate-400/35',
+      },
+      rejected: {
+        label: 'Refusée',
+        emoji: '✕',
+        pillClass: 'border-red-200/80 bg-red-50/95 text-red-950',
+      },
+      replaced: {
+        label: 'Remplacée',
+        emoji: '🔄',
+        pillClass: 'border-violet-300/60 bg-violet-50/95 text-violet-950',
+      },
+    };
+    return map[quest.status];
+  }, [quest]);
+
   // ── Skeleton ──────────────────────────────────────────────────────────────
 
   if (!isLoaded || loading) {
     return (
       <div className="min-h-screen bg-adventure overflow-x-hidden">
         <Navbar />
-        <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-3 sm:px-5 pt-24 pb-20 outline-none">
-          <div className="animate-pulse space-y-5 mt-4">
-            <div className="h-5 rounded-xl w-40 bg-[color:var(--progress-track)]" />
-            <div className="h-10 rounded-xl w-72 bg-[color:var(--progress-track)]" />
-            <div className="h-80 rounded-3xl bg-[color:var(--progress-track)]" />
-          </div>
-        </main>
+        <QuestHomeLoading />
       </div>
     );
   }
@@ -761,6 +863,44 @@ function AppPageContent() {
           )}
         </section>
 
+        {quest && questStatusDisplay ? (
+          <div
+            role="status"
+            aria-live="polite"
+            className="relative mb-4 overflow-hidden rounded-2xl border-2 border-orange-300/65 bg-gradient-to-br from-orange-50/98 via-white/95 to-amber-50/70 px-3 py-3 shadow-[0_12px_36px_-14px_rgba(249,115,22,.28)] ring-1 ring-orange-200/50 backdrop-blur-sm motion-safe:animate-fade-up-slow motion-reduce:animate-none motion-reduce:opacity-100 [animation-delay:50ms] [animation-fill-mode:backwards] sm:flex sm:flex-row sm:items-stretch sm:gap-0 sm:px-4 sm:py-3.5"
+          >
+            <div
+              className="pointer-events-none absolute inset-y-0 -left-[28%] z-0 w-[58%] bg-gradient-to-r from-transparent via-white/75 to-transparent opacity-90 motion-safe:animate-quest-day-strip-shine motion-reduce:animate-none"
+              aria-hidden
+            />
+            <div className="relative z-[1] flex flex-row items-stretch gap-3 sm:gap-4">
+              <div
+                className="w-1 shrink-0 self-stretch min-h-[48px] rounded-full bg-gradient-to-b from-orange-400 via-amber-400 to-orange-500 shadow-[0_0_14px_rgba(249,115,22,.45)]"
+                aria-hidden
+              />
+              <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-950/90">
+                    Quête du jour
+                  </span>
+                  <time
+                    className="font-display text-[1.05rem] font-black text-[var(--on-cream)] sm:text-lg"
+                    dateTime={quest.questDate}
+                  >
+                    {formatQuestDateFr(quest.questDate)}
+                  </time>
+                </div>
+                <span
+                  className={`inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border-2 px-3.5 py-2 text-[13px] font-black shadow-md motion-safe:transition-transform motion-safe:duration-300 motion-safe:hover:scale-[1.02] ${questStatusDisplay.pillClass}`}
+                >
+                  <span aria-hidden>{questStatusDisplay.emoji}</span>
+                  {questStatusDisplay.label}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {/* Carte quête — même ADN que QuestExamplesSlider (embedded) */}
         {quest && (
           <article
@@ -881,7 +1021,7 @@ function AppPageContent() {
               )}
             </div>
 
-            <div className="flex flex-col gap-3 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-4 py-4 sm:px-5">
+            <div className="flex flex-col gap-4 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-4 py-5 sm:px-5">
               {isCompleted ? (
                 <div className="text-center space-y-3">
                   <p className="font-display text-lg font-black text-emerald-900">
@@ -940,6 +1080,17 @@ function AppPageContent() {
                   <button type="button" onClick={handleAccept} className="btn btn-cta btn-lg w-full text-base font-black">
                     ⚔️ Je relève le défi !
                   </button>
+                  <div className="quest-actions-reroll">
+                    <button
+                      type="button"
+                      onClick={handleReroll}
+                      disabled={rerolling || !canReroll}
+                      className="quest-actions-reroll__btn"
+                    >
+                      <Icon name="Dices" size="sm" className="shrink-0 opacity-95" />
+                      {rerolling ? '…' : `Changer de quête (${rerollLabel})`}
+                    </button>
+                  </div>
                   <div className="quest-actions-secondary">
                     <div
                       className={`quest-actions-secondary__row ${!isPlannedQuest ? 'sm:mx-auto sm:max-w-xl' : ''}`}
@@ -949,14 +1100,14 @@ function AppPageContent() {
                         onClick={() => setShowAbandonConfirm(true)}
                         className={`quest-actions-secondary__btn quest-actions-secondary__btn--pass ${isPlannedQuest ? 'w-full sm:flex-1' : 'w-full'}`}
                       >
-                        <Icon name="Frown" size="sm" className="opacity-75" />
+                        <Icon name="Frown" size="sm" className="opacity-80" />
                         Ce n’est pas pour moi
                       </button>
                       {isPlannedQuest ? (
                         <button
                           type="button"
                           onClick={() => {
-                            setReportDeferredDate(todayStr);
+                            setReportDeferredDate(calendarDay);
                             setShowReportModal(true);
                           }}
                           disabled={!canReroll}
@@ -968,19 +1119,10 @@ function AppPageContent() {
                       ) : null}
                     </div>
                     {isPlannedQuest ? (
-                      <p className="px-1 pt-1 text-center text-[10px] leading-relaxed text-[var(--on-cream-subtle)]">
+                      <p className="mt-2 px-1 text-center text-[10px] leading-relaxed text-[var(--on-cream-subtle)]">
                         Comme « Changer de quête », une relance est utilisée — tu reçois une mission courte pour aujourd’hui.
                       </p>
                     ) : null}
-                    <button
-                      type="button"
-                      onClick={handleReroll}
-                      disabled={rerolling || !canReroll}
-                      className="quest-actions-secondary__btn quest-actions-secondary__btn--reroll"
-                    >
-                      <Icon name="Dices" size="sm" />
-                      {rerolling ? '…' : `Changer de quête (${rerollLabel})`}
-                    </button>
                   </div>
                 </>
               )}
@@ -1016,7 +1158,7 @@ function AppPageContent() {
               id="report-date"
               type="date"
               className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900"
-              min={todayStr}
+              min={calendarDay}
               max={reportDateMax}
               value={reportDeferredDate}
               onChange={(e) => setReportDeferredDate(e.target.value)}
@@ -1081,6 +1223,7 @@ function AppPageContent() {
 
       {xpCelebration && (
         <QuestXpCelebration
+          key={`${xpCelebration.xpGain.previousTotal}-${xpCelebration.xpGain.newTotal}`}
           open
           xpGain={xpCelebration.xpGain}
           badgesUnlocked={xpCelebration.badgesUnlocked}

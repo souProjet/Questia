@@ -611,29 +611,37 @@ export function QuestShareComposer({
 
         <div className="mb-6 min-w-0">
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-            <div className="text-center sm:min-w-0 sm:flex-1 sm:text-left">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Photo</p>
-            
-            </div>
-            <div className="flex flex-col items-stretch gap-2 sm:flex-shrink-0 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-              <button
-                type="button"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-cyan-300/55 bg-white/95 px-4 py-3 text-sm font-bold text-cyan-950 shadow-sm transition-all duration-200 hover:border-cyan-400/75 hover:shadow-md motion-safe:hover:-translate-y-0.5 sm:w-auto sm:py-2.5"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Icon name="Camera" size="sm" className="text-cyan-700" />
-                Ajouter une photo
-              </button>
-              {photoUrl ? (
+          <div className="rounded-2xl border border-amber-200/55 bg-gradient-to-br from-amber-50/90 via-white to-cyan-50/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_28px_-12px_rgba(249,115,22,0.12)] sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+              <div className="min-w-0 sm:flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Photo</p>
+                <p className="mt-1.5 text-sm font-semibold leading-snug text-slate-700">
+                  Mets un cliché de ton moment : ta carte raconte mieux ton histoire.
+                </p>
+              </div>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[min(100%,15.5rem)] sm:flex-shrink-0 sm:items-stretch">
                 <button
                   type="button"
-                  className="whitespace-nowrap py-1 text-center text-sm font-bold text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700 sm:py-0"
-                  onClick={clearPhoto}
+                  className="group relative inline-flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl border-2 border-cyan-400/70 bg-gradient-to-r from-cyan-50 via-white to-amber-50 px-5 py-3.5 text-base font-black text-cyan-950 shadow-[0_10px_36px_-10px_rgba(34,211,238,0.5),inset_0_1px_0_rgba(255,255,255,0.95)] ring-1 ring-cyan-300/35 transition-all duration-200 hover:border-cyan-500/85 hover:shadow-[0_14px_44px_-10px_rgba(34,211,238,0.55)] motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.99]"
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  Retirer la photo
+                  <span
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 motion-reduce:opacity-0"
+                    aria-hidden
+                  />
+                  <Icon name="Camera" size="lg" className="relative shrink-0 text-cyan-700 drop-shadow-sm" />
+                  <span className="relative">Ajouter une photo</span>
                 </button>
-              ) : null}
+                {photoUrl ? (
+                  <button
+                    type="button"
+                    className="py-1 text-center text-sm font-bold text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700 sm:text-right"
+                    onClick={clearPhoto}
+                  >
+                    Retirer la photo
+                  </button>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>

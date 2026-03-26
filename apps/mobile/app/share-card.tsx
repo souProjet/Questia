@@ -282,16 +282,35 @@ export default function ShareCardScreen() {
         </ScrollView>
 
         <Text style={styles.sectionLabel}>Photo</Text>
-        <View style={styles.actions}>
-          <Pressable style={styles.secondaryBtn} onPress={choosePhotoSource}>
-            <Text style={styles.secondaryBtnText}>📷 Ajouter une photo</Text>
+        <Text style={styles.photoHint}>
+          Mets un cliché de ton moment — ta carte raconte mieux ton histoire.
+        </Text>
+        <Pressable
+          onPress={choosePhotoSource}
+          style={({ pressed }) => [styles.photoAddWrap, pressed && styles.photoAddWrapPressed]}
+          accessibilityRole="button"
+          accessibilityLabel="Ajouter une photo depuis la galerie ou l’appareil photo"
+        >
+          <LinearGradient
+            colors={['#ecfeff', '#fffbeb', '#ffffff']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.photoAddGradient}
+          >
+            <Text style={styles.photoAddEmoji} accessibilityElementsHidden>
+              📷
+            </Text>
+            <View style={styles.photoAddTextCol}>
+              <Text style={styles.photoAddTitle}>Ajouter une photo</Text>
+              <Text style={styles.photoAddSub}>Galerie ou appareil — un coup de pouce pour briller</Text>
+            </View>
+          </LinearGradient>
+        </Pressable>
+        {photoUri ? (
+          <Pressable onPress={() => setPhotoUri(null)} style={styles.clearPhotoWrap}>
+            <Text style={styles.clearPhoto}>Retirer la photo</Text>
           </Pressable>
-          {photoUri ? (
-            <Pressable onPress={() => setPhotoUri(null)}>
-              <Text style={styles.clearPhoto}>Retirer</Text>
-            </Pressable>
-          ) : null}
-        </View>
+        ) : null}
 
         <View style={styles.cardWrap}>
           <View
@@ -437,17 +456,41 @@ function createShareStyles(p: ThemePalette, themeId: string) {
   bgChipGrad: { paddingHorizontal: 14, paddingVertical: 10, minWidth: 88, alignItems: 'center' },
   bgChipText: { fontWeight: '900', fontSize: 12, color: p.onCream },
   bgChipTextLight: { color: '#fff' },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 20 },
-  secondaryBtn: {
-    backgroundColor: p.surface,
-    borderWidth: 1,
-    borderColor: p.border,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 14,
+  photoHint: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: p.onCreamMuted,
+    marginBottom: 12,
+    lineHeight: 19,
+    paddingHorizontal: 2,
   },
-  secondaryBtnText: { fontWeight: '800', color: p.text, fontSize: 14 },
-  clearPhoto: { color: p.muted, fontWeight: '700', fontSize: 13 },
+  photoAddWrap: {
+    marginBottom: 10,
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#0891b2',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  photoAddWrapPressed: { opacity: 0.94, transform: [{ scale: 0.99 }] },
+  photoAddGradient: {
+    borderWidth: 2,
+    borderColor: 'rgba(34,211,238,0.58)',
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  photoAddEmoji: { fontSize: 30, lineHeight: 34 },
+  photoAddTextCol: { flex: 1, minWidth: 0 },
+  photoAddTitle: { fontSize: 17, fontWeight: '900', color: '#0e7490', letterSpacing: -0.3 },
+  photoAddSub: { fontSize: 12, fontWeight: '600', color: p.muted, marginTop: 4, lineHeight: 16 },
+  clearPhotoWrap: { alignSelf: 'flex-end', marginBottom: 20 },
+  clearPhoto: { color: p.muted, fontWeight: '800', fontSize: 13, textDecorationLine: 'underline' },
   cardWrap: { alignItems: 'center', marginBottom: 24 },
   cardOuter: {
     borderRadius: 24,

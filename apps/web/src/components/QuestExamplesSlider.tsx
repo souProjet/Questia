@@ -16,9 +16,11 @@ export type ExampleQuestSlide = {
 type Props = {
   quests: ExampleQuestSlide[];
   variant?: 'default' | 'embedded';
+  /** Avec variant embedded : le slider est dans un panneau (ex. hero landing) — chrome plus léger, pas de double cadre */
+  nestedInPanel?: boolean;
 };
 
-export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
+export function QuestExamplesSlider({ quests, variant = 'default', nestedInPanel = false }: Props) {
   const [i, setI] = useState(0);
   const n = quests.length;
 
@@ -31,6 +33,8 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
   }, [next]);
 
   const embedded = variant === 'embedded';
+  const inLandingPanel = embedded && nestedInPanel;
+  const embeddedChrome = embedded && !nestedInPanel;
   const iconSize = embedded ? 'h-4 w-4' : 'h-5 w-5';
 
   return (
@@ -48,21 +52,27 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
       )}
         <div
           className={
-            embedded
-              ? 'quest-slider-embedded relative overflow-hidden ring-1 ring-orange-400/25'
-              : 'relative overflow-hidden rounded-3xl border-2 border-amber-400/80 bg-gradient-to-br from-[#fffbeb] via-[#fff8e8] to-[#ecfeff] shadow-[0_8px_0_rgba(180,83,9,.18),0_20px_50px_rgba(249,115,22,.2)]'
+            inLandingPanel
+              ? 'quest-slider-landing relative overflow-hidden'
+              : embeddedChrome
+                ? 'quest-slider-embedded relative overflow-hidden ring-1 ring-orange-400/25'
+                : 'relative overflow-hidden rounded-3xl border-2 border-amber-400/80 bg-gradient-to-br from-[#fffbeb] via-[#fff8e8] to-[#ecfeff] shadow-[0_8px_0_rgba(180,83,9,.18),0_20px_50px_rgba(249,115,22,.2)]'
           }
         >
         <div
           className={
-            embedded
-              ? 'absolute top-3 right-3 z-10 flex items-center gap-1 rounded-xl bg-white/80 shadow-md px-3 py-1 text-xs font-bold text-orange-900 border border-orange-200/70'
-              : 'absolute top-5 right-5 z-10 flex items-center gap-2 rounded-xl bg-white/85 shadow-md px-3.5 py-1.5 text-sm font-bold text-orange-900 border-2 border-orange-300/70'
+            inLandingPanel
+              ? 'absolute top-2.5 right-2.5 z-10 flex items-center gap-1 rounded-lg bg-white/75 shadow-sm px-2.5 py-0.5 text-[11px] font-bold text-orange-900 border border-orange-200/55'
+              : embedded
+                ? 'absolute top-3 right-3 z-10 flex items-center gap-1 rounded-xl bg-white/80 shadow-md px-3 py-1 text-xs font-bold text-orange-900 border border-orange-200/70'
+                : 'absolute top-5 right-5 z-10 flex items-center gap-2 rounded-xl bg-white/85 shadow-md px-3.5 py-1.5 text-sm font-bold text-orange-900 border-2 border-orange-300/70'
           }
           aria-hidden
         >
           <svg
-            className={embedded ? 'h-3.5 w-3.5 text-orange-400' : 'h-4 w-4 text-orange-500'}
+            className={
+              inLandingPanel ? 'h-3 w-3 text-orange-400' : embedded ? 'h-3.5 w-3.5 text-orange-400' : 'h-4 w-4 text-orange-500'
+            }
             fill="none"
             stroke="currentColor"
             strokeWidth={2.1}
@@ -79,7 +89,13 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
             />
           </svg>
           <span className="tabular-nums">{i + 1}</span>
-          <span className={embedded ? 'text-orange-300/80 px-0.5' : 'text-orange-400/80 px-0.5'}>/</span>
+          <span
+            className={
+              inLandingPanel ? 'text-orange-300/70 px-0.5' : embedded ? 'text-orange-300/80 px-0.5' : 'text-orange-400/80 px-0.5'
+            }
+          >
+            /
+          </span>
           <span className="tabular-nums">{n}</span>
         </div>
 
@@ -92,14 +108,18 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
               <div
                 key={idx}
                 className={
-                  embedded
-                    ? 'w-full min-w-full shrink-0 px-4 pt-11 pb-5 sm:px-5 sm:pt-11 md:px-6 md:pt-12 sm:pb-5'
-                    : 'w-full min-w-full shrink-0 px-6 pt-12 pb-6'
+                  inLandingPanel
+                    ? 'w-full min-w-full shrink-0 px-3.5 pt-10 pb-4 sm:px-4 sm:pt-10 md:px-5 md:pt-10 sm:pb-4'
+                    : embedded
+                      ? 'w-full min-w-full shrink-0 px-4 pt-11 pb-5 sm:px-5 sm:pt-11 md:px-6 md:pt-12 sm:pb-5'
+                      : 'w-full min-w-full shrink-0 px-6 pt-12 pb-6'
                 }
               >
                 <div className={`flex items-start gap-3 ${embedded ? 'mb-3.5' : 'mb-5'}`}>
                   <span
-                    className={embedded ? 'text-3xl leading-none select-none' : 'text-4xl leading-none select-none'}
+                    className={
+                      inLandingPanel ? 'text-[1.65rem] leading-none select-none' : embedded ? 'text-3xl leading-none select-none' : 'text-4xl leading-none select-none'
+                    }
                     aria-hidden
                   >
                     {q.emoji}
@@ -107,15 +127,23 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
                   <div className="min-w-0 flex-1 pr-11">
                     <h3
                       className={
-                        embedded
-                          ? 'font-display font-black text-[1.07rem] sm:text-lg text-slate-900 mb-1.5 leading-snug'
-                          : 'font-display font-black text-xl text-slate-900 mb-2 leading-tight'
+                        inLandingPanel
+                          ? 'font-display font-black text-[1.02rem] sm:text-[1.07rem] text-[var(--on-cream)] mb-1.5 leading-snug'
+                          : embedded
+                            ? 'font-display font-black text-[1.07rem] sm:text-lg text-slate-900 mb-1.5 leading-snug'
+                            : 'font-display font-black text-xl text-slate-900 mb-2 leading-tight'
                       }
                     >
                       {q.title}
                     </h3>
                     <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                      <span className="rounded-full border border-cyan-400/45 bg-white/75 px-2.5 py-0.5 font-bold text-slate-800 shadow-sm">
+                      <span
+                        className={
+                          inLandingPanel
+                            ? 'rounded-full border border-cyan-400/40 bg-white/65 px-2 py-0.5 font-bold text-[var(--on-cream-muted)] shadow-sm'
+                            : 'rounded-full border border-cyan-400/45 bg-white/75 px-2.5 py-0.5 font-bold text-slate-800 shadow-sm'
+                        }
+                      >
                         {q.contextLabel}
                       </span>
                       {q.outdoor && (
@@ -128,18 +156,22 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
                 </div>
                 <p
                   className={
-                    embedded
-                      ? 'mb-3.5 rounded-r-lg border-l-4 border-cyan-500 bg-white/55 py-2.5 pl-3.5 text-[15px] sm:text-[0.95rem] font-medium leading-relaxed text-slate-800 shadow-inner'
-                      : 'mb-5 rounded-r-lg border-l-4 border-cyan-500 bg-white/50 py-2 pl-4 text-[15px] font-medium leading-relaxed text-slate-800'
+                    inLandingPanel
+                      ? 'mb-3 rounded-r-md border-l-[3px] border-cyan-500/90 bg-white/45 py-2 pl-3 text-[14px] sm:text-[0.92rem] font-medium leading-relaxed text-[var(--on-cream-muted)] shadow-[inset_0_1px_0_rgba(255,255,255,.5)]'
+                      : embedded
+                        ? 'mb-3.5 rounded-r-lg border-l-4 border-cyan-500 bg-white/55 py-2.5 pl-3.5 text-[15px] sm:text-[0.95rem] font-medium leading-relaxed text-slate-800 shadow-inner'
+                        : 'mb-5 rounded-r-lg border-l-4 border-cyan-500 bg-white/50 py-2 pl-4 text-[15px] font-medium leading-relaxed text-slate-800'
                   }
                 >
                   {q.mission}
                 </p>
                 <div
                   className={
-                    embedded
-                      ? 'inline-flex items-center gap-1.5 rounded-full border border-orange-300/70 bg-orange-100/95 px-2.5 py-1 text-[11px] font-black text-orange-900'
-                      : 'inline-flex items-center gap-1.5 rounded-lg border border-orange-300/60 bg-orange-100/90 px-3 py-1.5 text-xs font-black text-orange-900'
+                    inLandingPanel
+                      ? 'inline-flex items-center gap-1.5 rounded-full border border-orange-300/55 bg-orange-100/80 px-2.5 py-0.5 text-[10px] font-black text-orange-900'
+                      : embedded
+                        ? 'inline-flex items-center gap-1.5 rounded-full border border-orange-300/70 bg-orange-100/95 px-2.5 py-1 text-[11px] font-black text-orange-900'
+                        : 'inline-flex items-center gap-1.5 rounded-lg border border-orange-300/60 bg-orange-100/90 px-3 py-1.5 text-xs font-black text-orange-900'
                   }
                 >
                   <Clock className="h-3.5 w-3.5 shrink-0 text-orange-700" aria-hidden strokeWidth={2.5} />
@@ -152,18 +184,22 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
 
         <div
           className={
-            embedded
-              ? 'flex items-center justify-between gap-3 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-3.5 py-3.5 sm:px-4'
-              : 'flex items-center justify-between gap-4 border-t border-slate-900/10 bg-white/65 px-5 py-4'
+            inLandingPanel
+              ? 'flex items-center justify-between gap-2 border-t border-orange-200/45 bg-gradient-to-r from-white/40 via-amber-50/35 to-cyan-50/30 px-3 py-3 sm:px-3.5'
+              : embedded
+                ? 'flex items-center justify-between gap-3 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-3.5 py-3.5 sm:px-4'
+                : 'flex items-center justify-between gap-4 border-t border-slate-900/10 bg-white/65 px-5 py-4'
           }
         >
           <button
             type="button"
             onClick={prev}
             className={
-              embedded
-                ? 'inline-flex h-11 w-11 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/50 bg-white/90 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/60 hover:bg-cyan-50 hover:text-cyan-900 touch-manipulation active:scale-[0.98]'
-                : 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-slate-900/12 bg-white/80 text-slate-800 transition-colors hover:border-cyan-400/50 hover:bg-cyan-50'
+              inLandingPanel
+                ? 'inline-flex h-10 w-10 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-orange-300/45 bg-white/85 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/55 hover:bg-cyan-50/80 hover:text-cyan-900 touch-manipulation active:scale-[0.98]'
+                : embedded
+                  ? 'inline-flex h-11 w-11 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/50 bg-white/90 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/60 hover:bg-cyan-50 hover:text-cyan-900 touch-manipulation active:scale-[0.98]'
+                  : 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-slate-900/12 bg-white/80 text-slate-800 transition-colors hover:border-cyan-400/50 hover:bg-cyan-50'
             }
             aria-label="Quête précédente"
           >
@@ -177,9 +213,11 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
                 onClick={() => setI(idx)}
                 className={`h-2 rounded-full transition-all ${
                   idx === i
-                    ? embedded
-                      ? 'w-6 bg-gradient-to-r from-orange-500 to-amber-400 shadow-sm'
-                      : 'w-7 bg-orange-500'
+                    ? inLandingPanel
+                      ? 'w-5 bg-gradient-to-r from-orange-500 to-amber-400 shadow-sm'
+                      : embedded
+                        ? 'w-6 bg-gradient-to-r from-orange-500 to-amber-400 shadow-sm'
+                        : 'w-7 bg-orange-500'
                     : 'w-2 bg-orange-200/90 hover:bg-orange-300'
                 }`}
                 aria-label={`Carte ${idx + 1} sur ${n}`}
@@ -191,9 +229,11 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
             type="button"
             onClick={next}
             className={
-              embedded
-                ? 'inline-flex h-11 w-11 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/50 bg-white/90 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/60 hover:bg-cyan-50 hover:text-cyan-900 touch-manipulation active:scale-[0.98]'
-                : 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-slate-900/12 bg-white/80 text-slate-800 transition-colors hover:border-cyan-400/50 hover:bg-cyan-50'
+              inLandingPanel
+                ? 'inline-flex h-10 w-10 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-orange-300/45 bg-white/85 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/55 hover:bg-cyan-50/80 hover:text-cyan-900 touch-manipulation active:scale-[0.98]'
+                : embedded
+                  ? 'inline-flex h-11 w-11 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/50 bg-white/90 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/60 hover:bg-cyan-50 hover:text-cyan-900 touch-manipulation active:scale-[0.98]'
+                  : 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-slate-900/12 bg-white/80 text-slate-800 transition-colors hover:border-cyan-400/50 hover:bg-cyan-50'
             }
             aria-label="Quête suivante"
           >

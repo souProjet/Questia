@@ -12,3 +12,6 @@ ios/
 android/
 .vercel
 generated/
+
+# Nom réservé Windows — un fichier nommé « NUL » casse Git/Turborepo (erreur « Fonction incorrecte »).
+**/NUL

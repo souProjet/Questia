@@ -26,6 +26,7 @@ vi.mock('@/lib/actions/weather', () => ({
     weatherIcon: 'Sun',
     temp: 20,
     isOutdoorFriendly: true,
+    hasUserLocation: true,
   }),
 }));
 

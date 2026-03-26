@@ -57,6 +57,13 @@ const config: Config = {
         'shop-screen-shake': 'shopScreenShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both',
         'shop-coin-burst': 'shopCoinBurst 1.9s ease-out forwards',
         'shop-sparkle-orbit': 'shopSparkleOrbit 2s ease-out forwards',
+        /** Bandeau statut « Quête du jour » + loader accueil */
+        'quest-day-strip-in': 'questDayStripIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'quest-day-strip-shine': 'questDayStripShine 3.8s linear infinite',
+        'quest-loader-in': 'questLoaderIn 0.75s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'quest-loader-halo': 'questLoaderHalo 10s linear infinite',
+        'quest-loader-bar': 'questLoaderBar 1.25s ease-in-out infinite alternate',
+        'quest-loader-bounce': 'questLoaderBounce 1.05s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -195,6 +202,31 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'rotate(-12deg) scale(0.5)' },
           '25%': { opacity: '1', transform: 'rotate(8deg) scale(1.05)' },
           '100%': { opacity: '0', transform: 'rotate(24deg) scale(1.25)' },
+        },
+        questDayStripIn: {
+          '0%': { opacity: '0', transform: 'translateY(14px) scale(0.985)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        questDayStripShine: {
+          '0%': { transform: 'translateX(-100%) skewX(-12deg)' },
+          '100%': { transform: 'translateX(220%) skewX(-12deg)' },
+        },
+        questLoaderIn: {
+          '0%': { opacity: '0', transform: 'translateY(28px) scale(0.96)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        questLoaderHalo: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+        /** Barre type indéterminé : segment 38 % de large qui glisse (left % du parent). */
+        questLoaderBar: {
+          '0%': { left: '0%' },
+          '100%': { left: '62%' },
+        },
+        questLoaderBounce: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-5px)' },
         },
       },
       boxShadow: {

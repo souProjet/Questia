@@ -16,21 +16,24 @@ const MARKETING_MENU: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '#faq', label: 'FAQ', Icon: HelpCircle },
 ];
 
+const burgerBar =
+  'absolute left-0 w-[22px] h-0.5 rounded-full bg-gradient-to-r from-cyan-600 via-orange-500 to-amber-500 shadow-[0_1px_0_rgba(255,255,255,.35)]';
+
 function BurgerIcon({ open }: { open: boolean }) {
   return (
     <span className="relative block h-[18px] w-[22px]" aria-hidden>
       <span
-        className={`absolute left-0 w-[22px] h-0.5 rounded-full bg-slate-800 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-150 ${
+        className={`${burgerBar} transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-150 ${
           open ? 'top-[8px] rotate-45' : 'top-[4px] rotate-0'
         }`}
       />
       <span
-        className={`absolute left-0 top-[8px] w-[22px] h-0.5 rounded-full bg-slate-800 transition-opacity duration-200 ease-out motion-reduce:duration-100 ${
+        className={`${burgerBar} left-0 top-[8px] transition-opacity duration-200 ease-out motion-reduce:duration-100 ${
           open ? 'opacity-0' : 'opacity-100'
         }`}
       />
       <span
-        className={`absolute left-0 w-[22px] h-0.5 rounded-full bg-slate-800 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-150 ${
+        className={`${burgerBar} transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-150 ${
           open ? 'top-[8px] -rotate-45' : 'top-[12px] rotate-0'
         }`}
       />
@@ -209,7 +212,7 @@ export function Navbar() {
             <button
               type="button"
               id={`${panelId}-trigger`}
-              className="md:hidden relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-300/90 active:bg-slate-100/90 transition-colors"
+              className="md:hidden relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/55 bg-gradient-to-br from-white via-amber-50/70 to-cyan-50/50 text-[var(--on-cream)] shadow-[0_6px_0_rgba(120,53,15,.09),0_12px_28px_rgba(249,115,22,.14)] hover:border-orange-400/65 hover:shadow-[0_7px_0_rgba(120,53,15,.08),0_14px_32px_rgba(249,115,22,.18)] active:translate-y-0.5 active:shadow-[0_4px_0_rgba(120,53,15,.1),0_8px_20px_rgba(249,115,22,.12)] transition-[transform,box-shadow,border-color,filter] motion-reduce:transform-none ring-1 ring-white/70"
               aria-expanded={mobileOpen}
               aria-controls={panelId}
               onClick={() => setMobileOpen((o) => !o)}
@@ -226,7 +229,7 @@ export function Navbar() {
         <>
           <button
             type="button"
-            className={`fixed inset-0 z-[100] bg-slate-950/55 backdrop-blur-sm md:hidden transition-opacity duration-300 ease-out motion-reduce:duration-100 ${
+            className={`fixed inset-0 z-[100] bg-gradient-to-br from-slate-950/50 via-orange-950/25 to-cyan-950/30 backdrop-blur-[6px] md:hidden transition-opacity duration-300 ease-out motion-reduce:duration-100 ${
               drawerReady ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             aria-label="Fermer le menu"
@@ -235,31 +238,38 @@ export function Navbar() {
           />
           <div
             id={panelId}
-            className={`fixed inset-y-0 right-0 z-[101] flex w-[min(100%,19rem)] max-w-[calc(100vw-2.5rem)] flex-col bg-white shadow-[-12px_0_48px_rgba(15,23,42,0.14)] md:hidden border-l border-slate-200/80 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-75 motion-reduce:ease-out will-change-transform pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] ${
+            className={`navbar-mobile-drawer fixed inset-y-0 right-0 z-[101] flex w-[min(100%,19rem)] max-w-[calc(100vw-2.5rem)] flex-col md:hidden transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-75 motion-reduce:ease-out will-change-transform pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] ${
               drawerReady ? 'translate-x-0' : 'translate-x-full pointer-events-none'
             }`}
             role="dialog"
             aria-modal="true"
             aria-labelledby={`${panelId}-title`}
           >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-4">
+            <div
+              className="h-1 w-full shrink-0 bg-gradient-to-r from-cyan-400 via-orange-400 to-emerald-500"
+              aria-hidden
+            />
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-orange-200/45 bg-gradient-to-r from-[#fffbeb]/95 via-white/90 to-cyan-50/40 px-4 py-3.5">
               <div className="min-w-0">
-                <p id={`${panelId}-title`} className="font-display font-black text-slate-900 text-lg tracking-tight">
+                <p
+                  id={`${panelId}-title`}
+                  className="font-display font-black text-[var(--on-cream)] text-lg tracking-tight"
+                >
                   Menu
                 </p>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">Questia</p>
+                <p className="text-xs font-bold text-orange-900/75 mt-0.5 tracking-wide">Quête du jour</p>
               </div>
               <button
                 type="button"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-orange-200/60 bg-white/90 text-orange-900 shadow-sm hover:bg-cyan-50/80 hover:border-cyan-300/55 transition-colors"
                 onClick={closeMobile}
                 aria-label="Fermer"
               >
-                <X className="h-5 w-5" strokeWidth={2} />
+                <X className="h-5 w-5" strokeWidth={2.25} />
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 bg-gradient-to-b from-white/40 via-amber-50/20 to-cyan-50/35">
               {showMarketingNav ? (
                 <nav className="flex flex-col gap-0.5" aria-label="Sections du site">
                   {MARKETING_MENU.map(({ href, label, Icon }) => (
@@ -267,14 +277,14 @@ export function Navbar() {
                       key={href}
                       href={href}
                       onClick={closeMobile}
-                      className="group flex items-center gap-3 rounded-xl px-3 py-3.5 text-[15px] font-semibold text-slate-800 hover:bg-slate-50 active:bg-slate-100/80 transition-colors"
+                      className="group flex items-center gap-3 rounded-2xl px-3 py-3.5 text-[15px] font-bold text-[var(--on-cream)] border-2 border-transparent hover:border-orange-200/70 hover:bg-white/80 hover:shadow-[0_4px_0_rgba(234,88,12,.08)] active:scale-[0.99] transition-all"
                     >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-50 to-orange-50/80 text-cyan-800 ring-1 ring-slate-200/80 group-hover:ring-cyan-300/50">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-100/90 to-orange-100/80 text-cyan-900 ring-1 ring-orange-200/50 group-hover:ring-cyan-400/45 shadow-[inset_0_1px_0_rgba(255,255,255,.7)]">
                         <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1">{label}</span>
                       <ChevronRight
-                        className="h-4 w-4 shrink-0 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100"
+                        className="h-4 w-4 shrink-0 text-orange-400/80 opacity-0 transition-opacity group-hover:opacity-100"
                         aria-hidden
                         strokeWidth={2.25}
                       />
@@ -317,21 +327,21 @@ export function Navbar() {
               ) : null}
 
               {!isSignedIn ? (
-                <div className="mt-6 border-t border-slate-100 pt-5">
+                <div className="mt-6 border-t border-orange-200/40 pt-5">
                   <Link
                     href="/sign-in"
                     onClick={closeMobile}
-                    className="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white py-3.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors"
+                    className="flex w-full items-center justify-center rounded-2xl border-2 border-orange-300/50 bg-white/90 py-3.5 text-sm font-black text-[var(--on-cream)] shadow-[0_4px_0_rgba(120,53,15,.08)] hover:border-cyan-400/45 hover:bg-cyan-50/50 transition-colors"
                   >
                     Connexion
                   </Link>
                 </div>
               ) : showMarketingNav ? (
-                <div className="mt-6 border-t border-slate-100 pt-5">
+                <div className="mt-6 border-t border-orange-200/40 pt-5">
                   <Link
                     href="/app"
                     onClick={closeMobile}
-                    className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-md shadow-orange-500/25 hover:brightness-[1.03] active:brightness-[0.98] transition-[filter,box-shadow]"
+                    className="flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 via-orange-500 to-amber-400 py-3.5 text-sm font-black text-white shadow-[0_6px_0_rgba(180,83,9,.2),0_12px_28px_rgba(249,115,22,.35)] hover:brightness-[1.04] active:translate-y-0.5 active:shadow-sm transition-[filter,transform,box-shadow] motion-reduce:transform-none"
                   >
                     Ouvrir l&apos;app
                   </Link>

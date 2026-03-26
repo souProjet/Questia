@@ -5,12 +5,12 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   Linking,
   useWindowDimensions,
   Animated,
   Easing,
   Modal,
+  AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/expo';
@@ -25,12 +25,14 @@ import {
   isValidQuestDateIso,
   formatQuestDateFr,
   REPORT_DEFER_MAX_DAYS,
+  QUEST_LOADER_DAY_STORAGE_KEY,
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/QuestRewardOverlay';
 import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
+import { QuestHomeLoading } from '../../components/QuestHomeLoading';
 
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
 const PRIVACY_URL = `${SITE_PUBLIC}/legal/confidentialite`;
@@ -207,19 +209,23 @@ export default function DashboardScreen() {
   const [showReward, setShowReward] = useState(false);
   const acceptFlashOp = useRef(new Animated.Value(0)).current;
 
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [calendarDay, setCalendarDay] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
   const reportDateOptions = useMemo(() => {
     const out: string[] = [];
     for (let i = 0; i <= REPORT_DEFER_MAX_DAYS; i++) {
-      const d = new Date(`${todayStr}T12:00:00.000Z`);
+      const d = new Date(`${calendarDay}T12:00:00.000Z`);
       d.setUTCDate(d.getUTCDate() + i);
       out.push(d.toISOString().slice(0, 10));
     }
     return out;
-  }, [todayStr]);
+  }, [calendarDay]);
 
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportDeferredDate, setReportDeferredDate] = useState(todayStr);
+  const [reportDeferredDate, setReportDeferredDate] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
   const [reporting, setReporting] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [abandoning, setAbandoning] = useState(false);
@@ -248,7 +254,11 @@ export default function DashboardScreen() {
   }, []);
 
   const loadQuest = useCallback(
-    async (lat?: number, lon?: number, opts?: { silent?: boolean; questDate?: string }): Promise<boolean> => {
+    async (
+      lat?: number,
+      lon?: number,
+      opts?: { silent?: boolean; questDate?: string; ignoreUrlQuestDate?: boolean },
+    ): Promise<boolean> => {
       const silent = opts?.silent ?? false;
       if (!silent) {
         setLoading(true);
@@ -261,7 +271,9 @@ export default function DashboardScreen() {
           if (!silent) setError(result.error ?? 'Complète l\'onboarding d\'abord.');
           return false;
         }
-        const qd = opts?.questDate ?? questDateFromRoute ?? undefined;
+        const qd = opts?.ignoreUrlQuestDate
+          ? opts.questDate ?? undefined
+          : opts?.questDate ?? questDateFromRoute ?? undefined;
         const sp = new URLSearchParams();
         if (lat != null && lon != null) {
           sp.set('lat', String(lat));
@@ -297,21 +309,58 @@ export default function DashboardScreen() {
     [ensureProfile, questDateFromRoute],
   );
 
-  const enrichQuestWithLocation = useCallback(async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      await loadQuest(loc.coords.latitude, loc.coords.longitude, {
-        silent: true,
-        questDate: questDateFromRoute ?? undefined,
-      });
-    } catch {
-      /* géoloc refusée ou indisponible — la quête sans météo locale reste affichée */
+  const enrichQuestWithLocation = useCallback(
+    async (opts?: { ignoreUrlQuestDate?: boolean }) => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        await loadQuest(loc.coords.latitude, loc.coords.longitude, {
+          silent: true,
+          questDate: opts?.ignoreUrlQuestDate ? undefined : questDateFromRoute ?? undefined,
+          ignoreUrlQuestDate: opts?.ignoreUrlQuestDate,
+        });
+      } catch {
+        /* géoloc refusée ou indisponible — la quête sans météo locale reste affichée */
+      }
+    },
+    [loadQuest, questDateFromRoute],
+  );
+
+  useEffect(() => {
+    const syncDay = () => {
+      const d = new Date().toISOString().slice(0, 10);
+      setCalendarDay((prev) => (prev !== d ? d : prev));
+    };
+    const id = setInterval(syncDay, 60_000);
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') syncDay();
+    });
+    syncDay();
+    return () => {
+      clearInterval(id);
+      sub.remove();
+    };
+  }, []);
+
+  const prevCalendarDayRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!authLoaded) return;
+    if (prevCalendarDayRef.current === null) {
+      prevCalendarDayRef.current = calendarDay;
+      return;
     }
-  }, [loadQuest, questDateFromRoute]);
+    if (prevCalendarDayRef.current === calendarDay) return;
+    prevCalendarDayRef.current = calendarDay;
+    const urlPast = questDateFromRoute != null && questDateFromRoute < calendarDay;
+    if (urlPast) router.replace('/home');
+    void (async () => {
+      const ok = await loadQuest(undefined, undefined, { silent: true, ignoreUrlQuestDate: urlPast });
+      if (ok) await enrichQuestWithLocation({ ignoreUrlQuestDate: urlPast });
+    })();
+  }, [authLoaded, calendarDay, questDateFromRoute, router, loadQuest, enrichQuestWithLocation]);
 
   useEffect(() => {
     if (!authLoaded) return;
@@ -422,6 +471,58 @@ export default function DashboardScreen() {
     !rerolling &&
     rerollDaily + rerollBonus > 0;
 
+  const questStatusDisplay = useMemo(() => {
+    if (!quest) return null;
+    const map: Record<
+      DailyQuest['status'],
+      { label: string; emoji: string; pillBg: string; pillBorder: string; pillColor: string }
+    > = {
+      pending: {
+        label: 'En attente de ton choix',
+        emoji: '⏳',
+        pillBg: 'rgba(254,243,199,0.95)',
+        pillBorder: 'rgba(217,119,6,0.35)',
+        pillColor: '#78350f',
+      },
+      accepted: {
+        label: 'En cours',
+        emoji: '⚔️',
+        pillBg: 'rgba(209,250,229,0.95)',
+        pillBorder: 'rgba(16,185,129,0.4)',
+        pillColor: '#065f46',
+      },
+      completed: {
+        label: 'Validée',
+        emoji: '✅',
+        pillBg: 'rgba(209,250,229,0.98)',
+        pillBorder: 'rgba(5,150,105,0.45)',
+        pillColor: '#064e3b',
+      },
+      abandoned: {
+        label: 'Passée',
+        emoji: '🌙',
+        pillBg: 'rgba(226,232,240,0.98)',
+        pillBorder: 'rgba(71,85,105,0.55)',
+        pillColor: '#0f172a',
+      },
+      rejected: {
+        label: 'Refusée',
+        emoji: '✕',
+        pillBg: 'rgba(254,242,242,0.98)',
+        pillBorder: 'rgba(248,113,113,0.45)',
+        pillColor: '#991b1b',
+      },
+      replaced: {
+        label: 'Remplacée',
+        emoji: '🔄',
+        pillBg: 'rgba(245,243,255,0.98)',
+        pillBorder: 'rgba(139,92,246,0.4)',
+        pillColor: '#5b21b6',
+      },
+    };
+    return map[quest.status];
+  }, [quest]);
+
   const weatherLine = quest
     ? `${quest.context?.weatherDescription ?? quest.weather ?? 'Ciel variable'} · ${Math.round(
         quest.context?.temp ?? quest.weatherTemp ?? 18,
@@ -521,8 +622,25 @@ export default function DashboardScreen() {
   };
 
   useEffect(() => {
-    if (showReportModal) setReportDeferredDate(todayStr);
-  }, [showReportModal, todayStr]);
+    if (showReportModal) setReportDeferredDate(calendarDay);
+  }, [showReportModal, calendarDay]);
+
+  useEffect(() => {
+    if (!quest) return;
+    void AsyncStorage.setItem(QUEST_LOADER_DAY_STORAGE_KEY, new Date().toISOString().slice(0, 10));
+  }, [quest]);
+
+  const questStripEnter = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!quest?.questDate) return;
+    questStripEnter.setValue(0);
+    Animated.timing(questStripEnter, {
+      toValue: 1,
+      duration: 700,
+      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      useNativeDriver: true,
+    }).start();
+  }, [quest?.questDate, questStripEnter]);
 
   const { palette } = useAppTheme();
   const styles = useMemo(() => buildDashboardStyles(palette), [palette]);
@@ -530,10 +648,7 @@ export default function DashboardScreen() {
   if (loading && !quest) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.loadingFull}>
-          <ActivityIndicator color={palette.cyan} size="large" />
-          <Text style={styles.loadingText}>Chargement de ta quête…</Text>
-        </View>
+        <QuestHomeLoading compact={compact} />
       </SafeAreaView>
     );
   }
@@ -815,6 +930,56 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        {quest && questStatusDisplay ? (
+          <Animated.View
+            style={{
+              opacity: questStripEnter,
+              transform: [
+                {
+                  translateY: questStripEnter.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [26, 0],
+                  }),
+                },
+              ],
+            }}
+          >
+            <LinearGradient
+              colors={['rgba(255,247,237,0.98)', 'rgba(255,255,255,0.96)', 'rgba(254,243,199,0.55)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.questDayStatusStrip, compact && styles.questDayStatusStripCompact]}
+              accessibilityRole="summary"
+              accessibilityLabel={`Quête du jour ${formatQuestDateFr(quest.questDate)} — ${questStatusDisplay.label}`}
+            >
+              <View style={styles.questDayStatusAccent} accessibilityElementsHidden />
+              <View style={styles.questDayStatusInner}>
+                <View style={styles.questDayStatusLeft}>
+                  <Text style={[styles.questDayStatusKicker, compact && styles.questDayStatusKickerCompact]}>
+                    QUÊTE DU JOUR
+                  </Text>
+                  <Text style={[styles.questDayStatusDate, compact && styles.questDayStatusDateCompact]}>
+                    {formatQuestDateFr(quest.questDate)}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.questDayStatusPill,
+                    {
+                      backgroundColor: questStatusDisplay.pillBg,
+                      borderColor: questStatusDisplay.pillBorder,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.questDayStatusPillText, { color: questStatusDisplay.pillColor }]}>
+                    {questStatusDisplay.emoji} {questStatusDisplay.label}
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        ) : null}
+
         {quest && (
           <LinearGradient
             key={questCardSwapKey}
@@ -962,27 +1127,51 @@ export default function DashboardScreen() {
                       {accepting ? 'Confirmation…' : '⚔️  Je relève le défi !'}
                     </Text>
                   </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.rerollBtnProminent,
+                      !canRerollQuest && styles.rerollBtnDisabled,
+                      pressed && canRerollQuest && styles.rerollBtnProminentPressed,
+                    ]}
+                    onPress={handleReroll}
+                    disabled={!canRerollQuest || rerolling}
+                  >
+                    <Text style={styles.rerollTextProminent}>
+                      {rerolling ? '…' : `🎲  Changer de quête (${rerollLabel})`}
+                    </Text>
+                  </Pressable>
                   <View style={styles.secondaryRow}>
                     <Pressable
-                      style={styles.secondaryGhostBtn}
+                      style={({ pressed }) => [
+                        styles.secondaryGhostBtn,
+                        pressed && styles.secondaryGhostBtnPressed,
+                      ]}
                       onPress={() => setShowAbandonModal(true)}
                     >
                       <Text style={styles.secondaryGhostText}>Ce n’est pas pour moi</Text>
                     </Pressable>
-                    <Pressable
-                      style={[styles.secondaryCtaBtn, !canRerollQuest && styles.rerollBtnDisabled]}
-                      onPress={() => {
-                        setReportDeferredDate(todayStr);
-                        setShowReportModal(true);
-                      }}
-                      disabled={!canRerollQuest}
-                    >
-                      <Text style={styles.secondaryCtaText}>Reporter → courte</Text>
-                    </Pressable>
+                    {questPace === 'planned' ? (
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.secondaryCtaBtn,
+                          !canRerollQuest && styles.rerollBtnDisabled,
+                          pressed && canRerollQuest && styles.secondaryCtaBtnPressed,
+                        ]}
+                        onPress={() => {
+                          setReportDeferredDate(calendarDay);
+                          setShowReportModal(true);
+                        }}
+                        disabled={!canRerollQuest}
+                      >
+                        <Text style={styles.secondaryCtaText}>Reporter — courte</Text>
+                      </Pressable>
+                    ) : null}
                   </View>
-                  <Text style={styles.reportHint}>
-                    Reporter utilise une relance comme « Changer de quête », puis une mission faisable vite.
-                  </Text>
+                  {questPace === 'planned' ? (
+                    <Text style={styles.reportHint}>
+                      Reporter utilise une relance comme « Changer de quête », puis une mission faisable vite.
+                    </Text>
+                  ) : null}
                   {API_BASE_URL.includes('localhost') && (
                     <View style={styles.localhostWarning}>
                       <Text style={styles.localhostWarningText}>
@@ -990,15 +1179,6 @@ export default function DashboardScreen() {
                       </Text>
                     </View>
                   )}
-                  <Pressable
-                    style={[styles.rerollBtn, !canRerollQuest && styles.rerollBtnDisabled]}
-                    onPress={handleReroll}
-                    disabled={!canRerollQuest}
-                  >
-                    <Text style={styles.rerollText}>
-                      {rerolling ? '…' : `🎲  Changer de quête (${rerollLabel})`}
-                    </Text>
-                  </Pressable>
                 </View>
               )}
             </LinearGradient>
@@ -1116,8 +1296,6 @@ function buildDashboardStyles(p: ThemePalette) {
   inlineErrorDismiss: { fontSize: 13, fontWeight: '800', color: '#991b1b', textDecorationLine: 'underline' },
   content: { padding: 20, paddingTop: 14, paddingBottom: 24 },
   contentCompact: { paddingHorizontal: 16, paddingTop: 10 },
-  loadingFull: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
-  loadingText: { color: C.accent, fontSize: 14, fontWeight: '600' },
   errorBox: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
   errorText: { color: '#f87171', fontSize: 14, textAlign: 'center' },
   retryBtn: { backgroundColor: C.accent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12 },
@@ -1267,6 +1445,69 @@ function buildDashboardStyles(p: ThemePalette) {
   heroWeatherTextCompact: { fontSize: 11, lineHeight: 16 },
   heroWeatherSep: { color: C.muted },
   heroWeatherCity: { fontWeight: '800', color: p.linkOnBg },
+  questDayStatusStrip: {
+    position: 'relative',
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginBottom: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: 'rgba(251,146,60,0.55)',
+    shadowColor: '#9a3412',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  questDayStatusStripCompact: {
+    marginBottom: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+  },
+  questDayStatusAccent: {
+    width: 4,
+    alignSelf: 'stretch',
+    minHeight: 48,
+    marginRight: 10,
+    borderRadius: 999,
+    backgroundColor: '#f97316',
+    shadowColor: '#ea580c',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  questDayStatusInner: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  questDayStatusLeft: { flexShrink: 1, gap: 4 },
+  questDayStatusKicker: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 2,
+    color: '#9a3412',
+  },
+  questDayStatusKickerCompact: { fontSize: 9, letterSpacing: 1.6 },
+  questDayStatusDate: { fontSize: 16, fontWeight: '900', color: p.onCream, marginTop: 2 },
+  questDayStatusDateCompact: { fontSize: 15 },
+  questDayStatusPill: {
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 2,
+    maxWidth: '100%',
+  },
+  questDayStatusPillText: { fontSize: 13, fontWeight: '900' },
   questSliderEmbedded: {
     borderRadius: 26,
     borderWidth: 2,
@@ -1467,7 +1708,7 @@ function buildDashboardStyles(p: ThemePalette) {
     paddingVertical: 16,
     paddingBottom: 18,
   },
-  footerActionsInner: { gap: 10 },
+  footerActionsInner: { gap: 12 },
   completedFooterTitle: {
     fontSize: 17,
     fontWeight: '900',
@@ -1485,33 +1726,65 @@ function buildDashboardStyles(p: ThemePalette) {
     textDecorationLine: 'underline',
     marginTop: 8,
   },
-  secondaryRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  secondaryRow: { flexDirection: 'row', gap: 8, alignItems: 'stretch' },
   secondaryGhostBtn: {
     flex: 1,
-    paddingVertical: 10,
+    minWidth: 0,
+    paddingVertical: 9,
+    paddingHorizontal: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colorWithAlpha(p.onCream, 0.2),
+    borderColor: 'rgba(148,163,184,0.5)',
     alignItems: 'center',
-    backgroundColor: p.surface,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.92)',
   },
-  secondaryGhostText: { fontSize: 12, fontWeight: '700', color: p.muted },
+  secondaryGhostBtnPressed: { opacity: 0.92 },
+  secondaryGhostText: { fontSize: 11, fontWeight: '600', color: p.muted, textAlign: 'center' },
   secondaryCtaBtn: {
     flex: 1,
-    paddingVertical: 10,
+    minWidth: 0,
+    paddingVertical: 9,
+    paddingHorizontal: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.4),
+    borderColor: colorWithAlpha(p.cyan, 0.42),
     alignItems: 'center',
-    backgroundColor: colorWithAlpha(p.cyan, 0.08),
+    justifyContent: 'center',
+    backgroundColor: colorWithAlpha(p.cyan, 0.1),
   },
-  secondaryCtaText: { fontSize: 12, fontWeight: '800', color: '#155e75' },
-  reportHint: { fontSize: 10, color: p.onCreamMuted, textAlign: 'center', lineHeight: 14 },
+  secondaryCtaBtnPressed: { opacity: 0.92 },
+  secondaryCtaText: { fontSize: 11, fontWeight: '800', color: '#155e75', textAlign: 'center' },
+  reportHint: { fontSize: 10, color: p.onCreamMuted, textAlign: 'center', lineHeight: 14, marginTop: -2 },
+  rerollBtnProminent: {
+    borderWidth: 2,
+    borderColor: 'rgba(251,146,60,0.68)',
+    borderRadius: 16,
+    paddingVertical: 15,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,251,235,0.98)',
+    shadowColor: '#ea580c',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  rerollBtnProminentPressed: {
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  rerollTextProminent: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#9a3412',
+    letterSpacing: -0.2,
+    textAlign: 'center',
+  },
   abandonedFooterTitle: { fontSize: 17, fontWeight: '900', color: '#475569', textAlign: 'center' },
   abandonedFooterSub: { fontSize: 13, color: p.onCreamMuted, textAlign: 'center', lineHeight: 18 },
-  rerollBtn: { backgroundColor: p.surface, borderWidth: 1, borderColor: C.border, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  rerollBtnDisabled: { opacity: 0.4 },
-  rerollText: { color: C.accent, fontWeight: '700', fontSize: 14 },
+  rerollBtnDisabled: { opacity: 0.42 },
   acceptBtn: {
     backgroundColor: C.accentWarm,
     paddingVertical: 16,

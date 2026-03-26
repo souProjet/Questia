@@ -660,7 +660,7 @@ function ShopPageInner() {
                         className="font-display text-4xl sm:text-5xl font-black tracking-tight text-[var(--on-cream)] tabular-nums leading-none motion-safe:animate-shop-balance-pop motion-reduce:animate-none"
                       >
                         {balance.toLocaleString('fr-FR')}
-                        <span className="ml-2 text-2xl sm:text-3xl font-black text-amber-800">QC</span>
+                        <span className="ml-2 text-2xl sm:text-3xl font-black text-amber-800">Quest Coins</span>
                       </p>
                     </div>
                   </div>

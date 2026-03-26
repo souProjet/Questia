@@ -169,9 +169,11 @@ export default function ProfilePage() {
             <p className="text-[var(--muted)] font-semibold mb-8">{quadrant}</p>
 
             <section className="rounded-3xl border-2 border-cyan-500/45 bg-gradient-to-br from-white via-cyan-50/50 to-amber-50/40 p-6 shadow-lg mb-8">
-              <div className="flex justify-between items-end gap-4 mb-2">
-                <span className="text-xs font-black uppercase tracking-wider text-[var(--on-cream-muted)]">Niveau</span>
-                <span className="font-display text-5xl font-black tabular-nums text-[var(--on-cream)]">{prog.level}</span>
+              <div className="mb-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--on-cream-muted)]">Niveau</p>
+                <p className="mt-1.5 font-display text-5xl font-black tabular-nums leading-none tracking-tight text-[var(--on-cream)]">
+                  {prog.level}
+                </p>
               </div>
               <p className="text-sm font-semibold text-[var(--on-cream-muted)] mb-3 leading-relaxed">
                 {prog.totalXp} XP au total · encore {prog.xpToNext} XP pour monter · progression dans ce niveau :{' '}

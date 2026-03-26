@@ -134,3 +134,37 @@ export function levelFromTotalXp(totalXp: number): {
   const xpToNext = xpPerLevel - xpIntoLevel;
   return { level, xpIntoLevel, xpToNext, xpPerLevel };
 }
+
+/** Un segment d’animation : barre du niveau `level`, remplissage de `fromPct` à `toPct` (0–1). */
+export type XpBarSegment = { level: number; fromPct: number; toPct: number };
+
+/**
+ * Segments pour animer la barre « XP dans ce niveau » (comme l’accueil), entre deux totaux XP.
+ * Gère les montées de niveau (y compris plusieurs paliers d’un coup).
+ */
+export function xpBarSegmentsFromTotals(previousTotal: number, newTotal: number): XpBarSegment[] {
+  const before = levelFromTotalXp(previousTotal);
+  const after = levelFromTotalXp(newTotal);
+  const pl = XP_PER_LEVEL;
+
+  if (after.level < before.level) {
+    return [{ level: after.level, fromPct: after.xpIntoLevel / pl, toPct: after.xpIntoLevel / pl }];
+  }
+  if (after.level === before.level) {
+    return [{ level: before.level, fromPct: before.xpIntoLevel / pl, toPct: after.xpIntoLevel / pl }];
+  }
+
+  const segments: XpBarSegment[] = [];
+  let curLevel = before.level;
+  let fromPct = before.xpIntoLevel / pl;
+
+  segments.push({ level: curLevel, fromPct, toPct: 1 });
+  curLevel++;
+
+  while (curLevel < after.level) {
+    segments.push({ level: curLevel, fromPct: 0, toPct: 1 });
+    curLevel++;
+  }
+  segments.push({ level: after.level, fromPct: 0, toPct: after.xpIntoLevel / pl });
+  return segments;
+}

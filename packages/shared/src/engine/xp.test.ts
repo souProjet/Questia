@@ -4,6 +4,7 @@ import {
   streakBonusFor,
   computeCompletionXp,
   levelFromTotalXp,
+  xpBarSegmentsFromTotals,
   XP_PER_LEVEL,
   XP_PER_QUEST_CAP,
   XP_STREAK_BONUS_CAP,
@@ -71,5 +72,23 @@ describe('levelFromTotalXp', () => {
   it('plafonne le niveau interne', () => {
     const l = levelFromTotalXp(999999);
     expect(l.level).toBeLessThanOrEqual(99);
+  });
+});
+
+describe('xpBarSegmentsFromTotals', () => {
+  it('même niveau : un seul segment', () => {
+    const s = xpBarSegmentsFromTotals(10, 45);
+    expect(s).toHaveLength(1);
+    expect(s[0]!.level).toBe(1);
+    expect(s[0]!.fromPct).toBeCloseTo(0.1, 5);
+    expect(s[0]!.toPct).toBeCloseTo(0.45, 5);
+  });
+
+  it('montée d’un niveau : fin de barre puis début du suivant', () => {
+    const s = xpBarSegmentsFromTotals(90, 115);
+    expect(s.length).toBeGreaterThanOrEqual(2);
+    expect(s[0]!.toPct).toBe(1);
+    expect(s[s.length - 1]!.level).toBe(2);
+    expect(s[s.length - 1]!.toPct).toBeCloseTo(0.15, 5);
   });
 });

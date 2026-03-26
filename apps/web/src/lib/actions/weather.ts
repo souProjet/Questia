@@ -105,10 +105,21 @@ export async function checkWeatherSafety(lat: number, lon: number): Promise<Weat
   }
 }
 
+function hasValidUserCoords(lat?: number, lon?: number): boolean {
+  return (
+    typeof lat === 'number' &&
+    typeof lon === 'number' &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lon)
+  );
+}
+
 /** Full weather + location context for quest generation */
 export async function getQuestContext(lat?: number, lon?: number): Promise<QuestContext> {
   const t0 = performance.now();
-  if (!lat || !lon || !KEY) {
+  const hasUserLocation = hasValidUserCoords(lat, lon);
+
+  if (!hasUserLocation) {
     logStructured({
       domain: 'weather',
       operation: 'owm.questContext',
@@ -116,7 +127,7 @@ export async function getQuestContext(lat?: number, lon?: number): Promise<Quest
       outcome: 'skipped',
       durationMs: Math.round(performance.now() - t0),
       meta: {
-        hasCoords: Boolean(lat && lon),
+        hasCoords: false,
         hasApiKey: Boolean(KEY),
       },
     });
@@ -127,6 +138,30 @@ export async function getQuestContext(lat?: number, lon?: number): Promise<Quest
       weatherIcon: 'CloudSun',
       temp: 18,
       isOutdoorFriendly: true,
+      hasUserLocation: false,
+    };
+  }
+
+  if (!KEY) {
+    logStructured({
+      domain: 'weather',
+      operation: 'owm.questContext',
+      level: 'info',
+      outcome: 'skipped',
+      durationMs: Math.round(performance.now() - t0),
+      meta: {
+        hasCoords: true,
+        hasApiKey: false,
+      },
+    });
+    return {
+      city: 'ta ville',
+      country: '',
+      weatherDescription: 'Variable',
+      weatherIcon: 'CloudSun',
+      temp: 18,
+      isOutdoorFriendly: true,
+      hasUserLocation: true,
     };
   }
   try {
@@ -180,16 +215,33 @@ export async function getQuestContext(lat?: number, lon?: number): Promise<Quest
       weatherIcon: weatherIconName(main, temp),
       temp,
       isOutdoorFriendly,
+      hasUserLocation: true,
     };
   } catch (err) {
     const durationMs = Math.round(performance.now() - t0);
     if (err instanceof Error && err.message === 'fetch failed') {
-      return { city: 'ta ville', country: '', weatherDescription: 'Variable', weatherIcon: 'CloudSun', temp: 18, isOutdoorFriendly: true };
+      return {
+        city: 'ta ville',
+        country: '',
+        weatherDescription: 'Variable',
+        weatherIcon: 'CloudSun',
+        temp: 18,
+        isOutdoorFriendly: true,
+        hasUserLocation: true,
+      };
     }
     logStructuredError('weather', 'owm.questContext', err, {
       durationMs,
       outcome: 'fallback',
     });
-    return { city: 'ta ville', country: '', weatherDescription: 'Variable', weatherIcon: 'CloudSun', temp: 18, isOutdoorFriendly: true };
+    return {
+      city: 'ta ville',
+      country: '',
+      weatherDescription: 'Variable',
+      weatherIcon: 'CloudSun',
+      temp: 18,
+      isOutdoorFriendly: true,
+      hasUserLocation: true,
+    };
   }
 }

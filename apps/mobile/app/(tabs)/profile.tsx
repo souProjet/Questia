@@ -153,7 +153,7 @@ export default function ProfileScreen() {
             accessibilityHint="Ouvre la boutique pour bonus XP et cosm\u00e9tiques"
             style={({ pressed }) => [styles.levelCard, pressed && styles.levelCardPressed]}
           >
-            <View style={styles.levelRow}>
+            <View style={styles.levelHeader}>
               <Text style={styles.levelLabel}>Niveau</Text>
               <Text style={styles.levelValue}>{level}</Text>
             </View>
@@ -317,9 +317,22 @@ function createProfileStyles(p: ThemePalette) {
       marginBottom: 16,
     },
     levelCardPressed: { opacity: 0.9 },
-    levelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-    levelLabel: { fontSize: 12, fontWeight: '800', color: p.linkOnBg, letterSpacing: 2 },
-    levelValue: { fontSize: 36, fontWeight: '900', color: C.text },
+    levelHeader: { marginBottom: 2 },
+    levelLabel: {
+      fontSize: 11,
+      fontWeight: '800',
+      color: C.muted,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+      marginBottom: 6,
+    },
+    levelValue: {
+      fontSize: 42,
+      fontWeight: '900',
+      color: C.text,
+      lineHeight: 44,
+      letterSpacing: -0.5,
+    },
     xpCaption: { marginTop: 8, fontSize: 12, color: C.muted, fontWeight: '600', lineHeight: 18 },
     track: {
       marginTop: 12, height: 12, borderRadius: 8,

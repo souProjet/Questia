@@ -655,7 +655,7 @@ export default function ShopScreen() {
                     <Text style={styles.balanceK}>Ton solde</Text>
                     <Animated.Text style={[styles.balanceNum, { transform: [{ scale: balanceScale }] }]}>
                       {balance.toLocaleString('fr-FR')}
-                      <Text style={styles.balanceQc}> QC</Text>
+                      <Text style={styles.balanceQc}> Quest Coins</Text>
                     </Animated.Text>
                   </View>
                 </Pressable>

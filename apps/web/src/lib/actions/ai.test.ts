@@ -73,6 +73,7 @@ describe('ai actions', () => {
         weatherIcon: 'Sun',
         temp: 20,
         isOutdoorFriendly: true,
+        hasUserLocation: true,
       },
     );
     expect(q.title).toBe('Test quête intérieure');
@@ -103,6 +104,7 @@ describe('ai actions', () => {
         weatherIcon: 'Sun',
         temp: 20,
         isOutdoorFriendly: false,
+        hasUserLocation: true,
       },
     );
     expect(q.mission).toBe(archetype.description);

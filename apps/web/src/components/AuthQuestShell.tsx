@@ -11,7 +11,7 @@ type AuthQuestShellProps = {
 
 export function AuthQuestShell({ badge, title, subtitle, children, footer }: AuthQuestShellProps) {
   return (
-    <div className="min-h-screen bg-adventure flex flex-col items-center justify-center px-4 py-10 sm:py-14 relative overflow-x-hidden">
+    <div className="min-h-screen bg-adventure flex flex-col items-center justify-start px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-10 sm:pt-8 sm:pb-14 md:pt-10 relative overflow-x-hidden">
       <div className="pointer-events-none absolute inset-0 bg-grid opacity-[0.35]" aria-hidden />
 
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
@@ -31,10 +31,10 @@ export function AuthQuestShell({ badge, title, subtitle, children, footer }: Aut
 
       <main id="main-content" tabIndex={-1} className="relative z-10 mx-auto w-full max-w-[440px] min-w-0 outline-none">
         <div className="rounded-3xl border border-[rgba(19,33,45,0.1)] bg-white/92 shadow-[0_16px_48px_-12px_rgba(15,23,42,0.14),0_4px_0_rgba(15,23,42,0.04)] backdrop-blur-sm p-6 sm:p-8">
-          <header className="mb-8 text-center">
+          <header className="mb-3 sm:mb-4 text-center">
             <Link
               href="/"
-              className="inline-flex items-center gap-3 mb-5 group transition-transform hover:-translate-y-0.5"
+              className="inline-flex items-center gap-3 mb-4 group transition-transform hover:-translate-y-0.5"
             >
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-black text-white"
@@ -48,7 +48,7 @@ export function AuthQuestShell({ badge, title, subtitle, children, footer }: Aut
               <span className="font-display font-black text-xl tracking-tight text-slate-900">QUESTIA</span>
             </Link>
 
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-3">
               <span className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-wide text-cyan-900 bg-cyan-50/80 border border-cyan-200/60">
                 {badge}
               </span>
@@ -58,7 +58,7 @@ export function AuthQuestShell({ badge, title, subtitle, children, footer }: Aut
             <p className="text-sm text-slate-500 leading-relaxed">{subtitle}</p>
           </header>
 
-          <div className="auth-clerk-root mx-auto w-full min-w-0 text-slate-900 [color-scheme:light]">
+          <div className="auth-clerk-root auth-clerk-root--tight mx-auto w-full min-w-0 text-slate-900 [color-scheme:light] -mt-6 sm:-mt-8">
             {children}
           </div>
 

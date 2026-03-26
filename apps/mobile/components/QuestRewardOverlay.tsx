@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { DisplayBadge, XpBreakdown } from '@questia/shared';
-import { levelFromTotalXp } from '@questia/shared';
+import {
+  levelFromTotalXp,
+  XP_PER_LEVEL,
+  xpBarSegmentsFromTotals,
+  xpBreakdownRowsFr,
+} from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
 
@@ -140,6 +145,64 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
     };
   }, [payload]);
 
+  const breakdownRows = useMemo(
+    () => (payload ? xpBreakdownRowsFr(payload.xpGain.breakdown) : []),
+    [payload],
+  );
+
+  const barAnim = useRef(new Animated.Value(0)).current;
+  const [barLevel, setBarLevel] = useState(1);
+  const [barXpIntoLabel, setBarXpIntoLabel] = useState(0);
+
+  useEffect(() => {
+    const id = barAnim.addListener(({ value }) => {
+      setBarXpIntoLabel(Math.round(value * XP_PER_LEVEL));
+    });
+    return () => barAnim.removeListener(id);
+  }, [barAnim]);
+
+  useEffect(() => {
+    if (!visible || !payload) return;
+    let cancelled = false;
+
+    const segments = xpBarSegmentsFromTotals(payload.xpGain.previousTotal, payload.xpGain.newTotal);
+    const start = levelFromTotalXp(payload.xpGain.previousTotal);
+
+    void AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
+      if (cancelled) return;
+      if (reduce) {
+        const end = levelFromTotalXp(payload.xpGain.newTotal);
+        setBarLevel(end.level);
+        barAnim.setValue(end.xpIntoLevel / XP_PER_LEVEL);
+        return;
+      }
+
+      setBarLevel(start.level);
+      barAnim.setValue(start.xpIntoLevel / XP_PER_LEVEL);
+
+      const runSeg = (i: number) => {
+        if (cancelled || i >= segments.length) return;
+        const seg = segments[i]!;
+        setBarLevel(seg.level);
+        barAnim.setValue(seg.fromPct);
+        Animated.timing(barAnim, {
+          toValue: seg.toPct,
+          duration: Math.abs(seg.toPct - seg.fromPct) < 1e-6 ? 0 : 700,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }).start(({ finished }) => {
+          if (finished && !cancelled) runSeg(i + 1);
+        });
+      };
+      runSeg(0);
+    });
+
+    return () => {
+      cancelled = true;
+      barAnim.stopAnimation();
+    };
+  }, [visible, payload, barAnim]);
+
   if (!payload) return null;
 
   const { xpGain, badgesUnlocked } = payload;
@@ -244,26 +307,42 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
               Total {xpGain.previousTotal} → <Text style={styles.totalBold}>{xpGain.newTotal}</Text>
             </Text>
 
+            <View style={styles.progressBox} accessibilityRole="summary">
+              <View style={styles.progressHeader}>
+                <Text style={styles.progressLevelLabel}>Niveau {barLevel}</Text>
+                <Text style={styles.progressMeta}>
+                  {barXpIntoLabel}/{XP_PER_LEVEL} XP dans ce niveau
+                </Text>
+              </View>
+              <View style={styles.progressTrack}>
+                <Animated.View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: barAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0%', '100%'],
+                      }),
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={styles.progressHint}>
+                Comme sur l’accueil : la barre se remplit dans ton niveau, puis repart à zéro si tu montes de palier.
+              </Text>
+            </View>
+
             <View style={styles.rulesBox}>
-              <Text style={styles.rulesTitle}>Détail</Text>
-              <Text style={styles.ruleLine}>
-                Base {xpGain.breakdown.basePhase} · {xpGain.breakdown.baseAfterArchetype} XP
-              </Text>
-              <Text style={styles.ruleLine}>
-                Série · +{xpGain.breakdown.streakBonus} (×{xpGain.breakdown.streakDays} j.)
-              </Text>
-              {xpGain.breakdown.outdoorBonus > 0 ? (
-                <Text style={styles.ruleLine}>Extérieur · +{xpGain.breakdown.outdoorBonus}</Text>
-              ) : null}
-              {xpGain.breakdown.fallbackPenalty > 0 ? (
-                <Text style={styles.ruleLineMuted}>Repli météo · −{xpGain.breakdown.fallbackPenalty}</Text>
-              ) : null}
-              {xpGain.breakdown.afterReroll ? (
-                <Text style={styles.ruleLineMuted}>Après relance · ×0,75 sur le sous-total</Text>
-              ) : null}
-              {xpGain.breakdown.shopBonusXp != null && xpGain.breakdown.shopBonusXp > 0 ? (
-                <Text style={styles.ruleShopBonus}>Bonus boutique · +{xpGain.breakdown.shopBonusXp} XP</Text>
-              ) : null}
+              <Text style={styles.rulesTitle}>Comment ces XP sont calculés</Text>
+              {breakdownRows.map((row) => (
+                <View key={row.key} style={styles.ruleCard}>
+                  <View style={styles.ruleCardTop}>
+                    <Text style={styles.ruleCardLabel}>{row.label}</Text>
+                    <Text style={styles.ruleCardValue}>{row.value}</Text>
+                  </View>
+                  <Text style={styles.ruleCardDetail}>{row.detail}</Text>
+                </View>
+              ))}
             </View>
 
             {badgesUnlocked.length > 0 ? (
@@ -396,25 +475,84 @@ function buildRewardStyles(p: ThemePalette) {
       fontWeight: '600',
     },
     totalBold: { color: p.linkOnBg, fontWeight: '900' },
+    progressBox: {
+      marginBottom: 14,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.cyan, 0.4),
+      padding: 14,
+      backgroundColor: colorWithAlpha(p.cyan, 0.07),
+    },
+    progressHeader: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      gap: 8,
+    },
+    progressLevelLabel: { fontSize: 12, fontWeight: '900', color: '#155e75' },
+    progressMeta: { fontSize: 11, fontWeight: '700', color: p.onCreamMuted },
+    progressTrack: {
+      marginTop: 8,
+      height: 8,
+      borderRadius: 999,
+      backgroundColor: p.trackMuted,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.cyan, 0.35),
+    },
+    progressFill: {
+      height: '100%',
+      borderRadius: 999,
+      backgroundColor: '#22d3ee',
+    },
+    progressHint: {
+      marginTop: 8,
+      fontSize: 10,
+      fontWeight: '600',
+      lineHeight: 14,
+      color: p.onCreamMuted,
+    },
     rulesBox: {
       backgroundColor: p.cardCream,
       borderRadius: 16,
-      padding: 16,
+      padding: 14,
       borderWidth: 1,
       borderColor: p.borderCyan,
       marginBottom: 14,
-      gap: 4,
+      gap: 10,
     },
     rulesTitle: {
       fontSize: 10,
       fontWeight: '900',
       letterSpacing: 2,
       color: p.linkOnBg,
-      marginBottom: 6,
+      marginBottom: 2,
     },
-    ruleLine: { fontSize: 12, color: p.onCream, fontWeight: '600' },
-    ruleLineMuted: { fontSize: 12, color: p.onCreamMuted, fontWeight: '600' },
-    ruleShopBonus: { fontSize: 12, color: '#047857', fontWeight: '900' },
+    ruleCard: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.cyan, 0.35),
+      backgroundColor: 'rgba(255,255,255,0.94)',
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+    },
+    ruleCardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      gap: 8,
+      flexWrap: 'wrap',
+    },
+    ruleCardLabel: { fontSize: 10, fontWeight: '900', color: '#155e75', flex: 1 },
+    ruleCardValue: { fontSize: 13, fontWeight: '900', color: p.onCream },
+    ruleCardDetail: {
+      marginTop: 6,
+      fontSize: 11,
+      fontWeight: '600',
+      lineHeight: 16,
+      color: p.onCreamMuted,
+    },
     badgeBlock: { marginBottom: 14, gap: 10 },
     badgeKicker: {
       fontSize: 11,

@@ -35,6 +35,8 @@ export interface QuestContext {
   weatherIcon: string; // Lucide icon name: Sun, CloudRain, Cloud, etc.
   temp: number;
   isOutdoorFriendly: boolean;
+  /** Coordonnées GPS valides fournies par le client (permission + position) — sinon pas de lieu nommé / carte */
+  hasUserLocation: boolean;
 }
 
 export interface GeneratedDailyQuest {
@@ -326,6 +328,24 @@ function buildUserPrompt(
 
   const variationSalt = `${profile.questDateIso}|${archetype.id}|${profile.congruenceDelta.toFixed(3)}|${profile.day}|${repairHint ? 'r1' : 'r0'}`;
 
+  const locationBlock = context.hasUserLocation
+    ? `CONTEXTE DU JOUR :
+- Ville : ${context.city}, ${context.country}
+- Météo : ${context.weatherIcon} ${context.weatherDescription}, ${Math.round(context.temp)}°C
+- Sortie en extérieur : ${context.isOutdoorFriendly ? 'Oui, météo favorable' : 'Déconseillé (mauvais temps)'}`
+    : `CONTEXTE DU JOUR (position non partagée ou indisponible) :
+- Tu ne connais pas la zone précise de l’utilisateur — ne cite pas de ville ni d’adresse.
+- Météo (indicative) : ${context.weatherIcon} ${context.weatherDescription}, ${Math.round(context.temp)}°C
+- Pas de sortie avec lieu cartographié : les missions restent chez soi, en intérieur ou formulées sans nom propre de lieu (pas de café, parc, place ou enseigne nommés).`;
+
+  const noNamedPlaceBlock = !context.hasUserLocation
+    ? `
+PAS DE LIEU NOMMÉ (obligatoire) :
+- N’invente aucun nom de lieu (restaurant, parc, musée, place, boutique, adresse).
+- Utilise des tournures génériques : « un café que tu ne connais pas encore », « un parc de ton quartier », « chez toi », « dans un lieu calme près de chez toi ».
+`
+    : '';
+
   return `Génère une quête quotidienne unique pour aujourd'hui.
 
 VARIATION (évite la copie) : ${variationSalt}
@@ -334,10 +354,8 @@ DATE DU JOUR : ${profile.questDateIso}
 - Le champ "hook" : phrase courte (max 15 mots), DIFFÉRENTE d'un jour à l'autre.
 - Évite les formules creuses (« Sois toi-même », « Crois en tes rêves »).
 
-CONTEXTE DU JOUR :
-- Ville : ${context.city}, ${context.country}
-- Météo : ${context.weatherIcon} ${context.weatherDescription}, ${Math.round(context.temp)}°C
-- Sortie en extérieur : ${context.isOutdoorFriendly ? 'Oui, météo favorable' : 'Déconseillé (mauvais temps)'}
+${locationBlock}
+${noNamedPlaceBlock}
 
 PROFIL OPÉRATIONNEL :
 - Jour n°${profile.day}
@@ -359,8 +377,8 @@ Durée minimale : ${archetype.minimumDurationMinutes} minutes
 
 RÈGLES ABSOLUES :
 1. La mission doit être CONCRÈTE (actions précises, objets, lieux, durée) — pas seulement « réfléchir ».
-2. Elle doit être faisable AUJOURD'HUI${cityMustAppearInMission(context.city) ? ` à ${context.city}` : ''}.
-3. ${context.isOutdoorFriendly ? 'Peut se passer en extérieur si isOutdoor est true.' : 'Doit se passer en intérieur ou sous abri.'}
+2. Elle doit être faisable AUJOURD'HUI${context.hasUserLocation && cityMustAppearInMission(context.city) ? ` à ${context.city}` : ''}.
+3. ${!context.hasUserLocation ? 'Sans position GPS partagée : pas de sortie extérieure avec lieu sur carte — isOutdoor reste false.' : context.isOutdoorFriendly ? 'Peut se passer en extérieur si isOutdoor est true.' : 'Doit se passer en intérieur ou sous abri.'}
 4. Adapte la durée à la météo.
 5. Zéro jargon psychologique ou clinique (pas de Big Five, pas de « traits »).
 6. Commence la mission par un verbe d’action à l’impératif ou « Va », « Prends », « Écris », etc.
@@ -376,7 +394,7 @@ Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[.
 {
   "icon": "...",
   "title": "titre court (4-6 mots max), intrigant",
-  "mission": "2-3 phrases précises${cityMustAppearInMission(context.city) ? `, mention naturelle de ${context.city}` : ''}",
+  "mission": "2-3 phrases précises${context.hasUserLocation && cityMustAppearInMission(context.city) ? `, mention naturelle de ${context.city}` : ''}",
   "hook": "max 15 mots",
   "duration": "ex: 45 min, 1h30",
   "isOutdoor": ${computedIsOutdoor},
@@ -460,7 +478,8 @@ export async function generateDailyQuest(
 
 ${QUEST_SYSTEM_GUARDRAILS}`;
 
-  const computedIsOutdoor = context.isOutdoorFriendly && archetype.requiresOutdoor;
+  const computedIsOutdoor =
+    context.hasUserLocation && context.isOutdoorFriendly && archetype.requiresOutdoor;
   const personalityBlock = buildPersonalityPromptBlock(
     profile.declaredPersonality,
     profile.exhibitedPersonality,

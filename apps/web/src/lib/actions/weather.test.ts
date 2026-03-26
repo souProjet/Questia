@@ -42,6 +42,7 @@ describe('weather actions', () => {
     const c = await getQuestContext();
     expect(c.city).toBe('ta ville');
     expect(c.isOutdoorFriendly).toBe(true);
+    expect(c.hasUserLocation).toBe(false);
   });
 
   it('getQuestContext avec météo OK', async () => {
@@ -64,6 +65,7 @@ describe('weather actions', () => {
     const c = await getQuestContext(45, 5);
     expect(c.city).toBe('Lyon');
     expect(['Sun', 'CloudSun']).toContain(c.weatherIcon);
+    expect(c.hasUserLocation).toBe(true);
   });
 
   it('getQuestContext fetch échoue → défaut', async () => {
@@ -73,5 +75,6 @@ describe('weather actions', () => {
     const { getQuestContext } = await import('./weather');
     const c = await getQuestContext(1, 2);
     expect(c.weatherDescription).toBe('Variable');
+    expect(c.hasUserLocation).toBe(true);
   });
 });

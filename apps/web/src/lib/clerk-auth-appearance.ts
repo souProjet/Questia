@@ -3,6 +3,10 @@
  * Complété par `.auth-clerk-root` dans globals.css pour les classes internes Clerk.
  */
 export const clerkAuthAppearance = {
+  /** Retire le logo Clerk (déjà dans AuthQuestShell) — sinon grand vide au-dessus de « Continuer avec Google » */
+  options: {
+    logoImageUrl: '',
+  },
   variables: {
     colorPrimary: '#f97316',
     colorBackground: '#ffffff',
@@ -12,17 +16,19 @@ export const clerkAuthAppearance = {
     colorInputText: '#0f172a',
     colorDanger: '#dc2626',
     borderRadius: '14px',
-    spacingUnit: '16px',
+    spacingUnit: '12px',
     fontFamily: 'var(--font-inter), ui-sans-serif, system-ui, sans-serif',
     fontSize: '0.9375rem',
   },
   elements: {
     rootBox: '!mx-auto !w-full !max-w-full !flex !flex-col !items-stretch',
     card: '!mx-auto !w-full !max-w-full !border-0 !bg-transparent !shadow-none',
-    main: '!mx-auto !w-full !max-w-full',
+    /** Titres masqués dans le shell ; le conteneur Clerk garde souvent une marge — resserrer sans casser les autres étapes */
+    header: '!m-0 !p-0 !min-h-0 !gap-0 !border-0 !shadow-none',
+    main: '!mx-auto !w-full !max-w-full !mt-0 !pt-0 !gap-3',
     headerTitle: 'hidden',
     headerSubtitle: 'hidden',
-    socialButtonsRoot: 'gap-3 !relative !overflow-hidden',
+    socialButtonsRoot: '!mt-0 !pt-0 gap-3 !relative !overflow-hidden',
     socialButtonsBlockButton:
       '!w-full !justify-center !border !border-slate-200 !bg-slate-50 !text-slate-800 !rounded-2xl !font-bold hover:!bg-cyan-50 hover:!border-cyan-300/60 transition-all duration-200',
     formButtonPrimary:
