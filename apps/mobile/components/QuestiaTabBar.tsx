@@ -5,6 +5,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../contexts/AppThemeContext';
 import { colorWithAlpha } from '@questia/ui';
+import { hapticSelection } from '../lib/haptics';
 
 const ICONS: Record<string, string> = {
   home: '⚔️',
@@ -56,6 +57,7 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
             canPreventDefault: true,
           });
           if (!focused && !event.defaultPrevented) {
+            hapticSelection();
             navigation.dispatch({
               ...CommonActions.navigate(route),
               target: state.key,

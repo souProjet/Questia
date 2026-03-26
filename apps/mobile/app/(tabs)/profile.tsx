@@ -22,6 +22,7 @@ import {
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../../contexts/AppThemeContext';
+import { hapticLight } from '../../lib/haptics';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
@@ -147,7 +148,10 @@ export default function ProfileScreen() {
           <Text style={styles.quadrant}>{quadrantLabel}</Text>
 
           <Pressable
-            onPress={() => router.push('/shop')}
+            onPress={() => {
+              hapticLight();
+              router.push('/shop');
+            }}
             accessibilityRole="button"
             accessibilityLabel="Niveau et XP"
             accessibilityHint="Ouvre la boutique pour bonus XP et cosm\u00e9tiques"
@@ -265,7 +269,10 @@ export default function ProfileScreen() {
           {/* D\u00e9connexion */}
           <Pressable
             style={({ pressed }) => [styles.signOutBtn, pressed && styles.signOutBtnPressed]}
-            onPress={() => void signOut()}
+            onPress={() => {
+              hapticLight();
+              void signOut();
+            }}
             accessibilityRole="button"
             accessibilityLabel="Se d\u00e9connecter"
           >

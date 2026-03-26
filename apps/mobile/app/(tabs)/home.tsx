@@ -33,6 +33,7 @@ import { useAppTheme } from '../../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/QuestRewardOverlay';
 import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
 import { QuestHomeLoading } from '../../components/QuestHomeLoading';
+import { hapticError, hapticMedium, hapticSuccess, hapticWarning } from '../../lib/haptics';
 
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
 const PRIVACY_URL = `${SITE_PUBLIC}/legal/confidentialite`;
@@ -385,6 +386,7 @@ export default function DashboardScreen() {
         body: JSON.stringify({ questDate: quest.questDate, safetyConsentGiven: quest.isOutdoor }),
       });
       if (res.ok) {
+        hapticMedium();
         const data = await res.json() as Partial<DailyQuest>;
         setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? prev.status) as DailyQuest['status'] } : null));
         setShowSafety(false);
@@ -427,14 +429,18 @@ export default function DashboardScreen() {
             : null,
         );
         if (data.xpGain) {
+          hapticSuccess();
           setReward({
             xpGain: data.xpGain,
             badgesUnlocked: data.badgesUnlocked ?? [],
           });
           setShowReward(true);
         } else {
+          hapticSuccess();
           router.push({ pathname: '/share-card', params: { questDate: qd } });
         }
+      } else {
+        hapticError();
       }
     } finally {
       setCompleting(false);
@@ -546,10 +552,12 @@ export default function DashboardScreen() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError((data as { error?: string }).error ?? 'Erreur relance');
+        hapticError();
         return;
       }
       const ok = await loadQuest(undefined, undefined, { questDate: quest.questDate, silent: true });
       if (ok) {
+        hapticMedium();
         setQuestCardSwapKey((k) => k + 1);
         await enrichQuestWithLocation();
       }
@@ -575,11 +583,13 @@ export default function DashboardScreen() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError((data as { error?: string }).error ?? 'Erreur report');
+        hapticError();
         return;
       }
       setShowReportModal(false);
       const ok = await loadQuest(undefined, undefined, { questDate: quest.questDate, silent: true });
       if (ok) {
+        hapticMedium();
         setQuestCardSwapKey((k) => k + 1);
         await enrichQuestWithLocation();
       }
@@ -602,8 +612,10 @@ export default function DashboardScreen() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError((data as { error?: string }).error ?? 'Erreur abandon');
+        hapticError();
         return;
       }
+      hapticWarning();
       const data = (await res.json()) as Partial<DailyQuest>;
       setQuest((prev) =>
         prev

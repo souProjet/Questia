@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { HISTORY_PAGE_SIZE, questDisplayEmoji, type EscalationPhase } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../../contexts/AppThemeContext';
+import { hapticLight, hapticSelection } from '../../lib/haptics';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -330,6 +331,7 @@ export default function HistoryScreen() {
   }, [filteredTx.length, transactions, txHasMore]);
 
   const setTab = (t: 'quests' | 'wallet') => {
+    hapticSelection();
     if (t === 'wallet') router.replace('/history?tab=wallet');
     else router.replace('/history');
   };
@@ -337,6 +339,7 @@ export default function HistoryScreen() {
   const onReuse = (q: QuestHistoryRow) => {
     const text = reusePayload(q);
     Clipboard.setString(text);
+    hapticLight();
     Alert.alert('Copié', 'Tu peux coller le texte où tu veux pour t’inspirer.');
   };
 

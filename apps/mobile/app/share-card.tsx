@@ -28,6 +28,7 @@ import {
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
+import { hapticLight, hapticMedium } from '../lib/haptics';
 
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
 
@@ -167,6 +168,7 @@ export default function ShareCardScreen() {
   }, []);
 
   const choosePhotoSource = useCallback(() => {
+    hapticLight();
     Alert.alert('Image de fond', 'Tu préfères importer ou prendre une photo ?', [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Galerie', onPress: () => void pickFromLibrary() },
@@ -187,6 +189,7 @@ export default function ShareCardScreen() {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma quête Questia',
         });
+        hapticMedium();
       } else {
         Alert.alert('Partage indisponible', 'Le partage n’est pas disponible sur cet appareil.');
       }
@@ -203,6 +206,7 @@ export default function ShareCardScreen() {
     const message = buildQuestShareMessage({ title: quest.title, webUrl });
     try {
       await Share.share({ message, title: 'Questia' });
+      hapticLight();
     } catch {
       /* annulé */
     }

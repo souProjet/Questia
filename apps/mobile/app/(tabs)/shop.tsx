@@ -34,6 +34,7 @@ import {
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../../contexts/AppThemeContext';
+import { hapticError, hapticLight, hapticSuccess } from '../../lib/haptics';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -408,6 +409,7 @@ export default function ShopScreen() {
   }, [load, runPurchaseCelebration]);
 
   const onRefresh = useCallback(() => {
+    hapticLight();
     setRefreshing(true);
     void load({ silent: true });
   }, [load]);
@@ -423,9 +425,11 @@ export default function ShopScreen() {
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
+        hapticError();
         setFlash({ message: data.error ?? 'Impossible de lancer le paiement.', kind: 'error' });
         return;
       }
+      hapticLight();
       stripeOpenedAt.current = Date.now();
       await WebBrowser.openBrowserAsync(data.url);
     } finally {
@@ -444,6 +448,7 @@ export default function ShopScreen() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
+        hapticError();
         setFlash({ message: data.error ?? 'Achat impossible.', kind: 'error' });
         return;
       }
@@ -468,9 +473,11 @@ export default function ShopScreen() {
     });
     if (!res.ok) {
       const j = (await res.json().catch(() => ({}))) as { error?: string };
+      hapticError();
       setFlash({ message: j.error ?? 'Impossible d’enregistrer.', kind: 'error' });
       return;
     }
+    hapticLight();
     const j = (await res.json()) as { shop?: ProfileShop };
     setShop(j.shop ?? null);
     if (patch.activeThemeId != null) void refreshAppTheme();
