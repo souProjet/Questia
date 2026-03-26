@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/Icons';
+import { QuestiaLogo } from '@/components/QuestiaLogo';
 import type { ExplorerAxis, RiskAxis } from '@questia/shared';
 
 // ── Questions ─────────────────────────────────────────────────────────────────
@@ -88,16 +89,9 @@ export default function OnboardingPage() {
       <main id="main-content" tabIndex={-1} className="relative w-full max-w-md outline-none">
 
         {/* Logo */}
-        <div className="flex flex-col items-center gap-2 mb-10">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-black text-white"
-              style={{ background: 'linear-gradient(135deg, #f97316, #fbbf24)', boxShadow: '0 6px 16px rgba(249,115,22,.3)' }}
-            >
-              ⚔
-            </div>
-            <span className="font-display font-black text-2xl tracking-tight text-[var(--text)]">QUESTIA</span>
-          </div>
+        <div className="mb-10 flex flex-col items-center gap-3">
+          <QuestiaLogo variant="onboarding" priority />
+          <span className="font-display font-black text-2xl tracking-tight text-[var(--text)]">QUESTIA</span>
           <span className="text-xs font-bold uppercase tracking-wider text-[var(--link-on-bg)]">
             🧭 Calibration du profil
           </span>

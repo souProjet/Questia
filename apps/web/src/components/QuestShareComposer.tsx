@@ -13,6 +13,7 @@ import {
   type QuestShareBackground,
 } from '@questia/shared';
 import { siteUrl } from '@/config/marketing';
+import { QuestiaLogo } from '@/components/QuestiaLogo';
 
 export interface QuestSharePayload {
   questDate: string;
@@ -141,24 +142,35 @@ function QuestShareCardFrame({
             flexShrink: 0,
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             gap: 12,
             padding: '14px 16px 6px',
           }}
         >
-          <span
+          <div
             style={{
-              fontFamily: fontDisplay,
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: '0.28em',
-              textTransform: 'uppercase',
-              color: panelDark ? 'rgba(248,250,252,0.96)' : '#0f172a',
-              textShadow: photoUrl ? '0 1px 10px rgba(0,0,0,0.55)' : '0 1px 0 rgba(255,255,255,0.4)',
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
             }}
           >
-            QUESTIA
-          </span>
+            <QuestiaLogo variant="card" />
+            <span
+              style={{
+                fontFamily: fontDisplay,
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: '0.28em',
+                textTransform: 'uppercase',
+                color: panelDark ? 'rgba(248,250,252,0.96)' : '#0f172a',
+                textShadow: photoUrl ? '0 1px 10px rgba(0,0,0,0.55)' : '0 1px 0 rgba(255,255,255,0.4)',
+              }}
+            >
+              QUESTIA
+            </span>
+          </div>
           <span
             style={{
               fontFamily: fontSans,
@@ -612,14 +624,14 @@ export function QuestShareComposer({
         <div className="mb-6 min-w-0">
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
           <div className="rounded-2xl border border-amber-200/55 bg-gradient-to-br from-amber-50/90 via-white to-cyan-50/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_28px_-12px_rgba(249,115,22,0.12)] sm:p-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-              <div className="min-w-0 sm:flex-1">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-x-8 lg:gap-y-4">
+              <div className="min-w-0">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Photo</p>
                 <p className="mt-1.5 text-sm font-semibold leading-snug text-slate-700">
                   Mets un cliché de ton moment : ta carte raconte mieux ton histoire.
                 </p>
               </div>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[min(100%,15.5rem)] sm:flex-shrink-0 sm:items-stretch">
+              <div className="flex w-full flex-col gap-2 lg:w-[min(100%,15.5rem)] lg:justify-self-end lg:items-stretch">
                 <button
                   type="button"
                   className="group relative inline-flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl border-2 border-cyan-400/70 bg-gradient-to-r from-cyan-50 via-white to-amber-50 px-5 py-3.5 text-base font-black text-cyan-950 shadow-[0_10px_36px_-10px_rgba(34,211,238,0.5),inset_0_1px_0_rgba(255,255,255,0.95)] ring-1 ring-cyan-300/35 transition-all duration-200 hover:border-cyan-500/85 hover:shadow-[0_14px_44px_-10px_rgba(34,211,238,0.55)] motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.99]"
@@ -635,7 +647,7 @@ export function QuestShareComposer({
                 {photoUrl ? (
                   <button
                     type="button"
-                    className="py-1 text-center text-sm font-bold text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700 sm:text-right"
+                    className="py-1 text-center text-sm font-bold text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700 lg:text-right"
                     onClick={clearPhoto}
                   >
                     Retirer la photo

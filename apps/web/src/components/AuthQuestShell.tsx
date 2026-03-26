@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { QuestiaLogo } from '@/components/QuestiaLogo';
 
 type AuthQuestShellProps = {
   badge: ReactNode;
@@ -34,17 +35,9 @@ export function AuthQuestShell({ badge, title, subtitle, children, footer }: Aut
           <header className="mb-3 sm:mb-4 text-center">
             <Link
               href="/"
-              className="inline-flex items-center gap-3 mb-4 group transition-transform hover:-translate-y-0.5"
+              className="mb-4 inline-flex flex-col items-center gap-2.5 transition-transform hover:-translate-y-0.5 sm:flex-row sm:gap-3"
             >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-black text-white"
-                style={{
-                  background: 'linear-gradient(135deg, #f97316, #fbbf24)',
-                  boxShadow: '0 6px 16px rgba(249,115,22,.3)',
-                }}
-              >
-                ⚔
-              </div>
+              <QuestiaLogo variant="auth" priority />
               <span className="font-display font-black text-xl tracking-tight text-slate-900">QUESTIA</span>
             </Link>
 

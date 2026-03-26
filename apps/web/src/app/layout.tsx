@@ -35,12 +35,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'fr_FR',
     siteName: 'Questia',
+    images: [{ url: '/brand/questia-logo.png', width: 512, height: 512, alt: 'Questia' }],
   },
   twitter: {
     card: 'summary',
     title: 'Questia — App de quêtes quotidiennes IRL',
     description:
       'Une quête par jour dans ta vraie vie. iOS, Android et web.',
+    images: ['/brand/questia-logo.png'],
   },
   robots: { index: true, follow: true },
 };

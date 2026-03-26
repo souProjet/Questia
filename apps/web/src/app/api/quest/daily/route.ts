@@ -18,6 +18,8 @@ import {
   parseValidRefinementAnswers,
   buildRefinementContextForPrompt,
   isValidReportDeferredDate,
+  isValidQuestDateIso,
+  getQuestCalendarDateNow,
 } from '@questia/shared';
 import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@questia/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
@@ -60,12 +62,6 @@ function inferWideDestinationSearch(mission: string): boolean {
       m,
     ) || /\b(road trip|week-end|weekend)\b/i.test(m)
   );
-}
-
-// ── Today's date in YYYY-MM-DD ─────────────────────────────────────────────────
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
 }
 
 /** Champs boutique / relances pour le client (thème, packs, crédits) */
@@ -122,6 +118,12 @@ export async function GET(request: NextRequest) {
   const lat = url.searchParams.get('lat') ? parseFloat(url.searchParams.get('lat')!) : undefined;
   const lon = url.searchParams.get('lon') ? parseFloat(url.searchParams.get('lon')!) : undefined;
   const requestedQuestDate = url.searchParams.get('questDate') ?? url.searchParams.get('date');
+  if (requestedQuestDate && !isValidQuestDateIso(requestedQuestDate)) {
+    return NextResponse.json(
+      { error: 'Paramètre questDate invalide (format AAAA-MM-JJ attendu).' },
+      { status: 400 },
+    );
+  }
 
   // Get profile
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
@@ -139,7 +141,7 @@ export async function GET(request: NextRequest) {
     completedQuestCount,
   );
 
-  const today = todayStr();
+  const today = getQuestCalendarDateNow();
 
   // ── Quête d’un autre jour (ex. carte partage / deeplink) ────────────────────
   if (requestedQuestDate && requestedQuestDate !== today) {
@@ -434,7 +436,7 @@ export async function POST(request: NextRequest) {
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
   if (!profile) return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
 
-  const today = body.questDate ?? todayStr();
+  const today = body.questDate ?? getQuestCalendarDateNow();
 
   // ── Report: relance + quête instantanée + date de reprise (consomme une relance) ──
   if (body.action === 'report') {

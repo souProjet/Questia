@@ -7,6 +7,7 @@ import { useAuth, UserButton } from '@clerk/nextjs';
 import { ChevronRight, HelpCircle, Map, MessageCircle, Smartphone, X, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AdminNavLink } from '@/components/AdminNavLink';
+import { QuestiaLogo } from '@/components/QuestiaLogo';
 
 const MARKETING_MENU: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '#hero-examples', label: 'Exemples', Icon: Map },
@@ -127,15 +128,7 @@ export function Navbar() {
           aria-label="Questia, accueil"
         >
           <span className="flex min-w-0 items-center gap-2 sm:gap-3" aria-hidden>
-            <div
-              className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl flex items-center justify-center text-sm sm:text-base font-black text-white group-hover:scale-105 transition-all"
-              style={{
-                background: 'linear-gradient(135deg, #f97316, #fbbf24)',
-                boxShadow: '0 8px 20px rgba(249,115,22,.35)',
-              }}
-            >
-              Q
-            </div>
+            <QuestiaLogo variant="navbar" priority className="group-hover:scale-[1.03] transition-transform motion-reduce:transition-none" />
             <span className="min-w-0 leading-none">
               <span className="font-display font-black text-base sm:text-lg tracking-tight text-[var(--text)] block whitespace-nowrap">
                 QUESTIA

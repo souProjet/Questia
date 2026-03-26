@@ -17,6 +17,7 @@ export function LandingJsonLd() {
   const appSchema: Record<string, unknown> = {
     '@type': 'SoftwareApplication',
     name: 'Questia',
+    image: `${siteUrl}/brand/questia-logo.png`,
     applicationCategory: 'LifestyleApplication',
     operatingSystem: 'iOS, Android, Web',
     description:
@@ -44,6 +45,7 @@ export function LandingJsonLd() {
       description:
         'Questia transforme ton quotidien en aventure : une quête IRL par jour, personnalisée.',
       inLanguage: 'fr-FR',
+      image: `${siteUrl}/brand/questia-logo.png`,
     },
     appSchema,
     faqSchema,

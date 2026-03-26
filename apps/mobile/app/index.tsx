@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated, ScrollView, useWindowDimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated, ScrollView, useWindowDimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -76,7 +76,12 @@ export default function OnboardingPage() {
         {step === 'welcome' && (
           <>
             <View style={s.iconBox}>
-              <Text style={s.iconText}>🗺️</Text>
+              <Image
+                source={require('../assets/icon.png')}
+                style={s.iconImage}
+                resizeMode="contain"
+                accessibilityIgnoresInvertColors
+              />
             </View>
             <Text style={[s.title, compact && s.titleCompact]}>Questia</Text>
             <Text style={[s.subtitle, compact && s.subtitleCompact]}>Une aventure quotidienne,{'\n'}rien que pour toi.</Text>
@@ -169,8 +174,21 @@ export default function OnboardingPage() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
 
-  iconBox: { width: 80, height: 80, borderRadius: 24, backgroundColor: 'rgba(34,211,238,.1)', borderWidth: 1, borderColor: 'rgba(249,115,22,.28)', justifyContent: 'center', alignItems: 'center', marginBottom: 24, alignSelf: 'center' },
-  iconText: { fontSize: 36 },
+  iconBox: {
+    width: 100,
+    height: 100,
+    borderRadius: 26,
+    overflow: 'hidden',
+    marginBottom: 24,
+    alignSelf: 'center',
+    padding: 10,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  iconImage: { width: '100%', height: '100%' },
 
   title: { fontSize: 32, fontWeight: '900', color: C.text, textAlign: 'center', letterSpacing: 1, marginBottom: 10 },
   titleCompact: { fontSize: 26, marginBottom: 8 },

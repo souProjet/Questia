@@ -345,7 +345,17 @@ export default function ShareCardScreen() {
 
             <View style={styles.cardInner}>
               <View style={styles.cardTopRow}>
-                <Text style={[styles.brand, panelDark && styles.brandLight]}>QUESTIA</Text>
+                <View style={styles.brandRow}>
+                  <View style={styles.brandLogoWrap}>
+                    <Image
+                      source={require('../assets/icon.png')}
+                      style={styles.brandLogoImg}
+                      resizeMode="contain"
+                      accessibilityIgnoresInvertColors
+                    />
+                  </View>
+                  <Text style={[styles.brand, panelDark && styles.brandLight]}>QUESTIA</Text>
+                </View>
                 <Text style={[styles.date, panelDark && styles.dateLight]} numberOfLines={2}>
                   {formatQuestDateFr(quest.questDate)}
                 </Text>
@@ -550,6 +560,15 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     borderStyle: 'dashed',
   },
   heroEmoji: { fontSize: 88, lineHeight: 88, zIndex: 1 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1, minWidth: 0 },
+  brandLogoWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    overflow: 'hidden',
+    padding: 2,
+  },
+  brandLogoImg: { width: '100%', height: '100%' },
   brand: { fontSize: 10, fontWeight: '900', letterSpacing: 3.2, color: p.onCream },
   brandLight: { color: 'rgba(248,250,252,0.95)' },
   date: {

@@ -8,6 +8,8 @@
     "scheme": "questia",
     "userInterfaceStyle": "dark",
     "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#0a0a0f"
     },
     "ios": {

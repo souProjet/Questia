@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
+import { QuestiaLogo } from '@/components/QuestiaLogo';
 import { QuestExamplesSlider, type ExampleQuestSlide } from '@/components/QuestExamplesSlider';
 import { AppStoreButtons } from '@/components/AppStoreButtons';
 import { LandingJsonLd } from '@/components/LandingJsonLd';
@@ -35,11 +36,13 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'fr_FR',
     siteName: 'Questia',
+    images: [{ url: '/brand/questia-logo.png', width: 512, height: 512, alt: 'Questia' }],
   },
   twitter: {
     card: 'summary',
     title: 'Questia — App de quêtes quotidiennes IRL',
     description: seoDescription,
+    images: ['/brand/questia-logo.png'],
   },
 };
 
@@ -456,7 +459,10 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-3 sm:px-4 sm:px-6 py-10 sm:py-12 md:py-14">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8 sm:gap-10 md:gap-12">
             <div className="max-w-sm">
-              <p className="font-display font-black text-lg tracking-tight text-slate-900">Questia</p>
+              <div className="flex items-center gap-3">
+                <QuestiaLogo variant="footer" />
+                <p className="font-display font-black text-lg tracking-tight text-slate-900">Questia</p>
+              </div>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">
                 Des quêtes courtes dans la vraie vie — une mission par jour, sans te mettre la pression.
               </p>

@@ -9,8 +9,8 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { DA } from '@questia/ui';
@@ -169,14 +169,14 @@ export default function AuthScreen() {
       >
         {/* Logo */}
         <View style={s.logoSection}>
-          <LinearGradient
-            colors={['#f97316', '#fbbf24']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={s.logoIcon}
-          >
-            <Text style={s.logoIconText}>{'\u2694'}</Text>
-          </LinearGradient>
+          <View style={s.logoIcon}>
+            <Image
+              source={require('../../assets/icon.png')}
+              style={s.logoIconImage}
+              resizeMode="contain"
+              accessibilityIgnoresInvertColors
+            />
+          </View>
           <Text style={s.appTitle}>QUESTIA</Text>
           <View style={s.badgeRow}>
             <Text style={s.badgeText}>
@@ -282,23 +282,19 @@ const s = StyleSheet.create({
     marginBottom: 32,
   },
   logoIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-    shadowColor: '#f97316',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
+    width: 76,
+    height: 76,
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 16,
+    padding: 8,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 14,
-    elevation: 8,
+    elevation: 6,
   },
-  logoIconText: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '900',
-  },
+  logoIconImage: { width: '100%', height: '100%' },
   appTitle: {
     fontSize: 24,
     fontWeight: '900',

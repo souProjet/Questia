@@ -22,6 +22,7 @@ import {
   formatQuestDateFr,
   REPORT_DEFER_MAX_DAYS,
   QUEST_LOADER_DAY_STORAGE_KEY,
+  getQuestCalendarDateNow,
 } from '@questia/shared';
 
 const QuestDestinationMap = dynamic(
@@ -188,9 +189,7 @@ function AppPageContent() {
     return isValidQuestDateIso(raw) ? raw : null;
   }, [searchParams]);
   /** Jour calendaire courant (mis à jour au passage de minuit / retour sur l’onglet) — évite l’état « figé » si l’onglet reste ouvert. */
-  const [calendarDay, setCalendarDay] = useState(() =>
-    new Date().toISOString().slice(0, 10),
-  );
+  const [calendarDay, setCalendarDay] = useState(() => getQuestCalendarDateNow());
   const reportDateMax = useMemo(() => {
     const d = new Date(`${calendarDay}T12:00:00.000Z`);
     d.setUTCDate(d.getUTCDate() + REPORT_DEFER_MAX_DAYS);
@@ -282,12 +281,31 @@ function AppPageContent() {
         if (qd) sp.set('questDate', qd);
         const qs = sp.toString() ? `?${sp.toString()}` : '';
         const res = await fetch(`/api/quest/daily${qs}`, { cache: 'no-store' });
-        if (res.status === 404) {
-          if (!silent) setError('Crée d\'abord ton profil via l\'onboarding.');
+        let payload: unknown;
+        try {
+          payload = await res.json();
+        } catch {
+          payload = {};
+        }
+        if (!res.ok) {
+          if (!silent) {
+            const err = (payload as { error?: string }).error;
+            if (res.status === 401) {
+              setError(err ?? 'Connecte-toi pour ouvrir ta quête.');
+            } else if (res.status === 404) {
+              setError(
+                err ??
+                  'Aucune quête pour cette date, ou profil introuvable.',
+              );
+            } else if (res.status === 400) {
+              setError(err ?? 'Lien de quête invalide.');
+            } else {
+              setError(err ?? 'Impossible de charger la quête.');
+            }
+          }
           return false;
         }
-        if (!res.ok) throw new Error('Erreur serveur');
-        const data = await res.json() as DailyQuest;
+        const data = payload as DailyQuest;
         setQuest(data);
         if (data.refinement?.due && data.refinement.questions?.length) {
           setShowRefinement(true);
@@ -336,7 +354,7 @@ function AppPageContent() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const syncDay = () => {
-      const d = new Date().toISOString().slice(0, 10);
+      const d = getQuestCalendarDateNow();
       setCalendarDay((prev) => (prev !== d ? d : prev));
     };
     const id = window.setInterval(syncDay, 60_000);
@@ -357,7 +375,7 @@ function AppPageContent() {
   useEffect(() => {
     if (!quest || typeof window === 'undefined') return;
     try {
-      localStorage.setItem(QUEST_LOADER_DAY_STORAGE_KEY, new Date().toISOString().slice(0, 10));
+      localStorage.setItem(QUEST_LOADER_DAY_STORAGE_KEY, getQuestCalendarDateNow());
     } catch {
       /* quota / navigation privée */
     }
