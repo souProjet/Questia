@@ -33,7 +33,7 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
 
   return (
     <div
-      className={`flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 sm:gap-6 ${className}`}
+      className={`flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 sm:gap-6 w-full min-w-0 ${className}`}
       role="group"
       aria-label="Télécharger l'application Questia"
     >
@@ -50,7 +50,7 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
             alt="Télécharger dans l’App Store"
             width={250}
             height={83}
-            className={`block w-auto max-w-[min(100vw-2rem,280px)] ${hApple} ${imgShadow}`}
+            className={`block w-auto max-w-[min(100%,calc(100vw-1.5rem))] sm:max-w-[min(100vw-2rem,280px)] ${hApple} ${imgShadow}`}
             loading="lazy"
             decoding="async"
           />
@@ -74,7 +74,7 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
             alt="Disponible sur Google Play"
             width={646}
             height={250}
-            className={`block w-auto max-w-[min(100vw-2rem,300px)] ${hGoogle} ${imgShadow} mix-blend-multiply`}
+            className={`block w-auto max-w-[min(100%,calc(100vw-1.5rem))] sm:max-w-[min(100vw-2rem,300px)] ${hGoogle} ${imgShadow} mix-blend-multiply`}
             loading="lazy"
             decoding="async"
           />

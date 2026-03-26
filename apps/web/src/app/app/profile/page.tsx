@@ -133,9 +133,9 @@ export default function ProfilePage() {
       : getBadgeCatalogForUi(data?.badgesEarned);
 
   return (
-    <div className="min-h-screen bg-adventure">
+    <div className="min-h-screen bg-adventure overflow-x-hidden">
       <Navbar />
-      <main id="main-content" tabIndex={-1} className="relative z-10 max-w-2xl mx-auto px-4 pt-24 pb-20 outline-none">
+      <main id="main-content" tabIndex={-1} className="relative z-10 max-w-2xl mx-auto px-3 sm:px-5 pt-24 pb-20 outline-none">
         <div className="flex flex-wrap gap-4 mb-6">
           <Link
             href="/app"
@@ -266,20 +266,6 @@ export default function ProfilePage() {
             </ul>
 
             <section className="mt-12 space-y-6">
-
-              {/* ── Données & IA ── */}
-              <div className="rounded-2xl border border-[var(--border-ui)] bg-[var(--card)] p-5 sm:p-6 shadow-sm">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xl leading-none" aria-hidden>🤖</span>
-                  <h3 className="text-base font-black text-[var(--text)]">Données personnelles et IA</h3>
-                </div>
-                <p className="text-sm text-[var(--muted)] leading-relaxed">
-                  Les textes de quête sont générés par intelligence artificielle à partir de ton profil,
-                  du contexte (météo, lieu) et de règles internes. Ce contenu est une suggestion ludique,
-                  pas un conseil médical ou psychologique. Tu peux consulter le détail des traitements et
-                  tes droits dans la <Link href="/legal/confidentialite" className="underline underline-offset-2 hover:text-cyan-700 transition-colors">politique de confidentialité</Link>.
-                </p>
-              </div>
 
               {/* ── Liens légaux ── */}
               <div className="rounded-2xl border border-[var(--border-ui)] bg-[var(--card)] p-5 sm:p-6 shadow-sm">

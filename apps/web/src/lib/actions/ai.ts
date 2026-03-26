@@ -180,6 +180,38 @@ function cityMustAppearInMission(city: string): boolean {
   return c.length > 2 && c !== 'ta ville';
 }
 
+/** Si la ville doit être présente mais que le modèle l’a omise, on complète sans rejeter toute la réponse. */
+function ensureCityInMission(mission: string, city: string): string {
+  const c = city.trim();
+  if (!cityMustAppearInMission(city)) return mission.trim();
+  const m = mission.trim();
+  if (!m) return m;
+  if (m.toLowerCase().includes(c.toLowerCase())) return m;
+  return `${m} — à ${c}.`;
+}
+
+/** Réponse de secours : texte canon de l’archétype (taxonomie), pas une variante IA. */
+function buildFallbackDailyQuest(
+  archetype: QuestModel,
+  profile: DailyQuestProfileInput,
+  computedIsOutdoor: boolean,
+): GeneratedDailyQuest {
+  return {
+    icon: 'Swords',
+    title: archetype.title,
+    mission: archetype.description,
+    hook: pickFallbackHook(profile.questDateIso, archetype.id),
+    duration: `${archetype.minimumDurationMinutes} min`,
+    isOutdoor: computedIsOutdoor,
+    safetyNote: computedIsOutdoor ? 'Privilégie les lieux fréquentés et bien éclairés.' : null,
+    archetype: archetype.title,
+    destinationLabel: null,
+    destinationQuery: null,
+  };
+}
+
+const DAILY_QUEST_MAX_ATTEMPTS = 3;
+
 function validateGeneratedPayload(
   parsed: {
     title: string;
@@ -199,7 +231,7 @@ function validateGeneratedPayload(
   if (title.length < 3 || title.length > 90) {
     return { ok: false, reason: 'titre trop court ou trop long' };
   }
-  if (mission.length < 38) {
+  if (mission.length < 28) {
     return { ok: false, reason: 'mission pas assez concrète (trop courte)' };
   }
   if (hook.length < 6 || hook.split(/\s+/).length > 22) {
@@ -219,6 +251,20 @@ function validateGeneratedPayload(
     const query = (parsed.destinationQuery ?? '').trim();
     if (label.length < 2 || query.length < 6) {
       return { ok: false, reason: 'lieu extérieur : destinationLabel et destinationQuery requis' };
+    }
+    const badLabel =
+      /^null$/i.test(label) ||
+      /^undefined$/i.test(label) ||
+      /^lieu de la quête$/i.test(label) ||
+      /^nom (court )?du lieu$/i.test(label) ||
+      /^lieu$/i.test(label) ||
+      /^un lieu/i.test(label);
+    if (badLabel) {
+      return {
+        ok: false,
+        reason:
+          'destinationLabel doit être le nom réel du lieu (ex. marché couvert, place du village), pas un texte générique',
+      };
     }
   }
   if (archetype.requiresSocial) {
@@ -319,7 +365,10 @@ RÈGLES ABSOLUES :
 5. Zéro jargon psychologique ou clinique (pas de Big Five, pas de « traits »).
 6. Commence la mission par un verbe d’action à l’impératif ou « Va », « Prends », « Écris », etc.
 7. isOutdoor doit être EXACTEMENT : ${computedIsOutdoor}
-8. ${computedIsOutdoor ? `Si isOutdoor true : UN lieu public réel à ${context.city} ; destinationQuery = "Lieu, ${context.city}, ${context.country}"` : 'Si isOutdoor false : destinationLabel et destinationQuery à null.'}
+8. ${computedIsOutdoor ? `Si isOutdoor true :
+   - Lieu public réel et identifiable. destinationLabel = nom court (ex. « Marché couvert », « Place de la Mairie ») — JAMAIS « lieu de la quête », « null », « nom du lieu » ni placeholder.
+   - destinationQuery : texte pour géocoder le lieu (ex. « Nom du lieu, ${context.city}, ${context.country} »).
+   - COHÉRENCE GÉO : le lieu doit coller à la mission (même type de lieu : parc si la mission parle d’un parc). Si la mission est locale (quartier, village, rencontre du jour, café du coin), reste dans l’aire de ${context.city}. Si la mission décrit explicitement un autre lieu, une autre commune ou un déplacement plus large, destinationQuery doit nommer clairement cette zone pour que le point sur la carte soit pertinent.` : 'Si isOutdoor false : destinationLabel et destinationQuery à null.'}
 ${archetype.requiresSocial ? '9. Cette famille implique une interaction sociale réelle (inconnu, proche, message, appel…) — intègre-la dans la mission.\n' : ''}
 10. Respecte les garde-fous de sécurité : pas de danger physique, pas de conseils médicaux ou thérapeutiques, pas d’incitation à l’illégalité ou à la haine.
 
@@ -332,8 +381,8 @@ Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[.
   "duration": "ex: 45 min, 1h30",
   "isOutdoor": ${computedIsOutdoor},
   "safetyNote": ${computedIsOutdoor ? 'string court ou null' : 'null'},
-  "destinationLabel": ${computedIsOutdoor ? `"nom court du lieu"` : 'null'},
-  "destinationQuery": ${computedIsOutdoor ? `"Lieu, ${context.city}, ${context.country}"` : 'null'}
+  "destinationLabel": ${computedIsOutdoor ? `"ex: Marché couvert du centre"` : 'null'},
+  "destinationQuery": ${computedIsOutdoor ? `"${context.city}, ${context.country}"` : 'null'}
 }`;
 }
 
@@ -420,9 +469,24 @@ ${QUEST_SYSTEM_GUARDRAILS}`;
   const categoryFr = archetypeCategoryLabelFr(archetype.category);
   const targetTraitsLine = describeArchetypeTargetTraits(archetype);
 
+  const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY?.trim());
+  if (!hasOpenAiKey) {
+    logStructured({
+      domain: 'ai',
+      operation: 'generateDailyQuest',
+      level: 'warn',
+      outcome: 'skipped',
+      meta: {
+        reason: 'OPENAI_API_KEY missing or empty',
+        archetypeId: archetype.id,
+      },
+    });
+    return buildFallbackDailyQuest(archetype, safeProfile, computedIsOutdoor);
+  }
+
   let repairHint: string | null = null;
 
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < DAILY_QUEST_MAX_ATTEMPTS; attempt++) {
     try {
       const user = buildUserPrompt(
         safeProfile,
@@ -434,7 +498,17 @@ ${QUEST_SYSTEM_GUARDRAILS}`;
         targetTraitsLine,
         repairHint,
       );
-      const temperature = attempt === 0 ? 0.78 : 0.62;
+      const temperature = profile.isRerollGeneration
+        ? attempt === 0
+          ? 0.88
+          : attempt === 1
+            ? 0.7
+            : 0.62
+        : attempt === 0
+          ? 0.78
+          : attempt === 1
+            ? 0.62
+            : 0.55;
       const raw = await callModel(user, system, temperature);
       const parsedRaw = JSON.parse(raw) as Record<string, unknown>;
 
@@ -442,7 +516,10 @@ ${QUEST_SYSTEM_GUARDRAILS}`;
         ...parsedRaw,
         icon: normalizeIcon(parsedRaw.icon ?? parsedRaw.emoji),
         title: typeof parsedRaw.title === 'string' ? parsedRaw.title.trim() : '',
-        mission: typeof parsedRaw.mission === 'string' ? parsedRaw.mission.trim() : '',
+        mission: ensureCityInMission(
+          typeof parsedRaw.mission === 'string' ? parsedRaw.mission.trim() : '',
+          context.city,
+        ),
         hook: typeof parsedRaw.hook === 'string' ? parsedRaw.hook.trim() : '',
         duration: typeof parsedRaw.duration === 'string' ? parsedRaw.duration.trim() : `${archetype.minimumDurationMinutes} min`,
         isOutdoor: computedIsOutdoor,
@@ -487,7 +564,7 @@ ${QUEST_SYSTEM_GUARDRAILS}`;
           ...normalized,
           safetyNote:
             computedIsOutdoor && archetype.requiresOutdoor && !note
-              ? 'Reste dans des zones sûres et éclairées.'
+              ? 'Privilégie les lieux fréquentés et bien éclairés.'
               : note,
         };
       }
@@ -502,21 +579,15 @@ ${QUEST_SYSTEM_GUARDRAILS}`;
     operation: 'generateDailyQuest',
     level: 'warn',
     outcome: 'fallback',
-    meta: { archetypeId: archetype.id, attempts: 2, isOutdoor: computedIsOutdoor },
+    meta: {
+      archetypeId: archetype.id,
+      attempts: DAILY_QUEST_MAX_ATTEMPTS,
+      isOutdoor: computedIsOutdoor,
+      lastRepairHint: repairHint ?? undefined,
+    },
   });
 
-  return {
-    icon: 'Swords',
-    title: archetype.title,
-    mission: archetype.description,
-    hook: pickFallbackHook(profile.questDateIso, archetype.id),
-    duration: `${archetype.minimumDurationMinutes} min`,
-    isOutdoor: computedIsOutdoor,
-    safetyNote: computedIsOutdoor ? 'Reste dans des zones sûres et éclairées.' : null,
-    archetype: archetype.title,
-    destinationLabel: null,
-    destinationQuery: null,
-  } as GeneratedDailyQuest;
+  return buildFallbackDailyQuest(archetype, safeProfile, computedIsOutdoor);
 }
 
 // ── Legacy: kept for /api/quest/accept backward compat ───────────────────────

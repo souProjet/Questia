@@ -1,9 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
 export type QuestDestinationPayload = {
   label: string;
@@ -11,31 +9,20 @@ export type QuestDestinationPayload = {
   lon: number | null;
 };
 
-function useFixLeafletIcons() {
-  useEffect(() => {
-    delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: string })._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl:
-        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    });
-  }, []);
-}
-
-function FitRoute({ positions }: { positions: [number, number][] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (positions.length < 1) return;
-    if (positions.length === 1) {
-      map.setView(positions[0], 15);
-      return;
-    }
-    const bounds = L.latLngBounds(positions.map((p) => [p[0], p[1]]));
-    map.fitBounds(bounds, { padding: [36, 36], maxZoom: 15 });
-  }, [map, positions]);
-  return null;
-}
+const QuestDestinationMapLeaflet = dynamic(
+  () => import('./QuestDestinationMapLeaflet'),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="flex h-full w-full items-center justify-center bg-gradient-to-b from-cyan-50/80 to-white text-xs font-medium text-[var(--muted)]"
+        aria-hidden
+      >
+        Chargement de la carte…
+      </div>
+    ),
+  },
+);
 
 async function fetchFootRoute(
   from: { lat: number; lon: number },
@@ -60,7 +47,6 @@ export default function QuestDestinationMap({
   destination: QuestDestinationPayload;
   userPosition: { lat: number; lon: number } | null;
 }) {
-  useFixLeafletIcons();
   const [route, setRoute] = useState<[number, number][] | null>(null);
   const [routeError, setRouteError] = useState(false);
 
@@ -89,15 +75,15 @@ export default function QuestDestinationMap({
     return () => ac.abort();
   }, [dest, userPosition]);
 
-  const googleSearch = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination.label)}`;
-  const googleDir =
-    dest && userPosition
-      ? `https://www.google.com/maps/dir/?api=1&origin=${userPosition.lat},${userPosition.lon}&destination=${dest.lat},${dest.lon}&travelmode=walking`
-      : null;
-  const osmDir =
-    dest && userPosition
-      ? `https://www.openstreetmap.org/directions?engine=fossgis_osrm_foot&route=${userPosition.lat}%2C${userPosition.lon}%3B${dest.lat}%2C${dest.lon}`
-      : null;
+  const googleMapsHref = useMemo(() => {
+    if (dest && userPosition) {
+      return `https://www.google.com/maps/dir/?api=1&origin=${userPosition.lat},${userPosition.lon}&destination=${dest.lat},${dest.lon}&travelmode=walking`;
+    }
+    if (dest) {
+      return `https://www.google.com/maps/search/?api=1&query=${dest.lat},${dest.lon}`;
+    }
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination.label)}`;
+  }, [dest, userPosition, destination.label]);
 
   const center = useMemo((): [number, number] => {
     if (dest) return [dest.lat, dest.lon];
@@ -112,101 +98,70 @@ export default function QuestDestinationMap({
     return pts;
   }, [route, dest, userPosition]);
 
+  const mapInstanceKey = dest ? `${dest.lat}-${dest.lon}` : 'map';
+
+  const labelTrim = destination.label.trim();
+  const mapPopupLabel =
+    !labelTrim ||
+    /^null$/i.test(labelTrim) ||
+    /^undefined$/i.test(labelTrim) ||
+    /^lieu de la quête$/i.test(labelTrim)
+      ? 'Point de rendez-vous'
+      : destination.label;
+
   if (!dest) {
     return (
-      <div className="rounded-2xl border border-cyan-200/70 bg-white/90 p-4 shadow-sm">
-        <p className="text-sm font-bold text-cyan-950">📍 {destination.label}</p>
-        <p className="mt-1 text-xs text-[var(--on-cream-muted)]">
-          Le lieu n’a pas pu être placé sur une carte automatiquement. Ouvre la recherche ci-dessous.
+      <div className="rounded-2xl border border-cyan-200/50 bg-gradient-to-br from-white via-cyan-50/30 to-white p-4 shadow-sm ring-1 ring-cyan-100/70">
+        <p className="text-sm font-semibold text-cyan-950">
+          📍{' '}
+          {!destination.label.trim() || /^null$/i.test(destination.label.trim())
+            ? 'Lieu à préciser'
+            : destination.label}
+        </p>
+        <p className="mt-2 text-xs leading-relaxed text-[var(--on-cream-muted)]">
+          Le lieu n’a pas pu être placé sur la carte. Ouvre Google Maps pour t’orienter.
         </p>
         <a
-          href={googleSearch}
+          href={googleMapsHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-2.5 text-sm font-black text-white shadow-md"
+          className="btn btn-primary btn-md mt-4 w-full font-semibold"
         >
-          Ouvrir dans Maps
+          Ouvrir dans Google Maps
         </a>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-hidden rounded-2xl border border-cyan-200/70 shadow-md ring-1 ring-cyan-100/80">
+    <div className="space-y-4">
+      <div className="overflow-hidden rounded-2xl border border-cyan-200/45 bg-white/40 shadow-[0_8px_30px_-12px_rgba(34,211,238,0.25)] ring-1 ring-cyan-100/80">
         <div className="h-[min(58vw,300px)] w-full min-h-[220px] sm:h-[280px]">
-          <MapContainer
+          <QuestDestinationMapLeaflet
+            key={mapInstanceKey}
+            mapKey={mapInstanceKey}
             center={center}
-            zoom={14}
-            className="h-full w-full z-0"
-            scrollWheelZoom
-            attributionControl
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {route && route.length > 1 ? (
-              <Polyline
-                positions={route}
-                pathOptions={{ color: '#0891b2', weight: 5, opacity: 0.88 }}
-              />
-            ) : null}
-            <Marker position={[dest.lat, dest.lon]}>
-              <Popup>
-                <span className="font-semibold">Lieu de la quête</span>
-                <br />
-                {destination.label}
-              </Popup>
-            </Marker>
-            {userPosition ? (
-              <Marker position={[userPosition.lat, userPosition.lon]}>
-                <Popup>Toi (approx.)</Popup>
-              </Marker>
-            ) : null}
-            <FitRoute positions={positionsForFit} />
-          </MapContainer>
+            dest={dest}
+            destinationLabel={mapPopupLabel}
+            route={route}
+            userPosition={userPosition}
+            positionsForFit={positionsForFit}
+          />
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        {googleDir ? (
-          <a
-            href={googleDir}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-2.5 text-center text-sm font-black text-white shadow-md"
-          >
-            Itinéraire à pied (Google Maps)
-          </a>
-        ) : (
-          <p className="text-xs text-[var(--on-cream-muted)]">
-            Active la localisation dans le navigateur pour tracer un itinéraire depuis ta position.
-          </p>
-        )}
-        {osmDir ? (
-          <a
-            href={osmDir}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex flex-1 items-center justify-center rounded-xl border-2 border-cyan-300/60 bg-white px-4 py-2.5 text-center text-sm font-bold text-cyan-950"
-          >
-            Itinéraire (OpenStreetMap)
-          </a>
-        ) : null}
-        <a
-          href={googleSearch}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-center text-xs font-bold text-slate-700"
-        >
-          Rechercher « {destination.label} »
-        </a>
-      </div>
+      <a
+        href={googleMapsHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn btn-primary btn-md w-full font-semibold"
+      >
+        {userPosition ? 'Itinéraire dans Google Maps' : 'Voir dans Google Maps'}
+      </a>
 
       {routeError ? (
-        <p className="text-xs text-amber-800">
-          L’itinéraire à pied n’a pas pu être calculé (serveur occupé). Utilise le bouton Google Maps.
+        <p className="text-center text-xs text-amber-800/90">
+          L’itinéraire à pied n’a pas pu être calculé. Utilise le lien ci-dessus.
         </p>
       ) : null}
     </div>

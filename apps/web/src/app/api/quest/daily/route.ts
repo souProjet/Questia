@@ -22,7 +22,7 @@ import {
 import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@questia/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
 import { getQuestContext } from '@/lib/actions/weather';
-import { geocodeNominatim } from '@/lib/geocode';
+import { geocodeNominatim, shortenDisplayName } from '@/lib/geocode';
 import { Prisma } from '@prisma/client';
 import { badgeIdsSet, parseBadgesEarned, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
@@ -30,6 +30,37 @@ import { getNarrationDirectiveForPack } from '@/lib/narrationPack';
 import { getRefinementSurveyPayload } from '@/lib/refinementPayload';
 
 export const dynamic = 'force-dynamic';
+
+/** Libellés génériques renvoyés par le modèle ou des prompts — à ignorer au profit du géocodage. */
+function isPlaceholderDestinationLabel(s: string): boolean {
+  const t = s.trim().toLowerCase();
+  if (t.length < 2) return true;
+  if (t === 'lieu de la quête' || t === 'nom court du lieu' || t === 'lieu') return true;
+  if (/^nom (court )?du lieu$/i.test(t)) return true;
+  if (/^lieu (public|de la quête|suggéré)$/i.test(t)) return true;
+  return false;
+}
+
+/** Évite d’afficher « null » / « undefined » (JSON ou bugs modèle). */
+function sanitizeDestinationLabelForStorage(s: string | null | undefined): string | null {
+  if (s == null) return null;
+  const t = s.trim();
+  if (!t || /^null$/i.test(t) || /^undefined$/i.test(t)) return null;
+  return t;
+}
+
+/**
+ * Mission qui évoque un déplacement large ou une autre zone : recherche géo moins contrainte
+ * (viewbox plus large ; le fallback sans viewbox reste possible).
+ */
+function inferWideDestinationSearch(mission: string): boolean {
+  const m = mission.toLowerCase();
+  return (
+    /\b(autre ville|autre région|autre commune|ailleurs|loin|voyage|explorer loin|déplacement|km|kilomètre|kilometre|pays|hors de la ville|autre département)\b/i.test(
+      m,
+    ) || /\b(road trip|week-end|weekend)\b/i.test(m)
+  );
+}
 
 // ── Today's date in YYYY-MM-DD ─────────────────────────────────────────────────
 
@@ -191,6 +222,10 @@ export async function GET(request: NextRequest) {
   const congruenceDelta = computeCongruenceDelta(declaredPersonality, exhibited);
   const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs);
   const recentIds = recentLogs.slice(0, 7).map((r) => r.archetypeId);
+  /** Après relance/report, l’archétype supprimé n’est plus dans l’historique — on l’exclut quand même pour éviter la même quête. */
+  const extraExclude =
+    profile.rerollExcludeArchetypeId != null ? [profile.rerollExcludeArchetypeId] : [];
+  const recentIdsForSelect = Array.from(new Set([...recentIds, ...extraExclude]));
 
   const storedRefinementAnswers =
     (profile.refinementSchemaVersion ?? 0) >= REFINEMENT_SCHEMA_VERSION
@@ -205,7 +240,7 @@ export async function GET(request: NextRequest) {
   let archetype = selectQuest(
     declaredPersonality,
     effectivePhase,
-    recentIds,
+    recentIdsForSelect,
     context.isOutdoorFriendly,
     categoryBias,
     instantOnly,
@@ -215,7 +250,7 @@ export async function GET(request: NextRequest) {
     const pool = QUEST_TAXONOMY.filter(
       (q) =>
         q.questPace === 'instant' &&
-        !recentIds.includes(q.id) &&
+        !recentIdsForSelect.includes(q.id) &&
         (context.isOutdoorFriendly || !q.requiresOutdoor),
     );
     archetype =
@@ -266,17 +301,35 @@ export async function GET(request: NextRequest) {
   let destinationLat: number | null = null;
   let destinationLon: number | null = null;
   if (generated.isOutdoor) {
-    const rawLabel = generated.destinationLabel?.trim() || null;
+    let rawLabel = generated.destinationLabel?.trim() || null;
+    if (rawLabel && isPlaceholderDestinationLabel(rawLabel)) {
+      rawLabel = null;
+    }
+    rawLabel = sanitizeDestinationLabelForStorage(rawLabel);
     const area = [context.city, context.country].filter(Boolean).join(', ') || 'France';
     const searchQuery =
-      generated.destinationQuery?.trim() ||
+      sanitizeDestinationLabelForStorage(generated.destinationQuery?.trim()) ||
       (rawLabel ? `${rawLabel}, ${area}` : area);
-    destinationLabel = rawLabel ?? (context.city !== 'ta ville' ? context.city : 'Lieu de la quête');
-    const geo = await geocodeNominatim(searchQuery);
+    const wideSearch = inferWideDestinationSearch(generated.mission);
+    const viewboxDeltaDeg = wideSearch ? 1.05 : 0.32;
+    const geo = await geocodeNominatim(searchQuery, {
+      nearLat: lat,
+      nearLon: lon,
+      viewboxDeltaDeg,
+    });
+    const cityFallback = context.city !== 'ta ville' ? context.city : null;
     if (geo) {
       destinationLat = geo.lat;
       destinationLon = geo.lon;
+      destinationLabel =
+        rawLabel ??
+        (geo.displayName ? shortenDisplayName(geo.displayName) : null) ??
+        cityFallback ??
+        'Lieu suggéré';
+    } else {
+      destinationLabel = rawLabel ?? cityFallback ?? 'Lieu suggéré';
     }
+    destinationLabel = sanitizeDestinationLabelForStorage(destinationLabel) ?? 'Lieu suggéré';
   }
 
   // Compute updated day and phase progression
@@ -334,6 +387,7 @@ export async function GET(request: NextRequest) {
         congruenceDelta:  congruenceDelta,
         flagNextQuestAfterReroll: false,
         flagNextQuestInstantOnly: false,
+        rerollExcludeArchetypeId: null,
       },
     }),
   ]);
@@ -423,6 +477,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const excludeArchetypeId = existing.archetypeId;
+
     const updatedProfile =
       daily > 0
         ? await prisma.$transaction(async (tx) => {
@@ -436,6 +492,7 @@ export async function POST(request: NextRequest) {
                 flagNextQuestAfterReroll: true,
                 flagNextQuestInstantOnly: true,
                 deferredSocialUntil: deferredUntil,
+                rerollExcludeArchetypeId: excludeArchetypeId,
               },
             });
           })
@@ -450,6 +507,7 @@ export async function POST(request: NextRequest) {
                 flagNextQuestAfterReroll: true,
                 flagNextQuestInstantOnly: true,
                 deferredSocialUntil: deferredUntil,
+                rerollExcludeArchetypeId: excludeArchetypeId,
               },
             });
           });
@@ -524,6 +582,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const excludeArchetypeId = existing.archetypeId;
+
     const updatedProfile =
       daily > 0
         ? await prisma.$transaction(async (tx) => {
@@ -535,6 +595,7 @@ export async function POST(request: NextRequest) {
               data: {
                 rerollsRemaining: Math.max(0, daily - 1),
                 flagNextQuestAfterReroll: true,
+                rerollExcludeArchetypeId: excludeArchetypeId,
               },
             });
           })
@@ -547,6 +608,7 @@ export async function POST(request: NextRequest) {
               data: {
                 bonusRerollCredits: bonus - 1,
                 flagNextQuestAfterReroll: true,
+                rerollExcludeArchetypeId: excludeArchetypeId,
               },
             });
           });
@@ -730,10 +792,16 @@ function toQuestResponse(
   profile?: { deferredSocialUntil?: string | null } | null,
 ) {
   const archetype = QUEST_TAXONOMY.find((q) => q.id === log.archetypeId);
+  const hasCoords =
+    log.destinationLat != null &&
+    log.destinationLon != null &&
+    Number.isFinite(log.destinationLat) &&
+    Number.isFinite(log.destinationLon);
+  const storedLabel = sanitizeDestinationLabelForStorage(log.destinationLabel);
   const destination =
-    log.destinationLabel && log.isOutdoor
+    log.isOutdoor && hasCoords
       ? {
-          label: log.destinationLabel,
+          label: storedLabel ?? 'Lieu sur la carte',
           lat: log.destinationLat,
           lon: log.destinationLon,
         }

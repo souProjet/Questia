@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { frFR } from '@clerk/localizations';
 import { Inter, Space_Grotesk } from 'next/font/google';
@@ -43,6 +43,13 @@ export const metadata: Metadata = {
       'Une quête par jour dans ta vraie vie. iOS, Android et web.',
   },
   robots: { index: true, follow: true },
+};
+
+/** Notch / encoche : permet d’utiliser env(safe-area-inset-*) en CSS. */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -548,7 +548,7 @@ function ShopPageInner() {
   return (
     <div className="min-h-screen bg-adventure">
       <Navbar />
-      <main id="main-content" tabIndex={-1} className="relative z-10 max-w-4xl mx-auto px-4 pt-24 pb-24 outline-none">
+      <main id="main-content" tabIndex={-1} className="relative z-10 max-w-4xl mx-auto px-3 sm:px-5 pt-24 pb-24 outline-none">
         <Link
           href="/app"
           className="inline-flex items-center gap-2 text-sm font-bold text-[var(--link-on-bg)] hover:underline mb-6"
@@ -1073,7 +1073,7 @@ export default function ShopPage() {
       fallback={
         <div className="min-h-screen bg-adventure">
           <Navbar />
-          <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 pt-24 pb-24 flex justify-center outline-none">
+          <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-3 sm:px-5 pt-24 pb-24 flex justify-center outline-none">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
           </main>
         </div>

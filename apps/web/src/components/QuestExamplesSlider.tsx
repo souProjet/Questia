@@ -93,7 +93,7 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
                 key={idx}
                 className={
                   embedded
-                    ? 'w-full min-w-full shrink-0 px-5 pt-11 pb-5 sm:px-6 sm:pt-12 sm:pb-5'
+                    ? 'w-full min-w-full shrink-0 px-4 pt-11 pb-5 sm:px-5 sm:pt-11 md:px-6 md:pt-12 sm:pb-5'
                     : 'w-full min-w-full shrink-0 px-6 pt-12 pb-6'
                 }
               >
@@ -162,7 +162,7 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
             onClick={prev}
             className={
               embedded
-                ? 'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/50 bg-white/90 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/60 hover:bg-cyan-50 hover:text-cyan-900'
+                ? 'inline-flex h-11 w-11 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/50 bg-white/90 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/60 hover:bg-cyan-50 hover:text-cyan-900 touch-manipulation active:scale-[0.98]'
                 : 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-slate-900/12 bg-white/80 text-slate-800 transition-colors hover:border-cyan-400/50 hover:bg-cyan-50'
             }
             aria-label="Quête précédente"
@@ -192,7 +192,7 @@ export function QuestExamplesSlider({ quests, variant = 'default' }: Props) {
             onClick={next}
             className={
               embedded
-                ? 'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/50 bg-white/90 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/60 hover:bg-cyan-50 hover:text-cyan-900'
+                ? 'inline-flex h-11 w-11 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/50 bg-white/90 text-orange-800 shadow-sm transition-colors hover:border-cyan-400/60 hover:bg-cyan-50 hover:text-cyan-900 touch-manipulation active:scale-[0.98]'
                 : 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-slate-900/12 bg-white/80 text-slate-800 transition-colors hover:border-cyan-400/50 hover:bg-cyan-50'
             }
             aria-label="Quête suivante"

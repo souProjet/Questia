@@ -199,6 +199,8 @@ function AppPageContent() {
   const [completing, setCompleting] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
   const [rerolling, setRerolling] = useState(false);
+  /** Incrémenté après relance/report pour remonter la carte quête (animation / nouveau contenu). */
+  const [questCardSwapKey, setQuestCardSwapKey] = useState(0);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportDeferredDate, setReportDeferredDate] = useState(todayStr);
   const [reporting, setReporting] = useState(false);
@@ -453,6 +455,8 @@ function AppPageContent() {
       });
       if (!ok) {
         setBannerError('Impossible de charger la nouvelle quête. Réessaie.');
+      } else {
+        setQuestCardSwapKey((k) => k + 1);
       }
     } finally {
       setRerolling(false);
@@ -487,6 +491,7 @@ function AppPageContent() {
         questDate: quest.questDate,
       });
       if (!ok) setBannerError('Impossible de charger la nouvelle quête. Réessaie.');
+      else setQuestCardSwapKey((k) => k + 1);
     } finally {
       setReporting(false);
     }
@@ -549,9 +554,9 @@ function AppPageContent() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-adventure">
+      <div className="min-h-screen bg-adventure overflow-x-hidden">
         <Navbar />
-        <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-4 pt-24 pb-20 outline-none">
+        <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-3 sm:px-5 pt-24 pb-20 outline-none">
           <div className="animate-pulse space-y-5 mt-4">
             <div className="h-5 rounded-xl w-40 bg-[color:var(--progress-track)]" />
             <div className="h-10 rounded-xl w-72 bg-[color:var(--progress-track)]" />
@@ -564,9 +569,9 @@ function AppPageContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-adventure">
+      <div className="min-h-screen bg-adventure overflow-x-hidden">
         <Navbar />
-        <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-4 pt-24 pb-20 flex flex-col items-center justify-center text-center gap-6 outline-none">
+        <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-3 sm:px-5 pt-24 pb-20 flex flex-col items-center justify-center text-center gap-6 outline-none">
           <Icon name="Frown" size="2xl" className="text-[var(--subtle)] mx-auto" />
           <h2 className="font-display font-black text-2xl text-[var(--text)]">Pas de quête pour l'instant</h2>
           <p className="text-[var(--muted)] max-w-md">{error}</p>
@@ -591,7 +596,7 @@ function AppPageContent() {
   const isPlannedQuest = questPace === 'planned';
 
   return (
-    <div className="min-h-screen bg-adventure relative">
+    <div className="min-h-screen bg-adventure relative overflow-x-hidden">
       <Navbar />
 
       {acceptQuestFlash ? (
@@ -635,7 +640,7 @@ function AppPageContent() {
         </div>
       </div>
 
-      <main id="main-content" tabIndex={-1} className="relative z-10 max-w-2xl mx-auto px-4 pt-24 pb-24 outline-none">
+      <main id="main-content" tabIndex={-1} className="relative z-10 max-w-2xl mx-auto px-3 sm:px-5 pt-24 pb-24 outline-none">
         {bannerError && (
           <div
             role="alert"
@@ -759,13 +764,14 @@ function AppPageContent() {
         {/* Carte quête — même ADN que QuestExamplesSlider (embedded) */}
         {quest && (
           <article
-            className={`quest-slider-embedded overflow-hidden ring-1 transition-shadow duration-300 motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:110ms] [animation-fill-mode:backwards] ${
+            key={questCardSwapKey}
+            className={`quest-slider-embedded overflow-hidden ring-1 transition-[opacity,box-shadow] duration-300 motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:110ms] [animation-fill-mode:backwards] ${
               isAbandoned
                 ? 'ring-slate-400/35'
                 : isAccepted || isCompleted
                   ? 'ring-emerald-400/40 shadow-[0_12px_40px_-8px_rgba(16,185,129,.2)]'
                   : 'ring-orange-400/25'
-            }`}
+            } ${rerolling || reporting ? 'pointer-events-none opacity-55' : ''}`}
           >
             <div className="px-4 pb-5 pt-5 sm:px-6 sm:pt-6">
               {/* Titre + tag : identité de la quête avant les consignes */}
@@ -838,19 +844,18 @@ function AppPageContent() {
 
               {quest.isOutdoor && quest.destination ? (
                 <section
-                  className="mb-6 rounded-2xl border border-emerald-200/60 bg-gradient-to-br from-emerald-50/90 via-white to-cyan-50/40 p-5 shadow-sm ring-1 ring-emerald-100/80 sm:p-6"
+                  className="mb-6 rounded-2xl border border-cyan-200/50 bg-gradient-to-br from-white via-cyan-50/35 to-emerald-50/30 p-5 shadow-[0_8px_28px_-8px_rgba(34,211,238,0.18)] ring-1 ring-cyan-100/75 sm:p-6"
                   aria-labelledby="map-heading"
                 >
                   <h3
                     id="map-heading"
-                    className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-900"
+                    className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-cyan-950"
                   >
-                    <span aria-hidden>🗺️</span>
+                    <Icon name="Map" size="sm" className="text-cyan-700" />
                     Point de rendez-vous
                   </h3>
-                  <p className="mb-4 text-sm text-[var(--on-cream-muted)]">
-                    Lieu suggéré pour ta mission (public, accessible). L’itinéraire à pied apparaît si tu as autorisé la
-                    localisation.
+                  <p className="mb-4 text-sm leading-relaxed text-[var(--on-cream-muted)]">
+                    Un point d’appui pour ta mission. Active la localisation pour voir l’itinéraire à pied sur la carte.
                   </p>
                   <QuestDestinationMap destination={quest.destination} userPosition={userPosition} />
                 </section>
@@ -870,12 +875,9 @@ function AppPageContent() {
               </figure>
 
               {quest.safetyNote && isPending && (
-                <div className="mt-5 flex items-start gap-2 rounded-2xl border border-amber-200/70 bg-amber-50/95 p-3.5 text-sm text-amber-950 shadow-sm">
-                  <span aria-hidden className="text-lg leading-none">
-                    ⚠️
-                  </span>
-                  <span>{quest.safetyNote}</span>
-                </div>
+                <p className="mt-5 border-l-4 border-amber-300/90 pl-3 text-sm leading-relaxed text-slate-600">
+                  {quest.safetyNote}
+                </p>
               )}
             </div>
 
@@ -938,53 +940,52 @@ function AppPageContent() {
                   <button type="button" onClick={handleAccept} className="btn btn-cta btn-lg w-full text-base font-black">
                     ⚔️ Je relève le défi !
                   </button>
-                  <div
-                    className={`flex flex-col gap-2 sm:flex-row sm:justify-center ${!isPlannedQuest ? 'sm:max-w-md sm:mx-auto' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setShowAbandonConfirm(true)}
-                      className={`btn btn-ghost btn-sm font-semibold text-[var(--muted)] ${isPlannedQuest ? 'w-full sm:flex-1' : 'w-full'}`}
+                  <div className="quest-actions-secondary">
+                    <div
+                      className={`quest-actions-secondary__row ${!isPlannedQuest ? 'sm:mx-auto sm:max-w-xl' : ''}`}
                     >
-                      Ce n’est pas pour moi
-                    </button>
-                    {isPlannedQuest ? (
                       <button
                         type="button"
-                        onClick={() => {
-                          setReportDeferredDate(todayStr);
-                          setShowReportModal(true);
-                        }}
-                        disabled={!canReroll}
-                        className="btn btn-ghost btn-sm w-full sm:flex-1 font-semibold text-cyan-900 disabled:opacity-40"
+                        onClick={() => setShowAbandonConfirm(true)}
+                        className={`quest-actions-secondary__btn quest-actions-secondary__btn--pass ${isPlannedQuest ? 'w-full sm:flex-1' : 'w-full'}`}
                       >
-                        Reporter → quête courte
+                        <Icon name="Frown" size="sm" className="opacity-75" />
+                        Ce n’est pas pour moi
                       </button>
+                      {isPlannedQuest ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReportDeferredDate(todayStr);
+                            setShowReportModal(true);
+                          }}
+                          disabled={!canReroll}
+                          className="quest-actions-secondary__btn quest-actions-secondary__btn--report w-full sm:flex-1"
+                        >
+                          <Icon name="ClipboardList" size="sm" />
+                          Reporter — quête courte
+                        </button>
+                      ) : null}
+                    </div>
+                    {isPlannedQuest ? (
+                      <p className="px-1 pt-1 text-center text-[10px] leading-relaxed text-[var(--on-cream-subtle)]">
+                        Comme « Changer de quête », une relance est utilisée — tu reçois une mission courte pour aujourd’hui.
+                      </p>
                     ) : null}
+                    <button
+                      type="button"
+                      onClick={handleReroll}
+                      disabled={rerolling || !canReroll}
+                      className="quest-actions-secondary__btn quest-actions-secondary__btn--reroll"
+                    >
+                      <Icon name="Dices" size="sm" />
+                      {rerolling ? '…' : `Changer de quête (${rerollLabel})`}
+                    </button>
                   </div>
-                  {isPlannedQuest ? (
-                    <p className="text-center text-[11px] text-[var(--on-cream-subtle)]">
-                      Reporter utilise une relance comme « Changer de quête », puis te propose une mission faisable vite.
-                    </p>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={handleReroll}
-                    disabled={rerolling || !canReroll}
-                    className="btn btn-ghost btn-md w-full font-bold disabled:opacity-40"
-                  >
-                    {rerolling ? '…' : `🎲 Changer de quête (${rerollLabel})`}
-                  </button>
                 </>
               )}
             </div>
           </article>
-        )}
-
-        {isPending && quest && (
-          <p className="mt-6 text-center text-xs font-medium text-[var(--muted)]">
-            Demain matin : nouvelle carte sur ton plateau 🌅
-          </p>
         )}
       </main>
 
@@ -1123,7 +1124,7 @@ export default function AppPage() {
           <main
             id="main-content"
             tabIndex={-1}
-            className="max-w-2xl mx-auto px-4 pt-24 pb-20 outline-none"
+            className="max-w-2xl mx-auto px-3 sm:px-5 pt-24 pb-20 outline-none"
           >
             <div className="animate-pulse space-y-5 mt-4">
               <div className="h-5 rounded-xl w-40 bg-[color:var(--progress-track)]" />

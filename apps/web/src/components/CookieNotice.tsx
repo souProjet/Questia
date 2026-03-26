@@ -24,7 +24,7 @@ export function CookieNotice() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-[100] border-t border-slate-200/90 bg-white/95 px-4 py-3 shadow-[0_-8px_32px_rgba(15,23,42,0.12)] backdrop-blur-md md:px-6"
+      className="fixed bottom-0 left-0 right-0 z-[100] border-t border-slate-200/90 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-8px_32px_rgba(15,23,42,0.12)] backdrop-blur-md sm:px-6"
       role="dialog"
       aria-labelledby="cookie-notice-title"
       aria-live="polite"

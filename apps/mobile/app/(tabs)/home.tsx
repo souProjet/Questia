@@ -201,6 +201,7 @@ export default function DashboardScreen() {
   const [completing, setCompleting] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
   const [rerolling, setRerolling] = useState(false);
+  const [questCardSwapKey, setQuestCardSwapKey] = useState(0);
   const [rerollsRemaining, setRerollsRemaining] = useState(1);
   const [reward, setReward] = useState<QuestRewardPayload | null>(null);
   const [showReward, setShowReward] = useState(false);
@@ -446,8 +447,11 @@ export default function DashboardScreen() {
         setError((data as { error?: string }).error ?? 'Erreur relance');
         return;
       }
-      const ok = await loadQuest();
-      if (ok) await enrichQuestWithLocation();
+      const ok = await loadQuest(undefined, undefined, { questDate: quest.questDate, silent: true });
+      if (ok) {
+        setQuestCardSwapKey((k) => k + 1);
+        await enrichQuestWithLocation();
+      }
     } finally {
       setRerolling(false);
     }
@@ -473,8 +477,11 @@ export default function DashboardScreen() {
         return;
       }
       setShowReportModal(false);
-      const ok = await loadQuest();
-      if (ok) await enrichQuestWithLocation();
+      const ok = await loadQuest(undefined, undefined, { questDate: quest.questDate, silent: true });
+      if (ok) {
+        setQuestCardSwapKey((k) => k + 1);
+        await enrichQuestWithLocation();
+      }
     } finally {
       setReporting(false);
     }
@@ -810,6 +817,7 @@ export default function DashboardScreen() {
 
         {quest && (
           <LinearGradient
+            key={questCardSwapKey}
             colors={['#fff7df', '#fff3c6', '#d7f5f9']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -817,6 +825,7 @@ export default function DashboardScreen() {
               styles.questSliderEmbedded,
               (isAccepted || isCompleted) && styles.questSliderEmbeddedDone,
               isAbandoned && styles.questSliderEmbeddedAbandoned,
+              (rerolling || reporting) && { opacity: 0.55 },
             ]}
           >
             <View style={[styles.questCardBody, compact && styles.questCardBodyCompact]}>
@@ -995,10 +1004,6 @@ export default function DashboardScreen() {
             </LinearGradient>
           </LinearGradient>
         )}
-
-        {isPending && quest ? (
-          <Text style={styles.footerTeaser}>Demain matin : nouvelle carte sur ton plateau 🌅</Text>
-        ) : null}
       </ScrollView>
 
       {showSafety && quest && (

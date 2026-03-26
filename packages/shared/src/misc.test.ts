@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, afterEach } from 'vitest';
 import { HISTORY_PAGE_SIZE } from './historyPagination';
 import { formatQuestDateFr } from './formatQuestDateFr';
 import { questDisplayEmoji, QUEST_LUCIDE_ICON_TO_EMOJI } from './questDisplayEmoji';
@@ -13,12 +13,23 @@ describe('historyPagination', () => {
 });
 
 describe('formatQuestDateFr', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('retourne la chaîne si format invalide', () => {
     expect(formatQuestDateFr('pas-une-date')).toBe('pas-une-date');
   });
   it('formate une date ISO valide', () => {
     const s = formatQuestDateFr('2026-03-24');
     expect(s).toMatch(/2026/);
+  });
+  it('fallback si toLocaleDateString lève (locale indisponible)', () => {
+    const spy = vi.spyOn(Date.prototype, 'toLocaleDateString').mockImplementation(() => {
+      throw new Error('locale');
+    });
+    expect(formatQuestDateFr('2026-06-15')).toBe('2026-06-15');
+    spy.mockRestore();
   });
 });
 

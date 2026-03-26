@@ -119,7 +119,7 @@ export default function HomePage() {
   const storesReady = hasAnyStoreLink();
 
   return (
-    <div className="min-h-screen bg-adventure relative">
+    <div className="min-h-screen bg-adventure relative overflow-x-hidden">
       <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden>
         <div className="absolute -top-24 left-1/2 w-[min(112rem,220%)] max-w-none -translate-x-1/2 h-[min(42vh,28rem)] rounded-[100%] bg-gradient-to-b from-cyan-200/30 via-orange-100/8 to-transparent blur-3xl motion-safe:animate-glow-soft opacity-[0.65] motion-reduce:animate-none motion-reduce:opacity-40" />
       </div>
@@ -130,26 +130,26 @@ export default function HomePage() {
         <main id="main-content" tabIndex={-1} className="outline-none">
         <section
           id="hero"
-          className="relative pt-36 md:pt-44 pb-28 md:pb-36 px-4 sm:px-6 overflow-hidden"
+          className="relative pt-[max(7.25rem,calc(env(safe-area-inset-top,0px)+5.75rem))] sm:pt-36 md:pt-44 pb-20 sm:pb-24 md:pb-32 lg:pb-36 px-3 sm:px-4 sm:px-6 overflow-hidden"
           aria-labelledby="hero-heading"
         >
           <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-            <div className="absolute top-24 left-[8%] text-6xl opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none">
+            <div className="absolute top-16 sm:top-24 left-[4%] sm:left-[8%] text-4xl sm:text-6xl opacity-20 sm:opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none">
               🧭
             </div>
-            <div className="absolute top-28 right-[10%] text-5xl opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none [animation-delay:2s]">
+            <div className="absolute top-20 sm:top-28 right-[6%] sm:right-[10%] text-3xl sm:text-5xl opacity-20 sm:opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none [animation-delay:2s]">
               🎒
             </div>
-            <div className="absolute bottom-20 left-[45%] text-5xl opacity-25 select-none motion-safe:animate-float-delayed motion-reduce:animate-none">
+            <div className="absolute bottom-16 sm:bottom-20 left-[40%] sm:left-[45%] text-3xl sm:text-5xl opacity-20 sm:opacity-25 select-none motion-safe:animate-float-delayed motion-reduce:animate-none">
               🎲
             </div>
           </div>
 
-          <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[minmax(0,1fr)_minmax(300px,440px)] xl:grid-cols-[minmax(0,1.05fr)_minmax(320px,480px)] gap-12 lg:gap-14 xl:gap-16 lg:items-center">
-            <div className="space-y-8">
+          <div className="relative max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,440px)] xl:grid-cols-[minmax(0,1.05fr)_minmax(300px,480px)] gap-8 sm:gap-10 lg:gap-14 xl:gap-16 lg:items-center">
+            <div className="space-y-6 sm:space-y-8">
               <h1
                 id="hero-heading"
-                className="font-display font-black text-4xl md:text-5xl lg:text-[3.35rem] leading-[1.12] text-slate-900 mb-2 motion-safe:animate-fade-up motion-reduce:opacity-100"
+                className="font-display font-black text-[clamp(1.625rem,4.5vw+0.65rem,2.5rem)] sm:text-4xl md:text-5xl lg:text-[3.35rem] leading-[1.1] sm:leading-[1.12] text-slate-900 mb-2 motion-safe:animate-fade-up motion-reduce:opacity-100 [overflow-wrap:anywhere]"
               >
               L'app de{' '}
               <span className="text-gradient-pop text-[1.06em] md:text-[1.1em] lg:text-[1.12em] tracking-[-0.02em]">
@@ -160,7 +160,7 @@ export default function HomePage() {
             </h1>
 
             <div className="space-y-4 max-w-xl motion-safe:animate-fade-up motion-safe:delay-100 motion-reduce:opacity-100">
-              <p className="text-lg md:text-xl font-medium text-slate-800 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl font-medium text-slate-800 leading-relaxed">
                 Une mission chaque matin, <strong className="text-slate-900">ajustée à ton profil</strong> et à ton
                 rythme — pour sortir un peu plus, sans te mettre la pression.
               </p>
@@ -211,38 +211,39 @@ export default function HomePage() {
 
           <aside
             id="hero-examples"
-            className="flex w-full max-w-md mx-auto justify-center items-center self-stretch lg:max-w-none lg:mx-0 scroll-mt-28 motion-safe:animate-fade-up motion-safe:delay-300 motion-reduce:opacity-100"
+            className="flex w-full max-w-md mx-auto justify-center items-center self-stretch lg:max-w-none lg:mx-0 scroll-mt-[5.5rem] sm:scroll-mt-28 motion-safe:animate-fade-up motion-safe:delay-300 motion-reduce:opacity-100 min-w-0"
             aria-label="Missions en carrousel"
           >
-            <div className="w-full max-w-[27rem] xl:max-w-[30rem]">
+            <div className="w-full min-w-0 max-w-[min(100%,27rem)] xl:max-w-[30rem]">
               <QuestExamplesSlider quests={EXAMPLE_QUESTS} variant="embedded" />
             </div>
           </aside>
         </div>
       </section>
 
-      <section id="how" className="section-band-how py-28 md:py-36 px-4 sm:px-6 scroll-mt-24" aria-labelledby="how-heading">
+      <section id="how" className="section-band-how py-16 sm:py-20 md:py-28 lg:py-36 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24" aria-labelledby="how-heading">
         <LandingReveal>
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16 md:mb-20 space-y-5">
+          <div className="text-center mb-10 sm:mb-14 md:mb-20 space-y-4 sm:space-y-5">
             <p className="label flex items-center justify-center gap-2 text-emerald-900">
               <span aria-hidden>⚡</span> Fonctionnement
             </p>
-            <h2 id="how-heading" className="font-display font-black text-3xl md:text-5xl text-slate-900 leading-tight">
+            <h2 id="how-heading" className="font-display font-black text-2xl sm:text-3xl md:text-5xl text-slate-900 leading-tight [overflow-wrap:anywhere] px-1">
               Trois étapes, puis ta quête du matin
             </h2>
-            <p className="text-slate-600 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
+            <p className="text-slate-600 text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed px-1">
               Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur l’app mobile, tout dans la poche ;
               sur le web, même expérience depuis un navigateur.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 md:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
             {STEPS.map((s, i) => (
               <div
                 key={i}
-                className="card card-hover rounded-3xl p-8 md:p-9 flex flex-col items-start gap-5 border-2 border-slate-900/10 shadow-[0_6px_0_rgba(15,23,42,.06)]"
-                style={{ transform: i === 1 ? 'rotate(-1deg)' : i === 2 ? 'rotate(1deg)' : 'none' }}
+                className={`card card-hover rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-9 flex flex-col items-start gap-4 sm:gap-5 border-2 border-slate-900/10 shadow-[0_6px_0_rgba(15,23,42,.06)] ${
+                  i === 1 ? 'md:-rotate-1' : i === 2 ? 'md:rotate-1' : ''
+                }`}
               >
                 <span className="text-5xl leading-none" aria-hidden>
                   {s.emoji}
@@ -263,18 +264,18 @@ export default function HomePage() {
 
       <section
         id="telecharger"
-        className="py-28 md:py-36 px-4 sm:px-6 scroll-mt-24 border-y-2 border-cyan-300/25 bg-gradient-to-b from-white/40 to-cyan-50/30"
+        className="py-16 sm:py-20 md:py-28 lg:py-36 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-y-2 border-cyan-300/25 bg-gradient-to-b from-white/40 to-cyan-50/30"
         aria-labelledby="download-heading"
       >
         <LandingReveal delayMs={40}>
-        <div className="max-w-3xl mx-auto text-center space-y-6">
+        <div className="max-w-3xl mx-auto text-center space-y-5 sm:space-y-6 px-1">
           <p className="label flex items-center justify-center gap-2 text-cyan-900">
             <span aria-hidden>📲</span> Télécharger
           </p>
-          <h2 id="download-heading" className="font-display font-black text-3xl md:text-4xl text-slate-900 leading-tight">
+          <h2 id="download-heading" className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
             iPhone &amp; Android
           </h2>
-          <p className="text-slate-600 text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
+          <p className="text-slate-600 text-base sm:text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
             Quête du jour et progression sur ton téléphone. Tu peux aussi tout faire depuis le web avec le même compte.
           </p>
           <div className="pt-4 flex flex-col items-center gap-4">
@@ -289,32 +290,32 @@ export default function HomePage() {
         </LandingReveal>
       </section>
 
-      <section id="testimonials" className="section-band-social py-28 md:py-36 px-4 sm:px-6 relative scroll-mt-24" aria-labelledby="testimonials-heading">
+      <section id="testimonials" className="section-band-social py-16 sm:py-20 md:py-28 lg:py-36 px-3 sm:px-4 sm:px-6 relative scroll-mt-20 sm:scroll-mt-24" aria-labelledby="testimonials-heading">
         <LandingReveal delayMs={40}>
         <div className="max-w-5xl mx-auto relative">
-          <div className="text-center mb-14 md:mb-16 space-y-4">
+          <div className="text-center mb-10 sm:mb-12 md:mb-16 space-y-3 sm:space-y-4 px-1">
             <p className="label flex items-center justify-center gap-2 text-orange-900">
               <span aria-hidden>💬</span> Avis &amp; résultats
             </p>
-            <h2 id="testimonials-heading" className="font-display font-black text-3xl md:text-5xl text-slate-900 leading-tight">
+            <h2 id="testimonials-heading" className="font-display font-black text-2xl sm:text-3xl md:text-5xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
               Des joueurs qui avaient la flemme aussi
             </h2>
-            <p className="text-slate-600 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
+            <p className="text-slate-600 text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
               Pas de miracle, juste des petits pas — quand le jeu remplace la culpabilité.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 md:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
             {TESTIMONIALS.map((t, i) => (
               <article
                 key={t.name}
-                className="rounded-3xl p-7 md:p-8 border-[3px] bg-white/90 backdrop-blur-sm transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 motion-reduce:hover:translate-y-0"
+                className="rounded-2xl sm:rounded-3xl p-6 sm:p-7 md:p-8 border-[3px] bg-white/90 backdrop-blur-sm transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 motion-reduce:hover:translate-y-0"
                 style={{
                   borderColor: i === 0 ? 'rgba(249,115,22,.45)' : i === 1 ? 'rgba(34,211,238,.5)' : 'rgba(16,185,129,.45)',
                   boxShadow: i === 0 ? '0 10px 0 rgba(234,88,12,.12), 0 20px 40px rgba(249,115,22,.12)' : i === 1 ? '0 10px 0 rgba(8,145,178,.1), 0 20px 40px rgba(34,211,238,.12)' : '0 10px 0 rgba(5,150,105,.1), 0 20px 40px rgba(16,185,129,.12)',
                 }}
               >
-                <blockquote className="text-slate-900 text-base leading-relaxed font-semibold mb-6">
+                <blockquote className="text-slate-900 text-[15px] sm:text-base leading-relaxed font-semibold mb-5 sm:mb-6 [overflow-wrap:anywhere]">
                   « {t.quote} »
                 </blockquote>
                 <p className="text-sm text-slate-600">
@@ -329,27 +330,27 @@ export default function HomePage() {
         </LandingReveal>
       </section>
 
-      <section id="faq" className="py-28 md:py-36 px-4 sm:px-6 scroll-mt-24 bg-white/30" aria-labelledby="faq-heading">
+      <section id="faq" className="py-16 sm:py-20 md:py-28 lg:py-36 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 bg-white/30" aria-labelledby="faq-heading">
         <LandingReveal delayMs={40}>
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-10 md:mb-12 space-y-3">
+        <div className="max-w-2xl mx-auto min-w-0">
+          <div className="text-center mb-8 sm:mb-10 md:mb-12 space-y-2 sm:space-y-3 px-1">
             <p className="label text-emerald-900">FAQ</p>
-            <h2 id="faq-heading" className="font-display font-black text-3xl md:text-4xl text-slate-900 leading-tight">
+            <h2 id="faq-heading" className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
               Questions fréquentes
             </h2>
-            <p className="text-slate-600 text-base md:text-lg font-medium max-w-lg mx-auto leading-relaxed">
+            <p className="text-slate-600 text-sm sm:text-base md:text-lg font-medium max-w-lg mx-auto leading-relaxed">
               Tout ce qu’il faut savoir avant de te lancer — web ou mobile.
             </p>
           </div>
           <div
-            className="rounded-3xl border-2 border-slate-900/[0.08] bg-white/95 shadow-[0_1px_0_rgba(15,23,42,.06),0_12px_40px_-12px_rgba(15,23,42,.12)] overflow-hidden divide-y divide-slate-200/80"
+            className="rounded-2xl sm:rounded-3xl border-2 border-slate-900/[0.08] bg-white/95 shadow-[0_1px_0_rgba(15,23,42,.06),0_12px_40px_-12px_rgba(15,23,42,.12)] overflow-hidden divide-y divide-slate-200/80"
           >
             {LANDING_FAQ.map((item) => (
               <details key={item.question} className="group">
-                <summary className="cursor-pointer list-none px-5 sm:px-6 py-4 sm:py-5 font-bold text-slate-900 flex items-start justify-between gap-4 text-left select-none [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white">
-                  <span className="leading-snug text-[15px] sm:text-base pt-0.5">{item.question}</span>
+                <summary className="cursor-pointer list-none min-h-[3rem] sm:min-h-0 px-4 sm:px-6 py-4 sm:py-5 font-bold text-slate-900 flex items-start justify-between gap-3 sm:gap-4 text-left select-none touch-manipulation [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:bg-slate-50/80">
+                  <span className="leading-snug text-[14px] sm:text-[15px] md:text-base pt-0.5 [overflow-wrap:anywhere]">{item.question}</span>
                   <span
-                    className="shrink-0 mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 group-open:bg-cyan-50 group-open:text-cyan-800 transition-colors"
+                    className="shrink-0 mt-0.5 inline-flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 group-open:bg-cyan-50 group-open:text-cyan-800 transition-colors"
                     aria-hidden
                   >
                     <svg
@@ -364,8 +365,8 @@ export default function HomePage() {
                     </svg>
                   </span>
                 </summary>
-                <div className="px-5 sm:px-6 pb-5 -mt-1">
-                  <p className="text-slate-600 text-sm md:text-[15px] leading-relaxed border-l-2 border-cyan-200/90 pl-4">
+                <div className="px-4 sm:px-6 pb-4 sm:pb-5 -mt-1">
+                  <p className="text-slate-600 text-sm md:text-[15px] leading-relaxed border-l-2 border-cyan-200/90 pl-3 sm:pl-4 [overflow-wrap:anywhere]">
                     {item.answer}
                   </p>
                 </div>
@@ -378,17 +379,17 @@ export default function HomePage() {
 
       <section
         id="cta"
-        className="section-band-cta py-24 md:py-32 px-4 sm:px-6 scroll-mt-24 border-t-2 border-orange-200/40"
+        className="section-band-cta py-16 sm:py-20 md:py-24 lg:py-32 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-t-2 border-orange-200/40"
         aria-labelledby="cta-heading"
       >
         <LandingReveal delayMs={40}>
-          <div className="max-w-4xl mx-auto">
-            <div className="landing-cta-panel px-6 py-9 sm:px-10 sm:py-11 md:px-12 md:py-12 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 motion-reduce:transition-none">
+          <div className="max-w-4xl mx-auto min-w-0">
+            <div className="landing-cta-panel px-4 py-8 sm:px-10 sm:py-11 md:px-12 md:py-12 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 motion-reduce:transition-none">
               <div className="text-center space-y-2">
                 <p className="label text-orange-900">C’est parti</p>
                 <h2
                   id="cta-heading"
-                  className="font-display font-black text-2xl sm:text-3xl md:text-[2.15rem] text-slate-900 leading-tight tracking-tight"
+                  className="font-display font-black text-[clamp(1.25rem,3.5vw+0.6rem,1.85rem)] sm:text-3xl md:text-[2.15rem] text-slate-900 leading-tight tracking-tight [overflow-wrap:anywhere] px-0.5"
                 >
                   Prêt pour ta prochaine{' '}
                   <span className="text-gradient-pop text-[1.08em] sm:text-[1.12em] md:text-[1.18em] tracking-[-0.03em]">
@@ -396,7 +397,7 @@ export default function HomePage() {
                   </span>{' '}
                   ?
                 </h2>
-                <p className="text-slate-700 text-base md:text-lg font-medium leading-relaxed max-w-2xl mx-auto pt-1">
+                <p className="text-slate-700 text-sm sm:text-base md:text-lg font-medium leading-relaxed max-w-2xl mx-auto pt-1 px-0.5">
                   {storesReady
                     ? 'Gratuit pour commencer — sur les stores ou dans ton navigateur, avec le même compte.'
                     : 'Crée ton profil sur le web ; quand l’app sera dispo, tu reprends avec le même compte.'}
@@ -442,8 +443,8 @@ export default function HomePage() {
         </main>
 
       <footer className="border-t border-slate-200/80 bg-white/50 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-14">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 md:gap-12">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 sm:px-6 py-10 sm:py-12 md:py-14">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8 sm:gap-10 md:gap-12">
             <div className="max-w-sm">
               <p className="font-display font-black text-lg tracking-tight text-slate-900">Questia</p>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">
@@ -451,7 +452,7 @@ export default function HomePage() {
               </p>
             </div>
             <nav
-              className="flex flex-col sm:flex-row sm:flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-slate-600"
+              className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-row md:flex-wrap gap-x-4 gap-y-2.5 md:gap-x-6 md:gap-y-3 text-sm font-semibold text-slate-600 min-w-0"
               aria-label="Liens de pied de page"
             >
               <a href="#hero-examples" className="hover:text-slate-900 transition-colors">
