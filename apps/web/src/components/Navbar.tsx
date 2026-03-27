@@ -152,8 +152,13 @@ export function Navbar() {
           </div>
         )}
 
-        <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2 md:gap-3 md:pl-1 lg:pl-2">
-          {showLocaleSwitcher ? <LocaleSwitcher /> : null}
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-2 md:gap-3 md:pl-1 lg:pl-2">
+          {/* Sur mobile, la langue est dans le menu burger (évite la barre surchargée). */}
+          {showLocaleSwitcher ? (
+            <div className="hidden md:flex md:shrink-0 md:items-center">
+              <LocaleSwitcher />
+            </div>
+          ) : null}
           {isSignedIn ? (
             <>
               {showMarketingNav && (
@@ -290,6 +295,11 @@ export function Navbar() {
                       />
                     </a>
                   ))}
+                  {showLocaleSwitcher ? (
+                    <div className="mt-4 flex w-full justify-center border-t border-orange-200/40 pt-4 md:hidden">
+                      <LocaleSwitcher />
+                    </div>
+                  ) : null}
                 </nav>
               ) : null}
 
