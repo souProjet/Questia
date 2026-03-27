@@ -8,6 +8,7 @@ import { Navbar } from '@/components/Navbar';
 import {
   SHOP_CATALOG,
   COIN_PACKS,
+  getCoinPack,
   getThemeIds,
   getTitleDefinition,
   XP_SHOP_BONUS_PER_CHARGE,
@@ -19,6 +20,9 @@ import {
   type CoinPackEntry,
   type ShopMarketingBadge,
 } from '@questia/shared';
+import { AnalyticsEvent } from '@/lib/analytics/events';
+import { trackAnalyticsEvent } from '@/lib/analytics/track';
+import { trackMetaPixelEvent } from '@/lib/analytics/trackMeta';
 
 function RechargeModalContent({
   coinPacksSorted,
@@ -384,6 +388,41 @@ function ShopPageInner() {
     const canceled = searchParams.get('canceled');
     if (success === '1') void load();
     if (success === '1') {
+      let skipDup = false;
+      try {
+        skipDup = sessionStorage.getItem('questia_stripe_purchase_done') === '1';
+      } catch {
+        /* ignore */
+      }
+      let sku: string | null = null;
+      try {
+        sku = sessionStorage.getItem('questia_checkout_sku');
+        if (sku) sessionStorage.removeItem('questia_checkout_sku');
+      } catch {
+        /* ignore */
+      }
+      const pack = sku ? getCoinPack(sku) : undefined;
+      const valueEur = pack ? pack.priceCents / 100 : 0;
+      if (sku && !skipDup) {
+        try {
+          sessionStorage.setItem('questia_stripe_purchase_done', '1');
+        } catch {
+          /* ignore */
+        }
+        trackAnalyticsEvent(AnalyticsEvent.purchase, {
+          currency: 'EUR',
+          value: valueEur,
+          transaction_id: `stripe_coin_${sku}_${Date.now()}`,
+          items: [{ item_id: sku, item_name: pack?.name ?? sku }],
+          payment_type: 'stripe',
+        });
+        trackMetaPixelEvent('Purchase', {
+          currency: 'EUR',
+          value: valueEur,
+          content_ids: [sku],
+          content_type: 'product',
+        });
+      }
       setFlash({
         message: t('flashPaid'),
         kind: 'success',
@@ -405,6 +444,25 @@ function ShopPageInner() {
     setStripeLoadingSku(sku);
     setFlash(null);
     try {
+      const pack = getCoinPack(sku);
+      const valueEur = pack ? pack.priceCents / 100 : 0;
+      trackAnalyticsEvent(AnalyticsEvent.beginCheckout, {
+        currency: 'EUR',
+        value: valueEur,
+        items: [{ item_id: sku, item_name: pack?.name ?? sku }],
+      });
+      trackMetaPixelEvent('InitiateCheckout', {
+        currency: 'EUR',
+        value: valueEur,
+        content_ids: [sku],
+        content_type: 'product',
+      });
+      try {
+        sessionStorage.setItem('questia_checkout_sku', sku);
+        sessionStorage.removeItem('questia_stripe_purchase_done');
+      } catch {
+        /* ignore */
+      }
       const res = await fetch('/api/shop/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -435,6 +493,19 @@ function ShopPageInner() {
         setFlash({ message: data.error ?? t('errPurchase'), kind: 'error' });
         return;
       }
+      const cat = SHOP_CATALOG.find((e) => e.sku === sku);
+      trackAnalyticsEvent(AnalyticsEvent.purchase, {
+        currency: 'EUR',
+        value: 0,
+        items: [{ item_id: sku, item_name: cat?.name ?? sku }],
+        payment_type: 'quest_coins',
+      });
+      trackMetaPixelEvent('Purchase', {
+        currency: 'EUR',
+        value: 0,
+        content_ids: [sku],
+        content_type: 'product',
+      });
       await load();
       runPurchaseCelebration(sku);
     } finally {

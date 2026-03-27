@@ -26,6 +26,8 @@ import {
   QUEST_LOADER_DAY_STORAGE_KEY,
   getQuestCalendarDateNow,
 } from '@questia/shared';
+import { AnalyticsEvent } from '@/lib/analytics/events';
+import { questAnalyticsId, trackAnalyticsEvent } from '@/lib/analytics/track';
 
 const QuestDestinationMap = dynamic(
   () => import('@/components/QuestDestinationMap'),
@@ -249,6 +251,8 @@ function AppPageContent() {
   /** Flash plein écran court après acceptation de la quête (feedback « jeu »). */
   const [acceptQuestFlash, setAcceptQuestFlash] = useState(false);
   const [showRefinement, setShowRefinement] = useState(false);
+  /** Évite les doublons quest_viewed sur relances silencieuses de la même quête. */
+  const lastQuestViewKey = useRef<string | null>(null);
 
   // ── Ensure profile exists (get-or-create from onboarding localStorage) ───────
 
@@ -327,6 +331,14 @@ function AppPageContent() {
         }
         const data = payload as DailyQuest;
         setQuest(data);
+        const qk = `${data.questDate}_${data.archetypeId}`;
+        if (lastQuestViewKey.current !== qk) {
+          lastQuestViewKey.current = qk;
+          trackAnalyticsEvent(AnalyticsEvent.questViewed, {
+            quest_id: questAnalyticsId(data),
+            quest_status: data.status,
+          });
+        }
         if (data.refinement?.due && data.refinement.questions?.length) {
           setShowRefinement(true);
         } else {
@@ -466,6 +478,11 @@ function AppPageContent() {
       }
       const data = await res.json() as Partial<DailyQuest>;
       setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? prev.status) as DailyQuest['status'] } : null));
+      trackAnalyticsEvent(AnalyticsEvent.questAccepted, {
+        quest_id: questAnalyticsId(quest),
+        quest_phase: quest.phase,
+        is_outdoor: quest.isOutdoor,
+      });
       setAcceptQuestFlash(true);
       window.setTimeout(() => setAcceptQuestFlash(false), 780);
     } finally {
@@ -510,6 +527,11 @@ function AppPageContent() {
             }
           : null,
       );
+      trackAnalyticsEvent(AnalyticsEvent.questCompleted, {
+        quest_id: questAnalyticsId(quest),
+        quest_phase: quest.phase,
+        xp_gained: data.xpGain?.gained,
+      });
       if (data.xpGain) {
         setXpCelebration({
           xpGain: data.xpGain,
@@ -563,6 +585,7 @@ function AppPageContent() {
         setBannerError(t('bannerReloadFailed'));
       } else {
         setQuestCardSwapKey((k) => k + 1);
+        trackAnalyticsEvent(AnalyticsEvent.questRerolled, { quest_id: questAnalyticsId(quest) });
       }
     } finally {
       setRerolling(false);
@@ -631,6 +654,7 @@ function AppPageContent() {
             }
           : null,
       );
+      trackAnalyticsEvent(AnalyticsEvent.questAbandoned, { quest_id: questAnalyticsId(quest) });
       setShowAbandonConfirm(false);
     } finally {
       setAbandoning(false);
@@ -1294,7 +1318,12 @@ function AppPageContent() {
       {quest?.status === 'completed' && (
         <QuestShareComposer
           open={showShareCard}
-          onOpenChange={setShowShareCard}
+          onOpenChange={(open) => {
+            setShowShareCard(open);
+            if (open) {
+              trackAnalyticsEvent(AnalyticsEvent.shareOpened, { share_channel: 'quest_card' });
+            }
+          }}
           userFirstName={user?.firstName ?? t('shareDefaultName')}
           payload={{
             questDate: quest.questDate,

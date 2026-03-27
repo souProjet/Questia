@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import { ClerkProvider } from '@clerk/nextjs';
 import { frFR, enUS } from '@clerk/localizations';
 import { NextIntlClientProvider } from 'next-intl';
@@ -8,6 +9,8 @@ import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { siteUrl } from '@/config/marketing';
 import { CookieNotice } from '@/components/CookieNotice';
+import { AnalyticsClerkTracker } from '@/components/analytics/AnalyticsClerkTracker';
+import { AnalyticsPageViewTracker } from '@/components/analytics/AnalyticsPageViewTracker';
 import { MarketingScripts } from '@/components/analytics/MarketingScripts';
 import { SkipLink } from '@/components/SkipLink';
 import { HtmlLang } from '@/components/HtmlLang';
@@ -79,6 +82,10 @@ export default async function LocaleLayout({
         {children}
         <CookieNotice />
         <MarketingScripts />
+        <Suspense fallback={null}>
+          <AnalyticsPageViewTracker />
+        </Suspense>
+        <AnalyticsClerkTracker />
       </NextIntlClientProvider>
     </ClerkProvider>
   );

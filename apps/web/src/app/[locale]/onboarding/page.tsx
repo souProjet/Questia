@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { AnalyticsEvent } from '@/lib/analytics/events';
+import { trackAnalyticsEvent } from '@/lib/analytics/track';
 import { Link, useRouter } from '@/i18n/navigation';
 import { Icon } from '@/components/Icons';
 import { QuestiaLogo } from '@/components/QuestiaLogo';
@@ -57,12 +59,31 @@ export default function OnboardingPage() {
   const profileKey = explorer && risk ? `${explorer}_${risk}` : null;
   const profile = profileKey ? PROFILE_RESULTS[profileKey] : null;
 
-  const handleQ1 = (v: ExplorerAxis) => { setExplorer(v); setStep(1); };
-  const handleQ2 = (v: RiskAxis) => { setRisk(v); setStep(2); };
+  useEffect(() => {
+    trackAnalyticsEvent(AnalyticsEvent.onboardingStarted);
+  }, []);
+
+  const handleQ1 = (v: ExplorerAxis) => {
+    setExplorer(v);
+    setStep(1);
+    trackAnalyticsEvent(AnalyticsEvent.onboardingStepCompleted, {
+      step_name: 'explorer_axis',
+      step_index: 0,
+    });
+  };
+  const handleQ2 = (v: RiskAxis) => {
+    setRisk(v);
+    setStep(2);
+    trackAnalyticsEvent(AnalyticsEvent.onboardingStepCompleted, {
+      step_name: 'risk_axis',
+      step_index: 1,
+    });
+  };
 
   const handleFinish = () => {
     if (!explorer || !risk) return;
     setSaving(true);
+    trackAnalyticsEvent(AnalyticsEvent.onboardingCompleted);
     if (typeof window !== 'undefined') {
       localStorage.setItem('questia_explorer', explorer);
       localStorage.setItem('questia_risk', risk);
