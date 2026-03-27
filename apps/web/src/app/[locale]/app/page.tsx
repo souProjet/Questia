@@ -355,7 +355,7 @@ function AppPageContent() {
         if (!silent) setLoading(false);
       }
     },
-    [ensureProfile, questDateFromUrl, appLocale],
+    [ensureProfile, questDateFromUrl, appLocale, t],
   );
 
   useEffect(() => {

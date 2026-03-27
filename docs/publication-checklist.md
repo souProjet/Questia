@@ -8,15 +8,15 @@ Liste des éléments restants typiques pour une mise en production (web + iOS + 
 
 - [x] Pointer **questia.fr** vers l’hébergement (Vercel, autre) avec **HTTPS** valide.
 - [x] Configurer les **variables d’environnement de prod** sur l’hôte : `DATABASE_URL`, `DIRECT_DATABASE_URL`, `NEXT_PUBLIC_SITE_URL=https://questia.fr`, clés **Clerk** (prod), **OpenAI**, **OpenWeather**, **Stripe**, **Resend** (si mails), secrets **cron** / **webhooks**, etc. (référence : `apps/web/.env.example`).
-- [ ] **Analytics & pub (opt-in)** : si tu actives GTM, GA4 ou Meta Pixel, renseigner les `NEXT_PUBLIC_*` documentées dans `.env.example`, vérifier le bandeau cookies et la section cookies de `/legal/confidentialite`, puis tester en prod (voir [`marketing-analytics.md`](marketing-analytics.md)).
-- [ ] **Mobile** : `EXPO_PUBLIC_API_BASE_URL` = URL HTTPS du backend en prod ; `EXPO_PUBLIC_SITE_URL` = `https://questia.fr` ; même **Clerk publishable** que le web en prod.
+- [x] **Analytics & pub (opt-in)** : si tu actives GTM, GA4 ou Meta Pixel, renseigner les `NEXT_PUBLIC_*` documentées dans `.env.example`, vérifier le bandeau cookies et la section cookies de `/legal/confidentialite`, puis tester en prod (voir [`marketing-analytics.md`](marketing-analytics.md)).
+- [x] **Mobile** : `EXPO_PUBLIC_API_BASE_URL` = URL HTTPS du backend en prod ; `EXPO_PUBLIC_SITE_URL` = `https://questia.fr` ; même **Clerk publishable** que le web en prod.
 
 ---
 
 ## Base de données & migrations
 
 - [x] Appliquer les **migrations Prisma** sur la base **production** (pas seulement un `db push` local).
-- [ ] Avoir un **plan de sauvegarde** / restauration (ex. snapshots Neon).
+- [x] Avoir un **plan de sauvegarde** / restauration (ex. snapshots Neon).
 
 ---
 
