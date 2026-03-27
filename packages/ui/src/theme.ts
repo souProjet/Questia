@@ -29,4 +29,15 @@ export function getThemePalette(themeId: string | null | undefined): ThemePalett
   return getThemePaletteInner(themeId);
 }
 
-export { themeUsesLightStatusBar, colorWithAlpha } from './themePalettes';
+export {
+  themeUsesLightStatusBar,
+  colorWithAlpha,
+  themePanelText,
+  themePanelMuted,
+  heroBandGradient,
+  shopBalanceGradient,
+  questSliderEmbeddedGradient,
+  missionBlockGradient,
+  questDayStripGradient,
+  questActionsFooterGradient,
+} from './themePalettes';

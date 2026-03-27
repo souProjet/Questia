@@ -18,8 +18,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HISTORY_PAGE_SIZE, questDisplayEmoji, type EscalationPhase } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
+import { getHistoryScreenStrings } from '../../lib/historyScreenStrings';
 import { hapticLight, hapticSelection } from '../../lib/haptics';
+import { elevationAndroidSafe } from '../../lib/elevationAndroid';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -71,57 +74,11 @@ type TxRow = {
   createdAt: string;
 };
 
-const PHASE_LABEL: Record<EscalationPhase, string> = {
-  calibration: 'Étalonnage',
-  expansion: 'Expansion',
-  rupture: 'Rupture',
-};
-
-const STATUS_QUEST_LABEL: Record<QuestHistoryRow['status'], string> = {
-  pending: 'En attente',
-  accepted: 'Acceptée',
-  completed: 'Terminée',
-  rejected: 'Refusée',
-  replaced: 'Remplacée',
-};
-
-const ENTRY_KIND_LABEL: Record<string, string> = {
-  legacy_stripe_product: 'Achat Stripe',
-  stripe_coin_topup: 'Recharge QC',
-  coin_purchase: 'Achat en QC',
-};
-
-const TX_STATUS_LABEL: Record<string, string> = {
-  pending: 'En attente',
-  paid: 'Payé',
-  failed: 'Échoué',
-  refunded: 'Remboursé',
-};
-
-function normalize(s: string) {
-  return s
+function normalizeText(value: string) {
+  return value
     .toLowerCase()
     .normalize('NFD')
     .replace(/\p{M}/gu, '');
-}
-
-function txRowA11yLabel(tx: TxRow) {
-  const date = new Date(tx.createdAt).toLocaleString('fr-FR', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-  const qc =
-    tx.coinsDelta != null
-      ? `${tx.coinsDelta >= 0 ? 'plus' : 'moins'} ${Math.abs(tx.coinsDelta)} Quest Coins`
-      : '';
-  const eur =
-    tx.amountCents > 0
-      ? `${(tx.amountCents / 100).toFixed(2).replace('.', ',')} ${tx.currency.toUpperCase()}`
-      : '';
-  const bal = tx.coinBalanceAfter != null ? `Solde après : ${tx.coinBalanceAfter} Quest Coins` : '';
-  return [tx.label, tx.primarySku, ENTRY_KIND_LABEL[tx.entryKind] ?? tx.entryKind, TX_STATUS_LABEL[tx.status] ?? tx.status, qc, eur, bal, date]
-    .filter(Boolean)
-    .join('. ');
 }
 
 function reusePayload(q: QuestHistoryRow) {
@@ -136,6 +93,8 @@ function reusePayload(q: QuestHistoryRow) {
 }
 
 export default function HistoryScreen() {
+  const { locale: appLocale } = useAppLocale();
+  const s = useMemo(() => getHistoryScreenStrings(appLocale), [appLocale]);
   const { palette } = useAppTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const router = useRouter();
@@ -178,13 +137,13 @@ export default function HistoryScreen() {
       const tUrl = `${API_BASE_URL}/api/shop/transactions?limit=${HISTORY_PAGE_SIZE}&offset=0`;
       const [rq, rt] = await Promise.all([apiFetch(qUrl, token), apiFetch(tUrl, token)]);
       if (!rq.ok) {
-        setError(rq.status === 401 ? 'Session expirée.' : `Quêtes : erreur ${rq.status}`);
+        setError(rq.status === 401 ? s.errSession : s.errQuests(rq.status));
         setQuests([]);
         setTransactions([]);
         return;
       }
       if (!rt.ok) {
-        setError(rt.status === 401 ? 'Session expirée.' : `Portefeuille : erreur ${rt.status}`);
+        setError(rt.status === 401 ? s.errSession : s.errWallet(rt.status));
         setQuests([]);
         setTransactions([]);
         return;
@@ -196,11 +155,11 @@ export default function HistoryScreen() {
       setTransactions(jt.transactions);
       setTxHasMore(jt.hasMore);
     } catch {
-      setError('Impossible de joindre le serveur.');
+      setError(s.errNetwork);
       setQuests([]);
       setTransactions([]);
     }
-  }, []);
+  }, [s]);
 
   const loadMoreQuests = useCallback(async () => {
     if (!questHasMore || questLoadingMore || quests === null) return;
@@ -274,14 +233,14 @@ export default function HistoryScreen() {
 
   const filteredQuests = useMemo(() => {
     const list = quests ?? [];
-    const needle = normalize(qSearch.trim());
+    const needle = normalizeText(qSearch.trim());
     return list.filter((q) => {
       if (qStatus !== 'all' && q.status !== qStatus) return false;
       if (qPhase !== 'all' && q.phase !== qPhase) return false;
       if (qOutdoor === 'out' && !q.isOutdoor) return false;
       if (qOutdoor === 'in' && q.isOutdoor) return false;
       if (!needle) return true;
-      const hay = normalize(
+      const hay = normalizeText(
         [q.title, q.mission, q.hook, q.destinationLabel, q.locationCity, q.archetypeTitle, q.questDate]
           .filter(Boolean)
           .join(' '),
@@ -292,7 +251,7 @@ export default function HistoryScreen() {
 
   const filteredTx = useMemo(() => {
     const list = transactions ?? [];
-    const needle = normalize(wSearch.trim());
+    const needle = normalizeText(wSearch.trim());
     return list.filter((t) => {
       if (wKind !== 'all' && t.entryKind !== wKind) return false;
       if (wTxStatus !== 'all' && t.status !== wTxStatus) return false;
@@ -303,32 +262,20 @@ export default function HistoryScreen() {
         if (t.coinsDelta == null || t.coinsDelta >= 0) return false;
       }
       if (!needle) return true;
-      const hay = normalize([t.label, t.primarySku, ENTRY_KIND_LABEL[t.entryKind] ?? t.entryKind].join(' '));
+      const hay = normalizeText([t.label, t.primarySku, s.entryKind[t.entryKind] ?? t.entryKind].join(' '));
       return hay.includes(needle);
     });
-  }, [transactions, wSearch, wKind, wTxStatus, wFlow]);
+  }, [transactions, wSearch, wKind, wTxStatus, wFlow, s]);
 
   const questCountLabel = useMemo(() => {
     const n = quests?.length ?? 0;
-    const loaded =
-      n === 0
-        ? 'aucune entrée chargée'
-        : `${n} entrée${n > 1 ? 's' : ''} chargée${n > 1 ? 's' : ''}`;
-    return `${filteredQuests.length} résultat(s) sur ${loaded}${
-      questHasMore ? ' · d’autres entrées peuvent exister' : ' · historique entièrement chargé'
-    }`;
-  }, [filteredQuests.length, quests, questHasMore]);
+    return s.questCountLine(filteredQuests.length, n, questHasMore);
+  }, [filteredQuests.length, quests, questHasMore, s]);
 
   const txCountLabel = useMemo(() => {
     const n = transactions?.length ?? 0;
-    const loaded =
-      n === 0
-        ? 'aucune entrée chargée'
-        : `${n} entrée${n > 1 ? 's' : ''} chargée${n > 1 ? 's' : ''}`;
-    return `${filteredTx.length} mouvement(s) sur ${loaded}${
-      txHasMore ? ' · d’autres entrées peuvent exister' : ' · historique entièrement chargé'
-    }`;
-  }, [filteredTx.length, transactions, txHasMore]);
+    return s.txCountLine(filteredTx.length, n, txHasMore);
+  }, [filteredTx.length, transactions, txHasMore, s]);
 
   const setTab = (t: 'quests' | 'wallet') => {
     hapticSelection();
@@ -340,7 +287,7 @@ export default function HistoryScreen() {
     const text = reusePayload(q);
     Clipboard.setString(text);
     hapticLight();
-    Alert.alert('Copié', 'Tu peux coller le texte où tu veux pour t’inspirer.');
+    Alert.alert(s.copyTitle, s.copyMsg);
   };
 
   const phasePillStyle = (phase: EscalationPhase) =>
@@ -355,40 +302,40 @@ export default function HistoryScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
         <View style={{ width: 72 }} />
-        <Text style={[styles.topTitle, styles.topTitleCenter]}>Historique</Text>
+        <Text style={[styles.topTitle, styles.topTitleCenter]}>{s.title}</Text>
         <View style={{ width: 72 }} />
       </View>
 
-      <View style={styles.tabShell} accessibilityRole="tablist" accessibilityLabel="Type d’historique">
+      <View style={styles.tabShell} accessibilityRole="tablist" accessibilityLabel={s.tabListA11y}>
         <Pressable
           onPress={() => setTab('quests')}
           android_ripple={chipRipple}
           accessibilityRole="tab"
           accessibilityState={{ selected: segment === 'quests' }}
-          accessibilityLabel="Quêtes"
-          accessibilityHint="Affiche l’historique des quêtes"
+          accessibilityLabel={s.tabQuests}
+          accessibilityHint={s.tabQuestsHint}
           style={({ pressed }) => [
             styles.tabBtn,
             segment === 'quests' && styles.tabBtnActive,
             pressed && styles.tabPressed,
           ]}
         >
-          <Text style={[styles.tabBtnText, segment === 'quests' && styles.tabBtnTextActive]}>Quêtes</Text>
+          <Text style={[styles.tabBtnText, segment === 'quests' && styles.tabBtnTextActive]}>{s.tabQuests}</Text>
         </Pressable>
         <Pressable
           onPress={() => setTab('wallet')}
           android_ripple={chipRipple}
           accessibilityRole="tab"
           accessibilityState={{ selected: segment === 'wallet' }}
-          accessibilityLabel="Portefeuille"
-          accessibilityHint="Affiche les mouvements Quest Coins"
+          accessibilityLabel={s.tabWallet}
+          accessibilityHint={s.tabWalletHint}
           style={({ pressed }) => [
             styles.tabBtn,
             segment === 'wallet' && styles.tabBtnActive,
             pressed && styles.tabPressed,
           ]}
         >
-          <Text style={[styles.tabBtnText, segment === 'wallet' && styles.tabBtnTextActive]}>Portefeuille</Text>
+          <Text style={[styles.tabBtnText, segment === 'wallet' && styles.tabBtnTextActive]}>{s.tabWallet}</Text>
         </Pressable>
       </View>
 
@@ -403,9 +350,9 @@ export default function HistoryScreen() {
             style={styles.retry}
             onPress={() => void load()}
             accessibilityRole="button"
-            accessibilityLabel="Réessayer le chargement"
+            accessibilityLabel={s.retryLoadA11y}
           >
-            <Text style={styles.retryText}>Réessayer</Text>
+            <Text style={styles.retryText}>{s.retry}</Text>
           </Pressable>
         </View>
       ) : segment === 'quests' ? (
@@ -430,26 +377,26 @@ export default function HistoryScreen() {
                   />
                 </View>
                 <View style={styles.filterPanelInner}>
-                  <Text style={styles.filterPanelKicker}>Recherche & filtres</Text>
+                  <Text style={styles.filterPanelKicker}>{s.filterKicker}</Text>
                   <TextInput
                     style={styles.histInput}
                     value={qSearch}
                     onChangeText={setQSearch}
-                    placeholder="Titre, mission, lieu, date…"
+                    placeholder={s.qPlaceholder}
                     placeholderTextColor={palette.muted}
-                    accessibilityLabel="Recherche dans les quêtes"
-                    accessibilityHint="Filtre la liste par titre, mission, lieu ou date"
+                    accessibilityLabel={s.qSearchA11y}
+                    accessibilityHint={s.qSearchHint}
                   />
-                  <Text style={styles.filterGroupLabel}>Statut</Text>
+                  <Text style={styles.filterGroupLabel}>{s.labelStatus}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
                     {(
                       [
-                        ['all', 'Tous'],
-                        ['completed', 'Terminées'],
-                        ['accepted', 'Acceptées'],
-                        ['rejected', 'Refusées'],
-                        ['replaced', 'Remplacées'],
-                        ['pending', 'Attente'],
+                        ['all', s.statusAll],
+                        ['completed', s.statusCompleted],
+                        ['accepted', s.statusAccepted],
+                        ['rejected', s.statusRejected],
+                        ['replaced', s.statusReplaced],
+                        ['pending', s.statusPending],
                       ] as const
                     ).map(([v, label]) => (
                       <Pressable
@@ -458,7 +405,7 @@ export default function HistoryScreen() {
                         onPress={() => setQStatus(v)}
                         accessibilityRole="button"
                         accessibilityState={{ selected: qStatus === v }}
-                        accessibilityLabel={`Statut : ${label}`}
+                        accessibilityLabel={`${s.labelStatus} : ${label}`}
                         style={({ pressed }) => [
                           styles.chip,
                           qStatus === v && styles.chipOnOrange,
@@ -469,14 +416,14 @@ export default function HistoryScreen() {
                       </Pressable>
                     ))}
                   </ScrollView>
-                  <Text style={styles.filterGroupLabel}>Phase</Text>
+                  <Text style={styles.filterGroupLabel}>{s.labelPhase}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
                     {(
                       [
-                        ['all', 'Toutes'],
-                        ['calibration', PHASE_LABEL.calibration],
-                        ['expansion', PHASE_LABEL.expansion],
-                        ['rupture', PHASE_LABEL.rupture],
+                        ['all', s.phaseAll],
+                        ['calibration', s.phase.calibration],
+                        ['expansion', s.phase.expansion],
+                        ['rupture', s.phase.rupture],
                       ] as const
                     ).map(([v, label]) => (
                       <Pressable
@@ -485,7 +432,7 @@ export default function HistoryScreen() {
                         onPress={() => setQPhase(v)}
                         accessibilityRole="button"
                         accessibilityState={{ selected: qPhase === v }}
-                        accessibilityLabel={`Phase : ${label}`}
+                        accessibilityLabel={`${s.labelPhase} : ${label}`}
                         style={({ pressed }) => [
                           styles.chip,
                           qPhase === v && styles.chipOnCyan,
@@ -496,13 +443,13 @@ export default function HistoryScreen() {
                       </Pressable>
                     ))}
                   </ScrollView>
-                  <Text style={styles.filterGroupLabel}>Lieu</Text>
+                  <Text style={styles.filterGroupLabel}>{s.labelPlace}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
                     {(
                       [
-                        ['all', 'Tous'],
-                        ['out', 'Extérieur'],
-                        ['in', 'Intérieur'],
+                        ['all', s.placeAll],
+                        ['out', s.placeOutdoor],
+                        ['in', s.placeIndoor],
                       ] as const
                     ).map(([v, label]) => (
                       <Pressable
@@ -511,7 +458,7 @@ export default function HistoryScreen() {
                         onPress={() => setQOutdoor(v)}
                         accessibilityRole="button"
                         accessibilityState={{ selected: qOutdoor === v }}
-                        accessibilityLabel={`Lieu : ${label}`}
+                        accessibilityLabel={`${s.labelPlace} : ${label}`}
                         style={({ pressed }) => [
                           styles.chip,
                           qOutdoor === v && styles.chipOnGreen,
@@ -545,13 +492,13 @@ export default function HistoryScreen() {
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={styles.cardTitle}>{q.title}</Text>
                     <Text style={styles.cardMeta}>
-                      {new Date(q.questDate).toLocaleDateString('fr-FR')} · {STATUS_QUEST_LABEL[q.status]}
-                      {q.wasRerolled ? ' · relancée' : ''}
+                      {new Date(q.questDate).toLocaleDateString(s.numLocale)} · {s.statusQuest[q.status]}
+                      {q.wasRerolled ? ` · ${s.rerolled}` : ''}
                     </Text>
                     <View style={styles.tagRow}>
-                      <Text style={phasePillStyle(q.phase)}>{PHASE_LABEL[q.phase]}</Text>
+                      <Text style={phasePillStyle(q.phase)}>{s.phase[q.phase]}</Text>
                       <Text style={q.isOutdoor ? styles.pillOutdoor : styles.pillIndoor}>
-                        {q.isOutdoor ? 'Extérieur' : 'Intérieur'}
+                        {q.isOutdoor ? s.outdoor : s.indoor}
                       </Text>
                       {q.xpAwarded != null ? <Text style={styles.pillXp}>{`+${q.xpAwarded} XP`}</Text> : null}
                     </View>
@@ -561,14 +508,14 @@ export default function HistoryScreen() {
                     style={({ pressed }) => [styles.reuseBtn, pressed && styles.reuseBtnPressed]}
                     onPress={() => onReuse(q)}
                     accessibilityRole="button"
-                    accessibilityLabel="Réutiliser"
-                    accessibilityHint="Copie le texte de la quête dans le presse-papiers"
+                    accessibilityLabel={s.reuse}
+                    accessibilityHint={s.reuseHint}
                   >
-                    <Text style={styles.reuseBtnText}>Réutiliser</Text>
+                    <Text style={styles.reuseBtnText}>{s.reuse}</Text>
                   </Pressable>
                 </View>
                 {q.archetypeTitle ? (
-                  <Text style={styles.inspire}>Inspiration : {q.archetypeTitle}</Text>
+                  <Text style={styles.inspire}>{s.inspiration(q.archetypeTitle)}</Text>
                 ) : null}
                 <View style={styles.missionBox}>
                   <Text style={styles.missionText}>{q.mission}</Text>
@@ -581,9 +528,7 @@ export default function HistoryScreen() {
             <View>
               <View style={styles.emptyBox}>
                 <Text style={styles.emptyText}>
-                  {(quests?.length ?? 0) === 0
-                    ? 'Aucune quête dans ton historique.'
-                    : 'Aucune quête ne correspond à ces filtres.'}
+                  {(quests?.length ?? 0) === 0 ? s.emptyQuestNone : s.emptyQuestFiltered}
                 </Text>
               </View>
               {(quests?.length ?? 0) > 0 && questHasMore ? (
@@ -592,11 +537,11 @@ export default function HistoryScreen() {
                   onPress={() => void loadMoreQuests()}
                   disabled={questLoadingMore}
                   accessibilityRole="button"
-                  accessibilityLabel={questLoadingMore ? 'Chargement' : 'Charger plus de quêtes'}
+                  accessibilityLabel={questLoadingMore ? s.loadingA11y : s.loadMoreA11y}
                   accessibilityState={{ disabled: questLoadingMore }}
                 >
                   <Text style={styles.retryText}>
-                    {questLoadingMore ? 'Chargement…' : 'Charger plus d’entrées'}
+                    {questLoadingMore ? s.loading : s.loadMore}
                   </Text>
                 </Pressable>
               ) : null}
@@ -606,7 +551,7 @@ export default function HistoryScreen() {
             <View style={styles.listFooter}>
               {questLoadingMore ? <ActivityIndicator color={palette.orange} /> : null}
               {!questHasMore && !questLoadingMore ? (
-                <Text style={styles.loadMoreHint}>Tu as tout chargé.</Text>
+                <Text style={styles.loadMoreHint}>{s.allLoaded}</Text>
               ) : null}
             </View>
           }
@@ -633,31 +578,31 @@ export default function HistoryScreen() {
                   />
                 </View>
                 <View style={styles.filterPanelInner}>
-                  <Text style={styles.filterPanelKicker}>Recherche & filtres</Text>
+                  <Text style={styles.filterPanelKicker}>{s.filterKicker}</Text>
                   <TextInput
                     style={styles.histInput}
                     value={wSearch}
                     onChangeText={setWSearch}
-                    placeholder="Libellé, référence, type…"
+                    placeholder={s.wPlaceholder}
                     placeholderTextColor={palette.muted}
-                    accessibilityLabel="Recherche dans le portefeuille"
-                    accessibilityHint="Filtre par libellé, référence ou type de mouvement"
+                    accessibilityLabel={s.wSearchA11y}
+                    accessibilityHint={s.wSearchHint}
                   />
-                  <Text style={styles.filterGroupLabel}>Type</Text>
+                  <Text style={styles.filterGroupLabel}>{s.labelType}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
                     <Pressable
                       android_ripple={chipRipple}
                       onPress={() => setWKind('all')}
                       accessibilityRole="button"
                       accessibilityState={{ selected: wKind === 'all' }}
-                      accessibilityLabel="Type : Tous"
+                      accessibilityLabel={`${s.labelType} : ${s.all}`}
                       style={({ pressed }) => [
                         styles.chip,
                         wKind === 'all' && styles.chipOnCyan,
                         pressed && styles.chipPressed,
                       ]}
                     >
-                      <Text style={[styles.chipText, wKind === 'all' && styles.chipTextOn]}>Tous</Text>
+                      <Text style={[styles.chipText, wKind === 'all' && styles.chipTextOn]}>{s.all}</Text>
                     </Pressable>
                     {kindOptions.map((k) => (
                       <Pressable
@@ -666,7 +611,7 @@ export default function HistoryScreen() {
                         onPress={() => setWKind(k)}
                         accessibilityRole="button"
                         accessibilityState={{ selected: wKind === k }}
-                        accessibilityLabel={`Type : ${ENTRY_KIND_LABEL[k] ?? k}`}
+                        accessibilityLabel={`${s.labelType} : ${s.entryKind[k] ?? k}`}
                         style={({ pressed }) => [
                           styles.chip,
                           wKind === k && styles.chipOnCyan,
@@ -674,12 +619,12 @@ export default function HistoryScreen() {
                         ]}
                       >
                         <Text style={[styles.chipText, wKind === k && styles.chipTextOn]}>
-                          {ENTRY_KIND_LABEL[k] ?? k}
+                          {s.entryKind[k] ?? k}
                         </Text>
                       </Pressable>
                     ))}
                   </ScrollView>
-                  <Text style={styles.filterGroupLabel}>Statut paiement</Text>
+                  <Text style={styles.filterGroupLabel}>{s.labelPayStatus}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
                     {(['all', 'paid', 'pending', 'failed', 'refunded'] as const).map((v) => (
                       <Pressable
@@ -690,8 +635,8 @@ export default function HistoryScreen() {
                         accessibilityState={{ selected: wTxStatus === v }}
                         accessibilityLabel={
                           v === 'all'
-                            ? 'Statut paiement : Tous'
-                            : `Statut paiement : ${TX_STATUS_LABEL[v] ?? v}`
+                            ? `${s.labelPayStatus} : ${s.all}`
+                            : `${s.labelPayStatus} : ${s.txStatus[v] ?? v}`
                         }
                         style={({ pressed }) => [
                           styles.chip,
@@ -700,18 +645,18 @@ export default function HistoryScreen() {
                         ]}
                       >
                         <Text style={[styles.chipText, wTxStatus === v && styles.chipTextOn]}>
-                          {v === 'all' ? 'Tous' : TX_STATUS_LABEL[v] ?? v}
+                          {v === 'all' ? s.all : s.txStatus[v] ?? v}
                         </Text>
                       </Pressable>
                     ))}
                   </ScrollView>
-                  <Text style={styles.filterGroupLabel}>Flux QC</Text>
+                  <Text style={styles.filterGroupLabel}>{s.labelQcFlow}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
                     {(
                       [
-                        ['all', 'Tous'],
-                        ['in', 'Entrées +'],
-                        ['out', 'Sorties −'],
+                        ['all', s.flowAll],
+                        ['in', s.flowIn],
+                        ['out', s.flowOut],
                       ] as const
                     ).map(([v, label]) => (
                       <Pressable
@@ -720,7 +665,7 @@ export default function HistoryScreen() {
                         onPress={() => setWFlow(v)}
                         accessibilityRole="button"
                         accessibilityState={{ selected: wFlow === v }}
-                        accessibilityLabel={`Flux Quest Coins : ${label}`}
+                        accessibilityLabel={`${s.labelQcFlow} : ${label}`}
                         style={({ pressed }) => [
                           styles.chip,
                           wFlow === v && styles.chipOnGreen,
@@ -740,12 +685,12 @@ export default function HistoryScreen() {
             <View
               style={[styles.txRowOuter, i > 0 && styles.txRowBorder]}
               accessible
-              accessibilityLabel={txRowA11yLabel(tx)}
+              accessibilityLabel={s.txRowA11y(tx)}
             >
               <Text style={styles.txLabel}>{tx.label}</Text>
               <Text style={styles.txSku}>{tx.primarySku}</Text>
               <Text style={styles.txKind}>
-                {ENTRY_KIND_LABEL[tx.entryKind] ?? tx.entryKind} · {TX_STATUS_LABEL[tx.status] ?? tx.status}
+                {s.entryKind[tx.entryKind] ?? tx.entryKind} · {s.txStatus[tx.status] ?? tx.status}
               </Text>
               <View style={styles.txAmountRow}>
                 {tx.coinsDelta != null ? (
@@ -756,15 +701,19 @@ export default function HistoryScreen() {
                 ) : null}
                 {tx.amountCents > 0 ? (
                   <Text style={styles.txEur}>
-                    {(tx.amountCents / 100).toFixed(2).replace('.', ',')} {tx.currency.toUpperCase()}
+                    {(tx.amountCents / 100).toLocaleString(s.numLocale, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{' '}
+                    {tx.currency.toUpperCase()}
                   </Text>
                 ) : null}
               </View>
               {tx.coinBalanceAfter != null ? (
-                <Text style={styles.txAfter}>Solde après : {tx.coinBalanceAfter} QC</Text>
+                <Text style={styles.txAfter}>{s.balanceAfterTx(tx.coinBalanceAfter)}</Text>
               ) : null}
               <Text style={styles.txDate}>
-                {new Date(tx.createdAt).toLocaleString('fr-FR', {
+                {new Date(tx.createdAt).toLocaleString(s.numLocale, {
                   dateStyle: 'medium',
                   timeStyle: 'short',
                 })}
@@ -775,9 +724,7 @@ export default function HistoryScreen() {
             <View>
               <View style={styles.emptyBox}>
                 <Text style={styles.emptyText}>
-                  {(transactions?.length ?? 0) === 0
-                    ? 'Aucun mouvement dans ton portefeuille.'
-                    : 'Aucune opération ne correspond à ces filtres.'}
+                  {(transactions?.length ?? 0) === 0 ? s.emptyWalletNone : s.emptyWalletFiltered}
                 </Text>
               </View>
               {(transactions?.length ?? 0) > 0 && txHasMore ? (
@@ -786,11 +733,11 @@ export default function HistoryScreen() {
                   onPress={() => void loadMoreTx()}
                   disabled={txLoadingMore}
                   accessibilityRole="button"
-                  accessibilityLabel={txLoadingMore ? 'Chargement' : 'Charger plus de mouvements'}
+                  accessibilityLabel={txLoadingMore ? s.loadingA11y : s.txLoadMoreA11y}
                   accessibilityState={{ disabled: txLoadingMore }}
                 >
                   <Text style={styles.retryText}>
-                    {txLoadingMore ? 'Chargement…' : 'Charger plus d’entrées'}
+                    {txLoadingMore ? s.loading : s.loadMore}
                   </Text>
                 </Pressable>
               ) : null}
@@ -800,11 +747,9 @@ export default function HistoryScreen() {
             <View style={styles.listFooter}>
               {txLoadingMore ? <ActivityIndicator color={palette.orange} /> : null}
               {!txHasMore && !txLoadingMore ? (
-                <Text style={styles.loadMoreHint}>Tu as tout chargé.</Text>
+                <Text style={styles.loadMoreHint}>{s.allLoaded}</Text>
               ) : null}
-              <Text style={styles.walletShopHint}>
-                Recharge et achats depuis la boutique (onglet Shop).
-              </Text>
+              <Text style={styles.walletShopHint}>{s.walletShopHint}</Text>
             </View>
           }
         />
@@ -814,6 +759,7 @@ export default function HistoryScreen() {
 }
 
 function createStyles(p: ThemePalette) {
+  const elev = elevationAndroidSafe;
   const C = { text: p.text, muted: p.muted };
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: p.bg },
@@ -842,14 +788,14 @@ function createStyles(p: ThemePalette) {
     },
     tabBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
     tabBtnActive: {
-      backgroundColor: p.cardCream,
+      backgroundColor: p.card,
       borderWidth: 1,
       borderColor: p.border,
       shadowColor: p.text,
       shadowOpacity: 0.12,
       shadowRadius: 12,
       shadowOffset: { width: 0, height: 4 },
-      elevation: 3,
+      elevation: elev(3),
     },
     tabBtnText: { fontSize: 13, fontWeight: '800', color: p.muted },
     tabBtnTextActive: { color: p.text },
@@ -877,7 +823,7 @@ function createStyles(p: ThemePalette) {
       shadowOpacity: 0.14,
       shadowRadius: 22,
       shadowOffset: { width: 0, height: 10 },
-      elevation: 5,
+      elevation: elev(5),
     },
     filterPanelStripe: { height: 4, width: '100%' },
     filterPanelInner: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 16 },
@@ -904,7 +850,7 @@ function createStyles(p: ThemePalette) {
       shadowOpacity: 0.06,
       shadowOffset: { width: 0, height: 1 },
       shadowRadius: 2,
-      elevation: 1,
+      elevation: elev(1),
     },
     filterGroupLabel: {
       fontSize: 10,
@@ -961,12 +907,12 @@ function createStyles(p: ThemePalette) {
       marginBottom: 16,
       borderWidth: 1,
       borderColor: colorWithAlpha(p.orange, 0.22),
-      backgroundColor: p.cardCream,
+      backgroundColor: p.card,
       shadowColor: p.cyan,
       shadowOpacity: 0.14,
       shadowRadius: 20,
       shadowOffset: { width: 0, height: 8 },
-      elevation: 4,
+      elevation: elev(4),
     },
     questCardStripe: { height: 4, width: '100%' },
     questCardInner: { padding: 16 },
@@ -1068,7 +1014,7 @@ function createStyles(p: ThemePalette) {
       borderColor: colorWithAlpha(p.cyan, 0.4),
       borderRadius: 16,
       padding: 14,
-      backgroundColor: p.cardCream,
+      backgroundColor: p.surface,
     },
     missionText: { fontSize: 14, fontWeight: '700', color: p.text, lineHeight: 21 },
     hook: {
@@ -1095,7 +1041,7 @@ function createStyles(p: ThemePalette) {
       shadowOpacity: 0.1,
       shadowRadius: 18,
       shadowOffset: { width: 0, height: 8 },
-      elevation: 3,
+      elevation: elev(3),
     },
     txRowOuter: { paddingHorizontal: 14, paddingVertical: 12 },
     txRowBorder: { borderTopWidth: 1, borderTopColor: p.divider },

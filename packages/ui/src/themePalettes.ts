@@ -146,3 +146,55 @@ export function colorWithAlpha(hex: string, alpha: number): string {
   const b = parseInt(raw.slice(4, 6), 16);
   return `rgba(${r},${g},${b},${alpha})`;
 }
+
+/** Texte « panneau » : crème (#onCream) en thème clair par défaut, sinon couleurs du thème actif. */
+export function themePanelText(themeId: string | null | undefined, p: ThemePalette): string {
+  return themeId && themeId !== 'default' ? p.text : p.onCream;
+}
+
+export function themePanelMuted(themeId: string | null | undefined, p: ThemePalette): string {
+  return themeId && themeId !== 'default' ? p.muted : p.onCreamMuted;
+}
+
+export function heroBandGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
+  if (!themeId || themeId === 'default') {
+    return ['#fffbeb', '#ffffff', 'rgba(236,254,255,0.92)'];
+  }
+  return [colorWithAlpha(p.gold, 0.22), p.card, colorWithAlpha(p.cyan, 0.12)];
+}
+
+export function shopBalanceGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
+  if (!themeId || themeId === 'default') {
+    return ['#fffbeb', '#ffffff', '#fef3c7'];
+  }
+  return [colorWithAlpha(p.gold, 0.22), p.surface, colorWithAlpha(p.gold, 0.14)];
+}
+
+export function questSliderEmbeddedGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
+  if (!themeId || themeId === 'default') {
+    return ['#fff7df', '#fff3c6', '#d7f5f9'];
+  }
+  return [colorWithAlpha(p.gold, 0.2), p.card, colorWithAlpha(p.cyan, 0.14)];
+}
+
+export function missionBlockGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
+  if (!themeId || themeId === 'default') {
+    return ['#ffffff', 'rgba(224,242,254,0.55)', '#ffffff'];
+  }
+  return [p.card, colorWithAlpha(p.cyan, 0.1), p.surface];
+}
+
+export function questDayStripGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
+  if (!themeId || themeId === 'default') {
+    return ['rgba(255,247,237,0.98)', 'rgba(255,255,255,0.96)', 'rgba(254,243,199,0.55)'];
+  }
+  return [colorWithAlpha(p.orange, 0.12), p.card, colorWithAlpha(p.gold, 0.1)];
+}
+
+/** Fond sous les boutons d’action (valider, relancer, etc.) */
+export function questActionsFooterGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
+  if (!themeId || themeId === 'default') {
+    return ['rgba(255,255,255,0.88)', 'rgba(255,251,235,0.55)', 'rgba(236,254,255,0.45)'];
+  }
+  return [colorWithAlpha(p.surface, 0.98), colorWithAlpha(p.card, 0.95), colorWithAlpha(p.cyan, 0.12)];
+}

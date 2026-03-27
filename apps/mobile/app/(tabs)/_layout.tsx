@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Tabs } from 'expo-router';
 import { useAuth } from '@clerk/expo';
-import type { AppLocale } from '@questia/shared';
 import { QuestiaTabBar } from '../../components/QuestiaTabBar';
+import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { getTabTitles } from '../../lib/tabTitles';
 import { syncPushRemindersWithServer } from '../../lib/syncPushReminders';
 
@@ -23,11 +23,8 @@ function PushRemindersSync() {
 }
 
 export default function MainTabsLayout() {
-  const appLocale = useMemo((): AppLocale => {
-    const tag = Intl.DateTimeFormat().resolvedOptions().locale ?? 'fr';
-    return tag.toLowerCase().startsWith('en') ? 'en' : 'fr';
-  }, []);
-  const tab = getTabTitles(appLocale);
+  const { locale: appLocale } = useAppLocale();
+  const tab = useMemo(() => getTabTitles(appLocale), [appLocale]);
   return (
     <>
       <PushRemindersSync />

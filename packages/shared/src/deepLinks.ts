@@ -2,6 +2,8 @@
  * Deep links et URLs de partage cohérents entre web (Next `/app`) et mobile (scheme + universal links).
  */
 
+import { getTitleDefinition } from './shop/titles';
+
 /** Clés de query reconnues par l’API `/api/quest/daily` et les pages app. */
 export const QUEST_DATE_QUERY_KEYS = ['questDate', 'date'] as const;
 
@@ -36,10 +38,37 @@ export function buildNativeAppQuestUrl(scheme: string, questDate?: string | null
   return `${s}://app?questDate=${encodeURIComponent(questDate)}`;
 }
 
+/** Ligne « titre boutique » pour carte / texte de partage (null si pas équipé ou inconnu). */
+export function formatQuestShareEquippedTitleLine(
+  equippedTitleId: string | null | undefined,
+): string | null {
+  if (!equippedTitleId) return null;
+  const d = getTitleDefinition(equippedTitleId);
+  if (!d) return null;
+  return `${d.emoji} ${d.label}`;
+}
+
+/** Ligne niveau + XP totaux pour carte / texte de partage. */
+export function formatQuestShareProgressionLine(
+  p: { level: number; totalXp: number },
+  locale: 'fr' | 'en' = 'fr',
+): string {
+  const nLocale = locale === 'en' ? 'en-GB' : 'fr-FR';
+  const num = p.totalXp.toLocaleString(nLocale);
+  if (locale === 'en') return `Lv. ${p.level} · ${num} XP`;
+  return `Nv. ${p.level} · ${num} XP`;
+}
+
 /** Texte de partage court + URL (messageries, presse-papiers). */
 export function buildQuestShareMessage(opts: {
   title: string;
   webUrl: string;
+  equippedTitleLine?: string | null;
+  progressionLine?: string | null;
 }): string {
-  return `${opts.title}\n${opts.webUrl}`;
+  const lines: string[] = [opts.title];
+  if (opts.equippedTitleLine?.trim()) lines.push(opts.equippedTitleLine.trim());
+  if (opts.progressionLine?.trim()) lines.push(opts.progressionLine.trim());
+  lines.push(opts.webUrl);
+  return lines.join('\n');
 }

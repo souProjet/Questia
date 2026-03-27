@@ -8,12 +8,22 @@ import {
   buildQuestShareMessage,
   buildWebAppQuestUrl,
   formatQuestDateFr,
+  formatQuestShareEquippedTitleLine,
+  formatQuestShareProgressionLine,
   getQuestShareBackgroundById,
   questDisplayEmoji,
   type QuestShareBackground,
 } from '@questia/shared';
 import { siteUrl } from '@/config/marketing';
 import { QuestiaLogo } from '@/components/QuestiaLogo';
+
+function siteHostLabel(base: string): string {
+  try {
+    return new URL(base.startsWith('http') ? base : `https://${base}`).hostname.replace(/^www\./, '');
+  } catch {
+    return 'questia.fr';
+  }
+}
 
 export interface QuestSharePayload {
   questDate: string;
@@ -24,6 +34,16 @@ export interface QuestSharePayload {
   duration: string;
   streak: number;
   day: number;
+  /** Titre boutique équipé (affiché sur la carte + texte de partage). */
+  equippedTitleId?: string | null;
+  /** Niveau / XP (réponse API `progression`). */
+  progression?: {
+    level: number;
+    totalXp: number;
+    xpIntoLevel: number;
+    xpToNext: number;
+    xpPerLevel: number;
+  } | null;
 }
 
 const CARD_W = 360;
@@ -40,12 +60,21 @@ function QuestShareCardFrame({
   userFirstName,
   background,
   photoUrl,
+  shareLocale = 'fr',
 }: {
   payload: QuestSharePayload;
   userFirstName: string;
   background: QuestShareBackground;
   photoUrl: string | null;
+  shareLocale?: 'fr' | 'en';
 }) {
+  const equippedTitleLine = formatQuestShareEquippedTitleLine(payload.equippedTitleId);
+  const progressionLine =
+    payload.progression &&
+    formatQuestShareProgressionLine(
+      { level: payload.progression.level, totalXp: payload.progression.totalXp },
+      shareLocale,
+    );
   const panelDark = background.darkForeground && !photoUrl;
   const panelBorder = panelDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.55)';
   const panelBg = panelDark ? 'rgba(15,23,42,0.72)' : 'rgba(255,255,255,0.74)';
@@ -141,52 +170,99 @@ function QuestShareCardFrame({
           style={{
             flexShrink: 0,
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: photoUrl ? 'space-between' : 'flex-end',
             alignItems: 'center',
             gap: 12,
             padding: '14px 16px 6px',
           }}
         >
-          <div
-            style={{
-              flex: 1,
-              minWidth: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <QuestiaLogo variant="card" />
+          {photoUrl ? (
+            <>
+              <div
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <QuestiaLogo variant="card" />
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    justifyContent: 'center',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: fontDisplay,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.28em',
+                      textTransform: 'uppercase',
+                      color: panelDark ? 'rgba(248,250,252,0.96)' : '#0f172a',
+                      textShadow: '0 1px 10px rgba(0,0,0,0.55)',
+                    }}
+                  >
+                    QUESTIA
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: fontSans,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      color: 'rgba(248,250,252,0.92)',
+                      textShadow: '0 1px 8px rgba(0,0,0,0.65)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {siteHostLabel(siteUrl)}
+                  </span>
+                </div>
+              </div>
+              <span
+                style={{
+                  fontFamily: fontSans,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFeatureSettings: '"tnum"',
+                  letterSpacing: '0.01em',
+                  color: panelDark ? 'rgba(248,250,252,0.92)' : '#334155',
+                  textAlign: 'right',
+                  maxWidth: 200,
+                  lineHeight: 1.35,
+                  textShadow: '0 1px 10px rgba(0,0,0,0.5)',
+                }}
+              >
+                {dateLabel}
+              </span>
+            </>
+          ) : (
             <span
               style={{
-                fontFamily: fontDisplay,
-                fontSize: 10,
-                fontWeight: 800,
-                letterSpacing: '0.28em',
-                textTransform: 'uppercase',
-                color: panelDark ? 'rgba(248,250,252,0.96)' : '#0f172a',
-                textShadow: photoUrl ? '0 1px 10px rgba(0,0,0,0.55)' : '0 1px 0 rgba(255,255,255,0.4)',
+                fontFamily: fontSans,
+                fontSize: 11,
+                fontWeight: 600,
+                fontFeatureSettings: '"tnum"',
+                letterSpacing: '0.01em',
+                color: panelDark ? 'rgba(248,250,252,0.92)' : '#334155',
+                textAlign: 'right',
+                flex: 1,
+                lineHeight: 1.35,
+                textShadow: '0 1px 0 rgba(255,255,255,0.35)',
               }}
             >
-              QUESTIA
+              {dateLabel}
             </span>
-          </div>
-          <span
-            style={{
-              fontFamily: fontSans,
-              fontSize: 11,
-              fontWeight: 600,
-              fontFeatureSettings: '"tnum"',
-              letterSpacing: '0.01em',
-              color: panelDark ? 'rgba(248,250,252,0.92)' : '#334155',
-              textAlign: 'right',
-              maxWidth: 200,
-              lineHeight: 1.35,
-              textShadow: photoUrl ? '0 1px 10px rgba(0,0,0,0.5)' : '0 1px 0 rgba(255,255,255,0.35)',
-            }}
-          >
-            {dateLabel}
-          </span>
+          )}
         </div>
 
         {!photoUrl ? (
@@ -195,53 +271,39 @@ function QuestShareCardFrame({
               flex: 1,
               minHeight: 0,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               pointerEvents: 'none',
               padding: '8px 12px 0',
+              gap: 10,
             }}
           >
-            <div
+            <QuestiaLogo variant="shareHero" />
+            <span
               style={{
-                position: 'relative',
-                width: 200,
-                height: 200,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                fontFamily: fontDisplay,
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: '0.28em',
+                textTransform: 'uppercase',
+                color: panelDark ? 'rgba(248,250,252,0.96)' : '#0f172a',
+                textShadow: '0 1px 0 rgba(255,255,255,0.4)',
               }}
             >
-              <div
-                style={{
-                  position: 'absolute',
-                  width: 200,
-                  height: 200,
-                  borderRadius: '50%',
-                  border: '2px solid rgba(249,115,22,0.22)',
-                  boxShadow: '0 0 0 8px rgba(34,211,238,0.08)',
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  width: 156,
-                  height: 156,
-                  borderRadius: '50%',
-                  border: '1px dashed rgba(15,23,42,0.12)',
-                }}
-              />
-              <span
-                data-share-emoji-decor
-                style={{
-                  fontSize: 88,
-                  lineHeight: 1,
-                  filter: 'drop-shadow(0 4px 12px rgba(15,23,42,0.12))',
-                  opacity: 0.92,
-                }}
-              >
-                {questDisplayEmoji(payload.emoji)}
-              </span>
-            </div>
+              QUESTIA
+            </span>
+            <span
+              style={{
+                fontFamily: fontSans,
+                fontSize: 12,
+                fontWeight: 700,
+                color: mutedColor,
+                letterSpacing: '0.02em',
+              }}
+            >
+              {siteHostLabel(siteUrl)}
+            </span>
           </div>
         ) : (
           <div style={{ flex: 1, minHeight: 0 }} />
@@ -336,6 +398,25 @@ function QuestShareCardFrame({
             ) : null}
           </p>
 
+          {equippedTitleLine || progressionLine ? (
+            <p
+              style={{
+                fontFamily: fontSans,
+                fontSize: 10,
+                fontWeight: 700,
+                color: mutedColor,
+                textAlign: 'left',
+                marginTop: 10,
+                marginBottom: 0,
+                lineHeight: 1.45,
+              }}
+            >
+              {equippedTitleLine ? <span>{equippedTitleLine}</span> : null}
+              {equippedTitleLine && progressionLine ? <br /> : null}
+              {progressionLine ? <span>{progressionLine}</span> : null}
+            </p>
+          ) : null}
+
           <p
             style={{
               fontFamily: fontSans,
@@ -373,11 +454,14 @@ export function QuestShareComposer({
   onOpenChange,
   payload,
   userFirstName,
+  shareLocale = 'fr',
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   payload: QuestSharePayload;
   userFirstName: string;
+  /** Aligné sur la locale de l’app (libellés Nv./Lv. et format des nombres). */
+  shareLocale?: 'fr' | 'en';
 }) {
   const [bgId, setBgId] = useState(QUEST_SHARE_BACKGROUNDS[0].id);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -393,7 +477,6 @@ export function QuestShareComposer({
 
   const background = getQuestShareBackgroundById(bgId);
   const shareWebUrl = buildWebAppQuestUrl(siteUrl, payload.questDate);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   useLayoutEffect(() => {
     if (open) {
@@ -514,6 +597,16 @@ export function QuestShareComposer({
       const shareText = buildQuestShareMessage({
         title: payload.title,
         webUrl: shareWebUrl,
+        equippedTitleLine: formatQuestShareEquippedTitleLine(payload.equippedTitleId),
+        progressionLine: payload.progression
+          ? formatQuestShareProgressionLine(
+              {
+                level: payload.progression.level,
+                totalXp: payload.progression.totalXp,
+              },
+              shareLocale,
+            )
+          : null,
       });
       if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
@@ -532,17 +625,14 @@ export function QuestShareComposer({
     } finally {
       setExporting(false);
     }
-  }, [payload.questDate, payload.title, shareWebUrl]);
-
-  const copyShareLink = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(shareWebUrl);
-      setLinkCopied(true);
-      window.setTimeout(() => setLinkCopied(false), 2000);
-    } catch {
-      /* navigateur sans presse-papiers */
-    }
-  }, [shareWebUrl]);
+  }, [
+    payload.questDate,
+    payload.title,
+    payload.equippedTitleId,
+    payload.progression,
+    shareLocale,
+    shareWebUrl,
+  ]);
 
   if (!layerMounted && !open) return null;
 
@@ -669,6 +759,7 @@ export function QuestShareComposer({
                 userFirstName={userFirstName}
                 background={background}
                 photoUrl={photoUrl}
+                shareLocale={shareLocale}
               />
             </div>
           </div>
@@ -691,13 +782,6 @@ export function QuestShareComposer({
                 </>
               )}
             </span>
-          </button>
-          <button
-            type="button"
-            className="w-full rounded-2xl border border-cyan-300/60 bg-cyan-50/90 py-3 text-sm font-black text-cyan-950 shadow-sm transition-colors hover:bg-cyan-100/90"
-            onClick={() => void copyShareLink()}
-          >
-            {linkCopied ? 'Lien copié ✓' : 'Copier le lien (ouvre la quête sur questia.fr)'}
           </button>
           <button
             type="button"

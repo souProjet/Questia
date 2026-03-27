@@ -5,7 +5,7 @@ const LOGO_SRC = '/brand/questia-logo.png';
 /** Dimensions intrinsèques du PNG (carré) — utilisées pour next/image sans `fill` (évite le rognage avec padding sur l’img). */
 const LOGO_PX = 512;
 
-export type QuestiaLogoVariant = 'navbar' | 'auth' | 'footer' | 'onboarding' | 'card';
+export type QuestiaLogoVariant = 'navbar' | 'auth' | 'footer' | 'onboarding' | 'card' | 'shareHero';
 
 const VARIANT: Record<
   QuestiaLogoVariant,
@@ -40,6 +40,13 @@ const VARIANT: Record<
     sizes: '26px',
     inset: 'inset-[8%]',
     img: 'drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]',
+  },
+  /** Carte de partage sans photo — logo central bien visible. */
+  shareHero: {
+    box: 'h-[5.75rem] w-[5.75rem] min-h-[5.75rem] min-w-[5.75rem] rounded-[1.15rem] overflow-hidden',
+    sizes: '92px',
+    inset: 'inset-[8%]',
+    img: 'drop-shadow-[0_4px_18px_rgba(15,23,42,0.22)]',
   },
 };
 

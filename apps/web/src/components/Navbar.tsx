@@ -217,7 +217,7 @@ export function Navbar() {
             <button
               type="button"
               id={`${panelId}-trigger`}
-              className="md:hidden relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-orange-300/55 bg-gradient-to-br from-white via-amber-50/70 to-cyan-50/50 text-[var(--on-cream)] shadow-[0_6px_0_rgba(120,53,15,.09),0_12px_28px_rgba(249,115,22,.14)] hover:border-orange-400/65 hover:shadow-[0_7px_0_rgba(120,53,15,.08),0_14px_32px_rgba(249,115,22,.18)] active:translate-y-0.5 active:shadow-[0_4px_0_rgba(120,53,15,.1),0_8px_20px_rgba(249,115,22,.12)] transition-[transform,box-shadow,border-color,filter] motion-reduce:transform-none ring-1 ring-white/70"
+              className="navbar-mobile-burger-btn md:hidden relative inline-flex h-11 w-11 shrink-0 items-center justify-center hover:opacity-95 active:translate-y-0.5 transition-[transform,opacity] motion-reduce:transform-none"
               aria-expanded={mobileOpen}
               aria-controls={panelId}
               onClick={() => setMobileOpen((o) => !o)}
@@ -254,19 +254,19 @@ export function Navbar() {
               className="h-1 w-full shrink-0 bg-gradient-to-r from-cyan-400 via-orange-400 to-emerald-500"
               aria-hidden
             />
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-orange-200/45 bg-gradient-to-r from-[#fffbeb]/95 via-white/90 to-cyan-50/40 px-4 py-3.5">
+            <div className="navbar-mobile-drawer-header flex shrink-0 items-center justify-between gap-3 px-4 py-3.5">
               <div className="min-w-0">
                 <p
                   id={`${panelId}-title`}
-                  className="font-display font-black text-[var(--on-cream)] text-lg tracking-tight"
+                  className="font-display font-black text-[var(--text)] text-lg tracking-tight"
                 >
                   {t('menuTitle')}
                 </p>
-                <p className="text-xs font-bold text-orange-900/75 mt-0.5 tracking-wide">{t('menuSubtitle')}</p>
+                <p className="text-xs font-bold text-[var(--muted)] mt-0.5 tracking-wide">{t('menuSubtitle')}</p>
               </div>
               <button
                 type="button"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-orange-200/60 bg-white/90 text-orange-900 shadow-sm hover:bg-cyan-50/80 hover:border-cyan-300/55 transition-colors"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-[color:color-mix(in_srgb,var(--orange)_38%,transparent)] bg-[color:color-mix(in_srgb,var(--card)_92%,transparent)] text-[var(--text)] shadow-sm hover:border-[color:color-mix(in_srgb,var(--violet)_40%,transparent)] transition-colors"
                 onClick={closeMobile}
                 aria-label={t('close')}
               >
@@ -274,7 +274,7 @@ export function Navbar() {
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 bg-gradient-to-b from-white/40 via-amber-50/20 to-cyan-50/35">
+            <div className="navbar-mobile-drawer-body min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
               {showMarketingNav ? (
                 <nav className="flex flex-col gap-0.5" aria-label={t('navSections')}>
                   {marketingMenu.map(({ href, label, Icon }) => (
@@ -282,7 +282,7 @@ export function Navbar() {
                       key={href}
                       href={href}
                       onClick={closeMobile}
-                      className="group flex items-center gap-3 rounded-2xl px-3 py-3.5 text-[15px] font-bold text-[var(--on-cream)] border-2 border-transparent hover:border-orange-200/70 hover:bg-white/80 hover:shadow-[0_4px_0_rgba(234,88,12,.08)] active:scale-[0.99] transition-all"
+                      className="group flex items-center gap-3 rounded-2xl px-3 py-3.5 text-[15px] font-bold text-[var(--text)] border-2 border-transparent hover:border-[color:color-mix(in_srgb,var(--orange)_35%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--card)_85%,transparent)] hover:shadow-[0_4px_0_rgba(234,88,12,.08)] active:scale-[0.99] transition-all"
                     >
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-100/90 to-orange-100/80 text-cyan-900 ring-1 ring-orange-200/50 group-hover:ring-cyan-400/45 shadow-[inset_0_1px_0_rgba(255,255,255,.7)]">
                         <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden />

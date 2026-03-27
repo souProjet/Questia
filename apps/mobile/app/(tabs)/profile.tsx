@@ -18,14 +18,15 @@ import {
   BADGE_CATEGORY_LABEL_FR,
   getBadgeCatalogForUi,
   levelFromTotalXp,
-  type AppLocale,
   type ExplorerAxis,
   type RiskAxis,
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { hapticLight } from '../../lib/haptics';
 import { getProfileScreenStrings } from '../../lib/profileScreenStrings';
+import { elevationAndroidSafe } from '../../lib/elevationAndroid';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
@@ -61,10 +62,7 @@ type ProfilePayload = {
 };
 
 export default function ProfileScreen() {
-  const appLocale = useMemo((): AppLocale => {
-    const tag = Intl.DateTimeFormat().resolvedOptions().locale ?? 'fr';
-    return tag.toLowerCase().startsWith('en') ? 'en' : 'fr';
-  }, []);
+  const { locale: appLocale, setLocale } = useAppLocale();
   const s = useMemo(() => getProfileScreenStrings(appLocale), [appLocale]);
   const dateLocale = appLocale === 'en' ? 'en-GB' : 'fr-FR';
   const badgeCat = appLocale === 'en' ? BADGE_CATEGORY_LABEL_EN : BADGE_CATEGORY_LABEL_FR;
@@ -110,7 +108,7 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  }, [barAnim, s]);
+  }, [barAnim, s, appLocale]);
 
   useEffect(() => {
     void load();
@@ -147,7 +145,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
         <View style={{ width: 72 }} />
-        <Text style={[styles.topTitle, styles.topTitleCenter]}>Profil</Text>
+        <Text style={[styles.topTitle, styles.topTitleCenter]}>{s.title}</Text>
         <View style={{ width: 72 }} />
       </View>
 
@@ -165,7 +163,7 @@ export default function ProfileScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <Text style={styles.greeting}>
-            {user?.firstName ?? 'Aventurier\u00b7e'} <Text style={styles.emoji}>{'\u{1F3AE}'}</Text>
+            {user?.firstName ?? s.defaultName} <Text style={styles.emoji}>{'\u{1F3AE}'}</Text>
           </Text>
           <Text style={styles.quadrant}>{quadrantLabel}</Text>
 
@@ -195,8 +193,8 @@ export default function ProfileScreen() {
             <Pressable
               onPress={() => router.push('/history')}
               accessibilityRole="button"
-              accessibilityLabel="Historique des qu\u00eates"
-              accessibilityHint="Ouvre le journal des qu\u00eates"
+              accessibilityLabel={s.a11yHistory}
+              accessibilityHint={s.a11yHistoryHint}
               style={({ pressed }) => [styles.mini, pressed && styles.miniPressed]}
             >
               <Text style={styles.miniEmoji}>{'\u{1F4CD}'}</Text>
@@ -216,10 +214,52 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          <Text style={styles.section}>Insignes</Text>
-          <Text style={styles.hint}>
-            D\u00e9bloqu\u00e9s : bordure ambre et ombre. En attente : carte gris\u00e9e et bordure en pointill\u00e9s.
-          </Text>
+          <Text style={styles.section}>{s.localeSection}</Text>
+          <View style={styles.localeRow}>
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                void setLocale('fr');
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: appLocale === 'fr' }}
+              accessibilityLabel={s.localeFr}
+              style={({ pressed }) => [
+                styles.localeChip,
+                appLocale === 'fr' && styles.localeChipSelected,
+                pressed && styles.localeChipPressed,
+              ]}
+            >
+              <Text
+                style={[styles.localeChipText, appLocale === 'fr' && styles.localeChipTextSelected]}
+              >
+                {s.localeFr}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                void setLocale('en');
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: appLocale === 'en' }}
+              accessibilityLabel={s.localeEn}
+              style={({ pressed }) => [
+                styles.localeChip,
+                appLocale === 'en' && styles.localeChipSelected,
+                pressed && styles.localeChipPressed,
+              ]}
+            >
+              <Text
+                style={[styles.localeChipText, appLocale === 'en' && styles.localeChipTextSelected]}
+              >
+                {s.localeEn}
+              </Text>
+            </Pressable>
+          </View>
+
+          <Text style={styles.section}>{s.badgesTitle}</Text>
+          <Text style={styles.hint}>{s.badgesHint}</Text>
 
           <View style={styles.badgeGrid}>
             {badgeCatalog.map((b) => (
@@ -257,15 +297,6 @@ export default function ProfileScreen() {
                 )}
               </View>
             ))}
-          </View>
-
-          {/* Donn\u00e9es & IA */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoCardHeader}>
-              <Text style={styles.infoCardIcon}>{'\u{1F916}'}</Text>
-              <Text style={styles.infoCardTitle}>{s.aiTitle}</Text>
-            </View>
-            <Text style={styles.infoCardBody}>{s.aiBody}</Text>
           </View>
 
           {/* Liens l\u00e9gaux */}
@@ -307,6 +338,7 @@ export default function ProfileScreen() {
 }
 
 function createProfileStyles(p: ThemePalette) {
+  const elev = elevationAndroidSafe;
   const C = {
     bg: p.bg,
     card: p.card,
@@ -383,6 +415,25 @@ function createProfileStyles(p: ThemePalette) {
     miniVal: { fontSize: 16, fontWeight: '900', color: C.text },
     miniLbl: { fontSize: 10, color: C.muted, fontWeight: '600', marginTop: 2 },
 
+    localeRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
+    localeChip: {
+      flex: 1,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.card,
+    },
+    localeChipSelected: {
+      borderColor: C.accent,
+      backgroundColor: colorWithAlpha(p.cyan, 0.12),
+    },
+    localeChipPressed: { opacity: 0.88 },
+    localeChipText: { fontSize: 15, fontWeight: '800', color: C.muted },
+    localeChipTextSelected: { color: C.text },
+
     section: {
       fontSize: 11, fontWeight: '800', letterSpacing: 2, color: C.muted,
       marginBottom: 6, marginTop: 20, textTransform: 'uppercase',
@@ -392,8 +443,8 @@ function createProfileStyles(p: ThemePalette) {
     badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     badgeCard: { width: '47%', minWidth: 140, borderRadius: 18, padding: 14 },
     badgeCardUnlocked: {
-      backgroundColor: p.cardCream, borderWidth: 2, borderColor: colorWithAlpha(p.gold, 0.75),
-      shadowColor: p.orange, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: 4,
+      backgroundColor: p.card, borderWidth: 2, borderColor: colorWithAlpha(p.gold, 0.75),
+      shadowColor: p.orange, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: elev(4),
     },
     badgeCardLocked: {
       backgroundColor: p.surface, borderWidth: 2, borderStyle: 'dashed', borderColor: p.border, opacity: 0.95,
@@ -416,7 +467,12 @@ function createProfileStyles(p: ThemePalette) {
       marginBottom: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3,
       borderRadius: 999, overflow: 'hidden',
     },
-    badgeCatUnlocked: { color: '#78350f', backgroundColor: 'rgba(255,255,255,0.85)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.5)' },
+    badgeCatUnlocked: {
+      color: p.orange,
+      backgroundColor: colorWithAlpha(p.gold, 0.14),
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.gold, 0.45),
+    },
     badgeCatLocked: { color: '#64748b', backgroundColor: 'rgba(255,255,255,0.5)', borderWidth: 1, borderColor: 'rgba(148,163,184,0.45)' },
     badgeName: { fontSize: 14, fontWeight: '900', color: C.text, marginBottom: 4 },
     badgeNameMuted: { color: p.subtle },

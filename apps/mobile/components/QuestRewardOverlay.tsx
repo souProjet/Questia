@@ -9,6 +9,7 @@ import {
   Easing,
   Dimensions,
   AccessibilityInfo,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { DisplayBadge, XpBreakdown } from '@questia/shared';
@@ -21,7 +22,12 @@ import {
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
 
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+
+/** Carte centrée : hauteur max pour laisser voir confetti / halo autour. */
+const CARD_MAX_H = Math.min(SCREEN_H * 0.88, 620);
+/** Zone scrollable uniquement pour détail + badges (héros XP / jauge reste fixe au-dessus). */
+const SCROLL_MAX_H = Math.max(180, Math.min(SCREEN_H * 0.38, 340));
 
 export interface QuestRewardPayload {
   xpGain: {
@@ -265,100 +271,112 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
           );
         })}
 
-        <Animated.View style={[styles.cardWrap, { transform: [{ scale }, { translateX: shakeX }] }]}>
+        <Animated.View
+          style={[styles.cardWrap, { maxHeight: CARD_MAX_H, transform: [{ scale }, { translateX: shakeX }] }]}
+        >
           <LinearGradient
             colors={[palette.cardCream, palette.surface, '#fffbeb']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.card}
           >
-            <Text style={styles.kicker}>✨ Quête validée</Text>
+            <View style={styles.cardHero}>
+              <Text style={styles.kicker}>✨ Quête validée</Text>
 
-            {levelInfo?.leveledUp ? (
-              <View style={styles.levelBanner}>
-                <Text style={styles.levelKicker}>Niveau atteint</Text>
-                <Text style={styles.levelNum}>{levelInfo.afterLevel}</Text>
-                {levelInfo.levelsGained > 1 ? (
-                  <Text style={styles.levelSub}>+{levelInfo.levelsGained} niveaux d’un coup !</Text>
-                ) : (
-                  <Text style={styles.levelSubMuted}>Palier de progression débloqué</Text>
-                )}
-              </View>
-            ) : null}
-
-            <Animated.Text
-              style={[
-                styles.xpBig,
-                {
-                  transform: [
-                    {
-                      scale: xpPop.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.5, 1],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              +{xpGain.gained} XP
-            </Animated.Text>
-            <Text style={styles.totalLine}>
-              Total {xpGain.previousTotal} → <Text style={styles.totalBold}>{xpGain.newTotal}</Text>
-            </Text>
-
-            <View style={styles.progressBox} accessibilityRole="summary">
-              <View style={styles.progressHeader}>
-                <Text style={styles.progressLevelLabel}>Niveau {barLevel}</Text>
-                <Text style={styles.progressMeta}>
-                  {barXpIntoLabel}/{XP_PER_LEVEL} XP dans ce niveau
-                </Text>
-              </View>
-              <View style={styles.progressTrack}>
-                <Animated.View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: barAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0%', '100%'],
-                      }),
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={styles.progressHint}>
-                Comme sur l’accueil : la barre se remplit dans ton niveau, puis repart à zéro si tu montes de palier.
-              </Text>
-            </View>
-
-            <View style={styles.rulesBox}>
-              <Text style={styles.rulesTitle}>Comment ces XP sont calculés</Text>
-              {breakdownRows.map((row) => (
-                <View key={row.key} style={styles.ruleCard}>
-                  <View style={styles.ruleCardTop}>
-                    <Text style={styles.ruleCardLabel}>{row.label}</Text>
-                    <Text style={styles.ruleCardValue}>{row.value}</Text>
-                  </View>
-                  <Text style={styles.ruleCardDetail}>{row.detail}</Text>
+              {levelInfo?.leveledUp ? (
+                <View style={styles.levelBanner}>
+                  <Text style={styles.levelKicker}>Niveau atteint</Text>
+                  <Text style={styles.levelNum}>{levelInfo.afterLevel}</Text>
+                  {levelInfo.levelsGained > 1 ? (
+                    <Text style={styles.levelSub}>+{levelInfo.levelsGained} niveaux d’un coup !</Text>
+                  ) : (
+                    <Text style={styles.levelSubMuted}>Palier de progression débloqué</Text>
+                  )}
                 </View>
-              ))}
+              ) : null}
+
+              <Animated.Text
+                style={[
+                  styles.xpBig,
+                  {
+                    transform: [
+                      {
+                        scale: xpPop.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.5, 1],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                +{xpGain.gained} XP
+              </Animated.Text>
+              <Text style={styles.totalLine}>
+                Total {xpGain.previousTotal} → <Text style={styles.totalBold}>{xpGain.newTotal}</Text>
+              </Text>
+
+              <View style={styles.progressBox} accessibilityRole="summary">
+                <View style={styles.progressHeader}>
+                  <Text style={styles.progressLevelLabel}>Niveau {barLevel}</Text>
+                  <Text style={styles.progressMeta}>
+                    {barXpIntoLabel}/{XP_PER_LEVEL} XP dans ce niveau
+                  </Text>
+                </View>
+                <View style={styles.progressTrack}>
+                  <Animated.View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: barAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0%', '100%'],
+                        }),
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
             </View>
 
-            {badgesUnlocked.length > 0 ? (
-              <View style={styles.badgeBlock}>
-                <Text style={styles.badgeKicker}>Nouveaux badges</Text>
-                {badgesUnlocked.map((b) => (
-                  <View key={b.id} style={styles.badgeRow}>
-                    <Text style={styles.badgeEmoji}>{b.placeholderEmoji}</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.badgeTitle}>{b.title}</Text>
-                      <Text style={styles.badgeCrit}>{b.criteria}</Text>
-                    </View>
+            <ScrollView
+              style={{ maxHeight: SCROLL_MAX_H }}
+              contentContainerStyle={styles.cardScrollContent}
+              showsVerticalScrollIndicator
+              bounces
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.rulesBox}>
+                <Text style={styles.rulesTitle}>Détail XP</Text>
+                {breakdownRows.map((row) => (
+                  <View key={row.key} style={styles.ruleRowCompact}>
+                    <Text style={styles.ruleCardLabel} numberOfLines={2}>
+                      {row.label}
+                    </Text>
+                    <Text style={styles.ruleCardValue}>{row.value}</Text>
                   </View>
                 ))}
               </View>
-            ) : null}
+
+              {badgesUnlocked.length > 0 ? (
+                <View style={styles.badgeBlock}>
+                  <Text style={styles.badgeKicker}>Nouveaux badges</Text>
+                  {badgesUnlocked.map((b) => (
+                    <View key={b.id} style={styles.badgeRow}>
+                      <Text style={styles.badgeEmoji}>{b.placeholderEmoji}</Text>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={styles.badgeTitle} numberOfLines={2}>
+                          {b.title}
+                        </Text>
+                        <Text style={styles.badgeCrit} numberOfLines={2}>
+                          {b.criteria}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </ScrollView>
 
             <Pressable style={styles.cta} onPress={onContinue} accessibilityRole="button">
               <LinearGradient
@@ -383,7 +401,8 @@ function buildRewardStyles(p: ThemePalette) {
       flex: 1,
       backgroundColor: p.overlay,
       justifyContent: 'center',
-      padding: 20,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
     },
     ringBurst: {
       position: 'absolute',
@@ -406,10 +425,13 @@ function buildRewardStyles(p: ThemePalette) {
     cardWrap: {
       position: 'relative',
       zIndex: 2,
+      width: '100%',
+      maxWidth: Math.min(SCREEN_W - 28, 400),
+      alignSelf: 'center',
     },
     card: {
-      borderRadius: 28,
-      padding: 22,
+      borderRadius: 24,
+      padding: 0,
       borderWidth: 2,
       borderColor: colorWithAlpha(p.orange, 0.42),
       shadowColor: p.orange,
@@ -417,14 +439,25 @@ function buildRewardStyles(p: ThemePalette) {
       shadowOpacity: 0.4,
       shadowRadius: 28,
       elevation: 14,
+      overflow: 'hidden',
+    },
+    cardHero: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 4,
+    },
+    cardScrollContent: {
+      paddingHorizontal: 16,
+      paddingTop: 4,
+      paddingBottom: 10,
     },
     levelBanner: {
-      marginBottom: 12,
-      borderRadius: 18,
+      marginBottom: 8,
+      borderRadius: 16,
       borderWidth: 2,
       borderColor: colorWithAlpha(p.gold, 0.55),
-      paddingVertical: 12,
-      paddingHorizontal: 14,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
       backgroundColor: colorWithAlpha(p.cardCream, 0.95),
       alignItems: 'center',
     },
@@ -435,8 +468,8 @@ function buildRewardStyles(p: ThemePalette) {
       color: p.gold,
     },
     levelNum: {
-      marginTop: 4,
-      fontSize: 40,
+      marginTop: 2,
+      fontSize: 32,
       fontWeight: '900',
       color: p.linkOnBg,
     },
@@ -453,34 +486,34 @@ function buildRewardStyles(p: ThemePalette) {
       color: p.onCreamMuted,
     },
     kicker: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: '900',
-      letterSpacing: 2,
+      letterSpacing: 1.6,
       color: p.linkOnBg,
       textAlign: 'center',
-      marginBottom: 8,
+      marginBottom: 6,
     },
     xpBig: {
-      fontSize: 46,
+      fontSize: 38,
       fontWeight: '900',
       color: p.onCream,
       textAlign: 'center',
     },
     totalLine: {
       textAlign: 'center',
-      marginTop: 6,
-      marginBottom: 16,
-      fontSize: 14,
+      marginTop: 4,
+      marginBottom: 10,
+      fontSize: 13,
       color: p.onCreamMuted,
       fontWeight: '600',
     },
     totalBold: { color: p.linkOnBg, fontWeight: '900' },
     progressBox: {
-      marginBottom: 14,
-      borderRadius: 16,
+      marginBottom: 10,
+      borderRadius: 14,
       borderWidth: 1,
       borderColor: colorWithAlpha(p.cyan, 0.4),
-      padding: 14,
+      padding: 10,
       backgroundColor: colorWithAlpha(p.cyan, 0.07),
     },
     progressHeader: {
@@ -515,58 +548,60 @@ function buildRewardStyles(p: ThemePalette) {
     },
     rulesBox: {
       backgroundColor: p.cardCream,
-      borderRadius: 16,
-      padding: 14,
+      borderRadius: 14,
+      padding: 10,
       borderWidth: 1,
       borderColor: p.borderCyan,
-      marginBottom: 14,
-      gap: 10,
+      marginBottom: 10,
+      gap: 6,
     },
     rulesTitle: {
-      fontSize: 10,
+      fontSize: 9,
       fontWeight: '900',
-      letterSpacing: 2,
+      letterSpacing: 1.4,
       color: p.linkOnBg,
-      marginBottom: 2,
-    },
-    ruleCard: {
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colorWithAlpha(p.cyan, 0.35),
-      backgroundColor: 'rgba(255,255,255,0.94)',
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-    },
-    ruleCardTop: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      gap: 8,
-      flexWrap: 'wrap',
-    },
-    ruleCardLabel: { fontSize: 10, fontWeight: '900', color: '#155e75', flex: 1 },
-    ruleCardValue: { fontSize: 13, fontWeight: '900', color: p.onCream },
-    ruleCardDetail: {
-      marginTop: 6,
-      fontSize: 11,
-      fontWeight: '600',
-      lineHeight: 16,
-      color: p.onCreamMuted,
-    },
-    badgeBlock: { marginBottom: 14, gap: 10 },
-    badgeKicker: {
-      fontSize: 11,
-      fontWeight: '900',
-      color: p.orange,
-      letterSpacing: 1,
       marginBottom: 4,
     },
-    badgeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-    badgeEmoji: { fontSize: 28 },
-    badgeTitle: { fontSize: 15, fontWeight: '900', color: p.onCream },
-    badgeCrit: { fontSize: 12, color: p.onCreamMuted, marginTop: 2, fontWeight: '600' },
-    cta: { borderRadius: 16, overflow: 'hidden' },
-    ctaGrad: { paddingVertical: 16, alignItems: 'center' },
-    ctaText: { color: '#fff', fontWeight: '900', fontSize: 16 },
+    ruleRowCompact: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.cyan, 0.28),
+      backgroundColor: 'rgba(255,255,255,0.92)',
+    },
+    ruleCardLabel: {
+      fontSize: 11,
+      fontWeight: '800',
+      color: '#155e75',
+      flex: 1,
+      minWidth: 0,
+    },
+    ruleCardValue: { fontSize: 12, fontWeight: '900', color: p.onCream },
+    badgeBlock: { marginBottom: 4, gap: 8 },
+    badgeKicker: {
+      fontSize: 10,
+      fontWeight: '900',
+      color: p.orange,
+      letterSpacing: 0.8,
+      marginBottom: 2,
+    },
+    badgeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+    badgeEmoji: { fontSize: 22 },
+    badgeTitle: { fontSize: 13, fontWeight: '900', color: p.onCream },
+    badgeCrit: { fontSize: 11, color: p.onCreamMuted, marginTop: 2, fontWeight: '600' },
+    cta: {
+      borderRadius: 14,
+      overflow: 'hidden',
+      marginHorizontal: 14,
+      marginBottom: 12,
+      marginTop: 4,
+    },
+    ctaGrad: { paddingVertical: 13, alignItems: 'center' },
+    ctaText: { color: '#fff', fontWeight: '900', fontSize: 15 },
   });
 }

@@ -35,6 +35,19 @@ export default function OnboardingPage() {
     });
   };
 
+  /** Persiste tout de suite chaque axe (comme le web) pour que « Se connecter » / inscription gardent le profil. */
+  const persistExplorer = async (value: ExplorerAxis) => {
+    try {
+      await AsyncStorage.setItem('questia_explorer', value);
+    } catch {}
+  };
+
+  const persistRisk = async (value: RiskAxis) => {
+    try {
+      await AsyncStorage.setItem('questia_risk', value);
+    } catch {}
+  };
+
   const finish = async () => {
     if (!explorer || !risk) return;
     try {
@@ -61,6 +74,23 @@ export default function OnboardingPage() {
     paddingBottom: 24,
     paddingHorizontal: compact ? 18 : 24,
   };
+
+  const goToAuth = () => {
+    router.replace('/(auth)' as never);
+  };
+
+  const renderLoginFooter = (spaced: boolean) => (
+    <Pressable
+      onPress={goToAuth}
+      style={spaced ? [s.loginLink, s.loginFooterSpacer] : s.loginLink}
+      accessibilityRole="link"
+      accessibilityLabel="Se connecter"
+    >
+      <Text style={s.loginText}>
+        Déjà un compte ? <Text style={s.loginHighlight}>Se connecter</Text>
+      </Text>
+    </Pressable>
+  );
 
   return (
     <SafeAreaView style={s.safe}>
@@ -91,9 +121,7 @@ export default function OnboardingPage() {
             <Pressable style={s.btn} onPress={() => goTo('q1')}>
               <Text style={s.btnText}>Commencer →</Text>
             </Pressable>
-            <Pressable onPress={() => router.replace('/(auth)' as never)} style={s.loginLink}>
-              <Text style={s.loginText}>Déjà un compte ? <Text style={s.loginHighlight}>Se connecter</Text></Text>
-            </Pressable>
+            {renderLoginFooter(false)}
           </>
         )}
 
@@ -106,7 +134,15 @@ export default function OnboardingPage() {
               { id: 'homebody' as ExplorerAxis, icon: '🏠', title: 'Je reste au chaud.', desc: 'Canapé, film, routine.' },
               { id: 'explorer' as ExplorerAxis, icon: '🌍', title: 'Je pars explorer.',  desc: 'Nouvelles adresses, imprévus.' },
             ].map((o) => (
-              <Pressable key={o.id} style={s.optionCard} onPress={() => { setExplorer(o.id); goTo('q2'); }}>
+              <Pressable
+                key={o.id}
+                style={s.optionCard}
+                onPress={() => {
+                  setExplorer(o.id);
+                  void persistExplorer(o.id);
+                  goTo('q2');
+                }}
+              >
                 <Text style={s.optionIcon}>{o.icon}</Text>
                 <View style={s.optionText}>
                   <Text style={s.optionTitle}>{o.title}</Text>
@@ -114,6 +150,7 @@ export default function OnboardingPage() {
                 </View>
               </Pressable>
             ))}
+            {renderLoginFooter(true)}
           </>
         )}
 
@@ -126,7 +163,15 @@ export default function OnboardingPage() {
               { id: 'cautious' as RiskAxis, icon: '📋', title: 'Je prépare, je planifie.', desc: 'Quand tout se passe comme prévu, parfait.' },
               { id: 'risktaker' as RiskAxis, icon: '🎲', title: "J'improvise, je fonce.",   desc: 'Les imprévus mènent aux meilleures histoires.' },
             ].map((o) => (
-              <Pressable key={o.id} style={s.optionCard} onPress={() => { setRisk(o.id); goTo('done'); }}>
+              <Pressable
+                key={o.id}
+                style={s.optionCard}
+                onPress={() => {
+                  setRisk(o.id);
+                  void persistRisk(o.id);
+                  goTo('done');
+                }}
+              >
                 <Text style={s.optionIcon}>{o.icon}</Text>
                 <View style={s.optionText}>
                   <Text style={s.optionTitle}>{o.title}</Text>
@@ -137,6 +182,7 @@ export default function OnboardingPage() {
             <Pressable onPress={() => goTo('q1')} style={s.backBtn}>
               <Text style={s.backText}>← Retour</Text>
             </Pressable>
+            {renderLoginFooter(true)}
           </>
         )}
 
@@ -162,6 +208,7 @@ export default function OnboardingPage() {
             <Pressable onPress={() => goTo('q2')} style={s.backBtn}>
               <Text style={s.backText}>← Modifier mes réponses</Text>
             </Pressable>
+            {renderLoginFooter(true)}
           </>
         )}
 
@@ -220,6 +267,8 @@ const s = StyleSheet.create({
   backText: { color: C.muted, fontSize: 14 },
 
   loginLink: { alignItems: 'center', paddingVertical: 14, marginTop: 4 },
+  /** Comme le web (mt-10) : lien connexion sous les questions / récap */
+  loginFooterSpacer: { marginTop: 28 },
   loginText: { color: C.muted, fontSize: 14, fontWeight: '500' },
   loginHighlight: { color: C.accent, fontWeight: '700' },
 });

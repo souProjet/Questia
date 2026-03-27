@@ -11,6 +11,7 @@ import {
   Easing,
   Modal,
   AppState,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/expo';
@@ -27,10 +28,23 @@ import {
   REPORT_DEFER_MAX_DAYS,
   QUEST_LOADER_DAY_STORAGE_KEY,
 } from '@questia/shared';
-import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import {
+  colorWithAlpha,
+  type ThemePalette,
+  themePanelText,
+  themePanelMuted,
+  heroBandGradient,
+  questSliderEmbeddedGradient,
+  missionBlockGradient,
+  questDayStripGradient,
+  questActionsFooterGradient,
+} from '@questia/ui';
 import type { AppLocale, EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
+import { useAppLocale } from '../../contexts/AppLocaleContext';
+import { getHomeDashboardStrings } from '../../lib/homeDashboardStrings';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/QuestRewardOverlay';
+import { elevationAndroidSafe } from '../../lib/elevationAndroid';
 import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
 import { QuestHomeLoading } from '../../components/QuestHomeLoading';
 import { hapticError, hapticMedium, hapticSuccess, hapticWarning } from '../../lib/haptics';
@@ -197,10 +211,8 @@ export default function DashboardScreen() {
   const { user } = useUser();
   const router = useRouter();
 
-  const appLocale = useMemo((): AppLocale => {
-    const tag = Intl.DateTimeFormat().resolvedOptions().locale ?? 'fr';
-    return tag.toLowerCase().startsWith('en') ? 'en' : 'fr';
-  }, []);
+  const { locale: appLocale } = useAppLocale();
+  const homeUi = useMemo(() => getHomeDashboardStrings(appLocale), [appLocale]);
 
   const reportUi = useMemo(() => getQuestReportStrings(appLocale), [appLocale]);
 
@@ -249,8 +261,8 @@ export default function DashboardScreen() {
     try {
       const res = await apiFetch(`${API_BASE_URL}/api/profile`, token, { method: 'GET' });
       if (res.ok) return { ok: true };
-      if (res.status === 401) return { ok: false, error: 'Session expirée. Déconnecte-toi et reconnecte-toi.' };
-      if (res.status !== 404) return { ok: false, error: `Erreur ${res.status}` };
+      if (res.status === 401) return { ok: false, error: homeUi.errSession };
+      if (res.status !== 404) return { ok: false, error: homeUi.errHttp(res.status) };
       const explorer = await AsyncStorage.getItem('questia_explorer');
       const risk = await AsyncStorage.getItem('questia_risk');
       const createRes = await apiFetch(`${API_BASE_URL}/api/profile`, token, {
@@ -261,12 +273,12 @@ export default function DashboardScreen() {
         }),
       });
       if (createRes.ok || createRes.status === 201) return { ok: true };
-      if (createRes.status === 401) return { ok: false, error: 'Session expirée. Déconnecte-toi et reconnecte-toi.' };
-      return { ok: false, error: 'Impossible de créer le profil.' };
+      if (createRes.status === 401) return { ok: false, error: homeUi.errSession };
+      return { ok: false, error: homeUi.errCreateProfile };
     } catch (e) {
-      return { ok: false, error: 'Impossible de joindre l\'API. Sur téléphone, mets l\'URL ngrok dans .env (EXPO_PUBLIC_API_BASE_URL).' };
+      return { ok: false, error: homeUi.errApiUnreachable };
     }
-  }, []);
+  }, [homeUi]);
 
   const loadQuest = useCallback(
     async (
@@ -283,7 +295,7 @@ export default function DashboardScreen() {
         const token = await getTokenRef.current();
         const result = await ensureProfile(token);
         if (!result.ok) {
-          if (!silent) setError(result.error ?? 'Complète l\'onboarding d\'abord.');
+          if (!silent) setError(result.error ?? homeUi.errOnboarding);
           return false;
         }
         const qd = opts?.ignoreUrlQuestDate
@@ -300,10 +312,10 @@ export default function DashboardScreen() {
         const url = `${API_BASE_URL}/api/quest/daily${qs ? `?${qs}` : ''}`;
         const res = await apiFetch(url, token);
         if (res.status === 404) {
-          if (!silent) setError('Profil introuvable. Complète l\'onboarding.');
+          if (!silent) setError(homeUi.errProfileMissing);
           return false;
         }
-        if (!res.ok) throw new Error('Erreur serveur');
+        if (!res.ok) throw new Error(homeUi.errServer);
         const data = await res.json() as DailyQuest;
         setQuest(data);
         setRerollsRemaining(data.rerollsRemaining ?? 1);
@@ -315,14 +327,14 @@ export default function DashboardScreen() {
         return true;
       } catch (e) {
         if (!silent) {
-          setError(e instanceof Error ? e.message : 'Impossible de joindre l\'API. Vérifie EXPO_PUBLIC_API_BASE_URL.');
+          setError(e instanceof Error ? e.message : homeUi.errApiCheck);
         }
         return false;
       } finally {
         if (!silent) setLoading(false);
       }
     },
-    [ensureProfile, questDateFromRoute, appLocale],
+    [ensureProfile, questDateFromRoute, appLocale, homeUi],
   );
 
   const enrichQuestWithLocation = useCallback(
@@ -482,10 +494,7 @@ export default function DashboardScreen() {
   const phaseChip = PHASE_CHIP[phase];
   const rerollDaily = quest?.rerollsRemaining ?? rerollsRemaining;
   const rerollBonus = quest?.bonusRerollCredits ?? 0;
-  const rerollParts: string[] = [];
-  if (rerollDaily > 0) rerollParts.push(`${rerollDaily} du jour`);
-  if (rerollBonus > 0) rerollParts.push(`${rerollBonus} bonus`);
-  const rerollLabel = rerollParts.length > 0 ? rerollParts.join(' · ') : 'aucune';
+  const rerollLabel = homeUi.rerollParts(rerollDaily, rerollBonus);
   const canRerollQuest =
     !!quest &&
     isPending &&
@@ -494,47 +503,48 @@ export default function DashboardScreen() {
 
   const questStatusDisplay = useMemo(() => {
     if (!quest) return null;
+    const L = homeUi.questStatus;
     const map: Record<
       DailyQuest['status'],
       { label: string; emoji: string; pillBg: string; pillBorder: string; pillColor: string }
     > = {
       pending: {
-        label: 'En attente de ton choix',
+        label: L.pending,
         emoji: '⏳',
         pillBg: 'rgba(254,243,199,0.95)',
         pillBorder: 'rgba(217,119,6,0.35)',
         pillColor: '#78350f',
       },
       accepted: {
-        label: 'En cours',
+        label: L.accepted,
         emoji: '⚔️',
         pillBg: 'rgba(209,250,229,0.95)',
         pillBorder: 'rgba(16,185,129,0.4)',
         pillColor: '#065f46',
       },
       completed: {
-        label: 'Validée',
+        label: L.completed,
         emoji: '✅',
         pillBg: 'rgba(209,250,229,0.98)',
         pillBorder: 'rgba(5,150,105,0.45)',
         pillColor: '#064e3b',
       },
       abandoned: {
-        label: 'Passée',
+        label: L.abandoned,
         emoji: '🌙',
         pillBg: 'rgba(226,232,240,0.98)',
         pillBorder: 'rgba(71,85,105,0.55)',
         pillColor: '#0f172a',
       },
       rejected: {
-        label: 'Refusée',
+        label: L.rejected,
         emoji: '✕',
         pillBg: 'rgba(254,242,242,0.98)',
         pillBorder: 'rgba(248,113,113,0.45)',
         pillColor: '#991b1b',
       },
       replaced: {
-        label: 'Remplacée',
+        label: L.replaced,
         emoji: '🔄',
         pillBg: 'rgba(245,243,255,0.98)',
         pillBorder: 'rgba(139,92,246,0.4)',
@@ -542,10 +552,10 @@ export default function DashboardScreen() {
       },
     };
     return map[quest.status];
-  }, [quest]);
+  }, [quest, homeUi]);
 
   const weatherLine = quest
-    ? `${quest.context?.weatherDescription ?? quest.weather ?? 'Ciel variable'} · ${Math.round(
+    ? `${quest.context?.weatherDescription ?? quest.weather ?? homeUi.weatherFallback} · ${Math.round(
         quest.context?.temp ?? quest.weatherTemp ?? 18,
       )}°C`
     : '';
@@ -566,7 +576,7 @@ export default function DashboardScreen() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error ?? 'Erreur relance');
+        setError((data as { error?: string }).error ?? homeUi.errReroll);
         hapticError();
         return;
       }
@@ -597,7 +607,7 @@ export default function DashboardScreen() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error ?? 'Erreur report');
+        setError((data as { error?: string }).error ?? homeUi.errReport);
         hapticError();
         return;
       }
@@ -626,7 +636,7 @@ export default function DashboardScreen() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error ?? 'Erreur abandon');
+        setError((data as { error?: string }).error ?? homeUi.errAbandon);
         hapticError();
         return;
       }
@@ -669,8 +679,16 @@ export default function DashboardScreen() {
     }).start();
   }, [quest?.questDate, questStripEnter]);
 
-  const { palette } = useAppTheme();
-  const styles = useMemo(() => buildDashboardStyles(palette), [palette]);
+  const { palette, themeId } = useAppTheme();
+  const styles = useMemo(() => buildDashboardStyles(palette, themeId), [palette, themeId]);
+  const heroBandColors = useMemo(() => heroBandGradient(themeId, palette), [themeId, palette]);
+  const questSliderColors = useMemo(() => questSliderEmbeddedGradient(themeId, palette), [themeId, palette]);
+  const missionBlockColors = useMemo(() => missionBlockGradient(themeId, palette), [themeId, palette]);
+  const questDayStripColors = useMemo(() => questDayStripGradient(themeId, palette), [themeId, palette]);
+  const questActionsFooterColors = useMemo(
+    () => questActionsFooterGradient(themeId, palette),
+    [themeId, palette],
+  );
 
   if (loading && !quest) {
     return (
@@ -751,7 +769,7 @@ export default function DashboardScreen() {
           ]}
         >
           <LinearGradient
-            colors={['#fffbeb', '#ffffff', 'rgba(236,254,255,0.92)']}
+            colors={heroBandColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
@@ -924,7 +942,7 @@ export default function DashboardScreen() {
                 </Text>
                 <View style={[styles.xpTrackHero, compact && styles.xpTrackHeroCompact]}>
                   <LinearGradient
-                    colors={['#22d3ee', '#fb923c']}
+                    colors={[palette.cyan, palette.orange]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={[
@@ -971,55 +989,67 @@ export default function DashboardScreen() {
               ],
             }}
           >
-            <LinearGradient
-              colors={['rgba(255,247,237,0.98)', 'rgba(255,255,255,0.96)', 'rgba(254,243,199,0.55)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.questDayStatusStrip, compact && styles.questDayStatusStripCompact]}
-              accessibilityRole="summary"
+            <View
+              style={[styles.questDayStatusStripOuter, compact && styles.questDayStatusStripOuterCompact]}
+              accessible
               accessibilityLabel={`Quête du jour ${formatQuestDateForLocale(quest.questDate, appLocale)} — ${questStatusDisplay.label}`}
             >
-              <View style={styles.questDayStatusAccent} accessibilityElementsHidden />
-              <View style={styles.questDayStatusInner}>
-                <View style={styles.questDayStatusLeft}>
-                  <Text style={[styles.questDayStatusKicker, compact && styles.questDayStatusKickerCompact]}>
-                    QUÊTE DU JOUR
-                  </Text>
-                  <Text style={[styles.questDayStatusDate, compact && styles.questDayStatusDateCompact]}>
-                    {formatQuestDateForLocale(quest.questDate, appLocale)}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.questDayStatusPill,
-                    {
-                      backgroundColor: questStatusDisplay.pillBg,
-                      borderColor: questStatusDisplay.pillBorder,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.questDayStatusPillText, { color: questStatusDisplay.pillColor }]}>
-                    {questStatusDisplay.emoji} {questStatusDisplay.label}
-                  </Text>
+              <LinearGradient
+                colors={questDayStripColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+              <View
+                style={[styles.questDayStatusGradientFill, compact && styles.questDayStatusGradientFillCompact]}
+              >
+                <View style={styles.questDayStatusAccent} accessibilityElementsHidden />
+                <View style={styles.questDayStatusInner}>
+                  <View style={styles.questDayStatusLeft}>
+                    <Text style={[styles.questDayStatusKicker, compact && styles.questDayStatusKickerCompact]}>
+                      QUÊTE DU JOUR
+                    </Text>
+                    <Text style={[styles.questDayStatusDate, compact && styles.questDayStatusDateCompact]}>
+                      {formatQuestDateForLocale(quest.questDate, appLocale)}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.questDayStatusPill,
+                      {
+                        backgroundColor: questStatusDisplay.pillBg,
+                        borderColor: questStatusDisplay.pillBorder,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.questDayStatusPillText, { color: questStatusDisplay.pillColor }]}>
+                      {questStatusDisplay.emoji} {questStatusDisplay.label}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           </Animated.View>
         ) : null}
 
         {quest && (
-          <LinearGradient
+          <View
             key={questCardSwapKey}
-            colors={['#fff7df', '#fff3c6', '#d7f5f9']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
             style={[
-              styles.questSliderEmbedded,
-              (isAccepted || isCompleted) && styles.questSliderEmbeddedDone,
-              isAbandoned && styles.questSliderEmbeddedAbandoned,
+              styles.questSliderOuter,
+              (isAccepted || isCompleted) && styles.questSliderOuterDone,
+              isAbandoned && styles.questSliderOuterAbandoned,
               (rerolling || reporting) && { opacity: 0.55 },
             ]}
           >
+            <LinearGradient
+              colors={questSliderColors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
             <View style={[styles.questCardBody, compact && styles.questCardBodyCompact]}>
               <View style={styles.titleBlock}>
                 <View style={styles.questIconBox}>
@@ -1039,34 +1069,38 @@ export default function DashboardScreen() {
                 </View>
               </View>
 
-              <LinearGradient
-                colors={['#ffffff', 'rgba(224,242,254,0.55)', '#ffffff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.missionBlock}
-              >
-                <View style={styles.missionHeadingRow}>
-                  <Text style={styles.missionHeadingEmoji}>⚡</Text>
-                  <Text style={styles.missionLabel}>Ta mission — quoi faire</Text>
-                </View>
-                <Text style={[styles.missionText, compact && styles.missionTextCompact]}>{quest.mission}</Text>
-                {quest.deferredSocialUntil && isPending ? (
-                  <Text style={styles.deferNote}>
-                    📅 Pour un défi plus ambitieux ou social, repère :{' '}
-                    {formatQuestDateForLocale(quest.deferredSocialUntil, appLocale)} — optionnel.
-                  </Text>
-                ) : null}
-                <View style={styles.missionMetaRow}>
-                  <View style={styles.durationPill}>
-                    <Text style={styles.durationPillText}>⏱️ {quest.duration}</Text>
+              <View style={styles.missionBlockOuter}>
+                <LinearGradient
+                  colors={missionBlockColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                  pointerEvents="none"
+                />
+                <View style={styles.missionBlockInner}>
+                  <View style={styles.missionHeadingRow}>
+                    <Text style={styles.missionHeadingEmoji}>⚡</Text>
+                    <Text style={styles.missionLabel}>Ta mission — quoi faire</Text>
                   </View>
-                  {quest.isOutdoor && (
-                    <View style={styles.tagOutdoor}>
-                      <Text style={styles.tagOutdoorText}>🌿 Extérieur</Text>
+                  <Text style={[styles.missionText, compact && styles.missionTextCompact]}>{quest.mission}</Text>
+                  {quest.deferredSocialUntil && isPending ? (
+                    <Text style={styles.deferNote}>
+                      📅 Pour un défi plus ambitieux ou social, repère :{' '}
+                      {formatQuestDateForLocale(quest.deferredSocialUntil, appLocale)} — optionnel.
+                    </Text>
+                  ) : null}
+                  <View style={styles.missionMetaRow}>
+                    <View style={styles.durationPill}>
+                      <Text style={styles.durationPillText}>⏱️ {quest.duration}</Text>
                     </View>
-                  )}
+                    {quest.isOutdoor && (
+                      <View style={styles.tagOutdoor}>
+                        <Text style={styles.tagOutdoorText}>🌿 Extérieur</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-              </LinearGradient>
+              </View>
 
               {quest.isOutdoor && quest.destination ? (
                 <Pressable
@@ -1107,12 +1141,15 @@ export default function DashboardScreen() {
               ) : null}
             </View>
 
-            <LinearGradient
-              colors={['rgba(255,255,255,0.88)', 'rgba(255,251,235,0.55)', 'rgba(236,254,255,0.45)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.questActionsFooter}
-            >
+            <View style={styles.questActionsFooterShell}>
+              <LinearGradient
+                colors={questActionsFooterColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+              <View style={styles.questActionsFooter}>
               {isCompleted ? (
                 <View style={styles.footerActionsInner}>
                   <Text style={styles.completedFooterTitle}>🏆 Quête validée — belle perf, à demain !</Text>
@@ -1206,8 +1243,9 @@ export default function DashboardScreen() {
                   )}
                 </View>
               )}
-            </LinearGradient>
-          </LinearGradient>
+              </View>
+            </View>
+          </View>
         )}
       </ScrollView>
 
@@ -1286,7 +1324,11 @@ export default function DashboardScreen() {
   );
 }
 
-function buildDashboardStyles(p: ThemePalette) {
+function buildDashboardStyles(p: ThemePalette, themeId: string) {
+  const elev = elevationAndroidSafe;
+  const cq = themePanelText(themeId, p);
+  const cqMuted = themePanelMuted(themeId, p);
+  const isThemed = themeId !== 'default';
   const C = {
     bg: p.bg,
     card: p.card,
@@ -1333,21 +1375,21 @@ function buildDashboardStyles(p: ThemePalette) {
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
-    elevation: 4,
+    elevation: elev(4),
   },
   heroBandCompact: { marginBottom: 12, borderRadius: 20 },
   heroBandNarrow: { marginBottom: 10, borderRadius: 18 },
   heroInner: { paddingHorizontal: 16, paddingVertical: 14, position: 'relative', zIndex: 1 },
   heroInnerCompact: { paddingHorizontal: 14, paddingVertical: 11 },
   heroInnerNarrow: { paddingHorizontal: 12, paddingVertical: 9 },
-  heroGreeting: { fontSize: 20, fontWeight: '900', color: p.onCream, lineHeight: 25 },
+  heroGreeting: { fontSize: 20, fontWeight: '900', color: cq, lineHeight: 25 },
   heroGreetingCompact: { fontSize: 19, lineHeight: 24 },
   heroGreetingNarrow: { fontSize: 17, lineHeight: 22 },
   heroQuestLine: {
     marginTop: 4,
     fontSize: 18,
     fontWeight: '900',
-    color: '#0e7490',
+    color: p.linkOnBg,
     letterSpacing: -0.3,
     lineHeight: 23,
   },
@@ -1359,7 +1401,7 @@ function buildDashboardStyles(p: ThemePalette) {
     marginTop: 8,
     fontSize: 13,
     fontWeight: '600',
-    color: p.onCreamMuted,
+    color: cqMuted,
     lineHeight: 18,
   },
   heroObjectiveCompact: { marginTop: 6, fontSize: 12, lineHeight: 16 },
@@ -1401,7 +1443,7 @@ function buildDashboardStyles(p: ThemePalette) {
     backgroundColor: 'rgba(255,255,255,0.95)',
   },
   parcoursChipDense: { paddingHorizontal: 8, paddingVertical: 4 },
-  parcoursChipText: { fontSize: 11, fontWeight: '900', color: p.onCream },
+  parcoursChipText: { fontSize: 11, fontWeight: '900', color: cq },
   parcoursChipTextDense: { fontSize: 10 },
   titleShopChip: {
     paddingHorizontal: 10,
@@ -1439,7 +1481,7 @@ function buildDashboardStyles(p: ThemePalette) {
   xpStripHeroPressed: { opacity: 0.88 },
   heroChipPressed: { opacity: 0.88 },
   xpStripTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3, gap: 6 },
-  xpStripLabelHero: { fontSize: 11, fontWeight: '900', color: '#155e75', flex: 1 },
+  xpStripLabelHero: { fontSize: 11, fontWeight: '900', color: p.linkOnBg, flex: 1 },
   xpStripLabelHeroCompact: { fontSize: 10 },
   xpStripSubHero: { fontSize: 10, fontWeight: '700', color: C.muted },
   xpStripSubHeroCompact: { fontSize: 9 },
@@ -1463,32 +1505,38 @@ function buildDashboardStyles(p: ThemePalette) {
     borderTopColor: 'rgba(253,186,116,0.45)',
   },
   heroWeatherRowCompact: { marginTop: 8, paddingTop: 8 },
-  heroWeatherText: { fontSize: 12, fontWeight: '500', color: p.onCreamMuted, lineHeight: 17 },
+  heroWeatherText: { fontSize: 12, fontWeight: '500', color: cqMuted, lineHeight: 17 },
   heroWeatherTextCompact: { fontSize: 11, lineHeight: 16 },
   heroWeatherSep: { color: C.muted },
   heroWeatherCity: { fontWeight: '800', color: p.linkOnBg },
-  questDayStatusStrip: {
+  /** Bordure sur la View externe (pas sur le LinearGradient) — évite les artefacts « carré » Android. */
+  questDayStatusStripOuter: {
     position: 'relative',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(251,146,60,0.5)',
     overflow: 'hidden',
+    marginBottom: 12,
+    backgroundColor: themeId !== 'default' ? colorWithAlpha(p.surface, 0.72) : 'rgba(255,251,235,0.5)',
+    shadowColor: '#9a3412',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: elev(3),
+  },
+  questDayStatusStripOuterCompact: {
+    marginBottom: 10,
+    borderRadius: 16,
+  },
+  questDayStatusGradientFill: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    marginBottom: 12,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: 'rgba(251,146,60,0.55)',
-    shadowColor: '#9a3412',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    elevation: 4,
   },
-  questDayStatusStripCompact: {
-    marginBottom: 10,
+  questDayStatusGradientFillCompact: {
     paddingVertical: 10,
     paddingHorizontal: 10,
-    borderRadius: 16,
   },
   questDayStatusAccent: {
     width: 4,
@@ -1501,7 +1549,7 @@ function buildDashboardStyles(p: ThemePalette) {
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.45,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: elev(2),
   },
   questDayStatusInner: {
     flex: 1,
@@ -1517,10 +1565,17 @@ function buildDashboardStyles(p: ThemePalette) {
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 2,
-    color: '#9a3412',
+    color: p.orange,
+    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
   },
   questDayStatusKickerCompact: { fontSize: 9, letterSpacing: 1.6 },
-  questDayStatusDate: { fontSize: 16, fontWeight: '900', color: p.onCream, marginTop: 2 },
+  questDayStatusDate: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: cq,
+    marginTop: 2,
+    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+  },
   questDayStatusDateCompact: { fontSize: 15 },
   questDayStatusPill: {
     paddingHorizontal: 13,
@@ -1530,7 +1585,9 @@ function buildDashboardStyles(p: ThemePalette) {
     maxWidth: '100%',
   },
   questDayStatusPillText: { fontSize: 13, fontWeight: '900' },
-  questSliderEmbedded: {
+  /** Ombre / bordure sur la View — pas sur le LinearGradient (artefacts rectangulaires Android). */
+  questSliderOuter: {
+    position: 'relative',
     borderRadius: 26,
     borderWidth: 2,
     borderColor: 'rgba(249,115,22,0.38)',
@@ -1540,14 +1597,14 @@ function buildDashboardStyles(p: ThemePalette) {
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 14,
-    elevation: 5,
+    elevation: elev(5),
   },
-  questSliderEmbeddedDone: {
+  questSliderOuterDone: {
     borderColor: 'rgba(16,185,129,0.38)',
     shadowColor: '#047857',
     shadowOpacity: 0.18,
   },
-  questSliderEmbeddedAbandoned: {
+  questSliderOuterAbandoned: {
     borderColor: 'rgba(100,116,139,0.4)',
     opacity: 0.96,
   },
@@ -1561,33 +1618,44 @@ function buildDashboardStyles(p: ThemePalette) {
     marginBottom: 18,
     backgroundColor: colorWithAlpha(p.green, 0.08),
   },
-  mapCtaLabel: { fontSize: 11, fontWeight: '900', color: '#065f46', letterSpacing: 2, marginBottom: 8 },
-  mapCtaHint: { fontSize: 12, color: p.onCreamMuted, marginBottom: 10, fontWeight: '500', lineHeight: 18 },
-  mapCtaText: { fontSize: 15, fontWeight: '800', color: p.onCream },
-  missionBlock: {
-    borderWidth: 2,
-    borderColor: colorWithAlpha(p.cyan, 0.5),
+  mapCtaLabel: { fontSize: 11, fontWeight: '900', color: p.green, letterSpacing: 2, marginBottom: 8 },
+  mapCtaHint: { fontSize: 12, color: cqMuted, marginBottom: 10, fontWeight: '500', lineHeight: 18 },
+  mapCtaText: { fontSize: 15, fontWeight: '800', color: cq },
+  missionBlockOuter: {
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.45),
     borderRadius: 18,
-    padding: 18,
     marginBottom: 18,
+    overflow: 'hidden',
     shadowColor: p.cyan,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
-    elevation: 3,
+    elevation: elev(3),
+  },
+  missionBlockInner: {
+    padding: 18,
   },
   missionHeadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   missionHeadingEmoji: { fontSize: 16, lineHeight: 20 },
   missionLabel: {
     fontSize: 11,
     fontWeight: '900',
-    color: '#155e75',
+    color: p.linkOnBg,
     letterSpacing: 2,
     textTransform: 'uppercase',
     flex: 1,
+    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
   },
-  missionText: { fontSize: 18, fontWeight: '900', color: p.onCream, lineHeight: 26 },
-  missionTextCompact: { fontSize: 16, lineHeight: 24, color: p.onCream },
+  missionText: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: cq,
+    lineHeight: 26,
+    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+  },
+  missionTextCompact: { fontSize: 16, lineHeight: 24, color: cq },
   missionMetaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1605,7 +1673,7 @@ function buildDashboardStyles(p: ThemePalette) {
     borderWidth: 1,
     borderColor: colorWithAlpha(p.orange, 0.4),
   },
-  durationPillText: { fontSize: 12, fontWeight: '900', color: p.onCream },
+  durationPillText: { fontSize: 12, fontWeight: '900', color: cq },
   titleBlock: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1631,14 +1699,14 @@ function buildDashboardStyles(p: ThemePalette) {
     marginTop: 8,
     alignSelf: 'flex-start',
     fontSize: 11,
-    color: p.onCreamMuted,
+    color: cqMuted,
     fontWeight: '600',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: colorWithAlpha(p.onCream, 0.14),
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderColor: colorWithAlpha(cq, 0.14),
+    backgroundColor: isThemed ? colorWithAlpha(p.text, 0.08) : 'rgba(255,255,255,0.92)',
   },
   questPacePill: {
     marginTop: 8,
@@ -1651,27 +1719,27 @@ function buildDashboardStyles(p: ThemePalette) {
     borderWidth: 1,
   },
   questPacePillPlanned: {
-    borderColor: 'rgba(139,92,246,0.45)',
-    backgroundColor: 'rgba(245,243,255,0.95)',
-    color: '#5b21b6',
+    borderColor: isThemed ? 'rgba(167,139,250,0.5)' : 'rgba(139,92,246,0.45)',
+    backgroundColor: isThemed ? 'rgba(139,92,246,0.2)' : 'rgba(245,243,255,0.95)',
+    color: isThemed ? '#c4b5fd' : '#5b21b6',
   },
   questPacePillInstant: {
     borderColor: colorWithAlpha(p.cyan, 0.4),
     backgroundColor: colorWithAlpha(p.cyan, 0.1),
-    color: '#155e75',
+    color: p.linkOnBg,
   },
   deferNote: {
     marginTop: 12,
     fontSize: 12,
     fontWeight: '600',
     lineHeight: 18,
-    color: '#5b21b6',
+    color: isThemed ? '#c4b5fd' : '#5b21b6',
     padding: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: 'rgba(139,92,246,0.35)',
-    backgroundColor: 'rgba(245,243,255,0.65)',
+    borderColor: isThemed ? 'rgba(167,139,250,0.45)' : 'rgba(139,92,246,0.35)',
+    backgroundColor: isThemed ? 'rgba(139,92,246,0.12)' : 'rgba(245,243,255,0.65)',
   },
   questTitle: { fontSize: 19, fontWeight: '900', color: C.text, lineHeight: 24 },
   questTitleCompact: { fontSize: 17, lineHeight: 22 },
@@ -1691,25 +1759,25 @@ function buildDashboardStyles(p: ThemePalette) {
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 18,
-    backgroundColor: p.cardCream,
+    backgroundColor: p.card,
     shadowColor: p.cyan,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: elev(2),
   },
   hookCaption: {
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 2,
-    color: p.onCreamMuted,
+    color: cqMuted,
     textAlign: 'center',
     marginBottom: 10,
     textTransform: 'uppercase',
   },
   hookQuote: { textAlign: 'center' },
   hookGuillemet: { fontSize: 15, fontWeight: '800', color: colorWithAlpha(p.orange, 0.85) },
-  hookQuoteBody: { fontSize: 15, fontWeight: '600', lineHeight: 24, color: p.onCream },
+  hookQuoteBody: { fontSize: 15, fontWeight: '600', lineHeight: 24, color: cq },
   safetyNoteBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1718,14 +1786,18 @@ function buildDashboardStyles(p: ThemePalette) {
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(251,191,36,0.45)',
-    backgroundColor: 'rgba(254,252,232,0.95)',
+    borderColor: colorWithAlpha(p.gold, 0.45),
+    backgroundColor: isThemed ? colorWithAlpha(p.gold, 0.1) : 'rgba(254,252,232,0.95)',
   },
   safetyNoteEmoji: { fontSize: 18, lineHeight: 22 },
-  safetyNoteText: { flex: 1, fontSize: 14, color: '#78350f', fontWeight: '600', lineHeight: 20 },
-  questActionsFooter: {
+  safetyNoteText: { flex: 1, fontSize: 14, color: isThemed ? p.orange : '#78350f', fontWeight: '600', lineHeight: 20 },
+  questActionsFooterShell: {
+    position: 'relative',
+    overflow: 'hidden',
     borderTopWidth: 2,
-    borderTopColor: 'rgba(253,186,116,0.35)',
+    borderTopColor: isThemed ? colorWithAlpha(p.orange, 0.35) : 'rgba(253,186,116,0.35)',
+  },
+  questActionsFooter: {
     paddingHorizontal: 18,
     paddingVertical: 16,
     paddingBottom: 18,
@@ -1734,12 +1806,12 @@ function buildDashboardStyles(p: ThemePalette) {
   completedFooterTitle: {
     fontSize: 17,
     fontWeight: '900',
-    color: '#065f46',
+    color: p.green,
     textAlign: 'center',
     lineHeight: 24,
   },
-  completedFooterSub: { fontSize: 13, color: p.onCreamMuted, textAlign: 'center', marginBottom: 4 },
-  acceptedHint: { fontSize: 12, color: p.onCreamMuted, textAlign: 'center', lineHeight: 18, marginTop: 2 },
+  completedFooterSub: { fontSize: 13, color: cqMuted, textAlign: 'center', marginBottom: 4 },
+  acceptedHint: { fontSize: 12, color: cqMuted, textAlign: 'center', lineHeight: 18, marginTop: 2 },
   abandonLink: {
     fontSize: 11,
     fontWeight: '600',
@@ -1756,10 +1828,10 @@ function buildDashboardStyles(p: ThemePalette) {
     paddingHorizontal: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.5)',
+    borderColor: isThemed ? colorWithAlpha(p.text, 0.22) : 'rgba(148,163,184,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: isThemed ? colorWithAlpha(p.text, 0.08) : 'rgba(255,255,255,0.92)',
   },
   secondaryGhostBtnPressed: { opacity: 0.92 },
   secondaryGhostText: { fontSize: 11, fontWeight: '600', color: p.muted, textAlign: 'center' },
@@ -1776,10 +1848,10 @@ function buildDashboardStyles(p: ThemePalette) {
     backgroundColor: colorWithAlpha(p.cyan, 0.1),
   },
   secondaryCtaBtnPressed: { opacity: 0.92 },
-  secondaryCtaText: { fontSize: 11, fontWeight: '800', color: '#155e75', textAlign: 'center' },
+  secondaryCtaText: { fontSize: 11, fontWeight: '800', color: p.linkOnBg, textAlign: 'center' },
   reportHint: {
     fontSize: 11,
-    color: p.onCreamMuted,
+    color: cqMuted,
     textAlign: 'center',
     lineHeight: 15,
     marginTop: 2,
@@ -1787,18 +1859,18 @@ function buildDashboardStyles(p: ThemePalette) {
   },
   rerollBtnProminent: {
     borderWidth: 2,
-    borderColor: 'rgba(251,146,60,0.68)',
+    borderColor: isThemed ? colorWithAlpha(p.orange, 0.55) : 'rgba(251,146,60,0.68)',
     borderRadius: 16,
     paddingVertical: 15,
     paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,251,235,0.98)',
-    shadowColor: '#ea580c',
+    backgroundColor: isThemed ? colorWithAlpha(p.gold, 0.12) : 'rgba(255,251,235,0.98)',
+    shadowColor: p.orange,
     shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
+    shadowOpacity: isThemed ? 0.35 : 0.3,
     shadowRadius: 10,
-    elevation: 5,
+    elevation: elev(5),
   },
   rerollBtnProminentPressed: {
     shadowOpacity: 0.2,
@@ -1807,12 +1879,12 @@ function buildDashboardStyles(p: ThemePalette) {
   rerollTextProminent: {
     fontSize: 15,
     fontWeight: '900',
-    color: '#9a3412',
+    color: isThemed ? p.orange : '#9a3412',
     letterSpacing: -0.2,
     textAlign: 'center',
   },
-  abandonedFooterTitle: { fontSize: 17, fontWeight: '900', color: '#475569', textAlign: 'center' },
-  abandonedFooterSub: { fontSize: 13, color: p.onCreamMuted, textAlign: 'center', lineHeight: 18 },
+  abandonedFooterTitle: { fontSize: 17, fontWeight: '900', color: p.muted, textAlign: 'center' },
+  abandonedFooterSub: { fontSize: 13, color: cqMuted, textAlign: 'center', lineHeight: 18 },
   rerollBtnDisabled: { opacity: 0.42 },
   acceptBtn: {
     backgroundColor: C.accentWarm,
@@ -1823,7 +1895,7 @@ function buildDashboardStyles(p: ThemePalette) {
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
-    elevation: 6,
+    elevation: elev(6),
   },
   acceptText: { color: '#fff', fontWeight: '800', fontSize: 16 },
   localhostWarning: { backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)', borderRadius: 10, padding: 10, marginBottom: 8 },
@@ -1831,7 +1903,7 @@ function buildDashboardStyles(p: ThemePalette) {
   shareLinkBtn: {
     borderWidth: 2,
     borderColor: colorWithAlpha(p.cyan, 0.45),
-    backgroundColor: p.cardCream,
+    backgroundColor: p.card,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
@@ -1844,7 +1916,7 @@ function buildDashboardStyles(p: ThemePalette) {
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#fff',
+    backgroundColor: p.card,
     borderRadius: 20,
     padding: 20,
     maxHeight: '88%',
@@ -1869,7 +1941,7 @@ function buildDashboardStyles(p: ThemePalette) {
   },
   datePickRowActive: { borderColor: C.accent, backgroundColor: colorWithAlpha(p.cyan, 0.12) },
   datePickRowText: { fontSize: 14, fontWeight: '600', color: p.text },
-  datePickRowTextActive: { fontWeight: '900', color: '#155e75' },
+  datePickRowTextActive: { fontWeight: '900', color: p.linkOnBg },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
   modalBtnGhost: {
     flex: 1,
@@ -1892,10 +1964,10 @@ function buildDashboardStyles(p: ThemePalette) {
     flex: 2,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: isThemed ? colorWithAlpha(p.text, 0.12) : '#e2e8f0',
     alignItems: 'center',
   },
-  modalBtnAbandonText: { fontWeight: '900', color: '#0f172a' },
+  modalBtnAbandonText: { fontWeight: '900', color: p.text },
   footerTeaser: {
     marginTop: 8,
     textAlign: 'center',
@@ -1922,7 +1994,7 @@ function buildSafetySheetStyles(p: ThemePalette) {
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: p.cardCream,
+      backgroundColor: p.surface,
       borderTopLeftRadius: 28,
       borderTopRightRadius: 28,
       borderTopWidth: 1,

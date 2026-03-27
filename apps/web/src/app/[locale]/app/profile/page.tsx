@@ -175,16 +175,16 @@ export default function ProfilePage() {
             <h1 className="font-display font-black text-3xl text-[var(--text)] mb-2">{t('title')}</h1>
             <p className="text-[var(--muted)] font-semibold mb-8">{quadrant}</p>
 
-            <section className="rounded-3xl border-2 border-cyan-500/45 bg-gradient-to-br from-white via-cyan-50/50 to-amber-50/40 p-6 shadow-lg mb-8">
+            <section className="app-profile-level-card p-6 mb-8">
               <div className="mb-3">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--on-cream-muted)]">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--muted)]">
                   {t('levelLabel')}
                 </p>
-                <p className="mt-1.5 font-display text-5xl font-black tabular-nums leading-none tracking-tight text-[var(--on-cream)]">
+                <p className="mt-1.5 font-display text-5xl font-black tabular-nums leading-none tracking-tight text-[var(--text)]">
                   {prog.level}
                 </p>
               </div>
-              <p className="text-sm font-semibold text-[var(--on-cream-muted)] mb-3 leading-relaxed">
+              <p className="text-sm font-semibold text-[var(--muted)] mb-3 leading-relaxed">
                 {t('xpLine', {
                   total: prog.totalXp,
                   more: prog.xpToNext,
@@ -219,7 +219,7 @@ export default function ProfilePage() {
                   key={b.id}
                   className={`rounded-2xl p-4 transition-all ${
                     b.unlocked
-                      ? 'border-2 border-amber-300/90 bg-gradient-to-br from-amber-50/95 via-white to-orange-50/70 shadow-[0_12px_36px_-12px_rgba(245,158,11,0.45)] ring-1 ring-amber-200/50 motion-safe:hover:shadow-[0_14px_40px_-10px_rgba(245,158,11,0.4)]'
+                      ? 'app-profile-badge-unlocked motion-safe:hover:shadow-[0_14px_40px_-10px_rgba(245,158,11,0.4)]'
                       : 'border-2 border-dashed border-[color:color-mix(in_srgb,var(--text)_18%,transparent)] bg-[var(--surface)]/90 grayscale-[0.9] opacity-[0.92] shadow-inner'
                   }`}
                 >
@@ -243,7 +243,7 @@ export default function ProfilePage() {
                   <span
                     className={`inline-block mt-1 mb-1 rounded-full px-2 py-0.5 text-xs font-black uppercase tracking-wider ${
                       b.unlocked
-                        ? 'border border-amber-300/60 bg-white/80 text-amber-950'
+                        ? 'border border-[color:color-mix(in_srgb,var(--gold)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--gold)_12%,var(--surface))] text-[var(--orange)]'
                         : 'border border-[color:var(--border-ui)] bg-[var(--card)] text-[var(--subtle)]'
                     }`}
                   >
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                   </span>
                   <p
                     className={`font-black ${
-                      b.unlocked ? 'text-[var(--on-cream)]' : 'text-[var(--muted)]'
+                      b.unlocked ? 'text-[var(--text)]' : 'text-[var(--muted)]'
                     }`}
                   >
                     {b.title}

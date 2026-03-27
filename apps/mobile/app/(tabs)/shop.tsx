@@ -14,11 +14,12 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/expo';
 import * as WebBrowser from 'expo-web-browser';
 import { LinearGradient } from 'expo-linear-gradient';
+import { elevationAndroidSafe } from '../../lib/elevationAndroid';
 import {
   SHOP_CATALOG,
   COIN_PACKS,
@@ -32,8 +33,10 @@ import {
   type ShopCatalogEntry,
   type ShopMarketingBadge,
 } from '@questia/shared';
-import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { colorWithAlpha, shopBalanceGradient, type ThemePalette } from '@questia/ui';
+import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
+import { getShopScreenStrings } from '../../lib/shopScreenStrings';
 import { hapticError, hapticLight, hapticSuccess } from '../../lib/haptics';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
@@ -78,20 +81,6 @@ type TxRow = {
   createdAt: string;
 };
 
-const NARRATION_LABELS: Record<string, string> = {
-  cinematic: 'Cinématique',
-  poetic: 'Poétique',
-  noir: 'Mystère urbain',
-};
-
-const BADGE_LABELS: Record<ShopMarketingBadge, string> = {
-  featured: 'À la une',
-  best_value: 'Meilleur rapport',
-  popular: 'Populaire',
-  starter: 'Pour débuter',
-  new: 'Nouveau',
-};
-
 const TITLE_NONE = '__title_none__';
 const NARRATION_NONE = '__narration_none__';
 
@@ -107,46 +96,6 @@ function kindOrder(kind: ShopCatalogEntry['kind']): number {
   return order[kind] ?? 9;
 }
 
-function kindLabel(kind: ShopCatalogEntry['kind']): string {
-  switch (kind) {
-    case 'theme_pack':
-      return 'Thèmes';
-    case 'title':
-      return 'Titre';
-    case 'xp_booster':
-      return 'Bonus XP';
-    case 'narration_pack':
-      return 'Ton des quêtes';
-    case 'reroll_pack':
-      return 'Relances';
-    case 'bundle':
-      return 'Bundle';
-    default:
-      return '';
-  }
-}
-
-function themeLabel(id: string): string {
-  if (id === 'default') return 'Questia (clair)';
-  if (id === 'midnight') return 'Nuit boréale';
-  if (id === 'aurora') return 'Aurore';
-  if (id === 'parchment') return 'Parchemin';
-  return id;
-}
-
-function narrationDisplayLabel(shop: ProfileShop): string {
-  const id = shop.activeNarrationPackId;
-  if (!id) return 'Style Questia (par défaut)';
-  return NARRATION_LABELS[id] ?? id;
-}
-
-function titleDisplayLabel(shop: ProfileShop): string {
-  const id = shop.equippedTitleId;
-  if (!id) return 'Aucun titre';
-  const def = getTitleDefinition(id);
-  return def ? `${def.emoji} ${def.label}` : id;
-}
-
 type SelectOpt = { value: string; label: string };
 
 function SelectSheet({
@@ -156,6 +105,8 @@ function SelectSheet({
   selectedValue,
   onSelect,
   onClose,
+  closeLabel,
+  closeA11y,
 }: {
   visible: boolean;
   title: string;
@@ -163,40 +114,59 @@ function SelectSheet({
   selectedValue: string;
   onSelect: (value: string) => void;
   onClose: () => void;
+  closeLabel: string;
+  closeA11y: string;
 }) {
   const { palette } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createShopStyles(palette), [palette]);
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      statusBarTranslucent={Platform.OS === 'android'}
+      onRequestClose={onClose}
+    >
       <View style={styles.modalRoot}>
         <Pressable
           style={styles.modalBackdrop}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Fermer"
+          accessibilityLabel={closeA11y}
         />
         <View pointerEvents="box-none" style={styles.modalSheetWrap}>
-          <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>{title}</Text>
-            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
+          <View style={[styles.modalSheet, styles.selectSheetSheet, { paddingBottom: 28 + insets.bottom }]}>
+            <View style={styles.selectSheetHandle} accessibilityRole="none" />
+            <Text style={styles.selectSheetTitle}>{title}</Text>
+            <ScrollView
+              style={styles.selectSheetScroll}
+              contentContainerStyle={styles.selectSheetScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
               {options.map((o) => (
                 <Pressable
                   key={o.value}
-                  style={[styles.modalRow, o.value === selectedValue && styles.modalRowSelected]}
+                  style={[
+                    styles.selectOptionRow,
+                    o.value === selectedValue && styles.selectOptionRowSelected,
+                  ]}
                   onPress={() => {
                     onSelect(o.value);
                     onClose();
                   }}
+                  android_ripple={{ color: colorWithAlpha(palette.cyan, 0.2) }}
                 >
-                  <Text style={styles.modalRowText} numberOfLines={2}>
+                  <Text style={styles.selectOptionText} numberOfLines={3}>
                     {o.label}
                   </Text>
                   {o.value === selectedValue ? <Text style={styles.modalCheck}>✓</Text> : null}
                 </Pressable>
               ))}
             </ScrollView>
-            <Pressable style={styles.modalCancel} onPress={onClose}>
-              <Text style={styles.modalCancelText}>Fermer</Text>
+            <Pressable style={styles.modalCancel} onPress={onClose} hitSlop={8}>
+              <Text style={styles.modalCancelText}>{closeLabel}</Text>
             </Pressable>
           </View>
         </View>
@@ -213,20 +183,23 @@ const BADGE_BG: Record<ShopMarketingBadge, string> = {
   new: '#0891b2',
 };
 
-function MarketingBadgeRN({ badge }: { badge: ShopMarketingBadge }) {
+function MarketingBadgeRN({ badge, label }: { badge: ShopMarketingBadge; label: string }) {
   const { palette } = useAppTheme();
   const styles = useMemo(() => createShopStyles(palette), [palette]);
   return (
     <View style={[styles.badgePill, { backgroundColor: BADGE_BG[badge] }]}>
-      <Text style={styles.badgePillText}>{BADGE_LABELS[badge]}</Text>
+      <Text style={styles.badgePillText}>{label}</Text>
     </View>
   );
 }
 
 export default function ShopScreen() {
   const router = useRouter();
-  const { palette, refresh: refreshAppTheme } = useAppTheme();
+  const { locale: appLocale } = useAppLocale();
+  const s = useMemo(() => getShopScreenStrings(appLocale), [appLocale]);
+  const { palette, themeId, refresh: refreshAppTheme } = useAppTheme();
   const styles = useMemo(() => createShopStyles(palette), [palette]);
+  const balanceGradientColors = useMemo(() => shopBalanceGradient(themeId, palette), [themeId, palette]);
   const { getToken } = useAuth();
   const getTokenRef = useRef(getToken);
   useEffect(() => {
@@ -335,27 +308,40 @@ export default function ShopScreen() {
     const o = new Set(shop.ownedThemes ?? ['default']);
     return getThemeIds()
       .filter((id) => o.has(id))
-      .map((id) => ({ value: id, label: themeLabel(id) }));
-  }, [shop]);
+      .map((id) => ({ value: id, label: s.themeLabel(id) }));
+  }, [shop, s]);
 
   const narrationOptions = useMemo(() => {
     if (!shop) return [] as SelectOpt[];
-    const rows: SelectOpt[] = [{ value: NARRATION_NONE, label: 'Style Questia (par défaut)' }];
+    const rows: SelectOpt[] = [{ value: NARRATION_NONE, label: s.defaultNarration }];
     for (const id of shop.ownedNarrationPacks ?? []) {
-      rows.push({ value: id, label: NARRATION_LABELS[id] ?? id });
+      rows.push({ value: id, label: s.narrationPackLabel(id) });
     }
     return rows;
-  }, [shop]);
+  }, [shop, s]);
 
   const titleOptions = useMemo(() => {
     if (!shop) return [] as SelectOpt[];
-    const rows: SelectOpt[] = [{ value: TITLE_NONE, label: 'Aucun titre' }];
+    const rows: SelectOpt[] = [{ value: TITLE_NONE, label: s.noTitle }];
     for (const id of shop.ownedTitleIds ?? []) {
       const def = getTitleDefinition(id);
       rows.push({ value: id, label: def ? `${def.emoji} ${def.label}` : id });
     }
     return rows;
-  }, [shop]);
+  }, [shop, s]);
+
+  const narrationDisplayLabel = (profileShop: ProfileShop) => {
+    const id = profileShop.activeNarrationPackId;
+    if (!id) return s.defaultNarration;
+    return s.narrationPackLabel(id);
+  };
+
+  const titleDisplayLabel = (profileShop: ProfileShop) => {
+    const id = profileShop.equippedTitleId;
+    if (!id) return s.noTitle;
+    const def = getTitleDefinition(id);
+    return def ? `${def.emoji} ${def.label}` : id;
+  };
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -368,7 +354,7 @@ export default function ShopScreen() {
       ]);
       if (!pRes.ok) {
         if (!silent) {
-          setError(pRes.status === 401 ? 'Session expirée. Reconnecte-toi.' : 'Profil introuvable.');
+          setError(pRes.status === 401 ? s.errSession : s.errProfileMissing);
           setLoading(false);
         }
         setRefreshing(false);
@@ -381,12 +367,12 @@ export default function ShopScreen() {
         setTransactions(tJson.transactions ?? []);
       }
     } catch {
-      if (!silent) setError('Impossible de charger la boutique.');
+      if (!silent) setError(s.errLoadShop);
     } finally {
       if (!silent) setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [s]);
 
   useEffect(() => {
     void load();
@@ -400,13 +386,13 @@ export default function ShopScreen() {
         stripeOpenedAt.current = null;
         void load({ silent: true }).then(() => runPurchaseCelebration());
         setFlash({
-          message: 'Si le paiement est passé, ton solde est à jour ci-dessous.',
+          message: s.flashPaymentOk,
           kind: 'info',
         });
       }
     });
     return () => sub.remove();
-  }, [load, runPurchaseCelebration]);
+  }, [load, runPurchaseCelebration, s.flashPaymentOk]);
 
   const onRefresh = useCallback(() => {
     hapticLight();
@@ -426,7 +412,7 @@ export default function ShopScreen() {
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
         hapticError();
-        setFlash({ message: data.error ?? 'Impossible de lancer le paiement.', kind: 'error' });
+        setFlash({ message: data.error ?? s.errCheckout, kind: 'error' });
         return;
       }
       hapticLight();
@@ -449,7 +435,7 @@ export default function ShopScreen() {
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
         hapticError();
-        setFlash({ message: data.error ?? 'Achat impossible.', kind: 'error' });
+        setFlash({ message: data.error ?? s.errPurchase, kind: 'error' });
         return;
       }
       await load({ silent: true });
@@ -474,7 +460,7 @@ export default function ShopScreen() {
     if (!res.ok) {
       const j = (await res.json().catch(() => ({}))) as { error?: string };
       hapticError();
-      setFlash({ message: j.error ?? 'Impossible d’enregistrer.', kind: 'error' });
+      setFlash({ message: j.error ?? s.errSavePrefs, kind: 'error' });
       return;
     }
     hapticLight();
@@ -497,14 +483,14 @@ export default function ShopScreen() {
         <View style={styles.cardTop}>
           <Text style={styles.cardEmoji}>{item.emoji}</Text>
           <View style={styles.cardBadges}>
-            {m?.badge ? <MarketingBadgeRN badge={m.badge} /> : null}
-            <Text style={styles.kindLbl}>{kindLabel(item.kind)}</Text>
+            {m?.badge ? <MarketingBadgeRN badge={m.badge} label={s.marketingBadge(m.badge)} /> : null}
+            <Text style={styles.kindLbl}>{s.kindLabel(item.kind)}</Text>
             {item.contentsDetail ? (
               <Pressable
                 style={styles.infoDot}
                 hitSlop={10}
                 accessibilityRole="button"
-                accessibilityLabel={`Plus d'infos : ${item.name}`}
+                accessibilityLabel={s.moreInfoA11y(item.name)}
                 onPress={() => Alert.alert(item.name, item.contentsDetail!)}
               >
                 <Text style={styles.infoDotText}>i</Text>
@@ -522,15 +508,15 @@ export default function ShopScreen() {
         {m?.hook ? <Text style={styles.cardHook}>{m.hook}</Text> : null}
         {m?.compareAtCoins != null && m.savingsCoins != null ? (
           <Text style={styles.cardSave}>
-            <Text style={styles.strike}>{m.compareAtCoins.toLocaleString('fr-FR')} QC</Text>
-            <Text style={styles.saveAmt}> −{m.savingsCoins.toLocaleString('fr-FR')} QC </Text>
-            <Text style={styles.mutedSm}>vs achat séparé</Text>
+            <Text style={styles.strike}>{m.compareAtCoins.toLocaleString(s.numLocale)} QC</Text>
+            <Text style={styles.saveAmt}> −{m.savingsCoins.toLocaleString(s.numLocale)} QC </Text>
+            <Text style={styles.mutedSm}>{s.vsSeparate}</Text>
           </Text>
         ) : null}
         <View style={styles.cardFooter}>
-          <Text style={styles.price}>{item.priceCoins.toLocaleString('fr-FR')} QC</Text>
+          <Text style={styles.price}>{item.priceCoins.toLocaleString(s.numLocale)} QC</Text>
           {owns ? (
-            <Text style={styles.ownsLbl}>Déjà à toi</Text>
+            <Text style={styles.ownsLbl}>{s.owned}</Text>
           ) : (
             <Pressable
               style={[
@@ -539,9 +525,7 @@ export default function ShopScreen() {
                 !affordable && coinPurchaseSku !== item.sku && styles.buyBtnNeedRecharge,
               ]}
               disabled={coinPurchaseSku === item.sku}
-              accessibilityHint={
-                !affordable ? 'Ouvre l’achat de Quest Coins — solde insuffisant pour cet article.' : undefined
-              }
+              accessibilityHint={!affordable ? s.buyHintNeedCoins : undefined}
               onPress={() => {
                 if (!affordable) {
                   setRechargeModalVisible(true);
@@ -550,7 +534,7 @@ export default function ShopScreen() {
                 void buyWithCoins(item.sku);
               }}
             >
-              <Text style={styles.buyBtnText}>{coinPurchaseSku === item.sku ? '…' : 'Acheter'}</Text>
+              <Text style={styles.buyBtnText}>{coinPurchaseSku === item.sku ? '…' : s.buy}</Text>
             </Pressable>
           )}
         </View>
@@ -570,7 +554,7 @@ export default function ShopScreen() {
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <View style={styles.topBar}>
           <View style={{ width: 72 }} />
-          <Text style={[styles.topTitle, styles.topTitleCenter]}>Boutique</Text>
+          <Text style={[styles.topTitle, styles.topTitleCenter]}>{s.title}</Text>
           <View style={{ width: 72 }} />
         </View>
         <View style={styles.center}>
@@ -596,7 +580,7 @@ export default function ShopScreen() {
       <Animated.View style={{ flex: 1, transform: [{ translateX: screenShake }] }}>
       <View style={styles.topBar}>
         <View style={{ width: 72 }} />
-        <Text style={[styles.topTitle, styles.topTitleCenter]}>Boutique</Text>
+        <Text style={[styles.topTitle, styles.topTitleCenter]}>{s.title}</Text>
         <View style={{ width: 72 }} />
       </View>
 
@@ -633,36 +617,39 @@ export default function ShopScreen() {
           <View style={styles.errBox}>
             <Text style={styles.errText}>{error}</Text>
             <Pressable style={styles.retry} onPress={() => void load()}>
-              <Text style={styles.retryText}>Réessayer</Text>
+              <Text style={styles.retryText}>{s.retry}</Text>
             </Pressable>
           </View>
         ) : null}
 
         {shop && !error ? (
           <>
-            <LinearGradient
-              colors={['#fffbeb', '#ffffff', '#fef3c7']}
-              locations={[0, 0.42, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.balanceGradient}
-            >
-              <View style={styles.balanceRow}>
+            <View style={styles.balanceCardOuter}>
+              <LinearGradient
+                colors={balanceGradientColors}
+                locations={[0, 0.42, 1]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+              <View style={styles.balanceCardPadding}>
+                <View style={styles.balanceRow}>
                 <Pressable
                   style={({ pressed }) => [styles.balanceTap, pressed && styles.balanceTapPressed]}
                   onPress={() => router.push('/history?tab=wallet')}
                   accessibilityRole="button"
-                  accessibilityLabel="Historique du portefeuille"
-                  accessibilityHint="Ouvre le journal des mouvements Quest Coins"
+                  accessibilityLabel={s.walletHistoryA11y}
+                  accessibilityHint={s.walletHistoryHint}
                 >
                   <View style={styles.balanceCoinIcon} accessibilityElementsHidden>
                     <Text style={styles.balanceCoinEmoji}>🪙</Text>
                   </View>
                   <View style={styles.balanceLeft}>
-                    <Text style={styles.balanceK}>Ton solde</Text>
+                    <Text style={styles.balanceK}>{s.balanceK}</Text>
                     <Animated.Text style={[styles.balanceNum, { transform: [{ scale: balanceScale }] }]}>
-                      {balance.toLocaleString('fr-FR')}
-                      <Text style={styles.balanceQc}> Quest Coins</Text>
+                      {balance.toLocaleString(s.numLocale)}
+                      <Text style={styles.balanceQc}>{s.questCoinsSuffix}</Text>
                     </Animated.Text>
                   </View>
                 </Pressable>
@@ -670,18 +657,17 @@ export default function ShopScreen() {
                   style={({ pressed }) => [styles.balanceCta, pressed && styles.balanceCtaPressed]}
                   onPress={() => setRechargeModalVisible(true)}
                   accessibilityRole="button"
-                  accessibilityLabel="Ajouter des Quest Coins en euros"
+                  accessibilityLabel={s.addQcA11y}
                 >
-                  <Text style={styles.balanceCtaText}>Ajouter des QC</Text>
+                  <Text style={styles.balanceCtaText}>{s.addQc}</Text>
                 </Pressable>
+                </View>
               </View>
-            </LinearGradient>
+            </View>
 
             <View style={styles.prefsSectionOuter}>
-              <Text style={styles.prefsSectionHeading}>Équipement & affichage</Text>
-              <Text style={styles.prefsSectionIntro}>
-                Thème, ton des quêtes et titre — appliqués tout de suite dans l’app.
-              </Text>
+              <Text style={styles.prefsSectionHeading}>{s.prefsHeading}</Text>
+              <Text style={styles.prefsSectionIntro}>{s.prefsIntro}</Text>
 
               <View style={styles.prefsPanelOuter}>
                 <LinearGradient
@@ -690,13 +676,16 @@ export default function ShopScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.prefsStripe}
                 />
-                <LinearGradient
-                  colors={[palette.surface, palette.card, palette.card]}
-                  locations={[0, 0.4, 1]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.prefsPanelInner}
-                >
+                <View style={styles.prefsPanelBody}>
+                  <LinearGradient
+                    colors={[palette.surface, palette.card, palette.card]}
+                    locations={[0, 0.4, 1]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={StyleSheet.absoluteFill}
+                    pointerEvents="none"
+                  />
+                  <View style={styles.prefsPanelInner}>
                   <View style={styles.prefsEquipRow}>
                     <View style={styles.prefsGearIcon}>
                       <Text style={styles.prefsGearEmoji} accessibilityElementsHidden>
@@ -704,35 +693,35 @@ export default function ShopScreen() {
                       </Text>
                     </View>
                     <View style={styles.prefsEquipCopy}>
-                      <Text style={styles.prefsPanelKicker}>Personnalisation</Text>
-                      <Text style={styles.prefsPanelLead}>Règle l’apparence comme sur ton inventaire</Text>
+                      <Text style={styles.prefsPanelKicker}>{s.customization}</Text>
+                      <Text style={styles.prefsPanelLead}>{s.customizationLead}</Text>
                     </View>
                   </View>
 
                   <View style={styles.prefsFieldsGrid}>
                     <View style={styles.prefsFieldCard}>
-                      <Text style={styles.prefsFieldLabel}>Thème actif</Text>
+                      <Text style={styles.prefsFieldLabel}>{s.fieldTheme}</Text>
                       <Pressable
                         style={styles.prefsSelectRow}
                         onPress={() => setSelectKind('theme')}
                         accessibilityRole="button"
-                        accessibilityLabel={`Thème actuel : ${themeLabel(shop.activeThemeId)}`}
-                        accessibilityHint="Ouvre le choix de thème"
+                        accessibilityLabel={s.themeCurrentA11y(s.themeLabel(shop.activeThemeId))}
+                        accessibilityHint={s.themeOpenHint}
                       >
-                        <Text style={styles.prefsSelectRowText}>{themeLabel(shop.activeThemeId)}</Text>
+                        <Text style={styles.prefsSelectRowText}>{s.themeLabel(shop.activeThemeId)}</Text>
                         <Text style={styles.prefsSelectChevron} importantForAccessibility="no">
                           ▼
                         </Text>
                       </Pressable>
                     </View>
                     <View style={styles.prefsFieldCard}>
-                      <Text style={styles.prefsFieldLabel}>Ton des textes de quête</Text>
+                      <Text style={styles.prefsFieldLabel}>{s.fieldNarration}</Text>
                       <Pressable
                         style={styles.prefsSelectRow}
                         onPress={() => setSelectKind('narration')}
                         accessibilityRole="button"
-                        accessibilityLabel={`Ton des textes de quête : ${narrationDisplayLabel(shop)}`}
-                        accessibilityHint="Ouvre le choix du style de narration"
+                        accessibilityLabel={s.narrationCurrentA11y(narrationDisplayLabel(shop))}
+                        accessibilityHint={s.narrationOpenHint}
                       >
                         <Text style={styles.prefsSelectRowText}>{narrationDisplayLabel(shop)}</Text>
                         <Text style={styles.prefsSelectChevron} importantForAccessibility="no">
@@ -741,13 +730,13 @@ export default function ShopScreen() {
                       </Pressable>
                     </View>
                     <View style={styles.prefsFieldCard}>
-                      <Text style={styles.prefsFieldLabel}>Titre sur le profil</Text>
+                      <Text style={styles.prefsFieldLabel}>{s.fieldTitle}</Text>
                       <Pressable
                         style={styles.prefsSelectRow}
                         onPress={() => setSelectKind('title')}
                         accessibilityRole="button"
-                        accessibilityLabel={`Titre sur le profil : ${titleDisplayLabel(shop)}`}
-                        accessibilityHint="Ouvre le choix du titre affiché"
+                        accessibilityLabel={s.titleCurrentA11y(titleDisplayLabel(shop))}
+                        accessibilityHint={s.titleOpenHint}
                       >
                         <Text style={styles.prefsSelectRowText}>{titleDisplayLabel(shop)}</Text>
                         <Text style={styles.prefsSelectChevron} importantForAccessibility="no">
@@ -759,24 +748,25 @@ export default function ShopScreen() {
 
                   <View style={styles.prefsStatsRow}>
                     <View style={styles.statPillOrange}>
-                      <Text style={styles.statPillLabel}>Relances bonus</Text>
+                      <Text style={styles.statPillLabel}>{s.bonusRerolls}</Text>
                       <Text style={styles.statPillValueReroll}>{shop.bonusRerollCredits}</Text>
                     </View>
                     <View style={styles.statPillGreen}>
-                      <Text style={styles.statPillLabel}>Surcharges XP</Text>
+                      <Text style={styles.statPillLabel}>{s.xpCharges}</Text>
                       <Text style={styles.statPillValueXp}>{shop.xpBonusCharges}</Text>
                       <Text style={styles.statPillHint}>
-                        (+{XP_SHOP_BONUS_PER_CHARGE} XP / validation)
+                        {s.xpPerValidation(XP_SHOP_BONUS_PER_CHARGE)}
                       </Text>
                     </View>
                   </View>
-                </LinearGradient>
+                  </View>
+                </View>
               </View>
             </View>
 
             {featuredBundle ? (
               <View style={styles.section}>
-                <Text style={styles.h2}>À la une</Text>
+                <Text style={styles.h2}>{s.featured}</Text>
                 <Animated.View
                   style={[
                     styles.featuredBox,
@@ -789,7 +779,10 @@ export default function ShopScreen() {
                     <Text style={styles.featuredEmoji}>{featuredBundle.emoji}</Text>
                     <View style={{ flex: 1, minWidth: 0 }}>
                       {featuredBundle.marketing?.badge ? (
-                        <MarketingBadgeRN badge={featuredBundle.marketing.badge} />
+                        <MarketingBadgeRN
+                          badge={featuredBundle.marketing.badge}
+                          label={s.marketingBadge(featuredBundle.marketing.badge)}
+                        />
                       ) : null}
                       <View style={styles.featuredTitleRow}>
                         <Text style={[styles.featuredName, styles.featuredNameFlex]}>{featuredBundle.name}</Text>
@@ -798,7 +791,7 @@ export default function ShopScreen() {
                             style={styles.infoDot}
                             hitSlop={10}
                             accessibilityRole="button"
-                            accessibilityLabel={`Plus d'infos : ${featuredBundle.name}`}
+                            accessibilityLabel={s.moreInfoA11y(featuredBundle.name)}
                             onPress={() =>
                               Alert.alert(featuredBundle.name, featuredBundle.contentsDetail!)
                             }
@@ -822,21 +815,20 @@ export default function ShopScreen() {
                   featuredBundle.marketing?.savingsCoins != null ? (
                     <Text style={styles.featuredSave}>
                       <Text style={styles.strike}>
-                        {featuredBundle.marketing.compareAtCoins.toLocaleString('fr-FR')} QC
+                        {featuredBundle.marketing.compareAtCoins.toLocaleString(s.numLocale)} QC
                       </Text>
                       <Text style={styles.saveAmt}>
-                        {' '}
-                        Économie ~{featuredBundle.marketing.savingsCoins.toLocaleString('fr-FR')} QC
+                        {s.economy(featuredBundle.marketing.savingsCoins.toLocaleString(s.numLocale))}
                       </Text>
-                      <Text style={styles.mutedSm}> vs détail</Text>
+                      <Text style={styles.mutedSm}>{s.vsRetail}</Text>
                     </Text>
                   ) : null}
                   <View style={styles.featuredFooter}>
                     <Text style={styles.featuredPrice}>
-                      {featuredBundle.priceCoins.toLocaleString('fr-FR')} QC
+                      {featuredBundle.priceCoins.toLocaleString(s.numLocale)} QC
                     </Text>
                     {catalogItemFullyOwned(featuredBundle, shop, coinPurchasedSkus) ? (
-                      <Text style={styles.ownsLbl}>Déjà à toi</Text>
+                      <Text style={styles.ownsLbl}>{s.owned}</Text>
                     ) : (
                       <Pressable
                         style={[
@@ -848,9 +840,7 @@ export default function ShopScreen() {
                         ]}
                         disabled={coinPurchaseSku === featuredBundle.sku}
                         accessibilityHint={
-                          balance < featuredBundle.priceCoins
-                            ? 'Ouvre l’achat de Quest Coins — solde insuffisant pour ce bundle.'
-                            : undefined
+                          balance < featuredBundle.priceCoins ? s.buyBundleHintNeedCoins : undefined
                         }
                         onPress={() => {
                           if (balance < featuredBundle.priceCoins) {
@@ -861,7 +851,7 @@ export default function ShopScreen() {
                         }}
                       >
                         <Text style={styles.buyBtnText}>
-                          {coinPurchaseSku === featuredBundle.sku ? '…' : 'Acheter le bundle'}
+                          {coinPurchaseSku === featuredBundle.sku ? '…' : s.buyBundle}
                         </Text>
                       </Pressable>
                     )}
@@ -871,37 +861,37 @@ export default function ShopScreen() {
             ) : null}
 
             <View style={styles.section}>
-              <Text style={styles.h2}>Progression & XP</Text>
+              <Text style={styles.h2}>{s.sectionProgression}</Text>
               {xpItems.map(renderCatalogCard)}
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.h2}>Apparence</Text>
-              <Text style={styles.h3}>Thèmes</Text>
+              <Text style={styles.h2}>{s.sectionLook}</Text>
+              <Text style={styles.h3}>{s.sectionThemes}</Text>
               {themeItems.map(renderCatalogCard)}
-              <Text style={styles.h3}>Titres</Text>
+              <Text style={styles.h3}>{s.sectionTitles}</Text>
               {titleItems.map(renderCatalogCard)}
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.h2}>Ton des quêtes</Text>
+              <Text style={styles.h2}>{s.sectionNarration}</Text>
               {narrationItems.map(renderCatalogCard)}
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.h2}>Relances</Text>
+              <Text style={styles.h2}>{s.sectionRerolls}</Text>
               {rerollItems.map(renderCatalogCard)}
             </View>
 
             <View style={styles.section}>
               <View style={styles.journalHead}>
-                <Text style={[styles.h2, styles.h2JournalRow]}>Journal des transactions</Text>
+                <Text style={[styles.h2, styles.h2JournalRow]}>{s.txJournal}</Text>
                 <Pressable onPress={() => router.push('/history?tab=wallet')} hitSlop={8}>
-                  <Text style={styles.historyLink}>Historique détaillé</Text>
+                  <Text style={styles.historyLink}>{s.txHistoryLink}</Text>
                 </Pressable>
               </View>
               {transactions.length === 0 ? (
-                <Text style={styles.emptyTx}>Aucune opération pour l’instant.</Text>
+                <Text style={styles.emptyTx}>{s.txEmpty}</Text>
               ) : (
                 transactions.map((tx) => (
                   <View key={tx.id} style={styles.txRow}>
@@ -920,14 +910,18 @@ export default function ShopScreen() {
                       ) : null}
                       {tx.amountCents > 0 ? (
                         <Text style={styles.txEur}>
-                          {(tx.amountCents / 100).toFixed(2).replace('.', ',')} {tx.currency.toUpperCase()}
+                          {(tx.amountCents / 100).toLocaleString(s.numLocale, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{' '}
+                          {tx.currency.toUpperCase()}
                         </Text>
                       ) : null}
                       {tx.coinBalanceAfter != null ? (
-                        <Text style={styles.txAfter}>Solde après : {tx.coinBalanceAfter} QC</Text>
+                        <Text style={styles.txAfter}>{s.balanceAfter(tx.coinBalanceAfter)}</Text>
                       ) : null}
                       <Text style={styles.txDate}>
-                        {new Date(tx.createdAt).toLocaleString('fr-FR', {
+                        {new Date(tx.createdAt).toLocaleString(s.numLocale, {
                           dateStyle: 'medium',
                           timeStyle: 'short',
                         })}
@@ -946,11 +940,11 @@ export default function ShopScreen() {
           visible={selectKind !== null}
           title={
             selectKind === 'theme'
-              ? 'Thème actif'
-              :             selectKind === 'narration'
-                ? 'Ton des textes de quête'
+              ? s.selectThemeTitle
+              : selectKind === 'narration'
+                ? s.selectNarrationTitle
                 : selectKind === 'title'
-                  ? 'Titre sur le profil'
+                  ? s.selectTitleTitle
                   : ''
           }
           options={
@@ -980,14 +974,17 @@ export default function ShopScreen() {
             }
           }}
           onClose={() => setSelectKind(null)}
+          closeLabel={s.close}
+          closeA11y={s.closeA11y}
         />
       ) : null}
 
       {shop && !error ? (
         <Modal
           visible={rechargeModalVisible}
-          animationType="slide"
+          animationType="fade"
           transparent
+          statusBarTranslucent={Platform.OS === 'android'}
           onRequestClose={() => setRechargeModalVisible(false)}
         >
           <View style={styles.modalRoot}>
@@ -995,37 +992,33 @@ export default function ShopScreen() {
               style={styles.modalBackdrop}
               onPress={() => setRechargeModalVisible(false)}
               accessibilityRole="button"
-              accessibilityLabel="Fermer"
+              accessibilityLabel={s.closeA11y}
             />
             <View pointerEvents="box-none" style={styles.modalSheetWrap}>
               <View style={[styles.modalSheet, styles.rechargeModalSheet]}>
                 <View style={styles.rechargeModalHeader}>
                   <View style={styles.rechargeModalHeaderTop}>
                     <View style={styles.rechargeModalHeaderText}>
-                      <Text style={styles.rechargeModalTitle}>Ajouter des Quest Coins</Text>
-                      <Text style={styles.rechargeModalSubtitle}>
-                        Paiement par carte via Stripe. Aucun abonnement — tu paies uniquement le montant choisi.
-                      </Text>
+                      <Text style={styles.rechargeModalTitle}>{s.rechargeTitle}</Text>
+                      <Text style={styles.rechargeModalSubtitle}>{s.rechargeSubtitle}</Text>
                       <View style={styles.rechargeModalPills}>
                         <View style={styles.rechargeBalancePill}>
-                          <Text style={styles.rechargeBalancePillLbl}>Solde actuel</Text>
+                          <Text style={styles.rechargeBalancePillLbl}>{s.currentBalance}</Text>
                           <Text style={styles.rechargeBalancePillVal}>
-                            {balance.toLocaleString('fr-FR')} QC
+                            {balance.toLocaleString(s.numLocale)} QC
                           </Text>
                         </View>
                         <View style={styles.rechargeTrustPill}>
-                          <Text style={styles.rechargeTrustPillTxt}>🔒 Paiement sécurisé</Text>
+                          <Text style={styles.rechargeTrustPillTxt}>{s.securePayment}</Text>
                         </View>
                       </View>
-                      <Text style={styles.rechargeModalHint}>
-                        Après validation, les QC sont ajoutés à ton solde. Utilisables dans la boutique.
-                      </Text>
+                      <Text style={styles.rechargeModalHint}>{s.rechargeHint}</Text>
                     </View>
                     <Pressable
                       onPress={() => setRechargeModalVisible(false)}
                       hitSlop={12}
                       accessibilityRole="button"
-                      accessibilityLabel="Fermer"
+                      accessibilityLabel={s.closeA11y}
                     >
                       <Text style={styles.rechargeModalClose}>✕</Text>
                     </Pressable>
@@ -1038,7 +1031,10 @@ export default function ShopScreen() {
                   showsVerticalScrollIndicator
                 >
                   {coinPacksSorted.map((pack) => {
-                    const eur = (pack.priceCents / 100).toFixed(2).replace('.', ',');
+                    const eur = (pack.priceCents / 100).toLocaleString(s.numLocale, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    });
                     const qcPerEur = questCoinsPerEuro(pack.priceCents, pack.coinsGranted);
                     const bonusVsStarter =
                       coinPackReference && pack.sku !== coinPackReference.sku
@@ -1050,13 +1046,18 @@ export default function ShopScreen() {
                         <View style={styles.rechargePackTop}>
                           <Text style={styles.rechargePackEmoji}>{pack.emoji}</Text>
                           <View style={styles.cardBadges}>
-                            {pack.marketing?.badge ? <MarketingBadgeRN badge={pack.marketing.badge} /> : null}
+                            {pack.marketing?.badge ? (
+                              <MarketingBadgeRN
+                                badge={pack.marketing.badge}
+                                label={s.marketingBadge(pack.marketing.badge)}
+                              />
+                            ) : null}
                             {pack.contentsDetail ? (
                               <Pressable
                                 style={styles.infoDot}
                                 hitSlop={10}
                                 accessibilityRole="button"
-                                accessibilityLabel={`Plus d'infos : ${pack.name}`}
+                                accessibilityLabel={s.moreInfoA11y(pack.name)}
                                 onPress={() => Alert.alert(pack.name, pack.contentsDetail!)}
                               >
                                 <Text style={styles.infoDotText}>i</Text>
@@ -1065,7 +1066,7 @@ export default function ShopScreen() {
                           </View>
                         </View>
                         <Text style={styles.rechargePackQc}>
-                          +{pack.coinsGranted.toLocaleString('fr-FR')}{' '}
+                          +{pack.coinsGranted.toLocaleString(s.numLocale)}{' '}
                           <Text style={styles.rechargePackQcUnit}>QC</Text>
                         </Text>
                         <Text style={styles.rechargePackName}>{pack.name}</Text>
@@ -1080,11 +1081,13 @@ export default function ShopScreen() {
                           <Text style={styles.rechargePackHook}>{pack.marketing.hook}</Text>
                         ) : null}
                         <View style={styles.rechargePackPriceBlock}>
-                          <Text style={styles.rechargePackEur}>{eur} €</Text>
+                          <Text style={styles.rechargePackEur}>
+                            {appLocale === 'en' ? `€${eur}` : `${eur} €`}
+                          </Text>
                           <Text style={styles.rechargePackMeta}>
-                            {Math.round(qcPerEur)} QC / €
+                            {s.qcPerEur(Math.round(qcPerEur))}
                             {bonusVsStarter > 0 ? (
-                              <Text style={styles.bonusPct}> (+{bonusVsStarter}% vs petit)</Text>
+                              <Text style={styles.bonusPct}>{s.bonusVsSmall(bonusVsStarter)}</Text>
                             ) : null}
                           </Text>
                           <Pressable
@@ -1093,9 +1096,7 @@ export default function ShopScreen() {
                             onPress={() => void rechargeStripe(pack.sku)}
                           >
                             <Text style={styles.stripeBtnText}>
-                              {stripeLoadingSku === pack.sku
-                                ? 'Redirection…'
-                                : `Payer ${eur} €`}
+                              {stripeLoadingSku === pack.sku ? s.redirecting : s.payEur(eur)}
                             </Text>
                           </Pressable>
                         </View>
@@ -1104,11 +1105,9 @@ export default function ShopScreen() {
                   })}
                 </ScrollView>
                 <View style={styles.rechargeModalFooter}>
-                  <Text style={styles.rechargeModalFooterTxt}>
-                    Tu reviens sur la boutique après le paiement. Annulation = aucun débit.
-                  </Text>
+                  <Text style={styles.rechargeModalFooterTxt}>{s.rechargeFooter}</Text>
                   <Pressable style={styles.modalCancel} onPress={() => setRechargeModalVisible(false)}>
-                    <Text style={styles.modalCancelText}>Fermer</Text>
+                    <Text style={styles.modalCancelText}>{s.close}</Text>
                   </Pressable>
                 </View>
               </View>
@@ -1122,6 +1121,7 @@ export default function ShopScreen() {
 }
 
 function createShopStyles(p: ThemePalette) {
+  const elev = elevationAndroidSafe;
   const C = {
     bg: p.bg,
     card: p.card,
@@ -1179,20 +1179,23 @@ function createShopStyles(p: ThemePalette) {
     borderRadius: 12,
   },
   retryText: { color: '#fff', fontWeight: '800' },
-  /** Aligné sur la carte solde web : un seul bloc (dégradé + bordure), pas de double encadré */
-  balanceGradient: {
+  /** Dégradé en absoluteFill dans la View — évite les artefacts carrés (ombre + LinearGradient). */
+  balanceCardOuter: {
+    position: 'relative',
     borderRadius: 24,
     borderWidth: 2,
     borderColor: 'rgba(252, 211, 77, 0.75)',
-    paddingVertical: 18,
-    paddingHorizontal: 16,
     marginBottom: 16,
     overflow: 'hidden',
     shadowColor: '#b45309',
     shadowOpacity: 0.12,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    elevation: elev(4),
+  },
+  balanceCardPadding: {
+    paddingVertical: 18,
+    paddingHorizontal: 16,
   },
   balanceRow: {
     flexDirection: 'row',
@@ -1222,11 +1225,11 @@ function createShopStyles(p: ThemePalette) {
   balanceK: {
     fontSize: 11,
     fontWeight: '900',
-    color: p.onCream,
+    color: C.text,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
-  balanceNum: { fontSize: 32, fontWeight: '900', color: p.onCream, marginTop: 4, letterSpacing: -0.5 },
+  balanceNum: { fontSize: 32, fontWeight: '900', color: C.text, marginTop: 4, letterSpacing: -0.5 },
   balanceQc: { fontSize: 20, fontWeight: '900', color: p.orange },
   balanceCta: {
     backgroundColor: p.green,
@@ -1266,12 +1269,12 @@ function createShopStyles(p: ThemePalette) {
     borderColor: colorWithAlpha(p.cyan, 0.45),
     borderRadius: 22,
     padding: 16,
-    backgroundColor: p.cardCream,
+    backgroundColor: p.card,
   },
   featuredHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 10 },
   featuredEmoji: { fontSize: 40 },
-  featuredName: { fontSize: 18, fontWeight: '900', color: p.onCream, marginTop: 6 },
-  featuredDesc: { fontSize: 13, color: p.onCreamMuted, fontWeight: '600', lineHeight: 20, marginBottom: 8 },
+  featuredName: { fontSize: 18, fontWeight: '900', color: C.text, marginTop: 6 },
+  featuredDesc: { fontSize: 13, color: C.muted, fontWeight: '600', lineHeight: 20, marginBottom: 8 },
   featuredHook: { fontSize: 13, fontWeight: '700', color: p.linkOnBg, marginBottom: 8 },
   featuredSave: { fontSize: 12, marginBottom: 10 },
   featuredFooter: {
@@ -1407,9 +1410,13 @@ function createShopStyles(p: ThemePalette) {
     shadowOpacity: 0.14,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 10 },
-    elevation: 5,
+    elevation: elev(5),
   },
   prefsStripe: { height: 4, width: '100%' },
+  prefsPanelBody: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
   prefsPanelInner: {
     paddingHorizontal: 20,
     paddingTop: 24,
@@ -1473,7 +1480,7 @@ function createShopStyles(p: ThemePalette) {
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 2,
-    elevation: 1,
+    elevation: elev(1),
   },
   prefsSelectRowText: { fontSize: 14, fontWeight: '600', color: C.text, flex: 1, marginRight: 8, lineHeight: 20 },
   prefsSelectChevron: { fontSize: 10, color: p.linkOnBg, fontWeight: '900' },
@@ -1554,7 +1561,7 @@ function createShopStyles(p: ThemePalette) {
     paddingBottom: 28,
     paddingHorizontal: 16,
     zIndex: 2,
-    elevation: 8,
+    elevation: elev(8),
     shadowColor: p.text,
     shadowOpacity: 0.22,
     shadowRadius: 12,
@@ -1667,27 +1674,57 @@ function createShopStyles(p: ThemePalette) {
     lineHeight: 16,
     marginBottom: 8,
   },
-  modalTitle: {
-    fontSize: 17,
+  /** Feuille des selects (thème, narration, titre) — cartes arrondies, pas de liste à traits. */
+  selectSheetSheet: {
+    paddingTop: 10,
+    paddingHorizontal: 12,
+  },
+  selectSheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: colorWithAlpha(p.cyan, 0.38),
+    marginBottom: 10,
+  },
+  selectSheetTitle: {
+    fontSize: 18,
     fontWeight: '900',
     color: C.text,
-    paddingVertical: 16,
+    paddingVertical: 12,
     textAlign: 'center',
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: p.divider,
   },
-  modalScroll: { maxHeight: 360 },
-  modalRow: {
+  selectSheetScroll: { maxHeight: 360 },
+  selectSheetScrollContent: {
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  selectOptionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 14,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: p.divider,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: p.divider,
+    backgroundColor: p.surface,
   },
-  modalRowSelected: { backgroundColor: colorWithAlpha(p.cyan, 0.12) },
-  modalRowText: { fontSize: 15, fontWeight: '600', color: C.text, flex: 1, paddingRight: 12 },
+  selectOptionRowSelected: {
+    borderColor: colorWithAlpha(p.cyan, 0.5),
+    backgroundColor: colorWithAlpha(p.cyan, 0.12),
+  },
+  selectOptionText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: C.text,
+    flex: 1,
+    paddingRight: 12,
+    lineHeight: 22,
+  },
   modalCheck: { fontSize: 16, color: p.green, fontWeight: '900' },
   modalCancel: {
     paddingVertical: 12,

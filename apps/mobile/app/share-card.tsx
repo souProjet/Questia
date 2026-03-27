@@ -8,9 +8,10 @@ import {
   ActivityIndicator,
   Image,
   Alert,
+  Modal,
   useWindowDimensions,
-  Share,
 } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth, useUser } from '@clerk/expo';
@@ -20,17 +21,37 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { captureRef } from 'react-native-view-shot';
 import {
   QUEST_SHARE_BACKGROUNDS,
-  buildQuestShareMessage,
-  buildWebAppQuestUrl,
   formatQuestDateFr,
+  formatQuestShareEquippedTitleLine,
+  formatQuestShareProgressionLine,
   getQuestShareBackgroundById,
   questDisplayEmoji,
 } from '@questia/shared';
-import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
+import { useAppLocale } from '../contexts/AppLocaleContext';
 import { hapticLight, hapticMedium } from '../lib/haptics';
 
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
+
+function siteHostDisplay(base: string): string {
+  try {
+    return new URL(base.startsWith('http') ? base : `https://${base}`).hostname.replace(/^www\./, '');
+  } catch {
+    return 'questia.fr';
+  }
+}
+
+/** 2ᵉ couleur du dégradé du bouton partage (orange plus profond, cohérent par thème). */
+function orangeGradientEnd(orange: string): string {
+  const map: Record<string, string> = {
+    '#f97316': '#ea580c',
+    '#fb923c': '#ea580c',
+    '#ea580c': '#c2410c',
+    '#c2410c': '#9a3412',
+  };
+  return map[orange] ?? '#ea580c';
+}
 
 interface DailyQuest {
   questDate: string;
@@ -42,6 +63,14 @@ interface DailyQuest {
   status: string;
   day: number;
   streak: number;
+  equippedTitleId?: string | null;
+  progression?: {
+    totalXp: number;
+    level: number;
+    xpIntoLevel: number;
+    xpToNext: number;
+    xpPerLevel: number;
+  } | null;
 }
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
@@ -86,11 +115,17 @@ export default function ShareCardScreen() {
   const [error, setError] = useState<string | null>(null);
   const [bgId, setBgId] = useState(QUEST_SHARE_BACKGROUNDS[0].id);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photoRotation, setPhotoRotation] = useState(0);
+  const [photoFlipH, setPhotoFlipH] = useState(false);
+  const [photoFlipV, setPhotoFlipV] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
 
   const captureRefView = useRef<View>(null);
 
   const { palette, themeId } = useAppTheme();
+  const appLocale = useAppLocale().locale;
+  const shareLocale = appLocale === 'en' ? 'en' : 'fr';
   const styles = useMemo(() => createShareStyles(palette, themeId), [palette, themeId]);
 
   const load = useCallback(async () => {
@@ -145,6 +180,9 @@ export default function ShareCardScreen() {
     const res = await ImagePicker.launchImageLibraryAsync(pickerOptions);
     if (!res.canceled && res.assets[0]) {
       setPhotoUri(res.assets[0].uri);
+      setPhotoRotation(0);
+      setPhotoFlipH(false);
+      setPhotoFlipV(false);
     }
   }, []);
 
@@ -158,6 +196,9 @@ export default function ShareCardScreen() {
       const res = await ImagePicker.launchCameraAsync(pickerOptions);
       if (!res.canceled && res.assets[0]) {
         setPhotoUri(res.assets[0].uri);
+        setPhotoRotation(0);
+        setPhotoFlipH(false);
+        setPhotoFlipV(false);
       }
     } catch (e) {
       Alert.alert(
@@ -169,12 +210,62 @@ export default function ShareCardScreen() {
 
   const choosePhotoSource = useCallback(() => {
     hapticLight();
-    Alert.alert('Image de fond', 'Tu préfères importer ou prendre une photo ?', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Galerie', onPress: () => void pickFromLibrary() },
-      { text: 'Appareil photo', onPress: () => void takePhoto() },
-    ]);
-  }, [pickFromLibrary, takePhoto]);
+    setPhotoSheetOpen(true);
+  }, []);
+
+  const onPickGalleryFromSheet = useCallback(() => {
+    hapticLight();
+    setPhotoSheetOpen(false);
+    requestAnimationFrame(() => {
+      void pickFromLibrary();
+    });
+  }, [pickFromLibrary]);
+
+  const onPickCameraFromSheet = useCallback(() => {
+    hapticLight();
+    setPhotoSheetOpen(false);
+    requestAnimationFrame(() => {
+      void takePhoto();
+    });
+  }, [takePhoto]);
+
+  const hasPhotoTransforms = photoRotation % 360 !== 0 || photoFlipH || photoFlipV;
+
+  const rotatePhotoLeft = useCallback(() => {
+    hapticLight();
+    setPhotoRotation((r) => (r - 90 + 360) % 360);
+  }, []);
+
+  const rotatePhotoRight = useCallback(() => {
+    hapticLight();
+    setPhotoRotation((r) => (r + 90) % 360);
+  }, []);
+
+  const flipPhotoHorizontal = useCallback(() => {
+    hapticLight();
+    setPhotoFlipH((v) => !v);
+  }, []);
+
+  const flipPhotoVertical = useCallback(() => {
+    hapticLight();
+    setPhotoFlipV((v) => !v);
+  }, []);
+
+  const resetPhotoEdits = useCallback(() => {
+    hapticLight();
+    setPhotoRotation(0);
+    setPhotoFlipH(false);
+    setPhotoFlipV(false);
+  }, []);
+
+  const photoLayerTransform = useMemo(
+    () => [
+      { rotate: `${photoRotation}deg` } as const,
+      { scaleX: photoFlipH ? -1 : 1 },
+      { scaleY: photoFlipV ? -1 : 1 },
+    ],
+    [photoRotation, photoFlipH, photoFlipV],
+  );
 
   const shareImage = async () => {
     if (!captureRefView.current || !quest) return;
@@ -197,18 +288,6 @@ export default function ShareCardScreen() {
       Alert.alert('Erreur', e instanceof Error ? e.message : 'Export impossible');
     } finally {
       setExporting(false);
-    }
-  };
-
-  const shareWebLink = async () => {
-    if (!quest) return;
-    const webUrl = buildWebAppQuestUrl(SITE_PUBLIC, quest.questDate);
-    const message = buildQuestShareMessage({ title: quest.title, webUrl });
-    try {
-      await Share.share({ message, title: 'Questia' });
-      hapticLight();
-    } catch {
-      /* annulé */
     }
   };
 
@@ -244,6 +323,7 @@ export default function ShareCardScreen() {
   }
 
   return (
+    <>
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
@@ -311,9 +391,98 @@ export default function ShareCardScreen() {
           </LinearGradient>
         </Pressable>
         {photoUri ? (
-          <Pressable onPress={() => setPhotoUri(null)} style={styles.clearPhotoWrap}>
-            <Text style={styles.clearPhoto}>Retirer la photo</Text>
-          </Pressable>
+          <>
+            <Pressable
+              onPress={() => {
+                setPhotoUri(null);
+                setPhotoRotation(0);
+                setPhotoFlipH(false);
+                setPhotoFlipV(false);
+              }}
+              style={styles.clearPhotoWrap}
+            >
+              <Text style={styles.clearPhoto}>Retirer la photo</Text>
+            </Pressable>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.retouchRow}
+            >
+              <Pressable
+                onPress={rotatePhotoLeft}
+                style={({ pressed }) => [
+                  styles.retouchChip,
+                  pressed && styles.retouchChipPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Tourner à gauche"
+              >
+                <MaterialCommunityIcons name="rotate-left" size={22} color={palette.cyan} />
+                <Text style={styles.retouchChipLabel}>Gauche</Text>
+              </Pressable>
+              <Pressable
+                onPress={rotatePhotoRight}
+                style={({ pressed }) => [
+                  styles.retouchChip,
+                  pressed && styles.retouchChipPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Tourner à droite"
+              >
+                <MaterialCommunityIcons name="rotate-right" size={22} color={palette.cyan} />
+                <Text style={styles.retouchChipLabel}>Droite</Text>
+              </Pressable>
+              <Pressable
+                onPress={flipPhotoHorizontal}
+                style={({ pressed }) => [
+                  styles.retouchChip,
+                  pressed && styles.retouchChipPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Miroir horizontal"
+              >
+                <MaterialCommunityIcons name="flip-horizontal" size={22} color={palette.orange} />
+                <Text style={styles.retouchChipLabel}>Miroir ↔</Text>
+              </Pressable>
+              <Pressable
+                onPress={flipPhotoVertical}
+                style={({ pressed }) => [
+                  styles.retouchChip,
+                  pressed && styles.retouchChipPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Miroir vertical"
+              >
+                <MaterialCommunityIcons name="flip-vertical" size={22} color={palette.orange} />
+                <Text style={styles.retouchChipLabel}>Miroir ↕</Text>
+              </Pressable>
+              <Pressable
+                onPress={resetPhotoEdits}
+                disabled={!hasPhotoTransforms}
+                style={({ pressed }) => [
+                  styles.retouchChip,
+                  !hasPhotoTransforms && styles.retouchChipDisabled,
+                  pressed && hasPhotoTransforms && styles.retouchChipPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Annuler les retouches"
+              >
+                <MaterialCommunityIcons
+                  name="backup-restore"
+                  size={22}
+                  color={!hasPhotoTransforms ? palette.muted : palette.text}
+                />
+                <Text
+                  style={[
+                    styles.retouchChipLabel,
+                    !hasPhotoTransforms && styles.retouchChipLabelMuted,
+                  ]}
+                >
+                  Réinit.
+                </Text>
+              </Pressable>
+            </ScrollView>
+          </>
         ) : null}
 
         <View style={styles.cardWrap}>
@@ -323,7 +492,11 @@ export default function ShareCardScreen() {
             style={[styles.cardOuter, { width: cardW, height: cardH }]}
           >
             {photoUri ? (
-              <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              <Image
+                source={{ uri: photoUri }}
+                style={[StyleSheet.absoluteFillObject, { transform: photoLayerTransform }]}
+                resizeMode="cover"
+              />
             ) : (
               <LinearGradient
                 colors={[...bg.colors]}
@@ -344,30 +517,46 @@ export default function ShareCardScreen() {
             />
 
             <View style={styles.cardInner}>
-              <View style={styles.cardTopRow}>
-                <View style={styles.brandRow}>
-                  <View style={styles.brandLogoWrap}>
-                    <Image
-                      source={require('../assets/icon.png')}
-                      style={styles.brandLogoImg}
-                      resizeMode="contain"
-                      accessibilityIgnoresInvertColors
-                    />
-                  </View>
-                  <Text style={[styles.brand, panelDark && styles.brandLight]}>QUESTIA</Text>
-                </View>
-                <Text style={[styles.date, panelDark && styles.dateLight]} numberOfLines={2}>
-                  {formatQuestDateFr(quest.questDate)}
-                </Text>
+              <View style={[styles.cardTopRow, !photoUri && styles.cardTopRowSoloDate]}>
+                {photoUri ? (
+                  <>
+                    <View style={styles.brandRow}>
+                      <View style={styles.brandLogoWrap}>
+                        <Image
+                          source={require('../assets/icon.png')}
+                          style={styles.brandLogoImg}
+                          resizeMode="contain"
+                          accessibilityIgnoresInvertColors
+                        />
+                      </View>
+                      <View style={styles.brandTextCol}>
+                        <Text style={[styles.brand, panelDark && styles.brandLight]}>QUESTIA</Text>
+                        <Text style={styles.brandHostOnPhoto} numberOfLines={1}>
+                          {siteHostDisplay(SITE_PUBLIC)}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.date, panelDark && styles.dateLight]} numberOfLines={2}>
+                      {formatQuestDateFr(quest.questDate)}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={[styles.date, panelDark && styles.dateLight, styles.cardTopDateOnly]} numberOfLines={2}>
+                    {formatQuestDateFr(quest.questDate)}
+                  </Text>
+                )}
               </View>
 
               {!photoUri ? (
                 <View style={styles.cardHero}>
-                  <View style={styles.heroRingWrap}>
-                    <View style={styles.heroRingA} />
-                    <View style={styles.heroRingB} />
-                    <Text style={styles.heroEmoji}>{questDisplayEmoji(quest.emoji)}</Text>
-                  </View>
+                  <Image
+                    source={require('../assets/icon.png')}
+                    style={styles.heroLogoImg}
+                    resizeMode="contain"
+                    accessibilityIgnoresInvertColors
+                  />
+                  <Text style={[styles.heroBrand, panelDark && styles.heroBrandLight]}>QUESTIA</Text>
+                  <Text style={[styles.heroHost, panelDark && styles.heroHostLight]}>{siteHostDisplay(SITE_PUBLIC)}</Text>
                 </View>
               ) : (
                 <View style={styles.cardHeroSpacer} />
@@ -399,6 +588,21 @@ export default function ShareCardScreen() {
                     ? ` · 🔥 ${quest.streak} jour${quest.streak !== 1 ? 's' : ''} de suite`
                     : ''}
                 </Text>
+                {(() => {
+                  const eq = formatQuestShareEquippedTitleLine(quest.equippedTitleId);
+                  const prog = quest.progression
+                    ? formatQuestShareProgressionLine(
+                        { level: quest.progression.level, totalXp: quest.progression.totalXp },
+                        shareLocale,
+                      )
+                    : null;
+                  if (!eq && !prog) return null;
+                  return (
+                    <Text style={[styles.shareProfileMeta, panelDark && styles.shareProfileMetaLight]}>
+                      {[eq, prog].filter(Boolean).join('\n')}
+                    </Text>
+                  );
+                })()}
                 <Text style={[styles.hook, panelDark && styles.hookLight]}>« {truncate(quest.hook, 100)} »</Text>
                 <Text style={[styles.footerName, panelDark && styles.footerNameLight]}>
                   {first} · Quête validée ✓
@@ -409,17 +613,102 @@ export default function ShareCardScreen() {
         </View>
 
         <Pressable
-          style={[styles.shareBtn, exporting && { opacity: 0.6 }]}
           onPress={() => void shareImage()}
           disabled={exporting}
+          style={({ pressed }) => [
+            styles.shareBtnOuter,
+            pressed && !exporting && styles.shareBtnOuterPressed,
+            exporting && styles.shareBtnOuterBusy,
+          ]}
         >
-          <Text style={styles.shareBtnText}>{exporting ? '…' : '📤 Partager / enregistrer'}</Text>
-        </Pressable>
-        <Pressable style={styles.linkShareBtn} onPress={() => void shareWebLink()}>
-          <Text style={styles.linkShareBtnText}>🔗 Partager le lien (questia.fr)</Text>
+          <LinearGradient
+            colors={[palette.orange, orangeGradientEnd(palette.orange)]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.shareBtnGrad}
+          >
+            {exporting ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.shareBtnText}>Partager ou enregistrer</Text>
+            )}
+          </LinearGradient>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
+
+    <Modal
+      visible={photoSheetOpen}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={() => setPhotoSheetOpen(false)}
+    >
+      <View style={styles.photoSheetRoot} accessibilityViewIsModal>
+        <Pressable
+          style={styles.photoSheetBackdrop}
+          onPress={() => setPhotoSheetOpen(false)}
+          accessibilityRole="button"
+          accessibilityLabel="Fermer"
+        />
+        <SafeAreaView edges={['bottom']} style={styles.photoSheetSafe}>
+          <LinearGradient
+            colors={[palette.card, palette.surface]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.photoSheetCard}
+          >
+            <View style={styles.photoSheetHandle} accessibilityElementsHidden />
+            <Text style={styles.photoSheetTitle}>Photo de fond</Text>
+            <Text style={styles.photoSheetSubtitle}>Choisis comment ajouter ton image</Text>
+
+            <Pressable
+              onPress={onPickGalleryFromSheet}
+              style={({ pressed }) => [styles.photoSheetOption, pressed && styles.photoSheetOptionPressed]}
+              accessibilityRole="button"
+              accessibilityLabel="Ouvrir la photothèque"
+            >
+              <View style={[styles.photoSheetIconWrap, { borderColor: `${palette.cyan}55` }]}>
+                <Ionicons name="images-outline" size={26} color={palette.cyan} />
+              </View>
+              <View style={styles.photoSheetOptionTextCol}>
+                <Text style={styles.photoSheetOptionTitle}>Photothèque</Text>
+                <Text style={styles.photoSheetOptionHint}>Choisir une image existante</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={palette.muted} />
+            </Pressable>
+
+            <Pressable
+              onPress={onPickCameraFromSheet}
+              style={({ pressed }) => [styles.photoSheetOption, pressed && styles.photoSheetOptionPressed]}
+              accessibilityRole="button"
+              accessibilityLabel="Prendre une photo"
+            >
+              <View style={[styles.photoSheetIconWrap, { borderColor: `${palette.orange}55` }]}>
+                <Ionicons name="camera-outline" size={26} color={palette.orange} />
+              </View>
+              <View style={styles.photoSheetOptionTextCol}>
+                <Text style={styles.photoSheetOptionTitle}>Appareil photo</Text>
+                <Text style={styles.photoSheetOptionHint}>Prendre une photo maintenant</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={palette.muted} />
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                setPhotoSheetOpen(false);
+              }}
+              style={({ pressed }) => [styles.photoSheetDismiss, pressed && styles.photoSheetOptionPressed]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.photoSheetDismissText}>Annuler</Text>
+            </Pressable>
+          </LinearGradient>
+        </SafeAreaView>
+      </View>
+    </Modal>
+    </>
   );
 }
 
@@ -503,8 +792,52 @@ function createShareStyles(p: ThemePalette, themeId: string) {
   photoAddTextCol: { flex: 1, minWidth: 0 },
   photoAddTitle: { fontSize: 17, fontWeight: '900', color: '#0e7490', letterSpacing: -0.3 },
   photoAddSub: { fontSize: 12, fontWeight: '600', color: p.muted, marginTop: 4, lineHeight: 16 },
-  clearPhotoWrap: { alignSelf: 'flex-end', marginBottom: 20 },
+  clearPhotoWrap: { alignSelf: 'flex-end', marginBottom: 16 },
   clearPhoto: { color: p.muted, fontWeight: '800', fontSize: 13, textDecorationLine: 'underline' },
+  retouchHint: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: p.muted,
+    marginBottom: 12,
+    lineHeight: 17,
+    paddingHorizontal: 2,
+  },
+  retouchRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 10,
+    paddingBottom: 4,
+    marginBottom: 8,
+  },
+  retouchChip: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    minWidth: 76,
+    borderRadius: 14,
+    backgroundColor: p.card,
+    borderWidth: 1,
+    borderColor: p.border,
+  },
+  retouchChipPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
+  },
+  retouchChipDisabled: {
+    opacity: 0.45,
+  },
+  retouchChipLabel: {
+    marginTop: 6,
+    fontSize: 10,
+    fontWeight: '800',
+    color: p.text,
+    textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+  retouchChipLabelMuted: {
+    color: p.muted,
+  },
   cardWrap: { alignItems: 'center', marginBottom: 24 },
   cardOuter: {
     borderRadius: 24,
@@ -525,42 +858,56 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     paddingBottom: 4,
     gap: 12,
   },
+  cardTopRowSoloDate: {
+    justifyContent: 'flex-end',
+  },
+  cardTopDateOnly: {
+    flex: 1,
+    textAlign: 'right',
+  },
   cardHero: {
     flex: 1,
     minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
+    gap: 10,
   },
   cardHeroSpacer: {
     flex: 1,
     minHeight: 0,
   },
-  heroRingWrap: {
-    width: 200,
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
+  heroLogoImg: {
+    width: 112,
+    height: 112,
+    borderRadius: 26,
   },
-  heroRingA: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 2,
-    borderColor: colorWithAlpha(p.orange, 0.22),
+  heroBrand: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 3.6,
+    color: p.onCream,
   },
-  heroRingB: {
-    position: 'absolute',
-    width: 156,
-    height: 156,
-    borderRadius: 78,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.text, 0.14),
-    borderStyle: 'dashed',
+  heroBrandLight: { color: 'rgba(248,250,252,0.96)' },
+  heroHost: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: p.onCreamMuted,
+    letterSpacing: 0.3,
   },
-  heroEmoji: { fontSize: 88, lineHeight: 88, zIndex: 1 },
+  heroHostLight: { color: 'rgba(226,232,240,0.9)' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1, minWidth: 0 },
+  brandTextCol: { flex: 1, minWidth: 0, justifyContent: 'center' },
+  brandHostOnPhoto: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
+    letterSpacing: 0.35,
+    color: 'rgba(248,250,252,0.92)',
+    textShadowColor: 'rgba(0,0,0,0.65)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 5,
+  },
   brandLogoWrap: {
     width: 28,
     height: 28,
@@ -622,6 +969,17 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     color: 'rgba(226,232,240,0.88)',
     borderTopColor: 'rgba(255,255,255,0.1)',
   },
+  shareProfileMeta: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: p.onCreamMuted,
+    textAlign: 'left',
+    marginTop: 10,
+    lineHeight: 14,
+  },
+  shareProfileMetaLight: {
+    color: 'rgba(226,232,240,0.88)',
+  },
   hook: {
     fontSize: 12,
     fontStyle: 'italic',
@@ -634,28 +992,146 @@ function createShareStyles(p: ThemePalette, themeId: string) {
   hookLight: { color: 'rgba(226,232,240,0.9)' },
   footerName: { fontSize: 12, fontWeight: '900', color: p.linkOnBg, textAlign: 'center' },
   footerNameLight: { color: p.cyan },
-  shareBtn: {
-    backgroundColor: p.orange,
-    paddingVertical: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: p.orange,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+  shareBtnOuter: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.38)',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    elevation: 10,
   },
-  shareBtnText: { color: '#fff', fontWeight: '900', fontSize: 16 },
-  linkShareBtn: {
-    marginTop: 12,
-    paddingVertical: 14,
-    borderRadius: 16,
+  shareBtnOuterPressed: {
+    transform: [{ scale: 0.985 }],
+    opacity: 0.94,
+  },
+  shareBtnOuterBusy: {
+    opacity: 0.78,
+  },
+  shareBtnGrad: {
+    paddingVertical: 17,
+    paddingHorizontal: 28,
+    minHeight: 54,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareBtnText: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 16,
+    letterSpacing: 0.35,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  photoSheetRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  photoSheetBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.52)',
+  },
+  photoSheetSafe: {
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
+  },
+  photoSheetCard: {
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    paddingTop: 8,
+    paddingHorizontal: 18,
+    paddingBottom: 6,
     borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.45),
-    backgroundColor: colorWithAlpha(p.cyan, 0.1),
+    borderBottomWidth: 0,
+    borderColor: p.borderCyan,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 12,
   },
-  linkShareBtnText: { color: p.cyan, fontWeight: '800', fontSize: 14 },
+  photoSheetHandle: {
+    width: 42,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: p.trackMuted,
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  photoSheetTitle: {
+    fontSize: 19,
+    fontWeight: '900',
+    color: p.text,
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  photoSheetSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: p.muted,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 18,
+    lineHeight: 18,
+  },
+  photoSheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    marginBottom: 10,
+    backgroundColor: p.bg,
+    borderWidth: 1,
+    borderColor: p.border,
+  },
+  photoSheetOptionPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
+  },
+  photoSheetIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    backgroundColor: p.card,
+  },
+  photoSheetOptionTextCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  photoSheetOptionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: p.text,
+    letterSpacing: -0.2,
+  },
+  photoSheetOptionHint: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: p.muted,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  photoSheetDismiss: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  photoSheetDismissText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: p.muted,
+  },
   primaryBtn: {
     backgroundColor: p.cyan,
     paddingVertical: 14,

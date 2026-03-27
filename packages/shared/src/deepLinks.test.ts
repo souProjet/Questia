@@ -30,5 +30,13 @@ describe('deepLinks', () => {
     expect(buildQuestShareMessage({ title: 'Hello', webUrl: 'https://x.fr/app' })).toBe(
       'Hello\nhttps://x.fr/app',
     );
+    expect(
+      buildQuestShareMessage({
+        title: 'Hello',
+        webUrl: 'https://x.fr/app',
+        equippedTitleLine: '🧭 Scout',
+        progressionLine: 'Nv. 2 · 100 XP',
+      }),
+    ).toBe('Hello\n🧭 Scout\nNv. 2 · 100 XP\nhttps://x.fr/app');
   });
 });

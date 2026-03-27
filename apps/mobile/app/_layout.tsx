@@ -6,8 +6,10 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SecureStore from 'expo-secure-store';
 import { DA } from '@questia/ui';
+import { AppLocaleProvider } from '../contexts/AppLocaleContext';
 import { AppThemeProvider, useAppTheme } from '../contexts/AppThemeContext';
 import { setupNotificationHandler } from '../lib/pushNotifications';
+import { hasOnboardingAnswers } from '../lib/onboardingGate';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
@@ -51,23 +53,40 @@ const tokenCache = {
 const PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 
 function InitialLayout() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { userId, isLoaded } = useAuth();
   const { statusBarStyle } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
+  const authed = Boolean(userId);
 
   useEffect(() => {
     if (!isLoaded) return;
-    const segs = segments as string[];
+    const segs = (segments ?? []) as string[];
     const first = segs[0];
     const inAuthGroup = first === '(auth)';
+    // `segs.length === 0` : transition Expo Router — ne pas traiter comme « hors zone protégée ».
     const atOnboarding = segs.length === 0 || first === 'index';
-    if (isSignedIn && (inAuthGroup || atOnboarding)) {
+
+    if (authed && inAuthGroup) {
       router.replace('/home');
-    } else if (!isSignedIn && !inAuthGroup && !atOnboarding) {
+      return;
+    }
+
+    if (authed && atOnboarding) {
+      let cancelled = false;
+      void (async () => {
+        const ok = await hasOnboardingAnswers();
+        if (!cancelled && ok) router.replace('/home');
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (!authed && !inAuthGroup && !atOnboarding) {
       router.replace('/(auth)' as never);
     }
-  }, [isSignedIn, isLoaded, segments, router]);
+  }, [authed, isLoaded, segments, router]);
 
   return (
     <>
@@ -98,9 +117,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY} tokenCache={tokenCache}>
-        <AppThemeProvider>
-          <InitialLayout />
-        </AppThemeProvider>
+        <AppLocaleProvider>
+          <AppThemeProvider>
+            <InitialLayout />
+          </AppThemeProvider>
+        </AppLocaleProvider>
       </ClerkProvider>
     </SafeAreaProvider>
   );

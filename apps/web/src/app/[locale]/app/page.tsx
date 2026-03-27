@@ -689,32 +689,32 @@ function AppPageContent() {
       pending: {
         label: t('statusPending'),
         emoji: '⏳',
-        pillClass: 'border-amber-300/60 bg-amber-50/95 text-amber-950',
+        pillClass: 'quest-status-pill--pending',
       },
       accepted: {
         label: t('statusAccepted'),
         emoji: '⚔️',
-        pillClass: 'border-emerald-400/50 bg-emerald-50/95 text-emerald-950',
+        pillClass: 'quest-status-pill--accepted',
       },
       completed: {
         label: t('statusCompleted'),
         emoji: '✅',
-        pillClass: 'border-emerald-500/45 bg-emerald-100/90 text-emerald-950',
+        pillClass: 'quest-status-pill--completed',
       },
       abandoned: {
         label: t('statusAbandoned'),
         emoji: '🌙',
-        pillClass: 'border-slate-400/75 bg-slate-100/98 text-slate-900 ring-1 ring-slate-400/35',
+        pillClass: 'quest-status-pill--abandoned',
       },
       rejected: {
         label: t('statusRejected'),
         emoji: '✕',
-        pillClass: 'border-red-200/80 bg-red-50/95 text-red-950',
+        pillClass: 'quest-status-pill--rejected',
       },
       replaced: {
         label: t('statusReplaced'),
         emoji: '🔄',
-        pillClass: 'border-violet-300/60 bg-violet-50/95 text-violet-950',
+        pillClass: 'quest-status-pill--replaced',
       },
     };
     return map[quest.status];
@@ -819,9 +819,9 @@ function AppPageContent() {
         )}
 
         {/* Bandeau joueur : une seule lecture, emojis comme la landing */}
-        <section className="mb-8 mt-2 rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-[#fffbeb] via-white/95 to-cyan-50/40 px-5 py-6 md:px-7 md:py-7 shadow-[0_10px_0_rgba(180,83,9,.1),0_22px_48px_rgba(249,115,22,.12)] motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:40ms] [animation-fill-mode:backwards]">
+        <section className="app-app-hero-band mb-8 mt-2 px-5 py-6 md:px-7 md:py-7 motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:40ms] [animation-fill-mode:backwards]">
 
-          <h1 className="font-display font-black text-2xl leading-[1.15] text-[var(--on-cream)] sm:text-3xl md:text-[2.15rem]">
+          <h1 className="font-display font-black text-2xl leading-[1.15] text-[var(--text)] sm:text-3xl md:text-[2.15rem]">
             {t('greeting', { name: user?.firstName ?? t('defaultName') })}{' '}
             <span aria-hidden>👋</span>
             <br />
@@ -832,7 +832,7 @@ function AppPageContent() {
               ⚔️
             </span>
           </h1>
-          <p className="mt-3 text-sm font-semibold text-[var(--on-cream-muted)] md:text-base">
+          <p className="mt-3 text-sm font-semibold text-[var(--muted)] md:text-base">
             {t('heroSubtitle')}
           </p>
 
@@ -855,7 +855,7 @@ function AppPageContent() {
               </span>
             )}
             <span
-              className="inline-flex items-center gap-1 rounded-full border border-cyan-500/45 bg-white/95 px-3 py-1 text-xs font-black text-[var(--on-cream)] shadow-sm"
+              className="inline-flex items-center gap-1 rounded-full border border-cyan-500/45 bg-[color:color-mix(in_srgb,var(--card)_92%,transparent)] px-3 py-1 text-xs font-black text-[var(--text)] shadow-sm"
               title={t('journeyBadgeTooltip')}
             >
               <span aria-hidden>📍</span>
@@ -863,7 +863,7 @@ function AppPageContent() {
             </span>
             {quest?.equippedTitleId && getTitleDefinition(quest.equippedTitleId) ? (
               <span
-                className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-gradient-to-r from-amber-50 to-orange-50 px-3 py-1 text-[11px] font-black text-amber-950 shadow-sm"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[color:color-mix(in_srgb,var(--gold)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--gold)_14%,var(--surface))] px-3 py-1 text-[11px] font-black text-[var(--text)] shadow-sm"
                 title={t('equippedTitleShop')}
               >
                 <span aria-hidden>{getTitleDefinition(quest.equippedTitleId)!.emoji}</span>
@@ -872,7 +872,7 @@ function AppPageContent() {
             ) : null}
             {(quest?.xpBonusCharges ?? 0) > 0 ? (
               <span
-                className="inline-flex items-center gap-1 rounded-full border border-emerald-500/45 bg-emerald-50/95 px-3 py-1 text-[11px] font-black text-emerald-950 shadow-sm"
+                className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--green)_42%,transparent)] bg-[color:color-mix(in_srgb,var(--green)_12%,var(--surface))] px-3 py-1 text-[11px] font-black text-[var(--green)] shadow-sm"
                 title={t('xpBonusTooltip')}
               >
                 {t('xpBonusCharges', { n: quest?.xpBonusCharges ?? 0 })}
@@ -881,16 +881,16 @@ function AppPageContent() {
           </div>
 
           {quest?.progression && (
-              <div className="mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50/90 to-white/90 px-4 py-3 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-black text-cyan-950">
+              <div className="app-quest-xp-strip mt-5 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-black text-[var(--link-on-bg)]">
                 <span>
                   {t('levelLine', { level: quest.progression.level, xp: quest.progression.totalXp })}
                 </span>
-                <span className="font-bold text-[var(--on-cream-muted)]">
+                <span className="font-bold text-[var(--muted)]">
                   {t('xpToLevel', { xp: quest.progression.xpToNext })}
                 </span>
               </div>
-              <p className="mt-1 text-xs font-semibold text-[var(--on-cream-subtle)]">
+              <p className="mt-1 text-xs font-semibold text-[var(--subtle)]">
                 {t('xpInLevel', {
                   into: quest.progression.xpIntoLevel,
                   per: quest.progression.xpPerLevel,
@@ -911,14 +911,14 @@ function AppPageContent() {
           )}
 
           {quest && (quest.city || quest.weather) && (
-            <p className="mt-5 border-t border-dashed border-orange-300/50 pt-4 text-sm font-medium text-[var(--on-cream-muted)]">
+            <p className="mt-5 border-t border-dashed border-orange-300/50 pt-4 text-sm font-medium text-[var(--muted)]">
               <span className="mr-1.5" aria-hidden>
                 {weatherEmojiFromText(quest.context?.weatherDescription ?? quest.weather)}
               </span>
               {weatherLine}
               {quest.city && quest.city !== 'ta ville' && (
                 <>
-                  <span className="text-[var(--on-cream-subtle)]"> · </span>
+                  <span className="text-[var(--subtle)]"> · </span>
                   <span className="font-bold text-[var(--link-on-bg)]">📍 {quest.city}</span>
                 </>
               )}
@@ -930,10 +930,10 @@ function AppPageContent() {
           <div
             role="status"
             aria-live="polite"
-            className="relative mb-4 overflow-hidden rounded-2xl border-2 border-orange-300/65 bg-gradient-to-br from-orange-50/98 via-white/95 to-amber-50/70 px-3 py-3 shadow-[0_12px_36px_-14px_rgba(249,115,22,.28)] ring-1 ring-orange-200/50 backdrop-blur-sm motion-safe:animate-fade-up-slow motion-reduce:animate-none motion-reduce:opacity-100 [animation-delay:50ms] [animation-fill-mode:backwards] sm:flex sm:flex-row sm:items-stretch sm:gap-0 sm:px-4 sm:py-3.5"
+            className="app-quest-day-strip relative mb-4 overflow-hidden px-3 py-3 ring-1 ring-[color:color-mix(in_srgb,var(--orange)_25%,transparent)] backdrop-blur-sm motion-safe:animate-fade-up-slow motion-reduce:animate-none motion-reduce:opacity-100 [animation-delay:50ms] [animation-fill-mode:backwards] sm:flex sm:flex-row sm:items-stretch sm:gap-0 sm:px-4 sm:py-3.5"
           >
             <div
-              className="pointer-events-none absolute inset-y-0 -left-[28%] z-0 w-[58%] bg-gradient-to-r from-transparent via-white/75 to-transparent opacity-90 motion-safe:animate-quest-day-strip-shine motion-reduce:animate-none"
+              className="pointer-events-none absolute inset-y-0 -left-[28%] z-0 w-[58%] bg-gradient-to-r from-transparent via-[color:color-mix(in_srgb,var(--card)_55%,transparent)] to-transparent opacity-90 motion-safe:animate-quest-day-strip-shine motion-reduce:animate-none"
               aria-hidden
             />
             <div className="relative z-[1] flex flex-row items-stretch gap-3 sm:gap-4">
@@ -943,18 +943,18 @@ function AppPageContent() {
               />
               <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-950/90">
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--orange)]">
                     {t('questOfDay')}
                   </span>
                   <time
-                    className="font-display text-[1.05rem] font-black text-[var(--on-cream)] sm:text-lg"
+                    className="font-display text-[1.05rem] font-black text-[var(--text)] sm:text-lg"
                     dateTime={quest.questDate}
                   >
                     {formatQuestDateForLocale(quest.questDate, appLocale)}
                   </time>
                 </div>
                 <span
-                  className={`inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border-2 px-3.5 py-2 text-[13px] font-black shadow-md motion-safe:transition-transform motion-safe:duration-300 motion-safe:hover:scale-[1.02] ${questStatusDisplay.pillClass}`}
+                  className={`quest-status-pill ${questStatusDisplay.pillClass}`}
                 >
                   <span aria-hidden>{questStatusDisplay.emoji}</span>
                   {questStatusDisplay.label}
@@ -983,21 +983,21 @@ function AppPageContent() {
                   {questDisplayEmoji(quest.emoji)}
                 </span>
                 <div className="min-w-0 flex-1 pr-2">
-                  <h2 className="font-display text-lg font-black leading-tight text-[var(--on-cream)] sm:text-xl">
+                  <h2 className="font-display text-lg font-black leading-tight text-[var(--text)] sm:text-xl">
                     {quest.title}
                   </h2>
                   {(questFamily || questPace) ? (
-                    <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--on-cream-subtle)]">
+                    <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--subtle)]">
                       {questFamily ? (
-                        <span className="rounded-full border border-[color:color-mix(in_srgb,var(--on-cream)_16%,transparent)] bg-white/90 px-2.5 py-0.5 font-semibold text-[var(--on-cream-muted)] shadow-sm">
+                        <span className="rounded-full border border-[color:color-mix(in_srgb,var(--text)_16%,transparent)] bg-[color:color-mix(in_srgb,var(--card)_88%,transparent)] px-2.5 py-0.5 font-semibold text-[var(--muted)] shadow-sm">
                           {questFamily}
                         </span>
                       ) : null}
                       <span
                         className={`rounded-full border px-2.5 py-0.5 font-semibold shadow-sm ${
                           questPace === 'planned'
-                            ? 'border-violet-300/70 bg-violet-50/95 text-violet-950'
-                            : 'border-cyan-300/60 bg-cyan-50/95 text-cyan-950'
+                            ? 'border-[color:color-mix(in_srgb,#a78bfa_45%,transparent)] bg-[color:color-mix(in_srgb,#a78bfa_14%,var(--surface))] text-[var(--text)]'
+                            : 'border-[color:color-mix(in_srgb,var(--violet)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--violet)_10%,var(--surface))] text-[var(--link-on-bg)]'
                         }`}
                         title={
                           questPace === 'planned' ? t('pacePlannedTitle') : t('paceTodayTitle')
@@ -1012,23 +1012,23 @@ function AppPageContent() {
 
               {/* Mission concrète */}
               <section
-                className="mb-6 rounded-2xl border-2 border-cyan-400/55 bg-gradient-to-br from-white via-cyan-50/50 to-white p-5 shadow-[0_8px_28px_-6px_rgba(34,211,238,0.22)] ring-1 ring-cyan-200/70 sm:p-6"
+                className="quest-mission-panel mb-6 p-5 ring-1 ring-[color:color-mix(in_srgb,var(--violet)_28%,transparent)] sm:p-6"
                 aria-labelledby="mission-heading"
               >
                 <p
                   id="mission-heading"
-                  className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-cyan-950"
+                  className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--link-on-bg)]"
                 >
                   <span className="text-base leading-none" aria-hidden>
                     ⚡
                   </span>
                   {t('missionHeading')}
                 </p>
-                <p className="font-display text-[1.15rem] font-black leading-[1.35] text-[var(--on-cream)] sm:text-xl md:text-[1.35rem] md:leading-snug">
+                <p className="font-display text-[1.15rem] font-black leading-[1.35] text-[var(--text)] sm:text-xl md:text-[1.35rem] md:leading-snug">
                   {quest.mission}
                 </p>
                 {quest.deferredSocialUntil && isPending && (
-                  <p className="mt-4 rounded-xl border border-dashed border-violet-200/80 bg-violet-50/60 px-3 py-2.5 text-xs font-semibold leading-relaxed text-violet-950">
+                  <p className="mt-4 rounded-xl border border-dashed border-[color:color-mix(in_srgb,#a78bfa_45%,transparent)] bg-[color:color-mix(in_srgb,#a78bfa_10%,var(--surface))] px-3 py-2.5 text-xs font-semibold leading-relaxed text-[var(--text)]">
                     {appLocale === 'en' ? (
                       <>
                         📅 For a bolder or social challenge, you chose{' '}
@@ -1049,13 +1049,13 @@ function AppPageContent() {
                     )}
                   </p>
                 )}
-                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-cyan-200/60 pt-4">
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-orange-300/70 bg-orange-100/95 px-3 py-1.5 text-xs font-black text-orange-950">
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[color:color-mix(in_srgb,var(--violet)_28%,transparent)] pt-4">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-[color:color-mix(in_srgb,var(--orange)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--orange)_12%,var(--surface))] px-3 py-1.5 text-xs font-black text-[var(--text)]">
                     <span aria-hidden>⏱️</span>
                     {quest.duration}
                   </span>
                   {quest.isOutdoor && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-100/90 px-2.5 py-1 text-[11px] font-bold text-emerald-900">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--green)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--green)_10%,var(--surface))] px-2.5 py-1 text-[11px] font-bold text-[var(--green)]">
                       {t('outdoorBadge')}
                     </span>
                   )}
@@ -1064,17 +1064,17 @@ function AppPageContent() {
 
               {quest.isOutdoor && quest.destination ? (
                 <section
-                  className="mb-6 rounded-2xl border border-cyan-200/50 bg-gradient-to-br from-white via-cyan-50/35 to-emerald-50/30 p-5 shadow-[0_8px_28px_-8px_rgba(34,211,238,0.18)] ring-1 ring-cyan-100/75 sm:p-6"
+                  className="quest-map-panel mb-6 p-5 ring-1 ring-[color:color-mix(in_srgb,var(--violet)_22%,transparent)] sm:p-6"
                   aria-labelledby="map-heading"
                 >
                   <h3
                     id="map-heading"
-                    className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-cyan-950"
+                    className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--link-on-bg)]"
                   >
-                    <Icon name="Map" size="sm" className="text-cyan-700" />
+                    <Icon name="Map" size="sm" className="text-[var(--link-on-bg)]" />
                     {t('mapHeading')}
                   </h3>
-                  <p className="mb-4 text-sm leading-relaxed text-[var(--on-cream-muted)]">
+                  <p className="mb-4 text-sm leading-relaxed text-[var(--muted)]">
                     {t('mapDescription')}
                   </p>
                   <QuestDestinationMap destination={quest.destination} userPosition={userPosition} />
@@ -1087,7 +1087,7 @@ function AppPageContent() {
                   <span className="quest-hook-card__g" aria-hidden>
                     «
                   </span>
-                  <span className="font-medium text-[var(--on-cream)]">{quest.hook}</span>
+                  <span className="font-medium text-[var(--text)]">{quest.hook}</span>
                   <span className="quest-hook-card__g" aria-hidden>
                     »
                   </span>
@@ -1095,32 +1095,32 @@ function AppPageContent() {
               </figure>
 
               {quest.safetyNote && isPending && (
-                <p className="mt-5 border-l-4 border-amber-300/90 pl-3 text-sm leading-relaxed text-slate-600">
+                <p className="mt-5 border-l-4 border-[color:color-mix(in_srgb,var(--gold)_55%,transparent)] pl-3 text-sm leading-relaxed text-[var(--muted)]">
                   {quest.safetyNote}
                 </p>
               )}
             </div>
 
-            <div className="flex flex-col gap-4 border-t-2 border-orange-300/35 bg-gradient-to-r from-white/75 via-amber-50/50 to-cyan-50/40 px-4 py-5 sm:px-5">
+            <div className="app-quest-actions-footer flex flex-col gap-4 px-4 py-5 sm:px-5">
               {isCompleted ? (
                 <div className="text-center space-y-3">
-                  <p className="font-display text-lg font-black text-emerald-900">
+                  <p className="font-display text-lg font-black text-[var(--green)]">
                     {t('completedTitle')}
                   </p>
-                  <p className="mt-2 text-sm text-[var(--on-cream-muted)]">{t('completedSubtitle')}</p>
+                  <p className="mt-2 text-sm text-[var(--muted)]">{t('completedSubtitle')}</p>
                   <div className="flex justify-center">
                     <button
                       type="button"
                       onClick={() => setShowShareCard(true)}
-                      className="btn btn-md w-full sm:w-auto font-black border-2 border-cyan-400/50 bg-gradient-to-r from-cyan-50 to-amber-50 text-cyan-950 shadow-sm"
+                      className="quest-actions-share-btn btn btn-md w-full sm:w-auto font-black"
                     >
                       {t('shareVictory')}
                     </button>
                   </div>
                 </div>
               ) : isAbandoned ? (
-                <div className="text-center space-y-2 text-[var(--on-cream-muted)]">
-                  <p className="font-display text-lg font-black text-slate-700">
+                <div className="text-center space-y-2 text-[var(--muted)]">
+                  <p className="font-display text-lg font-black text-[var(--muted)]">
                     {t('abandonedTitle')}
                   </p>
                   <p className="text-sm">
@@ -1131,14 +1131,14 @@ function AppPageContent() {
                 completing ? (
                   <div className="flex items-center justify-center gap-3 py-4">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-                    <p className="font-bold text-emerald-900">{t('saving')}</p>
+                    <p className="font-bold text-[var(--green)]">{t('saving')}</p>
                   </div>
                 ) : (
                   <>
                     <button type="button" onClick={doComplete} className="btn btn-primary btn-lg w-full text-base font-black">
                       {t('validateQuest')}
                     </button>
-                    <p className="text-center text-xs text-[var(--on-cream-muted)]">
+                    <p className="text-center text-xs text-[var(--muted)]">
                       {t('validateHint')}
                     </p>
                     <button
@@ -1153,7 +1153,7 @@ function AppPageContent() {
               ) : accepting ? (
                 <div className="flex items-center justify-center gap-3 py-4">
                   <div className="h-6 w-6 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-                  <p className="font-bold text-orange-900">{t('confirming')}</p>
+                  <p className="font-bold text-[var(--orange)]">{t('confirming')}</p>
                 </div>
               ) : (
                 <>
@@ -1199,7 +1199,7 @@ function AppPageContent() {
                       ) : null}
                     </div>
                     {isPlannedQuest ? (
-                      <p className="mt-2 px-1 text-center text-[10px] leading-relaxed text-[var(--on-cream-subtle)]">
+                      <p className="mt-2 px-1 text-center text-[10px] leading-relaxed text-[var(--subtle)]">
                         {t('reportHint')}
                       </p>
                     ) : null}
@@ -1222,20 +1222,20 @@ function AppPageContent() {
           aria-modal="true"
           aria-labelledby="report-title"
         >
-          <div className="max-w-md w-full rounded-2xl border border-cyan-200/80 bg-white p-6 shadow-2xl">
-            <h3 id="report-title" className="font-display text-lg font-black text-slate-900">
+          <div className="max-w-md w-full rounded-2xl border border-[color:var(--border-ui-strong)] bg-[var(--card)] p-6 shadow-2xl">
+            <h3 id="report-title" className="font-display text-lg font-black text-[var(--text)]">
               {t('reportModalTitle')}
             </h3>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">
               {t('reportModalBody', { maxDays: REPORT_DEFER_MAX_DAYS })}
             </p>
-            <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500" htmlFor="report-date">
+            <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[var(--subtle)]" htmlFor="report-date">
               {t('reportDateLabel')}
             </label>
             <input
               id="report-date"
               type="date"
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900"
+              className="mt-1 w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2 text-[var(--text)]"
               min={calendarDay}
               max={reportDateMax}
               value={reportDeferredDate}
@@ -1270,11 +1270,11 @@ function AppPageContent() {
           aria-modal="true"
           aria-labelledby="abandon-title"
         >
-          <div className="max-w-md w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
-            <h3 id="abandon-title" className="font-display text-lg font-black text-slate-900">
+          <div className="max-w-md w-full rounded-2xl border border-[color:var(--border-ui-strong)] bg-[var(--card)] p-6 shadow-2xl">
+            <h3 id="abandon-title" className="font-display text-lg font-black text-[var(--text)]">
               {t('abandonModalTitle')}
             </h3>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">
               {t('abandonModalBody')}
             </p>
             <div className="mt-5 flex gap-2">
@@ -1288,7 +1288,7 @@ function AppPageContent() {
               </button>
               <button
                 type="button"
-                className="btn btn-md flex-[2] border border-slate-300 bg-slate-100 font-black text-slate-900"
+                className="btn btn-md flex-[2] border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--text)_10%,var(--card))] font-black text-[var(--text)]"
                 onClick={() => void confirmAbandon()}
                 disabled={abandoning}
               >
@@ -1325,6 +1325,7 @@ function AppPageContent() {
             }
           }}
           userFirstName={user?.firstName ?? t('shareDefaultName')}
+          shareLocale={appLocale === 'en' ? 'en' : 'fr'}
           payload={{
             questDate: quest.questDate,
             emoji: quest.emoji,
@@ -1334,6 +1335,8 @@ function AppPageContent() {
             duration: quest.duration,
             streak: quest.streak,
             day: quest.day,
+            equippedTitleId: quest.equippedTitleId ?? null,
+            progression: quest.progression ?? null,
           }}
         />
       )}

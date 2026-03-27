@@ -3,15 +3,27 @@ import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '../contexts/AppThemeContext';
 import { colorWithAlpha } from '@questia/ui';
 import { hapticSelection } from '../lib/haptics';
 
-const ICONS: Record<string, string> = {
-  home: '⚔️',
-  shop: '🛒',
-  history: '📜',
-  profile: '👤',
+type IonName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TAB_ICONS: Record<
+  string,
+  { inactive: IonName; active: IonName }
+> = {
+  home: { inactive: 'home-outline', active: 'home' },
+  shop: { inactive: 'cart-outline', active: 'cart' },
+  /** Liste / fil d’historique — plus homogène avec home · cart · person que journal-outline */
+  history: { inactive: 'list-outline', active: 'list' },
+  profile: { inactive: 'person-outline', active: 'person' },
+};
+
+const FALLBACK_ICONS: { inactive: IonName; active: IonName } = {
+  inactive: 'ellipse-outline',
+  active: 'ellipse',
 };
 
 /**
@@ -29,7 +41,7 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
         styles.outer,
         {
           paddingBottom: bottom,
-          backgroundColor: palette.cardCream,
+          backgroundColor: palette.surface,
           borderTopColor: colorWithAlpha(palette.cyan, 0.35),
         },
         Platform.select({
@@ -49,6 +61,9 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
         const title = options.title ?? route.name;
         const label =
           typeof options.tabBarLabel === 'string' ? options.tabBarLabel : String(title);
+
+        const icons = TAB_ICONS[route.name] ?? FALLBACK_ICONS;
+        const iconColor = focused ? palette.orange : palette.muted;
 
         const onPress = () => {
           const event = navigation.emit({
@@ -79,9 +94,13 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
             onLongPress={onLongPress}
             style={({ pressed }) => [styles.tab, pressed && styles.tabPressed]}
           >
-            <Text style={styles.icon} importantForAccessibility="no">
-              {ICONS[route.name] ?? '·'}
-            </Text>
+            <View style={styles.iconWrap} importantForAccessibility="no">
+              <Ionicons
+                name={focused ? icons.active : icons.inactive}
+                size={24}
+                color={iconColor}
+              />
+            </View>
             <Text
               style={[
                 styles.label,
@@ -113,11 +132,11 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   tabPressed: { opacity: 0.85 },
-  icon: {
-    fontSize: 22,
-    lineHeight: 26,
+  iconWrap: {
+    height: 26,
     marginBottom: 4,
-    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
     fontSize: 11,

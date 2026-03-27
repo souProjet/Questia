@@ -1,0 +1,322 @@
+import type { AppLocale } from '@questia/shared';
+import type { ShopCatalogEntry, ShopMarketingBadge } from '@questia/shared';
+
+export type ShopScreenStrings = {
+  numLocale: string;
+  title: string;
+  close: string;
+  closeA11y: string;
+  retry: string;
+  errSession: string;
+  errProfileMissing: string;
+  errLoadShop: string;
+  errCheckout: string;
+  errPurchase: string;
+  errSavePrefs: string;
+  flashPaymentOk: string;
+  kindLabel(kind: ShopCatalogEntry['kind']): string;
+  themeLabel(id: string): string;
+  narrationPackLabel(id: string): string;
+  defaultNarration: string;
+  noTitle: string;
+  marketingBadge(b: ShopMarketingBadge): string;
+  moreInfoA11y(name: string): string;
+  vsSeparate: string;
+  owned: string;
+  buy: string;
+  buyBundle: string;
+  buyHintNeedCoins: string;
+  buyBundleHintNeedCoins: string;
+  balanceK: string;
+  questCoinsSuffix: string;
+  addQc: string;
+  addQcA11y: string;
+  walletHistoryA11y: string;
+  walletHistoryHint: string;
+  prefsHeading: string;
+  prefsIntro: string;
+  customization: string;
+  customizationLead: string;
+  fieldTheme: string;
+  fieldNarration: string;
+  fieldTitle: string;
+  themeCurrentA11y(name: string): string;
+  themeOpenHint: string;
+  narrationCurrentA11y(name: string): string;
+  narrationOpenHint: string;
+  titleCurrentA11y(name: string): string;
+  titleOpenHint: string;
+  bonusRerolls: string;
+  xpCharges: string;
+  xpPerValidation: (n: number) => string;
+  featured: string;
+  economy: (n: string) => string;
+  vsRetail: string;
+  sectionProgression: string;
+  sectionLook: string;
+  sectionThemes: string;
+  sectionTitles: string;
+  sectionNarration: string;
+  sectionRerolls: string;
+  txJournal: string;
+  txHistoryLink: string;
+  txEmpty: string;
+  balanceAfter: (n: number) => string;
+  selectThemeTitle: string;
+  selectNarrationTitle: string;
+  selectTitleTitle: string;
+  rechargeTitle: string;
+  rechargeSubtitle: string;
+  currentBalance: string;
+  securePayment: string;
+  rechargeHint: string;
+  rechargeFooter: string;
+  redirecting: string;
+  payEur: (eur: string) => string;
+  qcPerEur: (n: number) => string;
+  bonusVsSmall: (pct: number) => string;
+};
+
+const NARRATION_FR: Record<string, string> = {
+  cinematic: 'Cinématique',
+  poetic: 'Poétique',
+  noir: 'Mystère urbain',
+};
+
+const NARRATION_EN: Record<string, string> = {
+  cinematic: 'Cinematic',
+  poetic: 'Poetic',
+  noir: 'Urban mystery',
+};
+
+function themeLabelFr(id: string): string {
+  if (id === 'default') return 'Questia (clair)';
+  if (id === 'midnight') return 'Nuit boréale';
+  if (id === 'aurora') return 'Aurore';
+  if (id === 'parchment') return 'Parchemin';
+  return id;
+}
+
+function themeLabelEn(id: string): string {
+  if (id === 'default') return 'Questia (light)';
+  if (id === 'midnight') return 'Boreal night';
+  if (id === 'aurora') return 'Aurora';
+  if (id === 'parchment') return 'Parchment';
+  return id;
+}
+
+function frStrings(): ShopScreenStrings {
+  const marketingBadge = (b: ShopMarketingBadge): string => {
+    const m: Record<ShopMarketingBadge, string> = {
+      featured: 'À la une',
+      best_value: 'Meilleur rapport',
+      popular: 'Populaire',
+      starter: 'Pour débuter',
+      new: 'Nouveau',
+    };
+    return m[b];
+  };
+  return {
+    numLocale: 'fr-FR',
+    title: 'Boutique',
+    close: 'Fermer',
+    closeA11y: 'Fermer',
+    retry: 'Réessayer',
+    errSession: 'Session expirée. Reconnecte-toi.',
+    errProfileMissing: 'Profil introuvable.',
+    errLoadShop: 'Impossible de charger la boutique.',
+    errCheckout: 'Impossible de lancer le paiement.',
+    errPurchase: 'Achat impossible.',
+    errSavePrefs: 'Impossible d’enregistrer.',
+    flashPaymentOk: 'Si le paiement est passé, ton solde est à jour ci-dessous.',
+    kindLabel(kind: ShopCatalogEntry['kind']): string {
+      switch (kind) {
+        case 'theme_pack':
+          return 'Thèmes';
+        case 'title':
+          return 'Titre';
+        case 'xp_booster':
+          return 'Bonus XP';
+        case 'narration_pack':
+          return 'Ton des quêtes';
+        case 'reroll_pack':
+          return 'Relances';
+        case 'bundle':
+          return 'Bundle';
+        default:
+          return '';
+      }
+    },
+    themeLabel: themeLabelFr,
+    narrationPackLabel: (id) => NARRATION_FR[id] ?? id,
+    defaultNarration: 'Style Questia (par défaut)',
+    noTitle: 'Aucun titre',
+    marketingBadge,
+    moreInfoA11y: (name) => `Plus d'infos : ${name}`,
+    vsSeparate: 'vs achat séparé',
+    owned: 'Déjà à toi',
+    buy: 'Acheter',
+    buyBundle: 'Acheter le bundle',
+    buyHintNeedCoins: 'Ouvre l’achat de Quest Coins — solde insuffisant pour cet article.',
+    buyBundleHintNeedCoins: 'Ouvre l’achat de Quest Coins — solde insuffisant pour ce bundle.',
+    balanceK: 'Ton solde',
+    questCoinsSuffix: ' Quest Coins',
+    addQc: 'Ajouter des QC',
+    addQcA11y: 'Ajouter des Quest Coins en euros',
+    walletHistoryA11y: 'Historique du portefeuille',
+    walletHistoryHint: 'Ouvre le journal des mouvements Quest Coins',
+    prefsHeading: 'Équipement & affichage',
+    prefsIntro: 'Thème, ton des quêtes et titre — appliqués tout de suite dans l’app.',
+    customization: 'Personnalisation',
+    customizationLead: 'Règle l’apparence comme sur ton inventaire',
+    fieldTheme: 'Thème actif',
+    fieldNarration: 'Ton des textes de quête',
+    fieldTitle: 'Titre sur le profil',
+    themeCurrentA11y: (name) => `Thème actuel : ${name}`,
+    themeOpenHint: 'Ouvre le choix de thème',
+    narrationCurrentA11y: (name) => `Ton des textes de quête : ${name}`,
+    narrationOpenHint: 'Ouvre le choix du style de narration',
+    titleCurrentA11y: (name) => `Titre sur le profil : ${name}`,
+    titleOpenHint: 'Ouvre le choix du titre affiché',
+    bonusRerolls: 'Relances bonus',
+    xpCharges: 'Surcharges XP',
+    xpPerValidation: (n) => `(+${n} XP / validation)`,
+    featured: 'À la une',
+    economy: (n) => ` Économie ~${n} QC`,
+    vsRetail: ' vs détail',
+    sectionProgression: 'Progression & XP',
+    sectionLook: 'Apparence',
+    sectionThemes: 'Thèmes',
+    sectionTitles: 'Titres',
+    sectionNarration: 'Ton des quêtes',
+    sectionRerolls: 'Relances',
+    txJournal: 'Journal des transactions',
+    txHistoryLink: 'Historique détaillé',
+    txEmpty: 'Aucune opération pour l’instant.',
+    balanceAfter: (n) => `Solde après : ${n} QC`,
+    selectThemeTitle: 'Thème actif',
+    selectNarrationTitle: 'Ton des textes de quête',
+    selectTitleTitle: 'Titre sur le profil',
+    rechargeTitle: 'Ajouter des Quest Coins',
+    rechargeSubtitle:
+      'Paiement par carte via Stripe. Aucun abonnement — tu paies uniquement le montant choisi.',
+    currentBalance: 'Solde actuel',
+    securePayment: '🔒 Paiement sécurisé',
+    rechargeHint: 'Après validation, les QC sont ajoutés à ton solde. Utilisables dans la boutique.',
+    rechargeFooter: 'Tu reviens sur la boutique après le paiement. Annulation = aucun débit.',
+    redirecting: 'Redirection…',
+    payEur: (eur) => `Payer ${eur} €`,
+    qcPerEur: (n) => `${n} QC / €`,
+    bonusVsSmall: (pct) => ` (+${pct}% vs petit)`,
+  };
+}
+
+function enStrings(): ShopScreenStrings {
+  const marketingBadge = (b: ShopMarketingBadge): string => {
+    const m: Record<ShopMarketingBadge, string> = {
+      featured: 'Featured',
+      best_value: 'Best value',
+      popular: 'Popular',
+      starter: 'Starter',
+      new: 'New',
+    };
+    return m[b];
+  };
+  return {
+    numLocale: 'en-GB',
+    title: 'Shop',
+    close: 'Close',
+    closeA11y: 'Close',
+    retry: 'Retry',
+    errSession: 'Session expired. Sign in again.',
+    errProfileMissing: 'Profile not found.',
+    errLoadShop: 'Could not load the shop.',
+    errCheckout: 'Could not start checkout.',
+    errPurchase: 'Purchase failed.',
+    errSavePrefs: 'Could not save settings.',
+    flashPaymentOk: 'If payment went through, your balance below is up to date.',
+    kindLabel(kind: ShopCatalogEntry['kind']): string {
+      switch (kind) {
+        case 'theme_pack':
+          return 'Themes';
+        case 'title':
+          return 'Title';
+        case 'xp_booster':
+          return 'XP boost';
+        case 'narration_pack':
+          return 'Quest tone';
+        case 'reroll_pack':
+          return 'Rerolls';
+        case 'bundle':
+          return 'Bundle';
+        default:
+          return '';
+      }
+    },
+    themeLabel: themeLabelEn,
+    narrationPackLabel: (id) => NARRATION_EN[id] ?? id,
+    defaultNarration: 'Questia style (default)',
+    noTitle: 'No title',
+    marketingBadge,
+    moreInfoA11y: (name) => `More info: ${name}`,
+    vsSeparate: 'vs separate purchase',
+    owned: 'Already yours',
+    buy: 'Buy',
+    buyBundle: 'Buy bundle',
+    buyHintNeedCoins: 'Opens Quest Coins purchase — not enough balance for this item.',
+    buyBundleHintNeedCoins: 'Opens Quest Coins purchase — not enough balance for this bundle.',
+    balanceK: 'Your balance',
+    questCoinsSuffix: ' Quest Coins',
+    addQc: 'Add QC',
+    addQcA11y: 'Add Quest Coins (EUR)',
+    walletHistoryA11y: 'Wallet history',
+    walletHistoryHint: 'Opens Quest Coin transactions',
+    prefsHeading: 'Gear & display',
+    prefsIntro: 'Theme, quest tone, and title — applied immediately in the app.',
+    customization: 'Customization',
+    customizationLead: 'Tune the look like in your inventory',
+    fieldTheme: 'Active theme',
+    fieldNarration: 'Quest text tone',
+    fieldTitle: 'Profile title',
+    themeCurrentA11y: (name) => `Current theme: ${name}`,
+    themeOpenHint: 'Opens theme picker',
+    narrationCurrentA11y: (name) => `Quest text tone: ${name}`,
+    narrationOpenHint: 'Opens narration style picker',
+    titleCurrentA11y: (name) => `Profile title: ${name}`,
+    titleOpenHint: 'Opens title picker',
+    bonusRerolls: 'Bonus rerolls',
+    xpCharges: 'XP charges',
+    xpPerValidation: (n) => `(+${n} XP per completion)`,
+    featured: 'Featured',
+    economy: (n) => ` Save ~${n} QC`,
+    vsRetail: ' vs retail',
+    sectionProgression: 'Progression & XP',
+    sectionLook: 'Look',
+    sectionThemes: 'Themes',
+    sectionTitles: 'Titles',
+    sectionNarration: 'Quest tone',
+    sectionRerolls: 'Rerolls',
+    txJournal: 'Transaction log',
+    txHistoryLink: 'Full history',
+    txEmpty: 'No transactions yet.',
+    balanceAfter: (n) => `Balance after: ${n} QC`,
+    selectThemeTitle: 'Active theme',
+    selectNarrationTitle: 'Quest text tone',
+    selectTitleTitle: 'Profile title',
+    rechargeTitle: 'Add Quest Coins',
+    rechargeSubtitle:
+      'Pay by card via Stripe. No subscription — you only pay the amount you choose.',
+    currentBalance: 'Current balance',
+    securePayment: '🔒 Secure payment',
+    rechargeHint: 'After confirmation, QC are added to your balance. Spend them in the shop.',
+    rechargeFooter: 'You return to the shop after payment. Cancel = no charge.',
+    redirecting: 'Redirecting…',
+    payEur: (eur) => `Pay €${eur}`,
+    qcPerEur: (n) => `${n} QC / €`,
+    bonusVsSmall: (pct) => ` (+${pct}% vs small pack)`,
+  };
+}
+
+export function getShopScreenStrings(locale: AppLocale): ShopScreenStrings {
+  return locale === 'en' ? enStrings() : frStrings();
+}

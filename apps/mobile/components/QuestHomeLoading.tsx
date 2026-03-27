@@ -6,6 +6,7 @@ import {
   resolveQuestLoaderSession,
   QUEST_LOADER_DAY_STORAGE_KEY,
 } from '@questia/shared';
+import { useAppLocale } from '../contexts/AppLocaleContext';
 import { useAppTheme } from '../contexts/AppThemeContext';
 import type { ThemePalette } from '@questia/ui';
 
@@ -116,6 +117,7 @@ function buildStyles(p: ThemePalette) {
 type Props = { compact?: boolean };
 
 export function QuestHomeLoading({ compact }: Props) {
+  const { locale: appLocale } = useAppLocale();
   const { palette } = useAppTheme();
   const styles = React.useMemo(() => buildStyles(palette), [palette]);
   /** Une seule mise à jour après AsyncStorage — évite deux messages différents. */
@@ -128,19 +130,15 @@ export function QuestHomeLoading({ compact }: Props) {
       try {
         const last = await AsyncStorage.getItem(QUEST_LOADER_DAY_STORAGE_KEY);
         const session = resolveQuestLoaderSession(last, today);
-        const loc = Intl.DateTimeFormat().resolvedOptions().locale ?? 'fr';
-        const questLocale = loc.toLowerCase().startsWith('en') ? 'en' : 'fr';
-        if (!cancelled) setLines(getDailyQuestLoadingLines(undefined, session, questLocale));
+        if (!cancelled) setLines(getDailyQuestLoadingLines(undefined, session, appLocale));
       } catch {
-        const loc = Intl.DateTimeFormat().resolvedOptions().locale ?? 'fr';
-        const questLocale = loc.toLowerCase().startsWith('en') ? 'en' : 'fr';
-        if (!cancelled) setLines(getDailyQuestLoadingLines(undefined, 'first-today', questLocale));
+        if (!cancelled) setLines(getDailyQuestLoadingLines(undefined, 'first-today', appLocale));
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [appLocale]);
 
   const enter = useRef(new Animated.Value(0)).current;
   const barPos = useRef(new Animated.Value(0)).current;

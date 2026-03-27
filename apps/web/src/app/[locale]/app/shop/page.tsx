@@ -721,7 +721,7 @@ function ShopPageInner() {
               }`}
             >
               <div
-                className={`max-w-4xl mx-auto rounded-3xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-white to-amber-100/90 p-5 sm:p-6 shadow-[0_12px_40px_-8px_rgba(180,83,9,0.25)] transition-shadow duration-300 ${
+                className={`app-shop-balance-card max-w-4xl mx-auto p-5 sm:p-6 transition-shadow duration-300 ${
                   celebratePurchase ? 'shadow-[0_0_0_4px_rgba(251,191,36,0.45)] ring-2 ring-amber-400/50' : ''
                 }`}
               >
@@ -734,15 +734,15 @@ function ShopPageInner() {
                       🪙
                     </span>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.15em] text-amber-900/90 mb-1">
+                      <p className="text-xs font-black uppercase tracking-[0.15em] text-[var(--muted)] mb-1">
                         {t('balanceLabel')}
                       </p>
                       <p
                         key={balanceAnimTick}
-                        className="font-display text-4xl sm:text-5xl font-black tracking-tight text-[var(--on-cream)] tabular-nums leading-none motion-safe:animate-shop-balance-pop motion-reduce:animate-none"
+                        className="font-display text-4xl sm:text-5xl font-black tracking-tight text-[var(--text)] tabular-nums leading-none motion-safe:animate-shop-balance-pop motion-reduce:animate-none"
                       >
                         {balance.toLocaleString(numLocale)}
-                        <span className="ml-2 text-2xl sm:text-3xl font-black text-amber-800">{t('questCoins')}</span>
+                        <span className="ml-2 text-2xl sm:text-3xl font-black text-[var(--orange)]">{t('questCoins')}</span>
                       </p>
                     </div>
                   </div>
@@ -885,7 +885,7 @@ function ShopPageInner() {
                   {t('featuredHeading')}
                 </h2>
                 <div
-                  className={`rounded-3xl border-2 border-violet-400/50 bg-gradient-to-br from-violet-50 via-amber-50/80 to-cyan-50 p-6 text-[var(--on-cream)] shadow-lg transition-shadow duration-300 ${
+                  className={`app-shop-featured-card p-6 transition-shadow duration-300 ${
                     purchaseHighlightSku === featuredBundle.sku
                       ? 'motion-safe:animate-shop-card-bump motion-reduce:ring-2 motion-reduce:ring-amber-300/60'
                       : ''
@@ -901,7 +901,7 @@ function ShopPageInner() {
                           <MarketingBadge badge={featuredBundle.marketing.badge} />
                         ) : null}
                         <div className="mt-2 flex items-start gap-2">
-                          <p className="font-display font-black text-xl text-[var(--on-cream)] flex-1 min-w-0">
+                          <p className="font-display font-black text-xl text-[var(--text)] flex-1 min-w-0">
                             {featuredBundle.name}
                           </p>
                           {featuredBundle.contentsDetail ? (
@@ -923,37 +923,37 @@ function ShopPageInner() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm text-[var(--on-cream-muted)] font-medium mb-2">{featuredBundle.description}</p>
+                  <p className="text-sm text-[var(--muted)] font-medium mb-2">{featuredBundle.description}</p>
                   {featuredBundle.includedItems?.length ? (
-                    <ul className="list-disc pl-5 text-sm text-[var(--on-cream-muted)] font-medium space-y-1 mb-2">
+                    <ul className="list-disc pl-5 text-sm text-[var(--muted)] font-medium space-y-1 mb-2">
                       {featuredBundle.includedItems.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
                   ) : null}
                   {featuredBundle.marketing?.hook ? (
-                    <p className="text-sm font-semibold text-violet-950 mb-3">{featuredBundle.marketing.hook}</p>
+                    <p className="text-sm font-semibold text-[var(--link-on-bg)] mb-3">{featuredBundle.marketing.hook}</p>
                   ) : null}
                   {featuredBundle.marketing?.compareAtCoins != null &&
                   featuredBundle.marketing?.savingsCoins != null ? (
-                    <p className="text-sm text-[var(--on-cream-muted)] mb-4">
-                      <span className="line-through tabular-nums text-[var(--on-cream-subtle)]">
+                    <p className="text-sm text-[var(--muted)] mb-4">
+                      <span className="line-through tabular-nums text-[var(--subtle)]">
                         {featuredBundle.marketing.compareAtCoins.toLocaleString(numLocale)} QC
                       </span>
-                      <span className="ml-2 font-black text-emerald-800">
+                      <span className="ml-2 font-black text-[var(--green)]">
                         {t('economy', {
                           n: featuredBundle.marketing.savingsCoins.toLocaleString(numLocale),
                         })}
                       </span>
-                      <span className="text-[var(--on-cream-subtle)] text-xs ml-1">{t('vsDetail')}</span>
+                      <span className="text-[var(--subtle)] text-xs ml-1">{t('vsDetail')}</span>
                     </p>
                   ) : null}
                   {(() => {
                     const owns = catalogItemFullyOwned(featuredBundle, shop, coinPurchasedSkus);
                     const affordable = balance >= featuredBundle.priceCoins;
                     return (
-                      <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-violet-200/60">
-                        <span className="font-display text-2xl font-black text-amber-950 tabular-nums">
+                      <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[color:var(--border-ui)]">
+                        <span className="font-display text-2xl font-black text-[var(--orange)] tabular-nums">
                           {featuredBundle.priceCoins.toLocaleString(numLocale)} QC
                         </span>
                         {owns ? (
