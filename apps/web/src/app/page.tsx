@@ -464,7 +464,7 @@ export default function HomePage() {
                 <p className="font-display font-black text-lg tracking-tight text-slate-900">Questia</p>
               </div>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                Des quêtes courtes dans la vraie vie — une mission par jour, sans te mettre la pression.
+                Des quêtes secondaires dans la vraie vie — une mission par jour, sans te mettre la pression.
               </p>
             </div>
             <nav

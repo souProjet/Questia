@@ -27,6 +27,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "ci": "npm run lint && npm run type-check && npm run test:coverage && npm run build",
+    "test:e2e": "npm run test:e2e -w @questia/web",
+    "test:e2e:local": "npm run test:e2e:local -w @questia/web",
     "clean": "turbo clean",
     "generate:logo": "node scripts/generate-questia-logo-square.mjs"
   },

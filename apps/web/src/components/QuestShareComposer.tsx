@@ -624,14 +624,14 @@ export function QuestShareComposer({
         <div className="mb-6 min-w-0">
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
           <div className="rounded-2xl border border-amber-200/55 bg-gradient-to-br from-amber-50/90 via-white to-cyan-50/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_28px_-12px_rgba(249,115,22,0.12)] sm:p-5">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-x-8 lg:gap-y-4">
-              <div className="min-w-0">
+            <div className="flex min-w-0 flex-col gap-4">
+              <div className="min-w-0 w-full">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Photo</p>
-                <p className="mt-1.5 text-sm font-semibold leading-snug text-slate-700">
+                <p className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-700">
                   Mets un cliché de ton moment : ta carte raconte mieux ton histoire.
                 </p>
               </div>
-              <div className="flex w-full flex-col gap-2 lg:w-[min(100%,15.5rem)] lg:justify-self-end lg:items-stretch">
+              <div className="flex w-full min-w-0 flex-col gap-2">
                 <button
                   type="button"
                   className="group relative inline-flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl border-2 border-cyan-400/70 bg-gradient-to-r from-cyan-50 via-white to-amber-50 px-5 py-3.5 text-base font-black text-cyan-950 shadow-[0_10px_36px_-10px_rgba(34,211,238,0.5),inset_0_1px_0_rgba(255,255,255,0.95)] ring-1 ring-cyan-300/35 transition-all duration-200 hover:border-cyan-500/85 hover:shadow-[0_14px_44px_-10px_rgba(34,211,238,0.55)] motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.99]"
@@ -647,7 +647,7 @@ export function QuestShareComposer({
                 {photoUrl ? (
                   <button
                     type="button"
-                    className="py-1 text-center text-sm font-bold text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700 lg:text-right"
+                    className="py-1 text-center text-sm font-bold text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700"
                     onClick={clearPhoto}
                   >
                     Retirer la photo
@@ -658,17 +658,19 @@ export function QuestShareComposer({
           </div>
         </div>
 
-        <div className="flex justify-center mb-6">
-          <div
-            ref={captureRef}
-            className="rounded-[24px] overflow-hidden shadow-[0_20px_50px_-12px_rgba(15,23,42,0.35),0_0_0_1px_rgba(255,255,255,0.12)] ring-1 ring-white/30"
-          >
-            <QuestShareCardFrame
-              payload={payload}
-              userFirstName={userFirstName}
-              background={background}
-              photoUrl={photoUrl}
-            />
+        <div className="mb-6 flex min-w-0 w-full justify-center">
+          <div className="max-w-full overflow-x-auto overflow-y-visible [-webkit-overflow-scrolling:touch] pb-0.5">
+            <div
+              ref={captureRef}
+              className="inline-block rounded-[24px] overflow-hidden shadow-[0_20px_50px_-12px_rgba(15,23,42,0.35),0_0_0_1px_rgba(255,255,255,0.12)] ring-1 ring-white/30"
+            >
+              <QuestShareCardFrame
+                payload={payload}
+                userFirstName={userFirstName}
+                background={background}
+                photoUrl={photoUrl}
+              />
+            </div>
           </div>
         </div>
 
@@ -711,7 +713,7 @@ export function QuestShareComposer({
 
   const panel = (
     <div
-      className="relative z-10 w-full min-w-0 max-w-md max-h-[min(92vh,52rem)] overflow-y-auto overflow-x-hidden rounded-t-[1.85rem] md:rounded-[1.85rem] share-sheet-scroll"
+      className="relative z-10 flex min-h-0 w-full min-w-0 max-w-md max-h-[min(92dvh,52rem)] flex-col overflow-y-auto overflow-x-hidden overscroll-contain rounded-t-[1.85rem] md:max-h-[min(92vh,52rem)] md:rounded-[1.85rem] share-sheet-scroll"
       role="dialog"
       aria-modal
       aria-labelledby="share-card-title"
@@ -738,7 +740,7 @@ export function QuestShareComposer({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex min-h-[100dvh] w-full flex-col justify-end md:justify-center md:p-5 md:pb-8"
+      className="fixed inset-0 z-[60] flex h-[100dvh] max-h-[100dvh] w-full flex-col justify-end overflow-hidden md:justify-center md:p-5 md:pb-8"
       role="presentation"
     >
       {/* Couche plein écran : base opaque + flou (évite trous / bords du radial seuls) */}
@@ -758,7 +760,7 @@ export function QuestShareComposer({
       />
 
       <div
-        className={`pointer-events-none relative z-10 mx-auto w-full max-w-md px-3 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-0 md:pb-0 transition-[transform,opacity] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:!translate-y-0 motion-reduce:!scale-100 motion-reduce:!opacity-100 motion-reduce:!transition-none ${sheetTransform}`}
+        className={`pointer-events-none relative z-10 mx-auto flex min-h-0 w-full max-w-md max-h-full flex-1 flex-col justify-end px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.25rem,env(safe-area-inset-top))] md:max-h-none md:flex-none md:px-0 md:pb-0 md:pt-0 transition-[transform,opacity] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:!translate-y-0 motion-reduce:!scale-100 motion-reduce:!opacity-100 motion-reduce:!transition-none ${sheetTransform}`}
       >
         <div className="pointer-events-auto">{panel}</div>
       </div>

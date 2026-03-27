@@ -6,8 +6,8 @@ Liste des éléments restants typiques pour une mise en production (web + iOS + 
 
 ## Infra & domaine
 
-- [ ] Pointer **questia.fr** vers l’hébergement (Vercel, autre) avec **HTTPS** valide.
-- [ ] Configurer les **variables d’environnement de prod** sur l’hôte : `DATABASE_URL`, `DIRECT_DATABASE_URL`, `NEXT_PUBLIC_SITE_URL=https://questia.fr`, clés **Clerk** (prod), **OpenAI**, **OpenWeather**, **Stripe**, **Resend** (si mails), secrets **cron** / **webhooks**, etc. (référence : `apps/web/.env.example`).
+- [x] Pointer **questia.fr** vers l’hébergement (Vercel, autre) avec **HTTPS** valide.
+- [x] Configurer les **variables d’environnement de prod** sur l’hôte : `DATABASE_URL`, `DIRECT_DATABASE_URL`, `NEXT_PUBLIC_SITE_URL=https://questia.fr`, clés **Clerk** (prod), **OpenAI**, **OpenWeather**, **Stripe**, **Resend** (si mails), secrets **cron** / **webhooks**, etc. (référence : `apps/web/.env.example`).
 - [ ] **Analytics & pub (opt-in)** : si tu actives GTM, GA4 ou Meta Pixel, renseigner les `NEXT_PUBLIC_*` documentées dans `.env.example`, vérifier le bandeau cookies et la section cookies de `/legal/confidentialite`, puis tester en prod (voir [`marketing-analytics.md`](marketing-analytics.md)).
 - [ ] **Mobile** : `EXPO_PUBLIC_API_BASE_URL` = URL HTTPS du backend en prod ; `EXPO_PUBLIC_SITE_URL` = `https://questia.fr` ; même **Clerk publishable** que le web en prod.
 
@@ -15,21 +15,21 @@ Liste des éléments restants typiques pour une mise en production (web + iOS + 
 
 ## Base de données & migrations
 
-- [ ] Appliquer les **migrations Prisma** sur la base **production** (pas seulement un `db push` local).
+- [x] Appliquer les **migrations Prisma** sur la base **production** (pas seulement un `db push` local).
 - [ ] Avoir un **plan de sauvegarde** / restauration (ex. snapshots Neon).
 
 ---
 
 ## Clerk (authentification)
 
-- [ ] Utiliser une **instance production** : domaines autorisés (`questia.fr`, sous-domaines si besoin), URLs de callback compatibles Next + Expo.
-- [ ] **Dashboard Clerk** : branding, e-mails, lien vers la politique de confidentialité (`https://questia.fr/legal/confidentialite`).
+- [x] Utiliser une **instance production** : domaines autorisés (`questia.fr`, sous-domaines si besoin), URLs de callback compatibles Next + Expo.
+- [x] **Dashboard Clerk** : branding, e-mails, lien vers la politique de confidentialité (`https://questia.fr/legal/confidentialite`).
 
 ---
 
 ## Paiements (Stripe)
 
-- [ ] **Compte Stripe live**, produits / prix alignés avec le code (webhooks, `STRIPE_WEBHOOK_SECRET` prod).
+- [x] **Compte Stripe live**, produits / prix alignés avec le code (webhooks, `STRIPE_WEBHOOK_SECRET` prod).
 - [ ] Tester un **parcours d’achat réel** (petit montant) + remboursement si besoin.
 - [ ] Relire les **CGV** publiées (`/legal/cgv`) avec un conseil si besoin (monnaie virtuelle, Stripe, rétractation).
 

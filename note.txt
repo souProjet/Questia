@@ -1,12 +1,37 @@
-- règles d'XP explicites (complétion, série, skip, plafonds) alignées avec phases d'escalade et archétypes : OK
-- badges avec critères clairs (ex. série, phase rupture, première quête extérieure) et affichage profil : OK
-- boutique / catalogue d'achats (thèmes, packs narration, rerolls optionnels) + journal des transactions : OK
-- écran historique riche : filtres, recherche, réutilisation d'idées de missions passées : OK
-- rappels utilisateur (push / email) pour la quête du jour, avec préférences : OK
-- accessibilité : contrastes, tailles de texte, lecteur d'écran web et mobile : OK
-- tests (moteur psychologique, chemins critiques quête / complétion) + CI (lint, build, tests) : OK
-- observabilité : suivi des erreurs, logs structurés sur IA / géo / météo : OK
-- RGPD : politique de confidentialité, export et suppression compte / données : OK
-- transparence contenu généré par IA et garde-fous sur les prompts : OK
-- fiches et conformité App Store / Play (captures, bien-être, guidelines) : OK
-- deep links et partage cohérents entre web et mobile : OK
+Analyse — ce qui manque ou à renforcer (Questia)
+================================================
+
+Ce qui est déjà solide
+----------------------
+- Monorepo (Turborepo) web + mobile + shared, CI (lint, typecheck, tests + coverage, build).
+- Beaucoup de tests unitaires côté web (API, logique métier, moteur partagé).
+- Docs utiles : publication, stores, deep links, analytics, DA.
+- Produit : parcours quête, profil, shop, admin, consentement cookies, base légale — socle large.
+
+Ce qui manque ou reste fragile (priorité subjective)
+----------------------------------------------------
+
+1. Tests de bout en bout (E2E)
+   Pas de couche Playwright / Cypress visible : les parcours critiques (auth, quête du jour, paiement, partage) reposent sur la CI unitaire + les tests manuels. Pour une app « life », c’est souvent le prochain palier de confiance.
+
+2. Mobile : peu ou pas de tests automatisés
+   La logique partagée est testée ; l’app Expo elle-même semble peu couverte (composants, navigation, intégrations natives).
+
+3. Gestion d’erreurs « Next »
+   Pas de error.tsx / global-error.tsx repérés : en cas d’exception React ou de segment qui casse, l’expérience utilisateur dépend du défaut Next, moins contrôlée qu’une page d’erreur Questia.
+
+4. Internationalisation
+   Tout est FR (lang="fr", Clerk FR) — cohérent pour le lancement France ; si l’ambition est EU / export, il manquera tôt ou tard une vraie couche i18n (clés, routes, métadonnées).
+
+5. Observabilité prod
+   Brique de log structuré en code ; ce qui manque souvent ensuite : agrégation (Sentry, Logflare, etc.), alertes et dashboards (erreurs 5xx, latence API, échecs Stripe/cron).
+
+6. Checklist déjà dans les docs
+   docs/publication-checklist.md liste le manquant opérationnel : domaine / HTTPS, env prod, migrations, deep links (placeholders Apple/Google), EAS / stores, analytics en prod. Travail release à boucler.
+
+7. Accessibilité & SEO (au-delà des correctifs ponctuels)
+   Skip link, structure sémantique partielle — possible d’aller plus loin : audits réguliers (contraste, focus, annonces d’erreurs, pages marketing).
+
+En résumé
+---------
+Le cœur produit et les tests backend/métier sont déjà sérieux ; ce qui manque le plus pour une app prête à scaler : E2E, durcissement erreurs + observabilité, tests mobile, et tout ce que la checklist publication couvre côté infra et stores.

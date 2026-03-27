@@ -88,8 +88,6 @@ export default function MentionsLegalesPage() {
           <a href={hostingProvider.website} className="font-semibold text-orange-600 hover:underline" target="_blank" rel="noopener noreferrer">
             {hostingProvider.website}
           </a>
-          . Vous pouvez surcharger ces informations via les variables d’environnement{' '}
-          <code className="rounded bg-slate-100 px-1 text-sm">NEXT_PUBLIC_LEGAL_HOST_*</code>.
         </p>
       </section>
 

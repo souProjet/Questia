@@ -2,33 +2,44 @@ import Image from 'next/image';
 
 const LOGO_SRC = '/brand/questia-logo.png';
 
+/** Dimensions intrinsèques du PNG (carré) — utilisées pour next/image sans `fill` (évite le rognage avec padding sur l’img). */
+const LOGO_PX = 512;
+
 export type QuestiaLogoVariant = 'navbar' | 'auth' | 'footer' | 'onboarding' | 'card';
 
-const VARIANT: Record<QuestiaLogoVariant, { box: string; sizes: string; img: string }> = {
+const VARIANT: Record<
+  QuestiaLogoVariant,
+  { box: string; sizes: string; inset: string; img: string }
+> = {
   navbar: {
-    box: 'h-9 w-9 min-h-9 min-w-9 sm:h-10 sm:w-10 sm:min-h-10 sm:min-w-10 rounded-[11px]',
+    box: 'h-9 w-9 min-h-9 min-w-9 sm:h-10 sm:w-10 sm:min-h-10 sm:min-w-10 overflow-visible',
     sizes: '(max-width: 640px) 36px, 40px',
-    img: 'object-contain p-[8%] drop-shadow-[0_1px_4px_rgba(15,23,42,0.4)]',
+    inset: 'inset-[6%]',
+    img: 'drop-shadow-[0_1px_4px_rgba(15,23,42,0.4)]',
   },
   auth: {
-    box: 'h-10 w-10 min-h-10 min-w-10 sm:h-11 sm:w-11 sm:min-h-11 sm:min-w-11 rounded-xl',
+    box: 'h-10 w-10 min-h-10 min-w-10 sm:h-11 sm:w-11 sm:min-h-11 sm:min-w-11 rounded-xl overflow-hidden',
     sizes: '44px',
-    img: 'object-contain p-[8%] drop-shadow-[0_1px_4px_rgba(15,23,42,0.35)]',
+    inset: 'inset-[10%]',
+    img: 'drop-shadow-[0_1px_4px_rgba(15,23,42,0.35)]',
   },
   footer: {
-    box: 'h-10 w-10 min-h-10 min-w-10 rounded-[11px]',
+    box: 'h-10 w-10 min-h-10 min-w-10 rounded-[11px] overflow-hidden',
     sizes: '40px',
-    img: 'object-contain p-[8%] drop-shadow-[0_1px_3px_rgba(15,23,42,0.3)]',
+    inset: 'inset-[10%]',
+    img: 'drop-shadow-[0_1px_3px_rgba(15,23,42,0.3)]',
   },
   onboarding: {
-    box: 'h-[4.25rem] w-[4.25rem] min-h-[4.25rem] min-w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem] sm:min-h-[4.75rem] sm:min-w-[4.75rem] rounded-2xl',
+    box: 'h-[4.25rem] w-[4.25rem] min-h-[4.25rem] min-w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem] sm:min-h-[4.75rem] sm:min-w-[4.75rem] rounded-2xl overflow-hidden',
     sizes: '(max-width: 640px) 68px, 76px',
-    img: 'object-contain p-[8%] drop-shadow-[0_2px_8px_rgba(15,23,42,0.2)]',
+    inset: 'inset-[10%]',
+    img: 'drop-shadow-[0_2px_8px_rgba(15,23,42,0.2)]',
   },
   card: {
-    box: 'h-[26px] w-[26px] min-h-[26px] min-w-[26px] rounded-[7px]',
+    box: 'h-[26px] w-[26px] min-h-[26px] min-w-[26px] rounded-[7px] overflow-hidden',
     sizes: '26px',
-    img: 'object-contain p-[6%] drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]',
+    inset: 'inset-[8%]',
+    img: 'drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]',
   },
 };
 
@@ -44,15 +55,18 @@ type QuestiaLogoProps = {
 export function QuestiaLogo({ variant = 'navbar', className = '', priority = false }: QuestiaLogoProps) {
   const v = VARIANT[variant];
   return (
-    <div className={`relative shrink-0 overflow-visible ${v.box} ${className}`}>
-      <Image
-        src={LOGO_SRC}
-        alt=""
-        fill
-        className={v.img}
-        sizes={v.sizes}
-        priority={priority}
-      />
+    <div className={`relative shrink-0 ${v.box} ${className}`}>
+      <div className={`absolute ${v.inset}`}>
+        <Image
+          src={LOGO_SRC}
+          alt=""
+          width={LOGO_PX}
+          height={LOGO_PX}
+          className={`h-full w-full object-contain object-center ${v.img}`}
+          sizes={v.sizes}
+          priority={priority}
+        />
+      </div>
     </div>
   );
 }
