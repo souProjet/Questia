@@ -26,8 +26,6 @@ export default defineConfig({
         'apps/web/src/app/api/admin/**',
         'apps/web/src/app/api/user/**',
       ],
-      // Seuil global : la route `quest/daily` et les webhooks nécessitent des jeux de mocks très lourds pour 100 % branches.
-      // Le moteur (`packages/shared`) est couvert à ~100 % lignes ; l’API et les libs sont couvertes par tests unitaires + routes.
       thresholds: {
         lines: 85,
         functions: 94,

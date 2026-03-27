@@ -3,7 +3,12 @@ import { HISTORY_PAGE_SIZE } from './historyPagination';
 import { formatQuestDateFr } from './formatQuestDateFr';
 import { questDisplayEmoji, QUEST_LUCIDE_ICON_TO_EMOJI } from './questDisplayEmoji';
 import { QUEST_SHARE_BACKGROUNDS, getQuestShareBackgroundById } from './questShareBackgrounds';
-import { QUEST_TAXONOMY, questFamilyLabel, isValidReportDeferredDate } from './constants/quests';
+import {
+  QUEST_TAXONOMY,
+  questFamilyLabel,
+  questLocalizedText,
+  isValidReportDeferredDate,
+} from './constants/quests';
 import { QUADRANT_DEFAULTS } from './constants/personality';
 
 describe('historyPagination', () => {
@@ -79,5 +84,11 @@ describe('constants re-export sanity', () => {
     expect(questFamilyLabel(null)).toBeNull();
     expect(questFamilyLabel('spatial_adventure')).toBeTruthy();
     expect(questFamilyLabel('not_a_category' as never)).toBeNull();
+  });
+  it('questLocalizedText FR et EN', () => {
+    const q = QUEST_TAXONOMY[0]!;
+    expect(questLocalizedText(q, 'fr').title).toBe(q.title);
+    expect(questLocalizedText(q, 'en').title).toBe(q.titleEn);
+    expect(questLocalizedText(q, 'en').description).toBe(q.descriptionEn);
   });
 });
