@@ -30,10 +30,31 @@ export function MarketingScripts() {
 
   useEffect(() => {
     setConsent(readMarketingConsent());
-    const handler = () => setConsent(readMarketingConsent());
+    const handler = (e: Event) => {
+      const d = (e as CustomEvent<MarketingConsent | null>).detail;
+      if (d && typeof d.analytics === 'boolean' && typeof d.ads === 'boolean') {
+        setConsent(d);
+      } else {
+        setConsent(readMarketingConsent());
+      }
+    };
     window.addEventListener('questia-consent-change', handler);
     return () => window.removeEventListener('questia-consent-change', handler);
   }, []);
+
+  useEffect(() => {
+    if (!consent || !(consent.analytics || consent.ads)) return;
+    const hasAny =
+      Boolean(analyticsConfig.gtmId) ||
+      Boolean(analyticsConfig.gaMeasurementId) ||
+      Boolean(analyticsConfig.metaPixelId);
+    if (hasAny) return;
+    console.warn(
+      '[Questia] Consentement accepté mais aucun identifiant marketing n’est dans le bundle JS ' +
+        '(NEXT_PUBLIC_GTM_ID, NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_META_PIXEL_ID). ' +
+        'Vérifie Vercel → variables pour l’environnement Production, répertoire racine du projet = apps/web, puis redéploie.',
+    );
+  }, [consent]);
 
   const allowGtm = consent && (consent.analytics || consent.ads) && analyticsConfig.gtmId;
   const allowGaDirect =

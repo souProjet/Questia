@@ -132,7 +132,8 @@ Ce document décrit comment configurer **Google Tag Manager (GTM)**, **Google An
 2. En **local** : copie vers `.env.local` (non versionné) et renseigne les clés nécessaires.
 3. Sur **Vercel** (ou autre) : **Settings → Environment Variables** → ajoute les mêmes clés pour **Production** (et éventuellement Preview).
 4. **Redéploie** l’application : les `NEXT_PUBLIC_*` sont injectées au **build** ; un simple changement d’env exige souvent un nouveau déploiement.
-5. Vérifie que le **domaine de production** est bien déclaré dans GA4 (flux de données) et, pour Meta, que le domaine est autorisé si demandé.
+5. **Monorepo** : sur Vercel, le **Root Directory** du projet doit être **`apps/web`** (pas la racine du repo). Sinon le build Next.js ne voit pas les variables prévues pour `@questia/web` et le bundle ne contient **aucun** `NEXT_PUBLIC_*` — même si le tableau des variables Vercel est rempli.
+6. Vérifie que le **domaine de production** est bien déclaré dans GA4 (flux de données) et, pour Meta, que le domaine est autorisé si demandé.
 
 ---
 
