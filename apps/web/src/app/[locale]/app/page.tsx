@@ -1103,11 +1103,11 @@ function AppPageContent() {
 
             <div className="app-quest-actions-footer flex flex-col gap-4 px-4 py-5 sm:px-5">
               {isCompleted ? (
-                <div className="text-center space-y-3">
-                  <p className="font-display text-lg font-black text-[var(--green)]">
+                <div className="mx-auto max-w-md text-center space-y-3">
+                  <p className="font-display text-xl font-black tracking-tight text-[var(--green)] sm:text-[1.35rem]">
                     {t('completedTitle')}
                   </p>
-                  <p className="mt-2 text-sm text-[var(--muted)]">{t('completedSubtitle')}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">{t('completedSubtitle')}</p>
                   <div className="flex justify-center">
                     <button
                       type="button"

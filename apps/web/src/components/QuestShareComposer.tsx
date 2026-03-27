@@ -441,7 +441,9 @@ function QuestShareCardFrame({
               letterSpacing: '-0.02em',
             }}
           >
-            {userFirstName} · Quête validée ✓
+            {shareLocale === 'en'
+              ? `${userFirstName} · Quest complete`
+              : `${userFirstName} · Quête accomplie`}
           </p>
         </div>
       </div>

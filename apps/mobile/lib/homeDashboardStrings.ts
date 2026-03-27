@@ -22,6 +22,10 @@ export type HomeDashboardStrings = {
   };
   rerollParts: (daily: number, bonus: number) => string;
   weatherFallback: string;
+  /** Bandeau quête terminée (accueil) — aligné sur AppQuest côté web */
+  completedTitle: string;
+  completedSubtitle: string;
+  shareVictoryCta: string;
 };
 
 function fr(): HomeDashboardStrings {
@@ -53,6 +57,9 @@ function fr(): HomeDashboardStrings {
       return parts.length > 0 ? parts.join(' · ') : 'aucune';
     },
     weatherFallback: 'Ciel variable',
+    completedTitle: 'Quête accomplie',
+    completedSubtitle: 'Ta série est enregistrée. À demain pour la suite.',
+    shareVictoryCta: 'Partager ta carte',
   };
 }
 
@@ -85,6 +92,9 @@ function en(): HomeDashboardStrings {
       return parts.length > 0 ? parts.join(' · ') : 'none';
     },
     weatherFallback: 'Mixed skies',
+    completedTitle: 'Quest complete',
+    completedSubtitle: 'Your streak is saved. See you tomorrow for the next one.',
+    shareVictoryCta: 'Share your card',
   };
 }
 

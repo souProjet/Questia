@@ -605,7 +605,7 @@ export default function ShareCardScreen() {
                 })()}
                 <Text style={[styles.hook, panelDark && styles.hookLight]}>« {truncate(quest.hook, 100)} »</Text>
                 <Text style={[styles.footerName, panelDark && styles.footerNameLight]}>
-                  {first} · Quête validée ✓
+                  {shareLocale === 'en' ? `${first} · Quest complete` : `${first} · Quête accomplie`}
                 </Text>
               </View>
             </View>

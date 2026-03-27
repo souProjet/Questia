@@ -1152,14 +1152,14 @@ export default function DashboardScreen() {
               <View style={styles.questActionsFooter}>
               {isCompleted ? (
                 <View style={styles.footerActionsInner}>
-                  <Text style={styles.completedFooterTitle}>🏆 Quête validée — belle perf, à demain !</Text>
-                  <Text style={styles.completedFooterSub}>Ta série et ton parcours sont à jour.</Text>
+                  <Text style={styles.completedFooterTitle}>{homeUi.completedTitle}</Text>
+                  <Text style={styles.completedFooterSub}>{homeUi.completedSubtitle}</Text>
                   <Link
                     href={{ pathname: '/share-card', params: { questDate: quest.questDate } }}
                     asChild
                   >
                     <Pressable style={styles.shareLinkBtn}>
-                      <Text style={styles.shareLinkText}>📸 Partager ma victoire</Text>
+                      <Text style={styles.shareLinkText}>{homeUi.shareVictoryCta}</Text>
                     </Pressable>
                   </Link>
                 </View>
@@ -1804,13 +1804,21 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
   },
   footerActionsInner: { gap: 12 },
   completedFooterTitle: {
-    fontSize: 17,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.35,
     color: p.green,
     textAlign: 'center',
     lineHeight: 24,
   },
-  completedFooterSub: { fontSize: 13, color: cqMuted, textAlign: 'center', marginBottom: 4 },
+  completedFooterSub: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: cqMuted,
+    textAlign: 'center',
+    marginBottom: 4,
+    paddingHorizontal: 8,
+  },
   acceptedHint: { fontSize: 12, color: cqMuted, textAlign: 'center', lineHeight: 18, marginTop: 2 },
   abandonLink: {
     fontSize: 11,

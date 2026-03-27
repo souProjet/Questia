@@ -21,6 +21,8 @@ import {
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
+import { useAppLocale } from '../contexts/AppLocaleContext';
+import { getHomeDashboardStrings } from '../lib/homeDashboardStrings';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -54,6 +56,8 @@ function rnd(i: number, salt: number) {
 
 export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
   const { palette } = useAppTheme();
+  const { locale } = useAppLocale();
+  const rewardUi = useMemo(() => getHomeDashboardStrings(locale), [locale]);
   const styles = useMemo(() => buildRewardStyles(palette), [palette]);
 
   const scale = useRef(new Animated.Value(0.82)).current;
@@ -281,7 +285,7 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
             style={styles.card}
           >
             <View style={styles.cardHero}>
-              <Text style={styles.kicker}>✨ Quête validée</Text>
+              <Text style={styles.kicker}>{rewardUi.completedTitle}</Text>
 
               {levelInfo?.leveledUp ? (
                 <View style={styles.levelBanner}>
@@ -486,9 +490,9 @@ function buildRewardStyles(p: ThemePalette) {
       color: p.onCreamMuted,
     },
     kicker: {
-      fontSize: 11,
-      fontWeight: '900',
-      letterSpacing: 1.6,
+      fontSize: 12,
+      fontWeight: '800',
+      letterSpacing: 0.4,
       color: p.linkOnBg,
       textAlign: 'center',
       marginBottom: 6,

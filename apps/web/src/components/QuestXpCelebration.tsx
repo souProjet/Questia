@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   levelFromTotalXp,
   XP_PER_LEVEL,
@@ -62,6 +63,7 @@ export function QuestXpCelebration({
   badgesUnlocked,
   onContinue,
 }: Props) {
+  const t = useTranslations('AppQuest');
   const reducedMotion = usePrefersReducedMotion();
   const breakdownRows = useMemo(() => xpBreakdownRowsFr(xpGain.breakdown), [xpGain.breakdown]);
 
@@ -207,9 +209,9 @@ export function QuestXpCelebration({
         <div className="relative z-[1] p-7">
           <p
             id="xp-celebration-title"
-            className="text-center text-xs font-black uppercase tracking-[0.2em] text-cyan-900 motion-safe:animate-fade-up motion-reduce:opacity-100 [animation-delay:60ms] [animation-fill-mode:backwards]"
+            className="text-center font-display text-sm font-black tracking-tight text-cyan-900 motion-safe:animate-fade-up motion-reduce:opacity-100 [animation-delay:60ms] [animation-fill-mode:backwards]"
           >
-            ✨ Quête validée
+            {t('completedTitle')}
           </p>
 
           {levelInfo.leveledUp ? (
