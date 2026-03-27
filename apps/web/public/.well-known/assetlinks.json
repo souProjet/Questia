@@ -4,7 +4,9 @@
     "target": {
       "namespace": "android_app",
       "package_name": "fr.questia.app",
-      "sha256_cert_fingerprints": ["REPLACE_WITH_RELEASE_SHA256"]
+      "sha256_cert_fingerprints": [
+        "7F:CC:BA:58:AA:DE:90:DD:EE:98:B8:DD:9E:A1:FB:51:4F:65:6D:FF:AF:B1:69:72:D7:E6:F6:1C:28:34:D8:18"
+      ]
     }
   }
 ]
