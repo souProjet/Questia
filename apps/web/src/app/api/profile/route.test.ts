@@ -49,24 +49,36 @@ describe('/api/profile', () => {
 
   it('GET 401', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as never);
-    const res = await GET();
+    const res = await GET(new NextRequest('http://localhost/api/profile'));
     expect(res.status).toBe(401);
   });
 
   it('GET 404', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
     prismaMock.profile.findUnique.mockResolvedValue(null);
-    const res = await GET();
+    const res = await GET(new NextRequest('http://localhost/api/profile'));
     expect(res.status).toBe(404);
   });
 
   it('GET 200', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
     prismaMock.profile.findUnique.mockResolvedValue(baseProfile);
-    const res = await GET();
+    const res = await GET(new NextRequest('http://localhost/api/profile'));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.shop).toBeDefined();
+  });
+
+  it('GET ?locale=en renvoie les titres de badges en anglais', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue(baseProfile);
+    const res = await GET(new NextRequest('http://localhost/api/profile?locale=en'));
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as {
+      progression: { badgeCatalog: { id: string; title: string }[] };
+    };
+    const row = json.progression.badgeCatalog.find((b) => b.id === 'serie_3');
+    expect(row?.title).toBe('First momentum');
   });
 
   it('PATCH 401', async () => {

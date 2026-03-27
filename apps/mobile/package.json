@@ -8,7 +8,9 @@
     "dev:tunnel": "expo start --tunnel",
     "build:ios": "eas build --platform ios",
     "build:android": "eas build --platform android",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@clerk/expo": "^3.1.2",
@@ -45,8 +47,11 @@
     "react": "19.1.0"
   },
   "devDependencies": {
+    "@types/jest": "29.5.14",
     "@types/react": "~19.1.0",
     "@types/react-native": "~0.73.0",
+    "jest": "~29.7.0",
+    "jest-expo": "~54.0.17",
     "typescript": "~5.8.0"
   }
 }

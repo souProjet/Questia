@@ -1,4 +1,5 @@
-import type { PsychologicalCategory, QuestModel, QuestPace } from '../types';
+import type { AppLocale, PsychologicalCategory, QuestModel, QuestPace } from '../types';
+import { QUEST_TAXONOMY_EN } from './questTaxonomyEn';
 
 /** Fenêtre max pour reporter une quête « planifiée » (choix de date côté client + API). */
 export const REPORT_DEFER_MAX_DAYS = 14;
@@ -27,7 +28,7 @@ export function isValidReportDeferredDate(dateIso: string, todayIso: string): bo
   return t1 >= t0 && t1 <= max;
 }
 
-const _QUEST_TAXONOMY_RAW: ReadonlyArray<Omit<QuestModel, 'questPace'>> = [
+const _QUEST_TAXONOMY_RAW: ReadonlyArray<Omit<QuestModel, 'questPace' | 'titleEn' | 'descriptionEn'>> = [
   {
     id: 1,
     title: 'Le Voyage Aléatoire',
@@ -458,10 +459,29 @@ const _QUEST_TAXONOMY_RAW: ReadonlyArray<Omit<QuestModel, 'questPace'>> = [
   },
 ];
 
-export const QUEST_TAXONOMY: QuestModel[] = _QUEST_TAXONOMY_RAW.map((q) => ({
-  ...q,
-  questPace: archetypeQuestPace(q),
-}));
+export const QUEST_TAXONOMY: QuestModel[] = _QUEST_TAXONOMY_RAW.map((q) => {
+  const en = QUEST_TAXONOMY_EN[q.id];
+  if (!en) {
+    throw new Error(`questTaxonomyEn missing id ${q.id}`);
+  }
+  return {
+    ...q,
+    titleEn: en.titleEn,
+    descriptionEn: en.descriptionEn,
+    questPace: archetypeQuestPace(q),
+  };
+});
+
+/** Titre + concept d’archétype selon la locale (taxonomie). */
+export function questLocalizedText(
+  q: QuestModel,
+  locale: AppLocale,
+): { title: string; description: string } {
+  if (locale === 'en') {
+    return { title: q.titleEn, description: q.descriptionEn };
+  }
+  return { title: q.title, description: q.description };
+}
 
 export const INDOOR_QUEST_IDS = QUEST_TAXONOMY
   .filter((q) => !q.requiresOutdoor)
@@ -486,8 +506,25 @@ export const QUEST_CATEGORY_LABEL_FR: Record<PsychologicalCategory, string> = {
   unconditional_service: 'Don & partage',
 };
 
-export function questFamilyLabel(category: string | undefined | null): string | null {
+export const QUEST_CATEGORY_LABEL_EN: Record<PsychologicalCategory, string> = {
+  spatial_adventure: 'Travel & exploration',
+  public_introspection: 'Presence in public',
+  sensory_deprivation: 'Immersion & calm',
+  exploratory_sociability: 'Meetups & places',
+  physical_existential: 'Body & perspective',
+  async_discipline: 'Discipline & rhythm',
+  dopamine_detox: 'Rhythm & screens',
+  active_empathy: 'Connection & listening',
+  temporal_projection: 'Projection',
+  hostile_immersion: 'Social immersion',
+  spontaneous_altruism: 'Warm gestures',
+  relational_vulnerability: 'Close ties',
+  unconditional_service: 'Giving & sharing',
+};
+
+export function questFamilyLabel(category: string | undefined | null, locale: AppLocale = 'fr'): string | null {
   if (!category) return null;
   const k = category as PsychologicalCategory;
-  return k in QUEST_CATEGORY_LABEL_FR ? QUEST_CATEGORY_LABEL_FR[k] : null;
+  const map = locale === 'en' ? QUEST_CATEGORY_LABEL_EN : QUEST_CATEGORY_LABEL_FR;
+  return k in map ? map[k] : null;
 }

@@ -1,3 +1,4 @@
+import type { AppLocale } from '@questia/shared';
 import { levelFromTotalXp, displayEarnedBadges, type DisplayBadge } from '@questia/shared';
 
 export type SerializedBadge = DisplayBadge;
@@ -15,8 +16,8 @@ export function parseBadgesEarned(raw: unknown): { id: string; unlockedAt: strin
     .map((b) => ({ id: b.id, unlockedAt: b.unlockedAt }));
 }
 
-export function serializeBadges(raw: unknown): SerializedBadge[] {
-  return displayEarnedBadges(raw);
+export function serializeBadges(raw: unknown, locale: AppLocale = 'fr'): SerializedBadge[] {
+  return displayEarnedBadges(raw, locale);
 }
 
 export function progressionFields(totalXp: number) {

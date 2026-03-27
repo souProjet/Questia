@@ -11,16 +11,16 @@ Ce qui est déjà solide
 Ce qui manque ou reste fragile (priorité subjective)
 ----------------------------------------------------
 
-1. Tests de bout en bout (E2E)
+1. Tests de bout en bout (E2E) : OK
    Pas de couche Playwright / Cypress visible : les parcours critiques (auth, quête du jour, paiement, partage) reposent sur la CI unitaire + les tests manuels. Pour une app « life », c’est souvent le prochain palier de confiance.
 
-2. Mobile : peu ou pas de tests automatisés
+2. Mobile : peu ou pas de tests automatisés : OK
    La logique partagée est testée ; l’app Expo elle-même semble peu couverte (composants, navigation, intégrations natives).
 
-3. Gestion d’erreurs « Next »
+3. Gestion d’erreurs « Next » : OK
    Pas de error.tsx / global-error.tsx repérés : en cas d’exception React ou de segment qui casse, l’expérience utilisateur dépend du défaut Next, moins contrôlée qu’une page d’erreur Questia.
 
-4. Internationalisation
+4. Internationalisation : OK
    Tout est FR (lang="fr", Clerk FR) — cohérent pour le lancement France ; si l’ambition est EU / export, il manquera tôt ou tard une vraie couche i18n (clés, routes, métadonnées).
 
 5. Observabilité prod

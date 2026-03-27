@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PersonalityVector } from '@questia/shared';
 import { QUEST_TAXONOMY } from '@questia/shared';
-import { archetypeCategoryLabelFr, buildPersonalityPromptBlock, describeArchetypeTargetTraits } from './questGenerationPrompt';
+import { archetypeCategoryLabel, buildPersonalityPromptBlock, describeArchetypeTargetTraits } from './questGenerationPrompt';
 
 const base = (): PersonalityVector => ({
   openness: 0.5,
@@ -29,7 +29,7 @@ describe('questGenerationPrompt', () => {
 
   it('describeArchetypeTargetTraits et libellé famille', () => {
     const q = QUEST_TAXONOMY[0]!;
-    expect(archetypeCategoryLabelFr(q.category).length).toBeGreaterThan(3);
+    expect(archetypeCategoryLabel(q.category).length).toBeGreaterThan(3);
     expect(describeArchetypeTargetTraits(q).length).toBeGreaterThan(5);
   });
 });

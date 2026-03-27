@@ -3,6 +3,8 @@
  * Déterministes par date ISO + contexte (première ouverture calendaire du jour vs reprise).
  */
 
+import type { AppLocale } from './types';
+
 /** Clé partagée web (localStorage) et mobile (AsyncStorage) pour savoir si l’app a déjà été ouverte aujourd’hui. */
 export const QUEST_LOADER_DAY_STORAGE_KEY = 'questia_loader_day_opened';
 
@@ -48,6 +50,46 @@ const SECONDARY_RETURNING = [
   'On garde le même rythme pour ta journée.',
 ] as const;
 
+const PRIMARY_FIRST_TODAY_EN = [
+  'Preparing your quest for today',
+  'First open of the day — building your card…',
+  'Welcome to today’s session — one moment…',
+  'Assembling your tailored mission for today…',
+  'Your daily card is taking shape…',
+  'One moment: we’re aligning everything to your profile',
+  'Almost ready — picking the right pace for you',
+] as const;
+
+const SECONDARY_FIRST_TODAY_EN = [
+  'Weather, places, your style — all lining up.',
+  'Your journey and preferences guide the card.',
+  'First load of the day can take a bit longer.',
+  'Every day, a different card.',
+  'We keep quests grounded in your reality.',
+  'Just a moment…',
+  'We avoid monotony, not simplicity.',
+] as const;
+
+const PRIMARY_RETURNING_EN = [
+  'Reloading your quest for today…',
+  'Back to your card — almost there.',
+  'One more moment — smoother than earlier.',
+  'Syncing…',
+  'Updating today’s mission…',
+  'Almost there — your session continues.',
+  'One last polish…',
+] as const;
+
+const SECONDARY_RETURNING_EN = [
+  'You already opened the app today — often quicker.',
+  'Warm cache: it can be fast.',
+  'If you just refreshed the page, that’s normal.',
+  'Same day, same energy — finishing up.',
+  'A few seconds is often enough.',
+  'Nothing to redo on your side.',
+  'Keeping the same rhythm for your day.',
+] as const;
+
 function daySeed(isoDay: string): number {
   const parts = isoDay.split('-').map(Number);
   if (parts.length !== 3) return 0;
@@ -73,17 +115,32 @@ export function resolveQuestLoaderSession(
 /**
  * @param isoDate - Date ISO `YYYY-MM-DD` pour la rotation des variantes (optionnel)
  * @param session - Première ouverture du jour calendaire vs reprise (défaut : `first-today`)
+ * @param locale - Langue d’affichage (défaut : `fr`)
  */
 export function getDailyQuestLoadingLines(
   isoDate?: string,
   session: QuestLoaderSession = 'first-today',
+  locale: AppLocale = 'fr',
 ): { primary: string; secondary: string } {
   const day =
     typeof isoDate === 'string' && isIsoDate(isoDate) ? isoDate : new Date().toISOString().slice(0, 10);
   const seed = daySeed(day);
   const first = session === 'first-today';
-  const primaries = first ? PRIMARY_FIRST_TODAY : PRIMARY_RETURNING;
-  const secondaries = first ? SECONDARY_FIRST_TODAY : SECONDARY_RETURNING;
+  const en = locale === 'en';
+  const primaries = first
+    ? en
+      ? PRIMARY_FIRST_TODAY_EN
+      : PRIMARY_FIRST_TODAY
+    : en
+      ? PRIMARY_RETURNING_EN
+      : PRIMARY_RETURNING;
+  const secondaries = first
+    ? en
+      ? SECONDARY_FIRST_TODAY_EN
+      : SECONDARY_FIRST_TODAY
+    : en
+      ? SECONDARY_RETURNING_EN
+      : SECONDARY_RETURNING;
   const pi = ((seed % primaries.length) + primaries.length) % primaries.length;
   const si = ((seed * 7 + 13) % secondaries.length + secondaries.length) % secondaries.length;
   return {

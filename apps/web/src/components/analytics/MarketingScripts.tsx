@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/i18n/navigation';
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
 import { analyticsConfig } from '@/config/analytics';

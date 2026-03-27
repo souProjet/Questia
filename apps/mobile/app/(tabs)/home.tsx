@@ -23,17 +23,18 @@ import {
   questFamilyLabel,
   getTitleDefinition,
   isValidQuestDateIso,
-  formatQuestDateFr,
+  formatQuestDateForLocale,
   REPORT_DEFER_MAX_DAYS,
   QUEST_LOADER_DAY_STORAGE_KEY,
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
-import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
+import type { AppLocale, EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/QuestRewardOverlay';
 import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
 import { QuestHomeLoading } from '../../components/QuestHomeLoading';
 import { hapticError, hapticMedium, hapticSuccess, hapticWarning } from '../../lib/haptics';
+import { getQuestReportStrings } from '../../lib/questReportStrings';
 
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
 const PRIVACY_URL = `${SITE_PUBLIC}/legal/confidentialite`;
@@ -93,6 +94,12 @@ const PHASE_LABEL: Record<EscalationPhase, { text: string; emoji: string }> = {
   calibration: { text: 'Semaine de découverte', emoji: '🌱' },
   expansion:   { text: 'En mode exploration',   emoji: '🧭' },
   rupture:     { text: 'Phase d\'intensité',    emoji: '⚡' },
+};
+
+const PHASE_LABEL_EN: Record<EscalationPhase, { text: string; emoji: string }> = {
+  calibration: { text: 'Discovery week', emoji: '🌱' },
+  expansion: { text: 'Exploration mode', emoji: '🧭' },
+  rupture: { text: 'Intensity phase', emoji: '⚡' },
 };
 
 const PHASE_CHIP: Record<EscalationPhase, { bg: string; border: string; color: string }> = {
@@ -190,6 +197,13 @@ export default function DashboardScreen() {
   const { user } = useUser();
   const router = useRouter();
 
+  const appLocale = useMemo((): AppLocale => {
+    const tag = Intl.DateTimeFormat().resolvedOptions().locale ?? 'fr';
+    return tag.toLowerCase().startsWith('en') ? 'en' : 'fr';
+  }, []);
+
+  const reportUi = useMemo(() => getQuestReportStrings(appLocale), [appLocale]);
+
   /** Clerk recrée souvent getToken → évite de recréer loadQuest à chaque rendu (boucle infinie d’effets). */
   const getTokenRef = useRef(getToken);
   useEffect(() => {
@@ -281,6 +295,7 @@ export default function DashboardScreen() {
           sp.set('lon', String(lon));
         }
         if (qd) sp.set('questDate', qd);
+        sp.set('locale', appLocale);
         const qs = sp.toString();
         const url = `${API_BASE_URL}/api/quest/daily${qs ? `?${qs}` : ''}`;
         const res = await apiFetch(url, token);
@@ -307,7 +322,7 @@ export default function DashboardScreen() {
         if (!silent) setLoading(false);
       }
     },
-    [ensureProfile, questDateFromRoute],
+    [ensureProfile, questDateFromRoute, appLocale],
   );
 
   const enrichQuestWithLocation = useCallback(
@@ -459,11 +474,11 @@ export default function DashboardScreen() {
   const isAccepted = qs === 'accepted';
   const isCompleted = qs === 'completed';
   const isAbandoned = qs === 'abandoned';
-  const questFamily = quest ? questFamilyLabel(quest.archetypeCategory) : null;
+  const questFamily = quest ? questFamilyLabel(quest.archetypeCategory, appLocale) : null;
   const questPace = quest?.questPace ?? 'instant';
 
   const phase = quest?.phase ?? 'calibration';
-  const phaseInfo = PHASE_LABEL[phase];
+  const phaseInfo = (appLocale === 'en' ? PHASE_LABEL_EN : PHASE_LABEL)[phase];
   const phaseChip = PHASE_CHIP[phase];
   const rerollDaily = quest?.rerollsRemaining ?? rerollsRemaining;
   const rerollBonus = quest?.bonusRerollCredits ?? 0;
@@ -962,7 +977,7 @@ export default function DashboardScreen() {
               end={{ x: 1, y: 1 }}
               style={[styles.questDayStatusStrip, compact && styles.questDayStatusStripCompact]}
               accessibilityRole="summary"
-              accessibilityLabel={`Quête du jour ${formatQuestDateFr(quest.questDate)} — ${questStatusDisplay.label}`}
+              accessibilityLabel={`Quête du jour ${formatQuestDateForLocale(quest.questDate, appLocale)} — ${questStatusDisplay.label}`}
             >
               <View style={styles.questDayStatusAccent} accessibilityElementsHidden />
               <View style={styles.questDayStatusInner}>
@@ -971,7 +986,7 @@ export default function DashboardScreen() {
                     QUÊTE DU JOUR
                   </Text>
                   <Text style={[styles.questDayStatusDate, compact && styles.questDayStatusDateCompact]}>
-                    {formatQuestDateFr(quest.questDate)}
+                    {formatQuestDateForLocale(quest.questDate, appLocale)}
                   </Text>
                 </View>
                 <View
@@ -1038,7 +1053,7 @@ export default function DashboardScreen() {
                 {quest.deferredSocialUntil && isPending ? (
                   <Text style={styles.deferNote}>
                     📅 Pour un défi plus ambitieux ou social, repère :{' '}
-                    {formatQuestDateFr(quest.deferredSocialUntil)} — optionnel.
+                    {formatQuestDateForLocale(quest.deferredSocialUntil, appLocale)} — optionnel.
                   </Text>
                 ) : null}
                 <View style={styles.missionMetaRow}>
@@ -1175,14 +1190,12 @@ export default function DashboardScreen() {
                         }}
                         disabled={!canRerollQuest}
                       >
-                        <Text style={styles.secondaryCtaText}>Reporter — courte</Text>
+                        <Text style={styles.secondaryCtaText}>{reportUi.reportShortQuest}</Text>
                       </Pressable>
                     ) : null}
                   </View>
                   {questPace === 'planned' ? (
-                    <Text style={styles.reportHint}>
-                      Reporter utilise une relance comme « Changer de quête », puis une mission faisable vite.
-                    </Text>
+                    <Text style={styles.reportHint}>{reportUi.reportHint}</Text>
                   ) : null}
                   {API_BASE_URL.includes('localhost') && (
                     <View style={styles.localhostWarning}>
@@ -1205,12 +1218,9 @@ export default function DashboardScreen() {
       <Modal visible={showReportModal} transparent animationType="fade" onRequestClose={() => setShowReportModal(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Reporter avec une relance</Text>
-            <Text style={styles.modalBody}>
-              Comme « Changer de quête », cela consomme une relance. Tu recevras une mission courte pour aujourd’hui.
-              Choisis une date repère (max {REPORT_DEFER_MAX_DAYS} jours) pour un défi plus ambitieux — optionnel.
-            </Text>
-            <Text style={styles.modalLabel}>Date repère</Text>
+            <Text style={styles.modalTitle}>{reportUi.reportModalTitle}</Text>
+            <Text style={styles.modalBody}>{reportUi.reportModalBody(REPORT_DEFER_MAX_DAYS)}</Text>
+            <Text style={styles.modalLabel}>{reportUi.reportDateLabel}</Text>
             <ScrollView style={styles.datePickScroll} nestedScrollEnabled>
               {reportDateOptions.map((iso) => (
                 <Pressable
@@ -1227,7 +1237,7 @@ export default function DashboardScreen() {
                       reportDeferredDate === iso && styles.datePickRowTextActive,
                     ]}
                   >
-                    {formatQuestDateFr(iso)}
+                    {formatQuestDateForLocale(iso, appLocale)}
                   </Text>
                 </Pressable>
               ))}
@@ -1767,7 +1777,14 @@ function buildDashboardStyles(p: ThemePalette) {
   },
   secondaryCtaBtnPressed: { opacity: 0.92 },
   secondaryCtaText: { fontSize: 11, fontWeight: '800', color: '#155e75', textAlign: 'center' },
-  reportHint: { fontSize: 10, color: p.onCreamMuted, textAlign: 'center', lineHeight: 14, marginTop: -2 },
+  reportHint: {
+    fontSize: 11,
+    color: p.onCreamMuted,
+    textAlign: 'center',
+    lineHeight: 15,
+    marginTop: 2,
+    paddingHorizontal: 4,
+  },
   rerollBtnProminent: {
     borderWidth: 2,
     borderColor: 'rgba(251,146,60,0.68)',

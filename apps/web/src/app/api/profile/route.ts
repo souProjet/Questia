@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
 import { QUADRANT_DEFAULTS, getBadgeCatalogForUi, getThemeIds, TITLE_IDS } from '@questia/shared';
 import type { ExplorerAxis, RiskAxis } from '@questia/shared';
+import { parseAppLocaleFromRequest } from '@/lib/requestLocale';
 import { progressionFields, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
 import { isValidIanaTimeZone } from '@/lib/reminders/time';
@@ -41,9 +42,11 @@ function shopPayload(profile: {
 }
 
 /** GET /api/profile — returns the current user's profile + progression (XP, badges) */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+
+  const locale = parseAppLocaleFromRequest(request);
 
   const profile = await prisma.profile.findUnique({
     where: { clerkId: userId },
@@ -56,8 +59,8 @@ export async function GET() {
     shop: shopPayload(profile),
     progression: {
       ...progressionFields(totalXp),
-      badges: serializeBadges(profile.badgesEarned),
-      badgeCatalog: getBadgeCatalogForUi(profile.badgesEarned),
+      badges: serializeBadges(profile.badgesEarned, locale),
+      badgeCatalog: getBadgeCatalogForUi(profile.badgesEarned, locale),
     },
   });
 }
@@ -66,6 +69,7 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+  const locale = parseAppLocaleFromRequest(request);
 
   const body = await request.json().catch(() => ({})) as {
     activeThemeId?: string;
@@ -170,8 +174,8 @@ export async function PATCH(request: NextRequest) {
     shop: shopPayload(updated),
     progression: {
       ...progressionFields(totalXp),
-      badges: serializeBadges(updated.badgesEarned),
-      badgeCatalog: getBadgeCatalogForUi(updated.badgesEarned),
+      badges: serializeBadges(updated.badgesEarned, locale),
+      badgeCatalog: getBadgeCatalogForUi(updated.badgesEarned, locale),
     },
   });
 }

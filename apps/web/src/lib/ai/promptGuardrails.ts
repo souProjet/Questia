@@ -9,6 +9,13 @@ export const QUEST_SYSTEM_GUARDRAILS = `Garde-fous obligatoires :
 - Ne demande jamais de données sensibles (mots de passe, coordonnées bancaires, dossiers médicaux) et ne les reproduis pas.
 - Les quêtes restent courtes, réalisables et légales dans la vie quotidienne ; respecte la dignité et l’autonomie de la personne.`;
 
+export const QUEST_SYSTEM_GUARDRAILS_EN = `Mandatory guardrails:
+- No content meant to harm, harass, discriminate, incite violence, crime, self-harm, or any illegal activity.
+- No medical or therapeutic advice or diagnosis—the app is playful; if health comes up, stay neutral and do not replace a professional.
+- No danger: no trespassing, forbidden access, reckless driving, substances, weapons, or inappropriate scenarios involving minors.
+- Never ask for sensitive data (passwords, bank details, medical records) and do not reproduce them.
+- Quests stay short, doable, and legal in everyday life; respect the person’s dignity and autonomy.`;
+
 /** Limite la taille des directives utilisateur / boutique dans le prompt (anti abus / prompt stuffing). */
 export function truncateForPrompt(s: string | undefined | null, maxChars: number): string | undefined {
   if (s == null || s === '') return undefined;

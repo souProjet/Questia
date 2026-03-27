@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from 'next-intl';
 import { Compass, Sparkles } from 'lucide-react';
 import {
   getDailyQuestLoadingLines,
@@ -13,6 +14,8 @@ import {
  * Session lue une seule fois au montage (localStorage synchrone) pour éviter deux messages différents.
  */
 export function QuestHomeLoading() {
+  const intlLocale = useLocale();
+  const questLocale = intlLocale === 'en' ? 'en' : 'fr';
   const [session] = useState(() => {
     if (typeof window === 'undefined') return 'first-today' as const;
     try {
@@ -24,7 +27,7 @@ export function QuestHomeLoading() {
     }
   });
 
-  const { primary, secondary } = getDailyQuestLoadingLines(undefined, session);
+  const { primary, secondary } = getDailyQuestLoadingLines(undefined, session, questLocale);
 
   return (
     <main

@@ -128,9 +128,13 @@ export function QuestHomeLoading({ compact }: Props) {
       try {
         const last = await AsyncStorage.getItem(QUEST_LOADER_DAY_STORAGE_KEY);
         const session = resolveQuestLoaderSession(last, today);
-        if (!cancelled) setLines(getDailyQuestLoadingLines(undefined, session));
+        const loc = Intl.DateTimeFormat().resolvedOptions().locale ?? 'fr';
+        const questLocale = loc.toLowerCase().startsWith('en') ? 'en' : 'fr';
+        if (!cancelled) setLines(getDailyQuestLoadingLines(undefined, session, questLocale));
       } catch {
-        if (!cancelled) setLines(getDailyQuestLoadingLines(undefined, 'first-today'));
+        const loc = Intl.DateTimeFormat().resolvedOptions().locale ?? 'fr';
+        const questLocale = loc.toLowerCase().startsWith('en') ? 'en' : 'fr';
+        if (!cancelled) setLines(getDailyQuestLoadingLines(undefined, 'first-today', questLocale));
       }
     })();
     return () => {

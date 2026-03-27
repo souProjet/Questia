@@ -14,26 +14,29 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth, useUser } from '@clerk/expo';
 import {
+  BADGE_CATEGORY_LABEL_EN,
   BADGE_CATEGORY_LABEL_FR,
   getBadgeCatalogForUi,
   levelFromTotalXp,
+  type AppLocale,
   type ExplorerAxis,
   type RiskAxis,
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { hapticLight } from '../../lib/haptics';
+import { getProfileScreenStrings } from '../../lib/profileScreenStrings';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
 
-const LEGAL_LINKS = [
-  { label: 'Confidentialit\u00e9', icon: '\u{1F512}', path: '/legal/confidentialite' },
-  { label: 'Mentions l\u00e9gales', icon: '\u{1F4C4}', path: '/legal/mentions-legales' },
-  { label: 'CGU', icon: '\u{1F4CB}', path: '/legal/cgu' },
-  { label: 'CGV', icon: '\u{1F4B3}', path: '/legal/cgv' },
-  { label: 'Bien-\u00eatre', icon: '\u{1F49A}', path: '/legal/bien-etre' },
-] as const;
+const LEGAL_PATHS = [
+  { key: 'privacy' as const, icon: '\u{1F512}', path: '/legal/confidentialite' },
+  { key: 'legal' as const, icon: '\u{1F4C4}', path: '/legal/mentions-legales' },
+  { key: 'terms' as const, icon: '\u{1F4CB}', path: '/legal/cgu' },
+  { key: 'sales' as const, icon: '\u{1F4B3}', path: '/legal/cgv' },
+  { key: 'wellbeing' as const, icon: '\u{1F49A}', path: '/legal/bien-etre' },
+];
 
 async function apiFetch(
   url: string,
@@ -58,6 +61,13 @@ type ProfilePayload = {
 };
 
 export default function ProfileScreen() {
+  const appLocale = useMemo((): AppLocale => {
+    const tag = Intl.DateTimeFormat().resolvedOptions().locale ?? 'fr';
+    return tag.toLowerCase().startsWith('en') ? 'en' : 'fr';
+  }, []);
+  const s = useMemo(() => getProfileScreenStrings(appLocale), [appLocale]);
+  const dateLocale = appLocale === 'en' ? 'en-GB' : 'fr-FR';
+  const badgeCat = appLocale === 'en' ? BADGE_CATEGORY_LABEL_EN : BADGE_CATEGORY_LABEL_FR;
   const router = useRouter();
   const { getToken, signOut } = useAuth();
   const { user } = useUser();
@@ -79,9 +89,9 @@ export default function ProfileScreen() {
     setError(null);
     try {
       const token = await getTokenRef.current();
-      const res = await apiFetch(`${API_BASE_URL}/api/profile`, token);
+      const res = await apiFetch(`${API_BASE_URL}/api/profile?locale=${appLocale}`, token);
       if (!res.ok) {
-        setError(res.status === 401 ? 'Session expir\u00e9e.' : `Erreur ${res.status}`);
+        setError(res.status === 401 ? s.errSession : s.errGeneric(res.status));
         setProfile(null);
         return;
       }
@@ -96,11 +106,11 @@ export default function ProfileScreen() {
         useNativeDriver: false,
       }).start();
     } catch {
-      setError('Impossible de charger le profil.');
+      setError(s.errLoad);
     } finally {
       setLoading(false);
     }
-  }, [barAnim]);
+  }, [barAnim, s]);
 
   useEffect(() => {
     void load();
@@ -108,13 +118,25 @@ export default function ProfileScreen() {
 
   const totalXp = profile?.totalXp ?? 0;
   const { level, xpIntoLevel, xpToNext, xpPerLevel } = levelFromTotalXp(totalXp);
-  const badgeCatalog = getBadgeCatalogForUi(profile?.badgesEarned);
+  const badgeCatalog = getBadgeCatalogForUi(profile?.badgesEarned, appLocale);
 
   const quadrantLabel = profile
-    ? `${profile.explorerAxis === 'explorer' ? 'Explorateur\u00b7rice' : 'Casanier\u00b7i\u00e8re'} \u00b7 ${
-        profile.riskAxis === 'risktaker' ? 'Audacieux\u00b7se' : 'Prudent\u00b7e'
+    ? `${profile.explorerAxis === 'explorer' ? s.axisExplorer : s.axisHomebody} \u00b7 ${
+        profile.riskAxis === 'risktaker' ? s.riskAudacious : s.riskCautious
       }`
     : '';
+
+  const legalLabelByKey = useMemo(
+    () =>
+      ({
+        privacy: s.legalPrivacy,
+        legal: s.legalLegal,
+        terms: s.legalTerms,
+        sales: s.legalSales,
+        wellbeing: s.legalWellbeing,
+      }) as const,
+    [s],
+  );
 
   const barWidth = barAnim.interpolate({
     inputRange: [0, 1],
@@ -137,7 +159,7 @@ export default function ProfileScreen() {
         <View style={styles.center}>
           <Text style={styles.err}>{error}</Text>
           <Pressable style={styles.retry} onPress={() => void load()}>
-            <Text style={styles.retryText}>R\u00e9essayer</Text>
+            <Text style={styles.retryText}>{s.retry}</Text>
           </Pressable>
         </View>
       ) : (
@@ -153,16 +175,16 @@ export default function ProfileScreen() {
               router.push('/shop');
             }}
             accessibilityRole="button"
-            accessibilityLabel="Niveau et XP"
-            accessibilityHint="Ouvre la boutique pour bonus XP et cosm\u00e9tiques"
+            accessibilityLabel={s.a11yLevelCard}
+            accessibilityHint={s.a11yLevelHint}
             style={({ pressed }) => [styles.levelCard, pressed && styles.levelCardPressed]}
           >
             <View style={styles.levelHeader}>
-              <Text style={styles.levelLabel}>Niveau</Text>
+              <Text style={styles.levelLabel}>{s.levelLabel}</Text>
               <Text style={styles.levelValue}>{level}</Text>
             </View>
             <Text style={styles.xpCaption}>
-              {totalXp} XP au total {'\u00b7'} encore {xpToNext} XP pour monter (tranche {xpIntoLevel}/{xpPerLevel})
+              {s.xpLine(totalXp, xpToNext, xpIntoLevel, xpPerLevel)}
             </Text>
             <View style={styles.track}>
               <Animated.View style={[styles.fill, { width: barWidth }]} />
@@ -178,19 +200,19 @@ export default function ProfileScreen() {
               style={({ pressed }) => [styles.mini, pressed && styles.miniPressed]}
             >
               <Text style={styles.miniEmoji}>{'\u{1F4CD}'}</Text>
-              <Text style={styles.miniVal}>Jour {profile?.currentDay ?? 1}</Text>
-              <Text style={styles.miniLbl}>Parcours</Text>
+              <Text style={styles.miniVal}>{s.dayChip(profile?.currentDay ?? 1)}</Text>
+              <Text style={styles.miniLbl}>{s.journey}</Text>
             </Pressable>
             <Pressable
               onPress={() => router.push('/home')}
               accessibilityRole="button"
-              accessibilityLabel="Accueil et qu\u00eate du jour"
-              accessibilityHint="Retour \u00e0 l'accueil"
+              accessibilityLabel={s.a11yHome}
+              accessibilityHint={s.a11yHomeHint}
               style={({ pressed }) => [styles.mini, pressed && styles.miniPressed]}
             >
               <Text style={styles.miniEmoji}>{'\u{1F525}'}</Text>
               <Text style={styles.miniVal}>{profile?.streakCount ?? 0}</Text>
-              <Text style={styles.miniLbl}>S\u00e9rie</Text>
+              <Text style={styles.miniLbl}>{s.streak}</Text>
             </Pressable>
           </View>
 
@@ -209,29 +231,29 @@ export default function ProfileScreen() {
                   <Text style={[styles.badgeEmoji, !b.unlocked && styles.badgeEmojiMuted]}>{b.placeholderEmoji}</Text>
                   {b.unlocked ? (
                     <View style={styles.badgePillUnlocked}>
-                      <Text style={styles.badgePillUnlockedText}>D\u00e9bloqu\u00e9</Text>
+                      <Text style={styles.badgePillUnlockedText}>{s.unlocked}</Text>
                     </View>
                   ) : (
                     <View style={styles.badgePillLocked}>
-                      <Text style={styles.badgePillLockedText}>{'\u00c0'} d\u00e9bloquer</Text>
+                      <Text style={styles.badgePillLockedText}>{s.locked}</Text>
                     </View>
                   )}
                 </View>
                 <Text style={[styles.badgeCat, b.unlocked ? styles.badgeCatUnlocked : styles.badgeCatLocked]}>
-                  {BADGE_CATEGORY_LABEL_FR[b.category]}
+                  {badgeCat[b.category]}
                 </Text>
                 <Text style={[styles.badgeName, !b.unlocked && styles.badgeNameMuted]}>{b.title}</Text>
                 <Text style={[styles.badgeCrit, !b.unlocked && styles.badgeCritLocked]}>{b.criteria}</Text>
                 {b.unlocked && b.unlockedAt ? (
                   <Text style={styles.badgeDateUnlocked}>
-                    {new Date(b.unlockedAt).toLocaleDateString('fr-FR', {
+                    {new Date(b.unlockedAt).toLocaleDateString(dateLocale, {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',
                     })}
                   </Text>
                 ) : (
-                  <Text style={styles.badgeDate}>Objectif en cours</Text>
+                  <Text style={styles.badgeDate}>{s.objectiveInProgress}</Text>
                 )}
               </View>
             ))}
@@ -241,29 +263,29 @@ export default function ProfileScreen() {
           <View style={styles.infoCard}>
             <View style={styles.infoCardHeader}>
               <Text style={styles.infoCardIcon}>{'\u{1F916}'}</Text>
-              <Text style={styles.infoCardTitle}>Donn\u00e9es personnelles et IA</Text>
+              <Text style={styles.infoCardTitle}>{s.aiTitle}</Text>
             </View>
-            <Text style={styles.infoCardBody}>
-              Les textes de qu\u00eate sont g\u00e9n\u00e9r\u00e9s par IA {'\u00e0'} partir de ton profil et du contexte.
-              C'est une suggestion ludique, pas un conseil m\u00e9dical.
-            </Text>
+            <Text style={styles.infoCardBody}>{s.aiBody}</Text>
           </View>
 
           {/* Liens l\u00e9gaux */}
-          <Text style={styles.section}>Informations l\u00e9gales</Text>
+          <Text style={styles.section}>{s.legalTitle}</Text>
           <View style={styles.legalGrid}>
-            {LEGAL_LINKS.map((l) => (
-              <Pressable
-                key={l.path}
-                onPress={() => void Linking.openURL(`${SITE_PUBLIC}${l.path}`)}
-                style={({ pressed }) => [styles.legalBtn, pressed && styles.legalBtnPressed]}
-                accessibilityRole="link"
-                accessibilityLabel={`Ouvrir ${l.label}`}
-              >
-                <Text style={styles.legalBtnIcon}>{l.icon}</Text>
-                <Text style={styles.legalBtnText}>{l.label}</Text>
-              </Pressable>
-            ))}
+            {LEGAL_PATHS.map((l) => {
+              const label = legalLabelByKey[l.key];
+              return (
+                <Pressable
+                  key={l.path}
+                  onPress={() => void Linking.openURL(`${SITE_PUBLIC}${l.path}`)}
+                  style={({ pressed }) => [styles.legalBtn, pressed && styles.legalBtnPressed]}
+                  accessibilityRole="link"
+                  accessibilityLabel={s.legalOpen(label)}
+                >
+                  <Text style={styles.legalBtnIcon}>{l.icon}</Text>
+                  <Text style={styles.legalBtnText}>{label}</Text>
+                </Pressable>
+              );
+            })}
           </View>
 
           {/* D\u00e9connexion */}
@@ -274,9 +296,9 @@ export default function ProfileScreen() {
               void signOut();
             }}
             accessibilityRole="button"
-            accessibilityLabel="Se d\u00e9connecter"
+            accessibilityLabel={s.signOutA11y}
           >
-            <Text style={styles.signOutBtnText}>Se d\u00e9connecter</Text>
+            <Text style={styles.signOutBtnText}>{s.signOut}</Text>
           </Pressable>
         </ScrollView>
       )}

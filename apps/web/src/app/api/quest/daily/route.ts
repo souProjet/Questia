@@ -21,11 +21,19 @@ import {
   isValidQuestDateIso,
   getQuestCalendarDateNow,
 } from '@questia/shared';
-import type { EscalationPhase, ExplorerAxis, RiskAxis, PersonalityVector, QuestLog } from '@questia/shared';
+import type {
+  AppLocale,
+  EscalationPhase,
+  ExplorerAxis,
+  RiskAxis,
+  PersonalityVector,
+  QuestLog,
+} from '@questia/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
 import { getQuestContext } from '@/lib/actions/weather';
 import { geocodeNominatim, shortenDisplayName } from '@/lib/geocode';
 import { Prisma } from '@prisma/client';
+import { parseAppLocaleFromRequest } from '@/lib/requestLocale';
 import { badgeIdsSet, parseBadgesEarned, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
 import { getNarrationDirectiveForPack } from '@/lib/narrationPack';
@@ -98,13 +106,13 @@ function shopClientPayload(profile: {
   };
 }
 
-function progressionPayload(profile: { totalXp: number; badgesEarned: unknown }) {
+function progressionPayload(profile: { totalXp: number; badgesEarned: unknown }, locale: AppLocale) {
   const safe = Math.max(0, Math.floor(profile.totalXp ?? 0));
   return {
     totalXp: safe,
     ...levelFromTotalXp(safe),
-    badges: serializeBadges(profile.badgesEarned),
-    badgeCatalog: getBadgeCatalogForUi(profile.badgesEarned),
+    badges: serializeBadges(profile.badgesEarned, locale),
+    badgeCatalog: getBadgeCatalogForUi(profile.badgesEarned, locale),
   };
 }
 
@@ -115,6 +123,7 @@ export async function GET(request: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
   const url = new URL(request.url);
+  const questLocale = parseAppLocaleFromRequest(request);
   const lat = url.searchParams.get('lat') ? parseFloat(url.searchParams.get('lat')!) : undefined;
   const lon = url.searchParams.get('lon') ? parseFloat(url.searchParams.get('lon')!) : undefined;
   const requestedQuestDate = url.searchParams.get('questDate') ?? url.searchParams.get('date');
@@ -168,7 +177,7 @@ export async function GET(request: NextRequest) {
       phase: profile.currentPhase,
       deferredSocialUntil: profile.deferredSocialUntil ?? null,
       ...shopClientPayload(profile),
-      progression: progressionPayload(profile),
+      progression: progressionPayload(profile, questLocale),
       refinement: refinementSurvey,
       ...(context ? { context } : {}),
     });
@@ -188,7 +197,7 @@ export async function GET(request: NextRequest) {
       phase: profile.currentPhase,
       deferredSocialUntil: profile.deferredSocialUntil ?? null,
       ...shopClientPayload(profile),
-      progression: progressionPayload(profile),
+      progression: progressionPayload(profile, questLocale),
       refinement: refinementSurvey,
     });
   }
@@ -296,6 +305,7 @@ export async function GET(request: NextRequest) {
       isRerollGeneration: profile.flagNextQuestAfterReroll === true,
       substitutedInstantAfterDefer: instantOnly,
       refinementContext,
+      locale: questLocale,
     },
     archetype,
     context,
@@ -408,7 +418,7 @@ export async function GET(request: NextRequest) {
     deferredSocialUntil: p.deferredSocialUntil ?? null,
     context,
     ...shopClientPayload(p),
-    progression: progressionPayload(p),
+    progression: progressionPayload(p, questLocale),
     refinement: getRefinementSurveyPayload(
       {
         currentDay: newDay,
@@ -425,6 +435,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+
+  const questLocale = parseAppLocaleFromRequest(request);
 
   const body = await request.json().catch(() => ({})) as {
     questDate?: string;
@@ -520,7 +532,7 @@ export async function POST(request: NextRequest) {
       reported: true,
       deferredUntil,
       ...shopClientPayload(updatedProfile),
-      progression: progressionPayload(updatedProfile),
+      progression: progressionPayload(updatedProfile, questLocale),
       deferredSocialUntil: updatedProfile.deferredSocialUntil ?? null,
     });
   }
@@ -563,7 +575,7 @@ export async function POST(request: NextRequest) {
       streak: p.streakCount,
       deferredSocialUntil: null,
       ...shopClientPayload(p),
-      progression: progressionPayload(p),
+      progression: progressionPayload(p, questLocale),
     });
   }
 
@@ -620,7 +632,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       rerolled: true,
       ...shopClientPayload(updatedProfile),
-      progression: progressionPayload(updatedProfile),
+      progression: progressionPayload(updatedProfile, questLocale),
     });
   }
 
@@ -715,9 +727,10 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    const prog = progressionPayload(profileAfter);
+    const prog = progressionPayload(profileAfter, questLocale);
     const badgesUnlocked = serializeBadges(
       newBadges.map((b) => ({ id: b.id, unlockedAt: b.unlockedAt })),
+      questLocale,
     );
 
     return NextResponse.json({

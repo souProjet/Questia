@@ -1,10 +1,14 @@
+import { getTranslations } from 'next-intl/server';
 import { siteUrl, appStoreUrl, playStoreUrl, hasAnyStoreLink } from '@/config/marketing';
-import { LANDING_FAQ } from '@/data/landing-seo';
 
-export function LandingJsonLd() {
+/** Locale explicite : évite `getLocale()` côté serveur (ordre RSC / navigation client). */
+export async function LandingJsonLd({ locale }: { locale: string }) {
+  const t = await getTranslations({ locale, namespace: 'HomePage' });
+  const faqItems = t.raw('faqItems') as { question: string; answer: string }[];
+
   const faqSchema = {
     '@type': 'FAQPage',
-    mainEntity: LANDING_FAQ.map((item) => ({
+    mainEntity: faqItems.map((item) => ({
       '@type': 'Question',
       name: item.question,
       acceptedAnswer: {
@@ -20,8 +24,7 @@ export function LandingJsonLd() {
     image: `${siteUrl}/brand/questia-logo.png`,
     applicationCategory: 'LifestyleApplication',
     operatingSystem: 'iOS, Android, Web',
-    description:
-      'Application de quêtes quotidiennes dans la vraie vie : missions courtes personnalisées selon ton profil et ton style de joueur.',
+    description: t('jsonLd.appDescription'),
     offers: {
       '@type': 'Offer',
       price: '0',
@@ -42,9 +45,8 @@ export function LandingJsonLd() {
       '@type': 'WebSite',
       name: 'Questia',
       url: siteUrl,
-      description:
-        'Questia transforme ton quotidien en aventure : une quête IRL par jour, personnalisée.',
-      inLanguage: 'fr-FR',
+      description: t('jsonLd.webDescription'),
+      inLanguage: locale === 'en' ? 'en-US' : 'fr-FR',
       image: `${siteUrl}/brand/questia-logo.png`,
     },
     appSchema,

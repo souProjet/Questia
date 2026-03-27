@@ -60,6 +60,12 @@ describe('getBadgeCatalogForUi', () => {
     expect(row?.unlocked).toBe(true);
     expect(row?.unlockedAt).toBe('2025-01-01');
   });
+  it('localise titre et critère en anglais', () => {
+    const cat = getBadgeCatalogForUi([], 'en');
+    const row = cat.find((c) => c.id === 'serie_3');
+    expect(row?.title).toBe('First momentum');
+    expect(row?.criteria).toContain('3-day streak');
+  });
 });
 
 function stats(p: Partial<BadgeEvaluationStats>): BadgeEvaluationStats {

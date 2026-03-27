@@ -1,4 +1,4 @@
-import type { EscalationPhase, ExplorerAxis, RiskAxis } from '../types';
+import type { AppLocale, EscalationPhase, ExplorerAxis, RiskAxis } from '../types';
 
 /** Liste canonique des insignes (ids, titres et critères affichés au joueur). */
 export type BadgeId =
@@ -48,6 +48,16 @@ export const BADGE_CATEGORY_LABEL_FR: Record<BadgeCategory, string> = {
   exploration: 'Extérieur',
   style: 'Profil',
   progression: 'Parcours',
+};
+
+export const BADGE_CATEGORY_LABEL_EN: Record<BadgeCategory, string> = {
+  phase: 'Phase',
+  milestone: 'Milestone',
+  serie: 'Streak',
+  volume: 'Volume',
+  exploration: 'Outdoors',
+  style: 'Profile',
+  progression: 'Journey',
 };
 
 export interface BadgeDefinition {
@@ -262,6 +272,129 @@ const byId = new Map<string, BadgeDefinition>(
   BADGE_DEFINITIONS.map((b) => [b.id, b] as const),
 );
 
+/** Titres et critères en anglais (même ordre que BADGE_DEFINITIONS). */
+export const BADGE_TEXT_EN: Record<BadgeId, { title: string; criteria: string }> = {
+  phase_calibration_fin: {
+    title: 'Calibration cleared',
+    criteria: 'Reach at least day 3 of your journey.',
+  },
+  phase_expansion: {
+    title: 'Wider horizon',
+    criteria: 'Enter Expansion phase (day 4+).',
+  },
+  phase_rupture: {
+    title: 'Breaking point',
+    criteria: 'Enter Rupture phase (day 11+).',
+  },
+  parcours_jour_21: {
+    title: 'Three weeks',
+    criteria: 'Reach journey day 21.',
+  },
+  parcours_jour_30: {
+    title: 'A month on the road',
+    criteria: 'Reach journey day 30.',
+  },
+  parcours_jour_60: {
+    title: 'Season under your belt',
+    criteria: 'Reach journey day 60.',
+  },
+  serie_3: {
+    title: 'First momentum',
+    criteria: 'Reach a 3-day streak.',
+  },
+  serie_7: {
+    title: 'Week on fire',
+    criteria: 'Reach a 7-day streak.',
+  },
+  serie_14: {
+    title: 'Two weeks straight',
+    criteria: 'Reach a 14-day streak.',
+  },
+  serie_30: {
+    title: 'Marathon',
+    criteria: 'Reach a 30-day streak.',
+  },
+  serie_60: {
+    title: 'Iron rhythm',
+    criteria: 'Reach a 60-day streak.',
+  },
+  premiere_quete: {
+    title: 'First stone',
+    criteria: 'Complete your first quest.',
+  },
+  cinq_quetes: {
+    title: 'Five wins',
+    criteria: 'Complete 5 quests in total.',
+  },
+  dix_quetes: {
+    title: 'Consistency',
+    criteria: 'Complete 10 quests in total.',
+  },
+  quinze_quetes: {
+    title: 'On a roll',
+    criteria: 'Complete 15 quests in total.',
+  },
+  vingt_cinq_quetes: {
+    title: 'Quarter century',
+    criteria: 'Complete 25 quests in total.',
+  },
+  cinquante_quetes: {
+    title: 'Half-century',
+    criteria: 'Complete 50 quests in total.',
+  },
+  cent_quetes: {
+    title: 'Centurion',
+    criteria: 'Complete 100 quests in total.',
+  },
+  premiere_exterieur: {
+    title: 'First step outside',
+    criteria: 'Complete your first outdoor quest.',
+  },
+  exterieur_5: {
+    title: 'Fresh air',
+    criteria: 'Complete 5 outdoor quests.',
+  },
+  exterieur_10: {
+    title: 'Place explorer',
+    criteria: 'Complete 10 outdoor quests.',
+  },
+  exterieur_25: {
+    title: 'Open water',
+    criteria: 'Complete 25 outdoor quests.',
+  },
+  exterieur_50: {
+    title: 'Open horizon',
+    criteria: 'Complete 50 outdoor quests.',
+  },
+  quadrant_audacieux: {
+    title: 'Line for line · bold',
+    criteria: 'Explorer + risk-taker profile and 15 completed quests.',
+  },
+  quadrant_explorer_prudent: {
+    title: 'Line for line · wise explorer',
+    criteria: 'Explorer + cautious profile and 15 completed quests.',
+  },
+  quadrant_homebody_prudent: {
+    title: 'Line for line · grounded',
+    criteria: 'Homebody + cautious profile and 15 completed quests.',
+  },
+  quadrant_homebody_risktaker: {
+    title: 'Line for line · tension',
+    criteria: 'Homebody + bold profile and 15 completed quests.',
+  },
+};
+
+export function localizeBadgeDefinition(
+  def: BadgeDefinition,
+  locale: AppLocale,
+): { title: string; criteria: string } {
+  if (locale === 'en') {
+    const en = BADGE_TEXT_EN[def.id];
+    if (en) return en;
+  }
+  return { title: def.title, criteria: def.criteria };
+}
+
 export function getBadgeDefinition(id: string): BadgeDefinition | undefined {
   return byId.get(id as BadgeId);
 }
@@ -276,7 +409,7 @@ export interface DisplayBadge {
 }
 
 /** Normalise le JSON stocké en base et enrichit les titres / critères pour l’UI. */
-export function displayEarnedBadges(raw: unknown): DisplayBadge[] {
+export function displayEarnedBadges(raw: unknown, locale: AppLocale = 'fr'): DisplayBadge[] {
   if (!Array.isArray(raw)) return [];
   const rows = raw.filter(
     (x): x is { id: string; unlockedAt: string } =>
@@ -287,11 +420,12 @@ export function displayEarnedBadges(raw: unknown): DisplayBadge[] {
   );
   return rows.map((b) => {
     const def = getBadgeDefinition(b.id);
+    const text = def ? localizeBadgeDefinition(def, locale) : { title: b.id, criteria: '' };
     return {
       id: b.id,
       unlockedAt: b.unlockedAt,
-      title: def?.title ?? b.id,
-      criteria: def?.criteria ?? '',
+      title: def ? text.title : b.id,
+      criteria: def ? text.criteria : '',
       placeholderEmoji: def?.placeholderEmoji ?? '🏅',
       category: def?.category ?? 'progression',
     };
@@ -322,17 +456,20 @@ function parseEarnedDates(raw: unknown): Map<string, string> {
 }
 
 /** Tous les insignes du jeu : débloqués ou verrouillés (objectifs visibles). */
-export function getBadgeCatalogForUi(earnedRaw: unknown): BadgeCatalogEntry[] {
+export function getBadgeCatalogForUi(earnedRaw: unknown, locale: AppLocale = 'fr'): BadgeCatalogEntry[] {
   const dates = parseEarnedDates(earnedRaw);
-  return BADGE_DEFINITIONS.map((def) => ({
-    id: def.id,
-    title: def.title,
-    criteria: def.criteria,
-    placeholderEmoji: def.placeholderEmoji,
-    category: def.category,
-    unlocked: dates.has(def.id),
-    unlockedAt: dates.get(def.id),
-  }));
+  return BADGE_DEFINITIONS.map((def) => {
+    const { title, criteria } = localizeBadgeDefinition(def, locale);
+    return {
+      id: def.id,
+      title,
+      criteria,
+      placeholderEmoji: def.placeholderEmoji,
+      category: def.category,
+      unlocked: dates.has(def.id),
+      unlockedAt: dates.get(def.id),
+    };
+  });
 }
 
 export interface BadgeEvaluationStats {

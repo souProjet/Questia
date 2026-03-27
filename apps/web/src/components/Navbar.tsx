@@ -1,21 +1,14 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { Link, usePathname } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useAuth, UserButton } from '@clerk/nextjs';
 import { ChevronRight, HelpCircle, Map, MessageCircle, Smartphone, X, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AdminNavLink } from '@/components/AdminNavLink';
+import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { QuestiaLogo } from '@/components/QuestiaLogo';
-
-const MARKETING_MENU: { href: string; label: string; Icon: LucideIcon }[] = [
-  { href: '#hero-examples', label: 'Exemples', Icon: Map },
-  { href: '#how', label: 'Fonctionnement', Icon: Zap },
-  { href: '#telecharger', label: 'Télécharger', Icon: Smartphone },
-  { href: '#testimonials', label: 'Avis', Icon: MessageCircle },
-  { href: '#faq', label: 'FAQ', Icon: HelpCircle },
-];
 
 const burgerBar =
   'absolute left-0 w-[22px] h-0.5 rounded-full bg-gradient-to-r from-cyan-600 via-orange-500 to-amber-500 shadow-[0_1px_0_rgba(255,255,255,.35)]';
@@ -44,7 +37,19 @@ function BurgerIcon({ open }: { open: boolean }) {
 
 export function Navbar() {
   const pathname = usePathname();
+  const t = useTranslations('Navbar');
   const { isSignedIn } = useAuth();
+
+  const marketingMenu = useMemo(
+    (): { href: string; label: string; Icon: LucideIcon }[] => [
+      { href: '#hero-examples', label: t('navExamples'), Icon: Map },
+      { href: '#how', label: t('navHow'), Icon: Zap },
+      { href: '#telecharger', label: t('navDownload'), Icon: Smartphone },
+      { href: '#testimonials', label: t('navTestimonials'), Icon: MessageCircle },
+      { href: '#faq', label: t('navFaq'), Icon: HelpCircle },
+    ],
+    [t],
+  );
   const panelId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [drawerMounted, setDrawerMounted] = useState(false);
@@ -53,6 +58,7 @@ export function Navbar() {
   const isAppRoute = pathname?.startsWith('/app') ?? false;
   const isAdminRoute = pathname?.startsWith('/admin') ?? false;
   const showMarketingNav = !isAppRoute && !isAdminRoute;
+  const showLocaleSwitcher = !isAdminRoute;
   const showMobileMenu = showMarketingNav || isAppRoute;
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
@@ -103,7 +109,7 @@ export function Navbar() {
 
   const marketingDesktop = (
     <>
-      {MARKETING_MENU.map(({ href, label, Icon }) => (
+      {marketingMenu.map(({ href, label, Icon }) => (
         <a
           key={href}
           href={href}
@@ -120,12 +126,12 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 lg:px-6 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
       <nav
         className="navbar-shell flex flex-nowrap items-center justify-between gap-2 sm:gap-4 md:gap-5 lg:gap-7 xl:gap-10 px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3 mx-auto w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[min(90rem,calc(100vw-2rem))] rounded-2xl min-w-0"
-        aria-label="Navigation principale"
+        aria-label={t('ariaMain')}
       >
         <Link
           href={isSignedIn ? '/app' : '/'}
           className="flex min-w-0 shrink items-center gap-2 sm:gap-3 group"
-          aria-label="Questia, accueil"
+          aria-label={t('ariaHome')}
         >
           <span className="flex min-w-0 items-center gap-2 sm:gap-3" aria-hidden>
             <QuestiaLogo variant="navbar" priority className="group-hover:scale-[1.03] transition-transform motion-reduce:transition-none" />
@@ -134,7 +140,7 @@ export function Navbar() {
                 QUESTIA
               </span>
               <span className="hidden min-[400px]:block text-[0.625rem] sm:text-xs font-bold uppercase tracking-wide text-[var(--link-on-bg)] whitespace-nowrap truncate max-w-[12rem] sm:max-w-none">
-                Quêtes quotidiennes dans la vraie vie
+                {t('brandSubtitle')}
               </span>
             </span>
           </span>
@@ -147,11 +153,12 @@ export function Navbar() {
         )}
 
         <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2 md:gap-3 md:pl-1 lg:pl-2">
+          {showLocaleSwitcher ? <LocaleSwitcher /> : null}
           {isSignedIn ? (
             <>
               {showMarketingNav && (
                 <Link href="/app" className="hidden sm:inline-flex btn-primary text-sm py-2 px-4 md:px-5">
-                  Ouvrir l&apos;app
+                  {t('openApp')}
                 </Link>
               )}
               {isAppRoute && (
@@ -160,19 +167,19 @@ export function Navbar() {
                     href="/app/shop"
                     className="hidden md:inline-flex text-sm font-black text-[var(--text)] px-3 py-2 rounded-xl border-2 border-[color:color-mix(in_srgb,var(--orange)_48%,transparent)] bg-[color:color-mix(in_srgb,var(--card)_72%,transparent)] hover:bg-[var(--card)] hover:border-[color:color-mix(in_srgb,var(--orange)_58%,transparent)] transition-all shadow-sm"
                   >
-                    Boutique
+                    {t('shop')}
                   </Link>
                   <Link
                     href="/app/history"
                     className="hidden md:inline-flex text-sm font-black text-[var(--text)] px-3 py-2 rounded-xl border-2 border-[color:color-mix(in_srgb,var(--cyan)_42%,transparent)] bg-[color:color-mix(in_srgb,var(--card)_72%,transparent)] hover:bg-[var(--card)] hover:border-[color:color-mix(in_srgb,var(--cyan)_55%,transparent)] transition-all shadow-sm"
                   >
-                    Historique
+                    {t('history')}
                   </Link>
                   <Link
                     href="/app/profile"
                     className="hidden md:inline-flex text-sm font-black text-[var(--text)] px-3 py-2 rounded-xl border-2 border-[color:color-mix(in_srgb,var(--violet)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--card)_72%,transparent)] hover:bg-[var(--card)] hover:border-[color:color-mix(in_srgb,var(--violet)_55%,transparent)] transition-all shadow-sm"
                   >
-                    Profil
+                    {t('profile')}
                   </Link>
                   <AdminNavLink />
                 </>
@@ -190,13 +197,13 @@ export function Navbar() {
                 href="/sign-in"
                 className="hidden sm:inline-flex text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors px-2 md:px-3 py-2 rounded-xl hover:bg-white/70"
               >
-                Connexion
+                {t('signIn')}
               </Link>
               <Link
                 href="/onboarding"
                 className="btn-cta text-xs sm:text-sm py-1.5 px-3 sm:py-2 sm:px-5 whitespace-nowrap"
               >
-                Commencer
+                {t('getStarted')}
               </Link>
             </>
           )}
@@ -210,7 +217,7 @@ export function Navbar() {
               aria-controls={panelId}
               onClick={() => setMobileOpen((o) => !o)}
             >
-              <span className="sr-only">{drawerMounted ? 'Fermer le menu' : 'Ouvrir le menu'}</span>
+              <span className="sr-only">{drawerMounted ? t('closeMenu') : t('openMenu')}</span>
               <BurgerIcon open={drawerReady && drawerMounted} />
             </button>
           ) : null}
@@ -225,7 +232,7 @@ export function Navbar() {
             className={`fixed inset-0 z-[100] bg-gradient-to-br from-slate-950/50 via-orange-950/25 to-cyan-950/30 backdrop-blur-[6px] md:hidden transition-opacity duration-300 ease-out motion-reduce:duration-100 ${
               drawerReady ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
-            aria-label="Fermer le menu"
+            aria-label={t('closeMenu')}
             onClick={closeMobile}
             tabIndex={drawerReady ? 0 : -1}
           />
@@ -248,15 +255,15 @@ export function Navbar() {
                   id={`${panelId}-title`}
                   className="font-display font-black text-[var(--on-cream)] text-lg tracking-tight"
                 >
-                  Menu
+                  {t('menuTitle')}
                 </p>
-                <p className="text-xs font-bold text-orange-900/75 mt-0.5 tracking-wide">Quête du jour</p>
+                <p className="text-xs font-bold text-orange-900/75 mt-0.5 tracking-wide">{t('menuSubtitle')}</p>
               </div>
               <button
                 type="button"
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-orange-200/60 bg-white/90 text-orange-900 shadow-sm hover:bg-cyan-50/80 hover:border-cyan-300/55 transition-colors"
                 onClick={closeMobile}
-                aria-label="Fermer"
+                aria-label={t('close')}
               >
                 <X className="h-5 w-5" strokeWidth={2.25} />
               </button>
@@ -264,8 +271,8 @@ export function Navbar() {
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 bg-gradient-to-b from-white/40 via-amber-50/20 to-cyan-50/35">
               {showMarketingNav ? (
-                <nav className="flex flex-col gap-0.5" aria-label="Sections du site">
-                  {MARKETING_MENU.map(({ href, label, Icon }) => (
+                <nav className="flex flex-col gap-0.5" aria-label={t('navSections')}>
+                  {marketingMenu.map(({ href, label, Icon }) => (
                     <a
                       key={href}
                       href={href}
@@ -287,14 +294,14 @@ export function Navbar() {
               ) : null}
 
               {isAppRoute ? (
-                <nav className="flex flex-col gap-1.5" aria-label="Navigation app">
+                <nav className="flex flex-col gap-1.5" aria-label={t('navApp')}>
                   <Link
                     href="/app/shop"
                     onClick={closeMobile}
                     className="flex items-center gap-3 rounded-xl border border-orange-200/80 bg-orange-50/50 px-3 py-3.5 text-sm font-black text-slate-900 hover:bg-orange-50 transition-colors"
                   >
                     <span className="w-1 self-stretch rounded-full bg-orange-500" aria-hidden />
-                    Boutique
+                    {t('shop')}
                     <ChevronRight className="ml-auto h-4 w-4 text-orange-600/80" strokeWidth={2.25} aria-hidden />
                   </Link>
                   <Link
@@ -303,7 +310,7 @@ export function Navbar() {
                     className="flex items-center gap-3 rounded-xl border border-cyan-200/80 bg-cyan-50/40 px-3 py-3.5 text-sm font-black text-slate-900 hover:bg-cyan-50/70 transition-colors"
                   >
                     <span className="w-1 self-stretch rounded-full bg-cyan-500" aria-hidden />
-                    Historique
+                    {t('history')}
                     <ChevronRight className="ml-auto h-4 w-4 text-cyan-700/80" strokeWidth={2.25} aria-hidden />
                   </Link>
                   <Link
@@ -312,10 +319,15 @@ export function Navbar() {
                     className="flex items-center gap-3 rounded-xl border border-violet-200/70 bg-violet-50/35 px-3 py-3.5 text-sm font-black text-slate-900 hover:bg-violet-50/60 transition-colors"
                   >
                     <span className="w-1 self-stretch rounded-full bg-violet-500" aria-hidden />
-                    Profil
+                    {t('profile')}
                     <ChevronRight className="ml-auto h-4 w-4 text-violet-600/80" strokeWidth={2.25} aria-hidden />
                   </Link>
                   <AdminNavLink variant="drawer" />
+                  {showLocaleSwitcher ? (
+                    <div className="mt-4 flex justify-center border-t border-orange-200/40 pt-4">
+                      <LocaleSwitcher />
+                    </div>
+                  ) : null}
                 </nav>
               ) : null}
 
@@ -326,7 +338,7 @@ export function Navbar() {
                     onClick={closeMobile}
                     className="flex w-full items-center justify-center rounded-2xl border-2 border-orange-300/50 bg-white/90 py-3.5 text-sm font-black text-[var(--on-cream)] shadow-[0_4px_0_rgba(120,53,15,.08)] hover:border-cyan-400/45 hover:bg-cyan-50/50 transition-colors"
                   >
-                    Connexion
+                    {t('signIn')}
                   </Link>
                 </div>
               ) : showMarketingNav ? (
@@ -336,7 +348,7 @@ export function Navbar() {
                     onClick={closeMobile}
                     className="flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 via-orange-500 to-amber-400 py-3.5 text-sm font-black text-white shadow-[0_6px_0_rgba(180,83,9,.2),0_12px_28px_rgba(249,115,22,.35)] hover:brightness-[1.04] active:translate-y-0.5 active:shadow-sm transition-[filter,transform,box-shadow] motion-reduce:transform-none"
                   >
-                    Ouvrir l&apos;app
+                    {t('openApp')}
                   </Link>
                 </div>
               ) : null}
