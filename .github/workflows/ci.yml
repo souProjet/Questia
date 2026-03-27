@@ -49,6 +49,9 @@ jobs:
     needs: quality
     env:
       TURBO_TELEMETRY_DISABLED: 1
+      # `secrets` n’est pas autorisé dans `if:` — on mappe ici pour tester avec `env.*`
+      CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v5
 
@@ -60,30 +63,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # `secrets` n’est pas utilisable dans `jobs.<id>.if` — uniquement dans `steps.*.if`
       - name: E2E désactivé (secrets Clerk manquants)
-        if: ${{ secrets.CLERK_PUBLISHABLE_KEY == '' || secrets.CLERK_SECRET_KEY == '' }}
+        if: ${{ env.CLERK_PUBLISHABLE_KEY == '' || env.CLERK_SECRET_KEY == '' }}
         run: |
           echo "::notice::Configure les secrets CLERK_PUBLISHABLE_KEY et CLERK_SECRET_KEY pour lancer les E2E."
 
       - name: Build web (clés Clerk pour E2E)
-        if: ${{ secrets.CLERK_PUBLISHABLE_KEY != '' && secrets.CLERK_SECRET_KEY != '' }}
+        if: ${{ env.CLERK_PUBLISHABLE_KEY != '' && env.CLERK_SECRET_KEY != '' }}
         run: npm run build --workspace=@questia/web
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ env.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ env.CLERK_SECRET_KEY }}
 
       - name: Install Playwright (Chromium)
-        if: ${{ secrets.CLERK_PUBLISHABLE_KEY != '' && secrets.CLERK_SECRET_KEY != '' }}
+        if: ${{ env.CLERK_PUBLISHABLE_KEY != '' && env.CLERK_SECRET_KEY != '' }}
         run: npx playwright install --with-deps chromium
         working-directory: apps/web
 
       - name: E2E (Playwright)
-        if: ${{ secrets.CLERK_PUBLISHABLE_KEY != '' && secrets.CLERK_SECRET_KEY != '' }}
+        if: ${{ env.CLERK_PUBLISHABLE_KEY != '' && env.CLERK_SECRET_KEY != '' }}
         run: npm run test:e2e -w @questia/web
         env:
           CI: true
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ env.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ env.CLERK_SECRET_KEY }}
