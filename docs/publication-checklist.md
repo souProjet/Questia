@@ -31,7 +31,7 @@ Liste des éléments restants typiques pour une mise en production (web + iOS + 
 
 - [x] **Compte Stripe live**, produits / prix alignés avec le code (webhooks, `STRIPE_WEBHOOK_SECRET` prod).
 - [ ] Tester un **parcours d’achat réel** (petit montant) + remboursement si besoin.
-- [ ] Relire les **CGV** publiées (`/legal/cgv`) avec un conseil si besoin (monnaie virtuelle, Stripe, rétractation).
+- [x] Relire les **CGV** publiées (`/legal/cgv`) avec un conseil si besoin (monnaie virtuelle, Stripe, rétractation).
 
 ---
 

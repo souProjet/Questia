@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
         source: '/.well-known/apple-app-site-association',
         headers: [{ key: 'Content-Type', value: 'application/json' }],
       },
+      {
+        source: '/.well-known/assetlinks.json',
+        headers: [{ key: 'Content-Type', value: 'application/json' }],
+      },
     ];
   },
   /** Ancienne route partage : tout passe par la modal sur /app */

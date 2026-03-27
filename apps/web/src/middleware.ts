@@ -36,6 +36,11 @@ function isPublicPagePath(pathname: string): boolean {
 export default clerkMiddleware(async (auth, req) => {
   const pathname = req.nextUrl.pathname;
 
+  /** Universal Links / App Links : fichiers publics, sans auth ni locale */
+  if (pathname.startsWith('/.well-known/')) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith('/api')) {
     if (!isPublicApiRoute(req)) {
       await auth.protect();
