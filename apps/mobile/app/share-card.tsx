@@ -10,6 +10,7 @@ import {
   Alert,
   Modal,
   useWindowDimensions,
+  Share,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +22,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { captureRef } from 'react-native-view-shot';
 import {
   QUEST_SHARE_BACKGROUNDS,
+  buildQuestShareMessage,
+  buildWebAppQuestUrl,
   formatQuestDateFr,
   formatQuestShareEquippedTitleLine,
   formatQuestShareProgressionLine,
@@ -119,6 +122,7 @@ export default function ShareCardScreen() {
   const [photoFlipH, setPhotoFlipH] = useState(false);
   const [photoFlipV, setPhotoFlipV] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [sharingLink, setSharingLink] = useState(false);
   const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
 
   const captureRefView = useRef<View>(null);
@@ -127,6 +131,7 @@ export default function ShareCardScreen() {
   const appLocale = useAppLocale().locale;
   const shareLocale = appLocale === 'en' ? 'en' : 'fr';
   const styles = useMemo(() => createShareStyles(palette, themeId), [palette, themeId]);
+  const fallbackWebUrl = useMemo(() => buildWebAppQuestUrl(SITE_PUBLIC), []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -267,6 +272,22 @@ export default function ShareCardScreen() {
     [photoRotation, photoFlipH, photoFlipV],
   );
 
+  const resolveShareUrl = useCallback(async (): Promise<string> => {
+    if (!quest) return fallbackWebUrl;
+    try {
+      const token = await getTokenRef.current();
+      const res = await apiFetch(`${API_BASE_URL}/api/quest/share`, token, {
+        method: 'POST',
+        body: JSON.stringify({ questDate: quest.questDate }),
+      });
+      if (!res.ok) return fallbackWebUrl;
+      const json = (await res.json()) as { webUrl?: string };
+      return typeof json.webUrl === 'string' && json.webUrl.trim() ? json.webUrl.trim() : fallbackWebUrl;
+    } catch {
+      return fallbackWebUrl;
+    }
+  }, [quest, fallbackWebUrl]);
+
   const shareImage = async () => {
     if (!captureRefView.current || !quest) return;
     setExporting(true);
@@ -275,14 +296,36 @@ export default function ShareCardScreen() {
         format: 'png',
         quality: 1,
       });
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
-          mimeType: 'image/png',
-          dialogTitle: 'Partager ma quête Questia',
+      const webUrl = await resolveShareUrl();
+      const shareText = buildQuestShareMessage({
+        title: quest.title,
+        webUrl,
+        equippedTitleLine: formatQuestShareEquippedTitleLine(quest.equippedTitleId),
+        progressionLine: quest.progression
+          ? formatQuestShareProgressionLine(
+              { level: quest.progression.level, totalXp: quest.progression.totalXp },
+              shareLocale,
+            )
+          : null,
+      });
+
+      try {
+        await Share.share({
+          title: 'Ma quête Questia',
+          message: shareText,
+          url: uri,
         });
         hapticMedium();
-      } else {
-        Alert.alert('Partage indisponible', 'Le partage n’est pas disponible sur cet appareil.');
+      } catch {
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'image/png',
+            dialogTitle: 'Partager ma quête Questia',
+          });
+          hapticMedium();
+        } else {
+          Alert.alert('Partage indisponible', 'Le partage n’est pas disponible sur cet appareil.');
+        }
       }
     } catch (e) {
       Alert.alert('Erreur', e instanceof Error ? e.message : 'Export impossible');
@@ -290,6 +333,38 @@ export default function ShareCardScreen() {
       setExporting(false);
     }
   };
+
+  const shareLink = useCallback(async () => {
+    if (!quest) return;
+    setSharingLink(true);
+    try {
+      const webUrl = await resolveShareUrl();
+      const shareText = buildQuestShareMessage({
+        title: quest.title,
+        webUrl,
+        equippedTitleLine: formatQuestShareEquippedTitleLine(quest.equippedTitleId),
+        progressionLine: quest.progression
+          ? formatQuestShareProgressionLine(
+              { level: quest.progression.level, totalXp: quest.progression.totalXp },
+              shareLocale,
+            )
+          : null,
+      });
+      await Share.share({
+        title: 'Ma quête Questia',
+        message: shareText,
+      });
+      hapticMedium();
+    } catch (e) {
+      if (e instanceof Error) {
+        Alert.alert('Partage du lien', e.message);
+      } else {
+        Alert.alert('Partage indisponible', 'Le partage n’est pas disponible sur cet appareil.');
+      }
+    } finally {
+      setSharingLink(false);
+    }
+  }, [quest, resolveShareUrl, shareLocale]);
 
   const first = user?.firstName ?? 'Aventurier·e';
   const bg = getQuestShareBackgroundById(bgId);
@@ -633,6 +708,19 @@ export default function ShareCardScreen() {
               <Text style={styles.shareBtnText}>Partager ou enregistrer</Text>
             )}
           </LinearGradient>
+        </Pressable>
+        <Pressable
+          onPress={() => void shareLink()}
+          disabled={sharingLink}
+          style={({ pressed }) => [
+            styles.linkBtn,
+            pressed && !sharingLink && styles.linkBtnPressed,
+            sharingLink && styles.linkBtnBusy,
+          ]}
+        >
+          <Text style={styles.linkBtnText}>
+            {sharingLink ? 'Partage du lien...' : 'Partager le lien unique'}
+          </Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -1025,6 +1113,29 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     textShadowColor: 'rgba(0,0,0,0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
+  },
+  linkBtn: {
+    marginTop: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: `${p.cyan}88`,
+    backgroundColor: `${p.cyan}14`,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  linkBtnPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
+  linkBtnBusy: {
+    opacity: 0.65,
+  },
+  linkBtnText: {
+    color: p.linkOnBg,
+    fontWeight: '800',
+    fontSize: 14,
+    letterSpacing: 0.2,
   },
   photoSheetRoot: {
     flex: 1,

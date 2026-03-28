@@ -192,6 +192,8 @@ model QuestLog {
 
   // Status
   status            QuestStatus     @default(pending)
+  /** Identifiant public de partage (lien unique web/mobile). */
+  shareId           String?         @unique @map("share_id")
   completedAt       DateTime?       @map("completed_at")
   safetyConsentGiven Boolean        @default(false) @map("safety_consent_given")
   wasRerolled       Boolean         @default(false) @map("was_rerolled")

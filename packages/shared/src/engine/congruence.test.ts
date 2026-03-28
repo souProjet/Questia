@@ -170,4 +170,25 @@ describe('selectQuest', () => {
     expect(r).not.toBeNull();
     expect(r!.questPace).toBe('instant');
   });
+
+  it('avec selectionSeed, reste deterministe pour un meme seed', () => {
+    const a = selectQuest(uniform(0.5), 'expansion', [], true, undefined, false, {
+      selectionSeed: 'userA:2026-03-28',
+    });
+    const b = selectQuest(uniform(0.5), 'expansion', [], true, undefined, false, {
+      selectionSeed: 'userA:2026-03-28',
+    });
+    expect(a?.id).toBe(b?.id);
+  });
+
+  it('peut varier entre seeds differents a score proche', () => {
+    const a = selectQuest(uniform(0.5), 'expansion', [], true, undefined, false, {
+      selectionSeed: 'userA:2026-03-28',
+    });
+    const b = selectQuest(uniform(0.5), 'expansion', [], true, undefined, false, {
+      selectionSeed: 'userB:2026-03-28',
+    });
+    expect(a).not.toBeNull();
+    expect(b).not.toBeNull();
+  });
 });

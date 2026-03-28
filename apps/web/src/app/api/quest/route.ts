@@ -23,7 +23,18 @@ export async function POST(request: NextRequest) {
     const phase = getEffectivePhase(currentDay, recentLogs);
     const recentQuestIds = questLogs.slice(-5).map((l) => l.questId);
 
-    const quest = selectQuest(declaredPersonality, phase, recentQuestIds, allowOutdoor);
+    const quest = selectQuest(
+      declaredPersonality,
+      phase,
+      recentQuestIds,
+      allowOutdoor,
+      undefined,
+      undefined,
+      {
+        exhibited,
+        congruenceDelta: delta,
+      },
+    );
 
     return NextResponse.json({
       quest,

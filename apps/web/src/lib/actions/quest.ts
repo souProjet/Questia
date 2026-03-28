@@ -35,7 +35,15 @@ export async function assignDailyQuest(input: AssignQuestInput): Promise<AssignQ
     weatherSafe = weather.safe;
   }
 
-  let quest = selectQuest(declaredPersonality, phase, recentQuestIds, weatherSafe);
+  let quest = selectQuest(
+    declaredPersonality,
+    phase,
+    recentQuestIds,
+    weatherSafe,
+    undefined,
+    undefined,
+    { exhibited, congruenceDelta: delta },
+  );
 
   let wasFallback = false;
   if (quest && !weatherSafe && quest.requiresOutdoor) {

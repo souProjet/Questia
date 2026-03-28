@@ -468,6 +468,9 @@ export function QuestShareComposer({
   const [bgId, setBgId] = useState(QUEST_SHARE_BACKGROUNDS[0].id);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [sharingLink, setSharingLink] = useState(false);
+  const [linkFeedback, setLinkFeedback] = useState<'idle' | 'copied' | 'shared' | 'error'>('idle');
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
   /** Couche modal montée (pour animation de sortie) */
   const [layerMounted, setLayerMounted] = useState(() => open);
   /** État « ouvert » pour transitions (backdrop + sheet) */
@@ -476,9 +479,11 @@ export function QuestShareComposer({
   const bgStripRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewViewportRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState(1);
 
   const background = getQuestShareBackgroundById(bgId);
-  const shareWebUrl = buildWebAppQuestUrl(siteUrl, payload.questDate);
+  const fallbackWebUrl = buildWebAppQuestUrl(siteUrl);
 
   useLayoutEffect(() => {
     if (open) {
@@ -506,6 +511,16 @@ export function QuestShareComposer({
       if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      setLinkFeedback('idle');
+    }
+  }, [open]);
+
+  useEffect(() => {
+    setShareUrl(null);
+  }, [payload.questDate]);
 
   useEffect(() => {
     if (!layerMounted) return;
@@ -547,6 +562,25 @@ export function QuestShareComposer({
     return () => el.removeEventListener('wheel', onWheel);
   }, [layerMounted, open]);
 
+  useLayoutEffect(() => {
+    if (!layerMounted) return;
+    const el = previewViewportRef.current;
+    if (!el) return;
+
+    const updateScale = () => {
+      const byWidth = el.clientWidth > 0 ? el.clientWidth / CARD_W : 1;
+      const byHeight = el.clientHeight > 0 ? el.clientHeight / CARD_H : 1;
+      const next = Math.min(1, byWidth, byHeight);
+      // Evite des micro-renders dus aux flottants.
+      setPreviewScale((prev) => (Math.abs(prev - next) < 0.001 ? prev : next));
+    };
+
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [layerMounted]);
+
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -560,17 +594,55 @@ export function QuestShareComposer({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const resolveShareUrl = useCallback(async (): Promise<string> => {
+    if (shareUrl) return shareUrl;
+    try {
+      const res = await fetch('/api/quest/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questDate: payload.questDate }),
+      });
+      if (!res.ok) return fallbackWebUrl;
+      const json = (await res.json()) as { webUrl?: string };
+      const url = typeof json.webUrl === 'string' && json.webUrl.trim() ? json.webUrl.trim() : fallbackWebUrl;
+      setShareUrl(url);
+      return url;
+    } catch {
+      return fallbackWebUrl;
+    }
+  }, [shareUrl, payload.questDate, fallbackWebUrl]);
+
   const exportPng = useCallback(async () => {
     const el = captureRef.current;
     if (!el) return;
     setExporting(true);
     try {
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+      const images = Array.from(el.querySelectorAll('img'));
+      await Promise.all(
+        images.map(async (img) => {
+          if (img.complete && img.naturalWidth > 0) return;
+          try {
+            await img.decode();
+          } catch {
+            // Fallback silencieux : on laisse html2canvas tenter le rendu.
+          }
+        }),
+      );
       const canvas = await html2canvas(el, {
         scale: 3,
         useCORS: true,
         allowTaint: false,
         logging: false,
         backgroundColor: null,
+        width: CARD_W,
+        height: CARD_H,
+        windowWidth: CARD_W,
+        windowHeight: CARD_H,
+        scrollX: 0,
+        scrollY: 0,
         /** html2canvas ne reproduit pas backdrop-filter / filter comme le navigateur — on aplatit pour coller à la preview. */
         onclone: (_documentClone, cloned) => {
           cloned.querySelectorAll<HTMLElement>('[data-share-panel]').forEach((node) => {
@@ -595,10 +667,11 @@ export function QuestShareComposer({
       if (!blob) return;
       const filename = `questia-quete-${payload.questDate}.png`;
       const file = new File([blob], filename, { type: 'image/png' });
+      const webUrl = await resolveShareUrl();
 
       const shareText = buildQuestShareMessage({
         title: payload.title,
-        webUrl: shareWebUrl,
+        webUrl,
         equippedTitleLine: formatQuestShareEquippedTitleLine(payload.equippedTitleId),
         progressionLine: payload.progression
           ? formatQuestShareProgressionLine(
@@ -615,6 +688,7 @@ export function QuestShareComposer({
           files: [file],
           title: 'Ma quête Questia',
           text: shareText,
+          url: webUrl,
         });
       } else {
         const url = URL.createObjectURL(blob);
@@ -633,8 +707,41 @@ export function QuestShareComposer({
     payload.equippedTitleId,
     payload.progression,
     shareLocale,
-    shareWebUrl,
+    resolveShareUrl,
   ]);
+
+  const shareLink = useCallback(async () => {
+    if (typeof navigator === 'undefined') return;
+    setSharingLink(true);
+    setLinkFeedback('idle');
+    try {
+      const webUrl = await resolveShareUrl();
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Ma quête Questia',
+          text: payload.title,
+          url: webUrl,
+        });
+        setLinkFeedback('shared');
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(webUrl);
+        setLinkFeedback('copied');
+        return;
+      }
+
+      setLinkFeedback('error');
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
+      setLinkFeedback('error');
+    } finally {
+      setSharingLink(false);
+    }
+  }, [payload.title, resolveShareUrl]);
 
   if (!layerMounted && !open) return null;
 
@@ -751,18 +858,38 @@ export function QuestShareComposer({
         </div>
 
         <div className="mb-6 flex min-w-0 w-full justify-center">
-          <div className="max-w-full overflow-x-auto overflow-y-visible [-webkit-overflow-scrolling:touch] pb-0.5">
+          <div
+            ref={previewViewportRef}
+            className="w-full min-w-0 h-[min(56dvh,34rem)] md:h-[min(52dvh,34rem)] flex items-center justify-center"
+          >
             <div
-              ref={captureRef}
-              className="inline-block rounded-[24px] overflow-hidden shadow-[0_20px_50px_-12px_rgba(15,23,42,0.35),0_0_0_1px_rgba(255,255,255,0.12)] ring-1 ring-white/30"
+              className="mx-auto"
+              style={{
+                width: CARD_W * previewScale,
+                height: CARD_H * previewScale,
+              }}
             >
-              <QuestShareCardFrame
-                payload={payload}
-                userFirstName={userFirstName}
-                background={background}
-                photoUrl={photoUrl}
-                shareLocale={shareLocale}
-              />
+              <div
+                style={{
+                  width: CARD_W,
+                  height: CARD_H,
+                  transform: `scale(${previewScale})`,
+                  transformOrigin: 'top left',
+                }}
+              >
+                <div
+                  ref={captureRef}
+                  className="inline-block rounded-[24px] overflow-hidden shadow-[0_20px_50px_-12px_rgba(15,23,42,0.35),0_0_0_1px_rgba(255,255,255,0.12)] ring-1 ring-white/30"
+                >
+                  <QuestShareCardFrame
+                    payload={payload}
+                    userFirstName={userFirstName}
+                    background={background}
+                    photoUrl={photoUrl}
+                    shareLocale={shareLocale}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -787,6 +914,22 @@ export function QuestShareComposer({
           </button>
           <button
             type="button"
+            className="w-full rounded-2xl border border-cyan-300/70 bg-cyan-50/70 py-3.5 text-sm font-extrabold text-cyan-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-all duration-200 hover:bg-cyan-100/80 hover:border-cyan-400/75 disabled:opacity-60"
+            disabled={sharingLink}
+            onClick={() => void shareLink()}
+          >
+            {sharingLink
+              ? 'Partage du lien...'
+              : linkFeedback === 'copied'
+                ? 'Lien copie'
+                : linkFeedback === 'shared'
+                  ? 'Lien partage'
+                  : linkFeedback === 'error'
+                    ? 'Impossible de partager le lien'
+                    : 'Partager le lien unique'}
+          </button>
+          <button
+            type="button"
             className="w-full rounded-xl py-3 text-sm font-bold text-slate-500 transition-colors hover:text-slate-800 hover:bg-slate-100/80"
             onClick={() => onOpenChange(false)}
           >
@@ -799,7 +942,7 @@ export function QuestShareComposer({
 
   const panel = (
     <div
-      className="relative z-10 flex min-h-0 w-full min-w-0 max-w-md max-h-[min(92dvh,52rem)] flex-col overflow-y-auto overflow-x-hidden overscroll-contain rounded-t-[1.85rem] md:max-h-[min(92vh,52rem)] md:rounded-[1.85rem] share-sheet-scroll"
+      className="relative z-10 flex min-h-0 w-full min-w-0 max-w-md max-h-[min(calc(100dvh-1rem),52rem)] flex-col overflow-y-auto overflow-x-hidden overscroll-contain rounded-t-[1.85rem] md:max-h-[min(calc(100vh-2.5rem),52rem)] md:rounded-[1.85rem] share-sheet-scroll"
       role="dialog"
       aria-modal
       aria-labelledby="share-card-title"
@@ -832,7 +975,7 @@ export function QuestShareComposer({
       {/* Couche plein écran : base opaque + flou (évite trous / bords du radial seuls) */}
       <button
         type="button"
-        className={`absolute left-0 top-0 z-0 min-h-[100dvh] w-full cursor-pointer border-0 transition-opacity duration-300 ease-out motion-reduce:transition-none ${
+        className={`absolute inset-0 z-0 h-full w-full cursor-pointer border-0 transition-opacity duration-300 ease-out motion-reduce:transition-none ${
           backdropActive ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         style={{

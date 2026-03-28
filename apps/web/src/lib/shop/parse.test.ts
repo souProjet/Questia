@@ -9,4 +9,10 @@ describe('parseStringArray', () => {
   it('filtre les chaînes', () => {
     expect(parseStringArray(['a', 1, 'b'])).toEqual(['a', 'b']);
   });
+  it('supporte les tableaux serialises JSON', () => {
+    expect(parseStringArray('["cinematic","poetic",1]')).toEqual(['cinematic', 'poetic']);
+  });
+  it('supporte un format CSV legacy', () => {
+    expect(parseStringArray('cinematic, poetic , noir')).toEqual(['cinematic', 'poetic', 'noir']);
+  });
 });

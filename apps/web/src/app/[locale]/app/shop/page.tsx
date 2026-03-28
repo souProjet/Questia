@@ -536,6 +536,20 @@ function ShopPageInner() {
   const ownedThemeIds = new Set(shop?.ownedThemes ?? ['default']);
   const ownedNarration = new Set(shop?.ownedNarrationPacks ?? []);
   const balance = shop?.coinBalance ?? 0;
+  const unownedItems = useMemo(() => {
+    if (!shop) return [] as ShopCatalogEntry[];
+    return items
+      .filter((item) => !catalogItemFullyOwned(item, shop, coinPurchasedSkus))
+      .sort((a, b) => a.priceCoins - b.priceCoins);
+  }, [items, shop, coinPurchasedSkus]);
+  const unlockNow = useMemo(
+    () => unownedItems.filter((item) => item.priceCoins <= balance).slice(0, 3),
+    [unownedItems, balance],
+  );
+  const unlockSoon = useMemo(
+    () => unownedItems.filter((item) => item.priceCoins > balance).slice(0, 3),
+    [unownedItems, balance],
+  );
 
   const renderCatalogCard = (item: ShopCatalogEntry) => {
     const owns = catalogItemFullyOwned(item, shop!, coinPurchasedSkus);
@@ -756,6 +770,84 @@ function ShopPageInner() {
                 </div>
               </div>
             </div>
+
+            <section className="mb-8" aria-labelledby="shop-value-heading">
+              <div className="app-shop-featured-card rounded-2xl p-5 sm:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2
+                      id="shop-value-heading"
+                      className="font-display font-black text-xl text-[var(--text)]"
+                    >
+                      {t('valueTitle')}
+                    </h2>
+                    <p className="mt-1 text-sm font-medium text-[var(--muted)]">
+                      {t('valueSubtitle')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm font-black"
+                    onClick={() => setRechargeOpen(true)}
+                  >
+                    {t('addQc')}
+                  </button>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
+                    ⚡ +XP
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
+                    🎨 {t('sectionThemes')}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
+                    🔁 {t('sectionRerolls')}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
+                    🎬 {t('sectionNarration')}
+                  </span>
+                </div>
+
+                {unlockNow.length > 0 ? (
+                  <div className="mt-4 rounded-xl border border-emerald-200/70 bg-emerald-50/60 p-3">
+                    <p className="text-xs font-black uppercase tracking-wide text-emerald-800">
+                      {t('valueUnlockNow')}
+                    </p>
+                    <ul className="mt-2 flex flex-wrap gap-2">
+                      {unlockNow.map((item) => (
+                        <li
+                          key={item.sku}
+                          className="inline-flex items-center gap-1 rounded-full border border-emerald-300/70 bg-white px-2.5 py-1 text-xs font-bold text-emerald-900"
+                        >
+                          <span aria-hidden>{item.emoji}</span>
+                          <span>{item.name}</span>
+                          <span className="text-emerald-700/85">· {item.priceCoins} QC</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : unlockSoon.length > 0 ? (
+                  <div className="mt-4 rounded-xl border border-amber-200/70 bg-amber-50/60 p-3">
+                    <p className="text-xs font-black uppercase tracking-wide text-amber-900">
+                      {t('valueNeedMore')}
+                    </p>
+                    <ul className="mt-2 flex flex-wrap gap-2">
+                      {unlockSoon.map((item) => (
+                        <li
+                          key={item.sku}
+                          className="inline-flex items-center gap-1 rounded-full border border-amber-300/70 bg-white px-2.5 py-1 text-xs font-bold text-amber-900"
+                        >
+                          <span aria-hidden>{item.emoji}</span>
+                          <span>{item.name}</span>
+                          <span className="text-amber-800/85">· {item.priceCoins} QC</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </section>
 
             <section className="mb-10" aria-labelledby="shop-prefs-heading">
               <h2 id="shop-prefs-heading" className="font-display font-black text-xl text-[var(--text)] mb-1">

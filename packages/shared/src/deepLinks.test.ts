@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildNativeAppQuestUrl,
   buildWebAppQuestUrl,
+  buildWebSharedQuestUrl,
   buildQuestShareMessage,
   formatQuestShareEquippedTitleLine,
   formatQuestShareProgressionLine,
@@ -30,6 +31,11 @@ describe('deepLinks', () => {
     expect(buildNativeAppQuestUrl('questia', '2026-01-15')).toBe('questia://app?questDate=2026-01-15');
     expect(buildNativeAppQuestUrl('questia:')).toBe('questia://app');
     expect(buildNativeAppQuestUrl('questia/', 'bad')).toBe('questia://app');
+  });
+
+  it('buildWebSharedQuestUrl', () => {
+    expect(buildWebSharedQuestUrl('https://questia.fr', 'abc123')).toBe('https://questia.fr/q/abc123');
+    expect(buildWebSharedQuestUrl('https://questia.fr/', '  z-9  ')).toBe('https://questia.fr/q/z-9');
   });
 
   it('formatQuestShareEquippedTitleLine', () => {

@@ -230,15 +230,40 @@ const FALLBACK_HOOKS_EN: string[] = [
   'Today, write a new line in your story.',
 ];
 
-function pickFallbackHook(questDateIso: string, archetypeId: number, locale: AppLocale): string {
+function pickFallbackHook(
+  questDateIso: string,
+  archetypeId: number,
+  locale: AppLocale,
+  salt?: string,
+): string {
   let h = 0;
-  for (let i = 0; i < questDateIso.length; i++) {
-    h = (Math.imul(31, h) + questDateIso.charCodeAt(i)) | 0;
+  const source = `${questDateIso}|${salt ?? ''}`;
+  for (let i = 0; i < source.length; i++) {
+    h = (Math.imul(31, h) + source.charCodeAt(i)) | 0;
   }
   h = (h + archetypeId * 17) | 0;
   const hooks = locale === 'en' ? FALLBACK_HOOKS_EN : FALLBACK_HOOKS;
   const idx = Math.abs(h) % hooks.length;
   return hooks[idx]!;
+}
+
+function fallbackHookStyling(
+  hook: string,
+  narrationDirective: string | undefined,
+  locale: AppLocale,
+): string {
+  if (!narrationDirective) return hook;
+  const d = narrationDirective.toLowerCase();
+  if (d.includes('cinémat') || d.includes('cinemat')) {
+    return locale === 'en' ? `Cut to scene: ${hook}` : `Cut scene : ${hook}`;
+  }
+  if (d.includes('poéti') || d.includes('poetic')) {
+    return locale === 'en' ? `${hook} Like a line of verse.` : `${hook} Comme un vers discret.`;
+  }
+  if (d.includes('mystère') || d.includes('mystere') || d.includes('noir')) {
+    return locale === 'en' ? `${hook} Keep the urban mystery alive.` : `${hook} Garde un léger mystere urbain.`;
+  }
+  return hook;
 }
 
 function normalizeIcon(raw: unknown): string {
@@ -274,11 +299,13 @@ function buildFallbackDailyQuest(
     locale === 'en'
       ? 'Prefer busy, well-lit public places.'
       : 'Privilégie les lieux fréquentés et bien éclairés.';
+  const hookSalt = `${profile.explorerAxis}_${profile.riskAxis}_${profile.day}_${Math.round(profile.congruenceDelta * 1000)}`;
+  const baseHook = pickFallbackHook(profile.questDateIso, archetype.id, locale, hookSalt);
   return {
     icon: 'Swords',
     title,
     mission: description,
-    hook: pickFallbackHook(profile.questDateIso, archetype.id, locale),
+    hook: fallbackHookStyling(baseHook, profile.narrationDirective, locale),
     duration: `${archetype.minimumDurationMinutes} min`,
     isOutdoor: computedIsOutdoor,
     safetyNote: computedIsOutdoor ? outdoorNote : null,

@@ -126,6 +126,36 @@ export function scoreQuestFit(
   return Math.abs(expectedDelta - targetMid);
 }
 
+function mixPersonality(
+  declared: PersonalityVector,
+  exhibited: PersonalityVector | undefined,
+  congruenceDelta: number | undefined,
+): PersonalityVector {
+  if (!exhibited) return declared;
+  const w = Math.min(0.45, Math.max(0.12, congruenceDelta ?? 0.22));
+  const out = emptyVector();
+  for (const key of PERSONALITY_KEYS) {
+    out[key] = declared[key] * (1 - w) + exhibited[key] * w;
+  }
+  return out;
+}
+
+function hashToUnit(seed: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i += 1) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 1_000_000) / 1_000_000;
+}
+
+type SelectQuestOptions = {
+  exhibited?: PersonalityVector;
+  congruenceDelta?: number;
+  selectionSeed?: string;
+  diversityWindow?: number;
+};
+
 /**
  * Picks the best quest for the user given their profile and phase.
  * Filters out recently assigned quests and respects outdoor/weather constraints.
@@ -139,8 +169,14 @@ export function selectQuest(
   allowOutdoor: boolean,
   categoryBias?: Partial<Record<PsychologicalCategory, number>>,
   instantOnly?: boolean,
+  options?: SelectQuestOptions,
 ): QuestModel | null {
   const targetDelta = getTargetDelta(phase);
+  const scoringVector = mixPersonality(
+    declared,
+    options?.exhibited,
+    options?.congruenceDelta,
+  );
   const candidates = QUEST_TAXONOMY
     .filter((q) => !recentQuestIds.includes(q.id))
     .filter((q) => allowOutdoor || !q.requiresOutdoor)
@@ -151,12 +187,30 @@ export function selectQuest(
   const bias = categoryBias ?? {};
   const scored = candidates
     .map((q) => {
-      let score = scoreQuestFit(q, declared, targetDelta);
+      let score = scoreQuestFit(q, scoringVector, targetDelta);
       const b = bias[q.category];
       if (b !== undefined) score -= b;
       return { quest: q, score };
     })
     .sort((a, b) => a.score - b.score);
 
-  return scored[0].quest;
+  if (!options?.selectionSeed) return scored[0].quest;
+
+  const window = Math.max(
+    1,
+    Math.min(scored.length, options.diversityWindow ?? 4),
+  );
+  const seeded = scored
+    .slice(0, window)
+    .map((entry, idx) => {
+      // Jitter léger et stable : varie entre utilisateurs/jours sans casser le fit.
+      const jitter = (hashToUnit(`${options.selectionSeed}:${entry.quest.id}`) - 0.5) * 0.09;
+      return {
+        quest: entry.quest,
+        score: entry.score + idx * 0.012 + jitter,
+      };
+    })
+    .sort((a, b) => a.score - b.score);
+
+  return seeded[0].quest;
 }

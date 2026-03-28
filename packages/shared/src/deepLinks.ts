@@ -29,6 +29,16 @@ export function buildWebAppQuestUrl(baseUrl: string, questDate?: string | null):
 }
 
 /**
+ * URL web publique d'une carte partagée (id public non prédictible).
+ * @param baseUrl Origine sans slash final (ex. https://questia.fr)
+ */
+export function buildWebSharedQuestUrl(baseUrl: string, shareId: string): string {
+  const base = baseUrl.replace(/\/$/, '');
+  const id = shareId.trim();
+  return `${base}/q/${encodeURIComponent(id)}`;
+}
+
+/**
  * Lien custom scheme (Expo) vers la route `app` avec paramètres — ouvert par l’app native.
  * @param scheme Sans « :// » (ex. questia)
  */

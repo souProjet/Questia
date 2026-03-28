@@ -257,6 +257,12 @@ export async function GET(request: NextRequest) {
     allowOutdoorQuests,
     categoryBias,
     instantOnly,
+    {
+      exhibited,
+      congruenceDelta,
+      selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}`,
+      diversityWindow: 4,
+    },
   );
 
   if (!archetype && instantOnly) {
