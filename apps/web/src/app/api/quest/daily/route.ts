@@ -248,6 +248,8 @@ export async function GET(request: NextRequest) {
   const refinementContext = buildRefinementContextForPrompt(storedRefinementAnswers);
 
   const instantOnly = profile.flagNextQuestInstantOnly === true;
+  /** Différencie la sélection / la génération IA après relance ou report (évite même archétype + même graine qu’au premier tirage). */
+  const regenTier = profile.flagNextQuestAfterReroll ? 'reroll' : 'first';
 
   // Select archetype via moteur Delta de congruence (+ biais questionnaire)
   let archetype = selectQuest(
@@ -260,7 +262,7 @@ export async function GET(request: NextRequest) {
     {
       exhibited,
       congruenceDelta,
-      selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}`,
+      selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${regenTier}`,
       diversityWindow: 7,
     },
   );
@@ -305,7 +307,7 @@ export async function GET(request: NextRequest) {
       explorerAxis: profile.explorerAxis as ExplorerAxis,
       riskAxis: profile.riskAxis as RiskAxis,
       questDateIso: today,
-      generationSeed: `${profile.id}:${today}:${effectivePhase}`,
+      generationSeed: `${profile.id}:${today}:${effectivePhase}:${regenTier}`,
       narrationDirective,
       declaredPersonality,
       exhibitedPersonality: exhibited,
@@ -371,6 +373,9 @@ export async function GET(request: NextRequest) {
 
   const assignAfterReroll = profile.flagNextQuestAfterReroll;
 
+  // Après relance/report, le POST a déjà décrémenté les relances — ne pas remettre 1 ici (sinon l’UI reste bloquée à 1/2).
+  const rerollsAfterQuestCreate = assignAfterReroll ? profile.rerollsRemaining : 1;
+
   // Save quest log + update profile atomically
   const [questLog] = await prisma.$transaction([
     prisma.questLog.create({
@@ -404,7 +409,7 @@ export async function GET(request: NextRequest) {
         currentPhase:     newPhase,
         streakCount:      newStreak,
         lastQuestDate:    today,
-        rerollsRemaining: 1,
+        rerollsRemaining: rerollsAfterQuestCreate,
         congruenceDelta:  congruenceDelta,
         flagNextQuestAfterReroll: false,
         flagNextQuestInstantOnly: false,
