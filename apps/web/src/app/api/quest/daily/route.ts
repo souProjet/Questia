@@ -27,6 +27,7 @@ import type {
   ExplorerAxis,
   RiskAxis,
   PersonalityVector,
+  PsychologicalCategory,
   QuestLog,
 } from '@questia/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
@@ -40,6 +41,39 @@ import { getNarrationDirectiveForPack } from '@/lib/narrationPack';
 import { getRefinementSurveyPayload } from '@/lib/refinementPayload';
 
 export const dynamic = 'force-dynamic';
+
+/** Relances successives : cumul des archétypes déjà proposés (JSON + ancienne colonne seule). */
+function parseRerollExcludedArchetypeIds(profile: {
+  rerollExcludeArchetypeId: number | null;
+  rerollExcludeArchetypeIds?: Prisma.JsonValue | null;
+}): number[] {
+  const raw = profile.rerollExcludeArchetypeIds;
+  const fromJson = Array.isArray(raw)
+    ? raw.filter((x): x is number => typeof x === 'number' && Number.isFinite(x))
+    : [];
+  const legacy = profile.rerollExcludeArchetypeId != null ? [profile.rerollExcludeArchetypeId] : [];
+  return Array.from(new Set([...legacy, ...fromJson]));
+}
+
+function mergeRerollExcludedArchetypeIds(
+  profile: { rerollExcludeArchetypeId: number | null; rerollExcludeArchetypeIds?: Prisma.JsonValue | null },
+  archetypeId: number,
+): number[] {
+  return Array.from(new Set([...parseRerollExcludedArchetypeIds(profile), archetypeId]));
+}
+
+/** Moins on retombe sur le même « thème » (catégorie psychologique) après plusieurs relances. */
+function buildCategoryPenaltyFromExcludedIds(
+  excludedIds: number[],
+): Partial<Record<PsychologicalCategory, number>> {
+  const penalty: Partial<Record<PsychologicalCategory, number>> = {};
+  for (const id of excludedIds) {
+    const q = QUEST_TAXONOMY.find((x) => x.id === id);
+    if (!q) continue;
+    penalty[q.category] = (penalty[q.category] ?? 0) + 0.18;
+  }
+  return penalty;
+}
 
 /** Libellés génériques renvoyés par le modèle ou des prompts — à ignorer au profit du géocodage. */
 function isPlaceholderDestinationLabel(s: string): boolean {
@@ -235,10 +269,10 @@ export async function GET(request: NextRequest) {
   const congruenceDelta = computeCongruenceDelta(declaredPersonality, exhibited);
   const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs);
   const recentIds = recentLogs.slice(0, 7).map((r) => r.archetypeId);
-  /** Après relance/report, l’archétype supprimé n’est plus dans l’historique — on l’exclut quand même pour éviter la même quête. */
-  const extraExclude =
-    profile.rerollExcludeArchetypeId != null ? [profile.rerollExcludeArchetypeId] : [];
+  /** Après relance/report, les archétypes déjà proposés aujourd’hui ne sont plus dans l’historique BDD — on les cumule ici. */
+  const extraExclude = parseRerollExcludedArchetypeIds(profile);
   const recentIdsForSelect = Array.from(new Set([...recentIds, ...extraExclude]));
+  const categoryRerollPenalty = buildCategoryPenaltyFromExcludedIds(extraExclude);
 
   const storedRefinementAnswers =
     (profile.refinementSchemaVersion ?? 0) >= REFINEMENT_SCHEMA_VERSION
@@ -248,8 +282,11 @@ export async function GET(request: NextRequest) {
   const refinementContext = buildRefinementContextForPrompt(storedRefinementAnswers);
 
   const instantOnly = profile.flagNextQuestInstantOnly === true;
-  /** Différencie la sélection / la génération IA après relance ou report (évite même archétype + même graine qu’au premier tirage). */
-  const regenTier = profile.flagNextQuestAfterReroll ? 'reroll' : 'first';
+  /** Chaque relance a une graine distincte (liste d’archétypes exclus cumulés). */
+  const regenTier =
+    profile.flagNextQuestAfterReroll === true
+      ? `reroll:${extraExclude.slice().sort((a, b) => a - b).join(',')}`
+      : 'first';
 
   // Select archetype via moteur Delta de congruence (+ biais questionnaire)
   let archetype = selectQuest(
@@ -264,6 +301,7 @@ export async function GET(request: NextRequest) {
       congruenceDelta,
       selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${regenTier}`,
       diversityWindow: 7,
+      categoryScorePenalty: categoryRerollPenalty,
     },
   );
 
@@ -414,6 +452,7 @@ export async function GET(request: NextRequest) {
         flagNextQuestAfterReroll: false,
         flagNextQuestInstantOnly: false,
         rerollExcludeArchetypeId: null,
+        rerollExcludeArchetypeIds: [],
       },
     }),
   ]);
@@ -506,6 +545,7 @@ export async function POST(request: NextRequest) {
     }
 
     const excludeArchetypeId = existing.archetypeId;
+    const mergedExclude = mergeRerollExcludedArchetypeIds(profile, excludeArchetypeId);
 
     const updatedProfile =
       daily > 0
@@ -520,7 +560,8 @@ export async function POST(request: NextRequest) {
                 flagNextQuestAfterReroll: true,
                 flagNextQuestInstantOnly: true,
                 deferredSocialUntil: deferredUntil,
-                rerollExcludeArchetypeId: excludeArchetypeId,
+                rerollExcludeArchetypeId: null,
+                rerollExcludeArchetypeIds: mergedExclude,
               },
             });
           })
@@ -535,7 +576,8 @@ export async function POST(request: NextRequest) {
                 flagNextQuestAfterReroll: true,
                 flagNextQuestInstantOnly: true,
                 deferredSocialUntil: deferredUntil,
-                rerollExcludeArchetypeId: excludeArchetypeId,
+                rerollExcludeArchetypeId: null,
+                rerollExcludeArchetypeIds: mergedExclude,
               },
             });
           });
@@ -611,6 +653,7 @@ export async function POST(request: NextRequest) {
     }
 
     const excludeArchetypeId = existing.archetypeId;
+    const mergedExclude = mergeRerollExcludedArchetypeIds(profile, excludeArchetypeId);
 
     const updatedProfile =
       daily > 0
@@ -623,7 +666,8 @@ export async function POST(request: NextRequest) {
               data: {
                 rerollsRemaining: Math.max(0, daily - 1),
                 flagNextQuestAfterReroll: true,
-                rerollExcludeArchetypeId: excludeArchetypeId,
+                rerollExcludeArchetypeId: null,
+                rerollExcludeArchetypeIds: mergedExclude,
               },
             });
           })
@@ -636,7 +680,8 @@ export async function POST(request: NextRequest) {
               data: {
                 bonusRerollCredits: bonus - 1,
                 flagNextQuestAfterReroll: true,
-                rerollExcludeArchetypeId: excludeArchetypeId,
+                rerollExcludeArchetypeId: null,
+                rerollExcludeArchetypeIds: mergedExclude,
               },
             });
           });

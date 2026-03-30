@@ -154,6 +154,8 @@ type SelectQuestOptions = {
   congruenceDelta?: number;
   selectionSeed?: string;
   diversityWindow?: number;
+  /** Augmente le score (moins bon) par catégorie — ex. relances pour éviter le même « thème ». */
+  categoryScorePenalty?: Partial<Record<PsychologicalCategory, number>>;
 };
 
 /**
@@ -185,11 +187,14 @@ export function selectQuest(
   if (candidates.length === 0) return null;
 
   const bias = categoryBias ?? {};
+  const catPen = options?.categoryScorePenalty;
   const scored = candidates
     .map((q) => {
       let score = scoreQuestFit(q, scoringVector, targetDelta);
       const b = bias[q.category];
       if (b !== undefined) score -= b;
+      const p = catPen?.[q.category];
+      if (p !== undefined) score += p;
       return { quest: q, score };
     })
     .sort((a, b) => a.score - b.score);

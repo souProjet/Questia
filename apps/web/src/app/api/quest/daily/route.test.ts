@@ -90,6 +90,7 @@ const profileRow = {
   badgesEarned: [],
   totalXp: 0,
   flagNextQuestAfterReroll: false,
+  rerollExcludeArchetypeIds: [],
   refinementSchemaVersion: 0,
   refinementSkippedAt: null,
   refinementAnswers: {},

@@ -161,4 +161,145 @@ export const QUEST_TAXONOMY_EN: Record<
     titleEn: 'The Gift Without Occasion',
     descriptionEn: 'Give a small gift or a meal to a neighbor or colleague for no special reason.',
   },
+  37: {
+    titleEn: 'The Wind Rose',
+    descriptionEn:
+      'Pick a random direction on a map (or app) and walk at least 15 minutes that way with no fixed goal.',
+  },
+  38: {
+    titleEn: 'The Screen-Free Café',
+    descriptionEn:
+      'Spend 30 minutes in a café with a notebook or paper book—phone off or in airplane mode.',
+  },
+  39: {
+    titleEn: 'The Room Under the Sounds',
+    descriptionEn: 'Lie down ten minutes, eyes closed, listening only to the sounds of the space—no moving.',
+  },
+  40: {
+    titleEn: 'The Neighborhood Neighbor',
+    descriptionEn:
+      'Ask a neighbor or shopkeeper what they would change first in the area—and note one idea you keep.',
+  },
+  41: {
+    titleEn: 'The Full Stairwell',
+    descriptionEn:
+      'On a usual route, take the stairs start-to-finish instead of an elevator; jot one line about your mood at arrival.',
+  },
+  42: {
+    titleEn: 'The Four Blocks',
+    descriptionEn:
+      'Chain four 25-minute distraction-free blocks on one task, with 5-minute breaks between.',
+  },
+  43: {
+    titleEn: 'The Hour Without Pings',
+    descriptionEn: 'One hour with no notifications or badges—partial airplane mode or settings, one activity only.',
+  },
+  44: {
+    titleEn: 'The Phrase Mirror',
+    descriptionEn: 'Rephrase twice what the other person said before adding a single sentence of your own.',
+  },
+  45: {
+    titleEn: 'The Three Futures',
+    descriptionEn:
+      'Write three paragraphs: your future in one month, one year, ten years—without judging the draft.',
+  },
+  46: {
+    titleEn: 'The First Hand Raised',
+    descriptionEn:
+      'In a group (meeting, class, drinks), speak up once even if your voice shakes.',
+  },
+  47: {
+    titleEn: 'Today’s Tip',
+    descriptionEn:
+      'Give an unusually generous tip or thank-you to someone who served you (café, care, delivery).',
+  },
+  48: {
+    titleEn: 'The Truth Voice Note',
+    descriptionEn:
+      'Send a ~1-minute voice message to someone you’ve been avoiding, honest on what matters.',
+  },
+  49: {
+    titleEn: 'The Dedicated Dish',
+    descriptionEn:
+      'Cook a dish or snack for a specific person and hand it to them with one simple sentence.',
+  },
+  50: {
+    titleEn: 'The Waterline',
+    descriptionEn:
+      'Walk at least 30 minutes along a river, canal, or greenway with no fixed goal.',
+  },
+  51: {
+    titleEn: 'The Back Row',
+    descriptionEn:
+      'Sit in the back row of an open public venue (sport, cultural practice) for 25 minutes—observe, no screen.',
+  },
+  52: {
+    titleEn: 'The Slow Bite',
+    descriptionEn:
+      'Pick one food; first bite eyes closed, then finish slowly with no other distraction.',
+  },
+  53: {
+    titleEn: 'The Visitor Welcome',
+    descriptionEn:
+      'Join a welcome meetup, newcomers drink, or club with introductions.',
+  },
+  54: {
+    titleEn: 'The Body Wake-Up',
+    descriptionEn:
+      'Before any screen in the morning, at least 12 minutes of stretches or gentle mobility in silence.',
+  },
+  55: {
+    titleEn: 'The Three MITs',
+    descriptionEn:
+      'The night before, write three must-do tasks; the next day, only those before 6 p.m.',
+  },
+  56: {
+    titleEn: 'The Meal Outside the Room',
+    descriptionEn: 'For one full meal, leave phone and tablet outside the room where you eat.',
+  },
+  57: {
+    titleEn: 'The Silence of Two',
+    descriptionEn:
+      'After asking someone a question, wait two minutes in silence before you rephrase or answer.',
+  },
+  58: {
+    titleEn: 'The Five-Year Timeline',
+    descriptionEn:
+      'On one page, draw a timeline of the last five years with at least five dated milestones.',
+  },
+  59: {
+    titleEn: 'The Unknown Booth',
+    descriptionEn:
+      'Enter a fair or expo alone and ask one specific question to an exhibitor.',
+  },
+  60: {
+    titleEn: 'The Next Coffee',
+    descriptionEn:
+      'If the place allows, quietly pay for the coffee or tea of the person behind you in line.',
+  },
+  61: {
+    titleEn: 'The I-Statement',
+    descriptionEn:
+      'Write or say a sentence starting with “I need” or “I feel,” without blaming the other person.',
+  },
+  62: {
+    titleEn: 'The Errand Unasked',
+    descriptionEn:
+      'Run one errand or admin task for someone close without them asking again.',
+  },
+  63: {
+    titleEn: 'The Virgin Terminus',
+    descriptionEn:
+      'Take a bus or tram to a terminus you’ve never visited, then walk 20 minutes there.',
+  },
+  64: {
+    titleEn: 'The No-Feed Evening',
+    descriptionEn:
+      'After a set hour, no screens or feeds until bed (paper, conversation, rest).',
+  },
+  65: {
+    titleEn: 'The Three Whys',
+    descriptionEn:
+      'When someone shares a worry, ask “why” up to three times gently before advising.',
+  },
 };

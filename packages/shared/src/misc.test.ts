@@ -77,7 +77,7 @@ describe('isValidReportDeferredDate', () => {
 
 describe('constants re-export sanity', () => {
   it('taxonomie et quadrants', () => {
-    expect(QUEST_TAXONOMY.length).toBe(36);
+    expect(QUEST_TAXONOMY.length).toBe(65);
     expect(QUADRANT_DEFAULTS.explorer_risktaker.openness).toBeGreaterThan(0.5);
   });
   it('questFamilyLabel', () => {

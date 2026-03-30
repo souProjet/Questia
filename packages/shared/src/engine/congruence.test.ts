@@ -191,4 +191,20 @@ describe('selectQuest', () => {
     expect(a).not.toBeNull();
     expect(b).not.toBeNull();
   });
+
+  it('categoryScorePenalty dépriorise fortement une catégorie', () => {
+    const base = selectQuest(uniform(0.5), 'expansion', [], true, undefined, false, {
+      selectionSeed: 'fixed-seed-penalty-test',
+      diversityWindow: 30,
+    });
+    expect(base).not.toBeNull();
+    const cat = base!.category;
+    const penalized = selectQuest(uniform(0.5), 'expansion', [], true, undefined, false, {
+      selectionSeed: 'fixed-seed-penalty-test',
+      diversityWindow: 30,
+      categoryScorePenalty: { [cat]: 8 },
+    });
+    expect(penalized).not.toBeNull();
+    expect(penalized!.category).not.toBe(cat);
+  });
 });
