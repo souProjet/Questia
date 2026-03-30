@@ -1,11 +1,11 @@
 /**
- * Réduit l’empreinte « portefeuille crypto » sur le Play Store :
- * - supprime toute entrée `solana-wallet` déjà présente dans le manifeste Expo ;
- * - ajoute une règle de fusion Manifest Merger `tools:node="remove"` pour l’intent
- *   injecté par les AAR (@solana-mobile, transitif via @clerk/clerk-js), qui sinon
- *   n’apparaît qu’au build Gradle.
+ * Réduit l’empreinte « portefeuille crypto » pour le Play Store :
+ * - intents `solana-wallet` (AAR @solana-mobile / Clerk) ;
+ * - package `org.toshi` (app Coinbase Wallet, souvent requis par les SDK wallet).
  *
- * Si vous activez la connexion Web3 / Solana dans l’app, supprimez ce plugin.
+ * Règles Manifest Merger `tools:node="remove"` + nettoyage si déjà présent dans le template Expo.
+ *
+ * Si vous activez Web3 / wallets dans l’app, supprimez ce plugin.
  */
 const { withAndroidManifest } = require('@expo/config-plugins');
 
@@ -15,7 +15,7 @@ function withRemoveWalletQueries(config) {
     const manifest = config.modResults.manifest;
     ensureToolsNamespace(manifest);
     stripSolanaWalletQueries(manifest);
-    addSolanaWalletRemovalMerger(manifest);
+    addWalletQueryRemovalMergers(manifest);
     return config;
   });
 }
@@ -61,31 +61,51 @@ function stripSolanaWalletQueries(manifest) {
 }
 
 /**
- * Intent fusionné par les libs ; le merger supprime la déclaration équivalente des dépendances.
  * @param {import('@expo/config-plugins').AndroidManifest['manifest']} manifest
  */
-function addSolanaWalletRemovalMerger(manifest) {
-  const removalIntent = {
+function addWalletQueryRemovalMergers(manifest) {
+  const solanaRemovalIntent = {
     $: { 'tools:node': 'remove' },
     action: [{ $: { 'android:name': 'android.intent.action.VIEW' } }],
     category: [{ $: { 'android:name': 'android.intent.category.BROWSABLE' } }],
     data: [{ $: { 'android:scheme': 'solana-wallet' } }],
   };
 
+  const coinbasePackageRemoval = {
+    $: { 'android:name': 'org.toshi', 'tools:node': 'remove' },
+  };
+
   if (!manifest.queries) {
-    manifest.queries = [{ intent: [removalIntent] }];
+    manifest.queries = [
+      {
+        intent: [solanaRemovalIntent],
+        package: [coinbasePackageRemoval],
+      },
+    ];
     return;
   }
 
   const queriesList = Array.isArray(manifest.queries) ? manifest.queries : [manifest.queries];
   const target = queriesList[0];
+
   if (!target.intent) {
-    target.intent = [removalIntent];
+    target.intent = [solanaRemovalIntent];
   } else {
     const intents = Array.isArray(target.intent) ? target.intent : [target.intent];
-    if (hasSolanaRemovalMerger(intents)) return;
-    target.intent = [...intents, removalIntent];
+    if (!hasSolanaRemovalMerger(intents)) {
+      target.intent = [...intents, solanaRemovalIntent];
+    }
   }
+
+  if (!target.package) {
+    target.package = [coinbasePackageRemoval];
+  } else {
+    const packages = Array.isArray(target.package) ? target.package : [target.package];
+    if (!hasCoinbasePackageRemovalMerger(packages)) {
+      target.package = [...packages, coinbasePackageRemoval];
+    }
+  }
+
   manifest.queries = queriesList.length === 1 ? queriesList[0] : queriesList;
 }
 
@@ -98,6 +118,17 @@ function hasSolanaRemovalMerger(intents) {
     const marker = intent.$ && intent.$['tools:node'] === 'remove';
     if (!marker) return false;
     return isSolanaWalletIntent(intent);
+  });
+}
+
+/**
+ * @param {Record<string, unknown>[]} packages
+ */
+function hasCoinbasePackageRemovalMerger(packages) {
+  return packages.some((p) => {
+    if (!p || typeof p !== 'object') return false;
+    const attrs = /** @type {Record<string, string | undefined>} */ (p.$ ?? p);
+    return attrs['tools:node'] === 'remove' && attrs['android:name'] === 'org.toshi';
   });
 }
 

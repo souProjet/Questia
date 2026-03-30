@@ -77,7 +77,8 @@
           "cameraPermission": "Questia utilise l’appareil photo pour ta carte à partager."
         }
       ],
-      "./plugins/withRemoveWalletQueries.js"
+      "./plugins/withRemoveWalletQueries.js",
+      "./plugins/withRemoveLeakedTestActivities.js"
     ],
     "experiments": {
       "typedRoutes": true
