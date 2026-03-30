@@ -204,7 +204,7 @@ export function selectQuest(
     .slice(0, window)
     .map((entry, idx) => {
       // Jitter léger et stable : varie entre utilisateurs/jours sans casser le fit.
-      const jitter = (hashToUnit(`${options.selectionSeed}:${entry.quest.id}`) - 0.5) * 0.09;
+      const jitter = (hashToUnit(`${options.selectionSeed}:${entry.quest.id}`) - 0.5) * 0.14;
       return {
         quest: entry.quest,
         score: entry.score + idx * 0.012 + jitter,

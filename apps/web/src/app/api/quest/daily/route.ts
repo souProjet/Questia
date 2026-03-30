@@ -261,7 +261,7 @@ export async function GET(request: NextRequest) {
       exhibited,
       congruenceDelta,
       selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}`,
-      diversityWindow: 4,
+      diversityWindow: 7,
     },
   );
 
@@ -305,6 +305,7 @@ export async function GET(request: NextRequest) {
       explorerAxis: profile.explorerAxis as ExplorerAxis,
       riskAxis: profile.riskAxis as RiskAxis,
       questDateIso: today,
+      generationSeed: `${profile.id}:${today}:${effectivePhase}`,
       narrationDirective,
       declaredPersonality,
       exhibitedPersonality: exhibited,

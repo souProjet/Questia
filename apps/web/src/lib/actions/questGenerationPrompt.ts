@@ -7,6 +7,8 @@ const BIG_KEYS: (keyof PersonalityVector)[] = [
   'extraversion',
   'agreeableness',
   'emotionalStability',
+  'thrillSeeking',
+  'boredomSusceptibility',
 ];
 
 const TRAIT_FR: Record<string, string> = {
@@ -15,6 +17,8 @@ const TRAIT_FR: Record<string, string> = {
   extraversion: 'Extraversion (contact, énergie sociale)',
   agreeableness: 'Agréabilité (chaleur, coopération)',
   emotionalStability: 'Stabilité émotionnelle (calme, résilience)',
+  thrillSeeking: 'Recherche de sensations',
+  boredomSusceptibility: 'Sensibilité à l’ennui',
 };
 
 const TRAIT_EN: Record<string, string> = {
@@ -23,6 +27,8 @@ const TRAIT_EN: Record<string, string> = {
   extraversion: 'Extraversion (social energy)',
   agreeableness: 'Agreeableness (warmth, cooperation)',
   emotionalStability: 'Emotional stability (calm, resilience)',
+  thrillSeeking: 'Thrill seeking',
+  boredomSusceptibility: 'Boredom susceptibility',
 };
 
 function band(v: number, locale: AppLocale): string {
@@ -139,6 +145,88 @@ export function buildPersonalityPromptBlock(
   }
   lines.push(`INDICATEUR DE COHÉRENCE (0 = proche, 1 = plus d’écart) : ${congruenceDelta.toFixed(2)}. ${deltaHint}`);
 
+  return lines.join('\n');
+}
+
+/**
+ * Pistes opérationnelles pour différencier les missions (sans jargon clinique).
+ * Utilise un mélange déclaré / observé quand l’historique existe.
+ */
+export function buildPersonalityMissionHints(
+  declared: PersonalityVector,
+  exhibited: PersonalityVector,
+  locale: AppLocale = 'fr',
+): string {
+  const hasHistory = BIG_KEYS.some((k) => (exhibited[k] ?? 0) > 0.02);
+  const m = (k: keyof PersonalityVector) =>
+    hasHistory
+      ? (declared[k] ?? 0.5) * 0.55 + (exhibited[k] ?? 0) * 0.45
+      : declared[k] ?? 0.5;
+
+  if (locale === 'en') {
+    const lines: string[] = ['MISSION TUNING (make this day feel personal, not generic):'];
+    const ex = m('extraversion');
+    if (ex < 0.38) {
+      lines.push(
+        '- Social vibe: quiet — solo or very light contact; avoid “big group energy”.',
+      );
+    } else if (ex > 0.62) {
+      lines.push('- Social vibe: lively — a small real interaction can carry the mission.');
+    } else {
+      lines.push('- Social vibe: balanced — optional light contact; no forced extroversion.');
+    }
+    const op = m('openness');
+    const co = m('conscientiousness');
+    if (op > 0.58 && co < 0.45) {
+      lines.push('- Lean into a fresh angle or unusual detail; structure can stay loose.');
+    } else if (op < 0.4 && co > 0.58) {
+      lines.push('- Prefer a clear, repeatable micro-step over a vague “explore”.');
+    } else {
+      lines.push('- Mix one concrete novelty with one clear completion signal.');
+    }
+    const bore = m('boredomSusceptibility');
+    const thrill = m('thrillSeeking');
+    if (bore > 0.55 || thrill > 0.55) {
+      lines.push('- Pace: needs a bit of spice — a crisp constraint, twist, or time-box.');
+    } else {
+      lines.push('- Pace: steady — reward calm focus over hype.');
+    }
+    if (m('agreeableness') > 0.58) {
+      lines.push('- Tone: warm — small kindness or gentle connection fits the grain.');
+    }
+    return lines.join('\n');
+  }
+
+  const lines: string[] = ['ACCROCHE MISSION (différencier ce jour — éviter la « quête générique ») :'];
+  const ex = m('extraversion');
+  if (ex < 0.38) {
+    lines.push(
+      '- Registre social : plutôt calme — solo ou contact très léger ; pas d’énergie « grand groupe ».',
+    );
+  } else if (ex > 0.62) {
+    lines.push('- Registre social : plutôt vif — une petite interaction réelle peut porter la mission.');
+  } else {
+    lines.push('- Registre social : équilibré — contact léger possible, sans forcer l’extraversion.');
+  }
+  const op = m('openness');
+  const co = m('conscientiousness');
+  if (op > 0.58 && co < 0.45) {
+    lines.push('- Mise sur un angle neuf ou un détail inusité ; la structure peut rester souple.');
+  } else if (op < 0.4 && co > 0.58) {
+    lines.push('- Privilégie une micro-étape claire et répétable plutôt qu’un vague « explore ».');
+  } else {
+    lines.push('- Combine une nouveauté concrète avec un signal de fin net (c’est fait quand…).');
+  }
+  const bore = m('boredomSusceptibility');
+  const thrill = m('thrillSeeking');
+  if (bore > 0.55 || thrill > 0.55) {
+    lines.push('- Rythme : il faut un peu de mordant — contrainte ludique, twist ou créneau horaire court.');
+  } else {
+    lines.push('- Rythme : posé — valorise l’attention calme plutôt que le buzz.');
+  }
+  if (m('agreeableness') > 0.58) {
+    lines.push('- Ton : chaleureux — petite bienveillance ou lien doux dans le grain.');
+  }
   return lines.join('\n');
 }
 

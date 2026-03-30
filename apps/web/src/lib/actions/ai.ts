@@ -14,6 +14,7 @@ import type {
 import { questLocalizedText } from '@questia/shared';
 import {
   archetypeCategoryLabel,
+  buildPersonalityMissionHints,
   buildPersonalityPromptBlock,
   describeArchetypeTargetTraits,
 } from './questGenerationPrompt';
@@ -27,7 +28,7 @@ import {
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
 
 /** Modèle OpenAI (`chat.completions`). Surchargeable sans redéploiement de code via `OPENAI_MODEL`. */
-const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini';
+const DEFAULT_OPENAI_MODEL = 'gpt-5.4';
 const OPENAI_MODEL =
   (typeof process.env.OPENAI_MODEL === 'string' ? process.env.OPENAI_MODEL.trim() : '') ||
   DEFAULT_OPENAI_MODEL;
@@ -85,6 +86,8 @@ export interface DailyQuestProfileInput {
   refinementContext?: string | null;
   /** Langue affichage / génération (taxonomie + prompts). Défaut : fr. */
   locale?: AppLocale;
+  /** Graine stable (ex. `userId:date:phase`) pour varier les angles créatifs sans dépendre du seul archétype. */
+  generationSeed?: string;
 }
 
 // ── Phase → human label ───────────────────────────────────────────────────────
@@ -245,6 +248,53 @@ function pickFallbackHook(
   const hooks = locale === 'en' ? FALLBACK_HOOKS_EN : FALLBACK_HOOKS;
   const idx = Math.abs(h) % hooks.length;
   return hooks[idx]!;
+}
+
+const CREATIVE_ANGLES_FR: readonly string[] = [
+  'Angle du jour : partir d’un objet physique concret (papier, photo, plante, clef…) — pas seulement d’une intention abstraite.',
+  'Angle du jour : ancrer la mission dans un moment précis (réveil, trajet, pause, soir) avec une durée max claire.',
+  'Angle du jour : une contrainte ludique courte (3 min, 3 photos, 3 lignes écrites, 1 détail nouveau).',
+  'Angle du jour : explorer un sens (ouïe, odorat, toucher) plutôt qu’une longue introspection.',
+  'Angle du jour : bousculer un ordre habituel (itinéraire, ordre des tâches, fenêtre) — geste léger.',
+  'Angle du jour : mini-récit (2 phrases) comme prétexte à l’action, sans théâtre.',
+  'Angle du jour : interaction humaine minimale et réaliste — pas de « grand défi social ».',
+  'Angle du jour : calme — une seule action, posée, bien sentie.',
+  'Angle du jour : schéma ou liste au stylo (30 secondes) puis action.',
+  'Angle du jour : lieux génériques ou quartier sans enseigne (si pas de GPS) — éviter le cliché.',
+  'Angle du jour : privilégier un fait, un déplacement, un message précis plutôt qu’un ton « motivation ».',
+  'Angle du jour : varier vocabulaire et type d’action par rapport au scénario habituel de cette famille.',
+];
+
+const CREATIVE_ANGLES_EN: readonly string[] = [
+  'Today’s angle: start from a physical object (paper, photo, plant, key…) — not only abstract intent.',
+  'Today’s angle: anchor the mission in a specific moment (wake, commute, break, evening) with a clear max duration.',
+  'Today’s angle: a short playful constraint (3 min, 3 photos, 3 written lines, 1 new detail).',
+  'Today’s angle: explore a sense (hearing, smell, touch) instead of long introspection.',
+  'Today’s angle: gently break a usual order (route, task order, seat, window) — light disruption.',
+  'Today’s angle: a 2-sentence micro-story as a pretext to act, no drama.',
+  'Today’s angle: minimal realistic human interaction — not a “big social challenge”.',
+  'Today’s angle: calm — one action, done with attention.',
+  'Today’s angle: scribble a tiny map or list (30s) then act.',
+  'Today’s angle: generic places or neighborhood without brand names (if no GPS) — avoid clichés.',
+  'Today’s angle: prefer a fact, a move, a precise message over generic “motivation”.',
+  'Today’s angle: vary wording and action type vs. the usual template for this family.',
+];
+
+function pickCreativeAngle(locale: AppLocale, seed: string): string {
+  const list = locale === 'en' ? CREATIVE_ANGLES_EN : CREATIVE_ANGLES_FR;
+  let h = 2166136261;
+  const s = `${seed}|creative`;
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return list[(h >>> 0) % list.length]!;
+}
+
+function truncateArchetypeDescription(text: string, max = 320): string {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  return `${t.slice(0, max).trim()}…`;
 }
 
 function fallbackHookStyling(
@@ -444,12 +494,16 @@ function buildUserPrompt(
   context: QuestContext,
   computedIsOutdoor: boolean,
   personalityBlock: string,
+  missionHintsBlock: string,
   categoryLabel: string,
   targetTraitsLine: string,
   repairHint: string | null,
 ): string {
   const locale = profile.locale ?? 'fr';
   const arch = questLocalizedText(archetype, locale);
+  const archetypeSummary = truncateArchetypeDescription(arch.description);
+  const creativeSeed = `${profile.generationSeed ?? profile.questDateIso}|${profile.questDateIso}|${archetype.id}`;
+  const creativeAngleLine = pickCreativeAngle(locale, creativeSeed);
 
   if (locale === 'en') {
     const rerollBlock = profile.isRerollGeneration
@@ -467,7 +521,7 @@ function buildUserPrompt(
     const repairBlock = repairHint
       ? `\nFIX REQUESTED (previous answer was invalid):\n${repairHint}\nRewrite title, mission, hook${computedIsOutdoor ? ', destinationLabel, destinationQuery' : ''} completely.\n`
       : '';
-    const variationSalt = `${profile.questDateIso}|${archetype.id}|${profile.congruenceDelta.toFixed(3)}|${profile.day}|${repairHint ? 'r1' : 'r0'}`;
+    const variationSalt = `${profile.questDateIso}|${archetype.id}|${profile.explorerAxis}|${profile.riskAxis}|${profile.congruenceDelta.toFixed(3)}|${profile.day}|${profile.generationSeed ?? 'nos'}|${repairHint ? 'r1' : 'r0'}`;
     const locationBlock = context.hasUserLocation
       ? `TODAY’S CONTEXT:
 - City: ${context.city}, ${context.country}
@@ -502,15 +556,22 @@ OPERATIONAL PROFILE:
 
 ${personalityBlock}
 
-QUEST FAMILY (honor the intent; don’t quote it as a label):
+${missionHintsBlock}
+
+${creativeAngleLine}
+
+PRIORITY: the mission must feel written for *this* person and *this* day — the family below is a compass, not a template to paste.
+ANTI-PATTERN: do not output a “stock quest” for this category; vary object, time window, constraint, and wording — two users in the same family should not get the same mission.
+
+QUEST FAMILY (intent only; do not name the category as a label):
 - ${categoryLabel}
-- Archetype axes: ${targetTraitsLine}
+- Archetype emphasis (light touch): ${targetTraitsLine}
 
 ${profile.narrationDirective ? `STYLE DIRECTIVE (follow without quoting):\n${profile.narrationDirective}\n` : ''}
 ${profile.refinementContext ? `USER PREFERENCES (adapt; don’t cite the source):\n${profile.refinementContext}\n` : ''}
 
-ARCHETYPE (canonical title): "${arch.title}"
-Concept: ${arch.description}
+ARCHETYPE HINT (do not repeat the canonical title verbatim): “${arch.title}”
+Summary (paraphrase freely; do not copy-paste): ${archetypeSummary}
 Minimum duration: ${archetype.minimumDurationMinutes} minutes
 
 ABSOLUTE RULES:
@@ -561,7 +622,7 @@ Reply with strict JSON. Pick ONE icon name from: ${[...ICON_ALLOWLIST].join(', '
     ? `\nCORRECTION DEMANDÉE (la proposition précédente était invalide) :\n${repairHint}\nRéécris entièrement title, mission, hook${computedIsOutdoor ? ', destinationLabel, destinationQuery' : ''}.\n`
     : '';
 
-  const variationSalt = `${profile.questDateIso}|${archetype.id}|${profile.congruenceDelta.toFixed(3)}|${profile.day}|${repairHint ? 'r1' : 'r0'}`;
+  const variationSalt = `${profile.questDateIso}|${archetype.id}|${profile.explorerAxis}|${profile.riskAxis}|${profile.congruenceDelta.toFixed(3)}|${profile.day}|${profile.generationSeed ?? 'nos'}|${repairHint ? 'r1' : 'r0'}`;
 
   const locationBlock = context.hasUserLocation
     ? `CONTEXTE DU JOUR :
@@ -599,15 +660,22 @@ PROFIL OPÉRATIONNEL :
 
 ${personalityBlock}
 
-FAMILLE DE QUÊTE (respecte l’intention ; ne la cite pas comme étiquette) :
+${missionHintsBlock}
+
+${creativeAngleLine}
+
+PRIORITÉ : la mission doit sembler écrite pour **cette** personne et **ce** jour — la famille ci-dessous est une boussole, pas un modèle à recopier.
+ANTI-RÉPÉTITION : n’invente pas une « quête catalogue » pour cette catégorie ; varie objet, créneau, contrainte ludique et formulation — deux utilisateurs de la même famille ne doivent pas recevoir la même mission.
+
+FAMILLE DE QUÊTE (intention seulement ; ne cite pas la catégorie comme étiquette) :
 - ${categoryLabel}
-- Axes visés par l’archétype : ${targetTraitsLine}
+- Emphase archétype (léger) : ${targetTraitsLine}
 
 ${profile.narrationDirective ? `DIRECTIVE DE STYLE (respecte-la sans la citer mot pour mot) :\n${profile.narrationDirective}\n` : ''}
 ${profile.refinementContext ? `PRÉFÉRENCES UTILISATEUR (adapter la mission, sans citer la source) :\n${profile.refinementContext}\n` : ''}
 
-ARCHÉTYPE (titre canon) : "${arch.title}"
-Concept : ${arch.description}
+INDICATION D’ARCHÉTYPE (ne répète pas le titre canon mot pour mot) : « ${arch.title} »
+Résumé (paraphrase libre ; ne pas copier-coller) : ${archetypeSummary}
 Durée minimale : ${archetype.minimumDurationMinutes} minutes
 
 RÈGLES ABSOLUES :
@@ -713,10 +781,10 @@ export async function generateDailyQuest(
 
   const system =
     locale === 'en'
-      ? `You are Questia's quest creator. You generate unique, concrete, doable daily adventures. Use a warm, direct "you". Never use clinical psychology jargon or mention "traits" or the Big Five. Each quest needs no prerequisites. Match tone and social exposure to the user profile in the message—without naming scores.
+      ? `You are Questia's quest creator. You generate unique, concrete, doable daily adventures. Use a warm, direct "you". Never use clinical psychology jargon or mention "traits" or the Big Five. Each quest needs no prerequisites. Match tone and social exposure to the user profile in the message—without naming scores. Prioritize the person’s operational profile and mission hints over repeating archetype wording; the family label is a hint, not a script.
 
 ${QUEST_SYSTEM_GUARDRAILS_EN}`
-      : `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d’exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores.
+      : `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d’exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores. Priorise le profil opérationnel et les pistes « accroche mission » plutôt que de recopier l’archétype ; la famille de quête est un fil conducteur, pas un texte à répéter.
 
 ${QUEST_SYSTEM_GUARDRAILS}`;
 
@@ -726,6 +794,11 @@ ${QUEST_SYSTEM_GUARDRAILS}`;
     safeProfile.declaredPersonality,
     safeProfile.exhibitedPersonality,
     safeProfile.congruenceDelta,
+    locale,
+  );
+  const missionHintsBlock = buildPersonalityMissionHints(
+    safeProfile.declaredPersonality,
+    safeProfile.exhibitedPersonality,
     locale,
   );
   const categoryLabel = archetypeCategoryLabel(archetype.category, locale);
@@ -756,21 +829,22 @@ ${QUEST_SYSTEM_GUARDRAILS}`;
         context,
         computedIsOutdoor,
         personalityBlock,
+        missionHintsBlock,
         categoryLabel,
         targetTraitsLine,
         repairHint,
       );
       const temperature = profile.isRerollGeneration
         ? attempt === 0
-          ? 0.88
+          ? 0.9
           : attempt === 1
-            ? 0.7
-            : 0.62
+            ? 0.72
+            : 0.64
         : attempt === 0
-          ? 0.78
+          ? 0.84
           : attempt === 1
-            ? 0.62
-            : 0.55;
+            ? 0.65
+            : 0.56;
       const raw = await callModel(user, system, temperature);
       const parsedRaw = JSON.parse(raw) as Record<string, unknown>;
 
