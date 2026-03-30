@@ -76,7 +76,8 @@
           "photosPermission": "Questia accède à tes photos pour composer ta carte à partager.",
           "cameraPermission": "Questia utilise l’appareil photo pour ta carte à partager."
         }
-      ]
+      ],
+      "./plugins/withRemoveWalletQueries.js"
     ],
     "experiments": {
       "typedRoutes": true
