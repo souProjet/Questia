@@ -1,26 +1,24 @@
 {
   "cli": {
-    "version": ">= 16.0.0"
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsucXVlc3RpYS5mciQ"
-      }
+      "distribution": "internal"
     },
     "preview": {
       "distribution": "internal",
       "ios": { "simulator": true },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsucXVlc3RpYS5mciQ"
+        "EXPO_PUBLIC_API_BASE_URL": "https://questia.fr",
+        "EXPO_PUBLIC_SITE_URL": "https://questia.fr"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsucXVlc3RpYS5mciQ",
         "EXPO_PUBLIC_API_BASE_URL": "https://questia.fr",
         "EXPO_PUBLIC_SITE_URL": "https://questia.fr"
       }

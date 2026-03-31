@@ -17,6 +17,8 @@
     "dev:web": "turbo dev --filter=@questia/web",
     "dev:mobile": "turbo dev --filter=@questia/mobile",
     "expo:start": "expo start apps/mobile",
+    "eas:android": "cd apps/mobile && eas build --platform android",
+    "eas:ios": "cd apps/mobile && eas build --platform ios",
     "expo:android": "expo start apps/mobile --android",
     "expo:ios": "expo start apps/mobile --ios",
     "dev:mobile:clear": "npm run dev -w @questia/mobile -- --clear",
