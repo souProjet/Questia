@@ -5,24 +5,19 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  Linking,
   useWindowDimensions,
   Animated,
   Easing,
   Modal,
   AppState,
-  Platform,
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/expo';
-import { useRouter, Link, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
-  questDisplayEmoji,
-  questFamilyLabel,
-  getTitleDefinition,
   isValidQuestDateIso,
   formatQuestDateForLocale,
   REPORT_DEFER_MAX_DAYS,
@@ -31,22 +26,16 @@ import {
 import {
   colorWithAlpha,
   type ThemePalette,
-  themePanelText,
-  themePanelMuted,
-  heroBandGradient,
-  questSliderEmbeddedGradient,
-  missionBlockGradient,
-  questDayStripGradient,
-  questActionsFooterGradient,
 } from '@questia/ui';
-import type { AppLocale, EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
+import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { getHomeDashboardStrings } from '../../lib/homeDashboardStrings';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/QuestRewardOverlay';
-import { elevationAndroidSafe } from '../../lib/elevationAndroid';
 import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
 import { QuestHomeLoading } from '../../components/QuestHomeLoading';
+import { QuestSwipeCard } from '../../components/QuestSwipeCard';
+import { QuestDetailDrawer } from '../../components/QuestDetailDrawer';
 import { hapticError, hapticMedium, hapticSuccess, hapticWarning } from '../../lib/haptics';
 import { getQuestReportStrings } from '../../lib/questReportStrings';
 
@@ -102,35 +91,6 @@ interface DailyQuest {
     questions?: RefinementQuestionUi[];
     consentNotice?: string;
   };
-}
-
-const PHASE_LABEL: Record<EscalationPhase, { text: string; emoji: string }> = {
-  calibration: { text: 'Semaine de découverte', emoji: '🌱' },
-  expansion:   { text: 'En mode exploration',   emoji: '🧭' },
-  rupture:     { text: 'Phase d\'intensité',    emoji: '⚡' },
-};
-
-const PHASE_LABEL_EN: Record<EscalationPhase, { text: string; emoji: string }> = {
-  calibration: { text: 'Discovery week', emoji: '🌱' },
-  expansion: { text: 'Exploration mode', emoji: '🧭' },
-  rupture: { text: 'Intensity phase', emoji: '⚡' },
-};
-
-const PHASE_CHIP: Record<EscalationPhase, { bg: string; border: string; color: string }> = {
-  calibration: { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.25)', color: '#10b981' },
-  expansion:   { bg: 'rgba(34,211,238,0.12)', border: 'rgba(34,211,238,0.35)', color: '#0e7490' },
-  rupture:     { bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.28)', color: '#c2410c' },
-};
-
-function weatherEmojiFromText(desc: string | null | undefined): string {
-  const d = (desc ?? '').toLowerCase();
-  if (d.includes('pluie') || d.includes('averses')) return '🌧️';
-  if (d.includes('neige')) return '❄️';
-  if (d.includes('orage')) return '⛈️';
-  if (d.includes('brouillard')) return '🌫️';
-  if (d.includes('nuage') || d.includes('couvert')) return '☁️';
-  if (d.includes('soleil') || d.includes('clair')) return '☀️';
-  return '🌤️';
 }
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
@@ -200,7 +160,6 @@ function SafetySheet({ quest, onConfirm, onClose }: {
 export default function DashboardScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const compact = windowWidth < 400;
-  const narrow = windowWidth < 360;
   const routeParams = useLocalSearchParams<{ questDate?: string | string[]; date?: string | string[] }>();
   const qRaw = routeParams.questDate ?? routeParams.date;
   const questDateParam = Array.isArray(qRaw) ? qRaw[0] : qRaw;
@@ -230,6 +189,9 @@ export default function DashboardScreen() {
   const [completing, setCompleting] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
   const [rerolling, setRerolling] = useState(false);
+  const [showRerollConfirm, setShowRerollConfirm] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [showSwipeOnboarding, setShowSwipeOnboarding] = useState(false);
   const [questCardSwapKey, setQuestCardSwapKey] = useState(0);
   const [rerollsRemaining, setRerollsRemaining] = useState(1);
   const [reward, setReward] = useState<QuestRewardPayload | null>(null);
@@ -483,91 +445,31 @@ export default function DashboardScreen() {
 
   const qs = quest?.status;
   const isPending = qs === 'pending';
-  const isAccepted = qs === 'accepted';
-  const isCompleted = qs === 'completed';
-  const isAbandoned = qs === 'abandoned';
-  const questFamily = quest ? questFamilyLabel(quest.archetypeCategory, appLocale) : null;
   const questPace = quest?.questPace ?? 'instant';
 
-  const phase = quest?.phase ?? 'calibration';
-  const phaseInfo = (appLocale === 'en' ? PHASE_LABEL_EN : PHASE_LABEL)[phase];
-  const phaseChip = PHASE_CHIP[phase];
   const rerollDaily = quest?.rerollsRemaining ?? rerollsRemaining;
   const rerollBonus = quest?.bonusRerollCredits ?? 0;
-  const rerollLabel = homeUi.rerollParts(rerollDaily, rerollBonus);
   const canRerollQuest =
     !!quest &&
     isPending &&
     !rerolling &&
     rerollDaily + rerollBonus > 0;
 
-  const questStatusDisplay = useMemo(() => {
-    if (!quest) return null;
-    const L = homeUi.questStatus;
-    const map: Record<
-      DailyQuest['status'],
-      { label: string; emoji: string; pillBg: string; pillBorder: string; pillColor: string }
-    > = {
-      pending: {
-        label: L.pending,
-        emoji: '⏳',
-        pillBg: 'rgba(254,243,199,0.95)',
-        pillBorder: 'rgba(217,119,6,0.35)',
-        pillColor: '#78350f',
-      },
-      accepted: {
-        label: L.accepted,
-        emoji: '⚔️',
-        pillBg: 'rgba(209,250,229,0.95)',
-        pillBorder: 'rgba(16,185,129,0.4)',
-        pillColor: '#065f46',
-      },
-      completed: {
-        label: L.completed,
-        emoji: '✅',
-        pillBg: 'rgba(209,250,229,0.98)',
-        pillBorder: 'rgba(5,150,105,0.45)',
-        pillColor: '#064e3b',
-      },
-      abandoned: {
-        label: L.abandoned,
-        emoji: '🌙',
-        pillBg: 'rgba(226,232,240,0.98)',
-        pillBorder: 'rgba(71,85,105,0.55)',
-        pillColor: '#0f172a',
-      },
-      rejected: {
-        label: L.rejected,
-        emoji: '✕',
-        pillBg: 'rgba(254,242,242,0.98)',
-        pillBorder: 'rgba(248,113,113,0.45)',
-        pillColor: '#991b1b',
-      },
-      replaced: {
-        label: L.replaced,
-        emoji: '🔄',
-        pillBg: 'rgba(245,243,255,0.98)',
-        pillBorder: 'rgba(139,92,246,0.4)',
-        pillColor: '#5b21b6',
-      },
-    };
-    return map[quest.status];
-  }, [quest, homeUi]);
-
-  const weatherLine = quest
-    ? `${quest.context?.weatherDescription ?? quest.weather ?? homeUi.weatherFallback} · ${Math.round(
-        quest.context?.temp ?? quest.weatherTemp ?? 18,
-      )}°C`
-    : '';
-
   const handleAccept = () => {
     if (quest?.isOutdoor) setShowSafety(true);
     else doAccept();
   };
 
+  const confirmReroll = () => {
+    if (!quest || quest.status !== 'pending' || rerolling || !canRerollQuest) return;
+    setShowRerollConfirm(true);
+  };
+
   const handleReroll = async () => {
     if (!quest || quest.status !== 'pending' || rerolling || !canRerollQuest) return;
+    setShowRerollConfirm(false);
     setRerolling(true);
+    setError(null);
     try {
       const token = await getToken();
       const res = await apiFetch(`${API_BASE_URL}/api/quest/daily`, token, {
@@ -582,9 +484,12 @@ export default function DashboardScreen() {
       }
       const ok = await loadQuest(undefined, undefined, { questDate: quest.questDate, silent: true });
       if (ok) {
-        hapticMedium();
         setQuestCardSwapKey((k) => k + 1);
+        hapticSuccess();
         await enrichQuestWithLocation();
+      } else {
+        setError(homeUi.errReroll);
+        hapticError();
       }
     } finally {
       setRerolling(false);
@@ -667,28 +572,21 @@ export default function DashboardScreen() {
     void AsyncStorage.setItem(QUEST_LOADER_DAY_STORAGE_KEY, new Date().toISOString().slice(0, 10));
   }, [quest]);
 
-  const questStripEnter = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (!quest?.questDate) return;
-    questStripEnter.setValue(0);
-    Animated.timing(questStripEnter, {
-      toValue: 1,
-      duration: 700,
-      easing: Easing.bezier(0.22, 1, 0.36, 1),
-      useNativeDriver: true,
-    }).start();
-  }, [quest?.questDate, questStripEnter]);
+    if (!quest || quest.status !== 'pending') return;
+    void (async () => {
+      const seen = await AsyncStorage.getItem('questia_swipe_onboarding_seen');
+      if (!seen) setShowSwipeOnboarding(true);
+    })();
+  }, [quest]);
+
+  const dismissSwipeOnboarding = useCallback(() => {
+    setShowSwipeOnboarding(false);
+    void AsyncStorage.setItem('questia_swipe_onboarding_seen', '1');
+  }, []);
 
   const { palette, themeId } = useAppTheme();
   const styles = useMemo(() => buildDashboardStyles(palette, themeId), [palette, themeId]);
-  const heroBandColors = useMemo(() => heroBandGradient(themeId, palette), [themeId, palette]);
-  const questSliderColors = useMemo(() => questSliderEmbeddedGradient(themeId, palette), [themeId, palette]);
-  const missionBlockColors = useMemo(() => missionBlockGradient(themeId, palette), [themeId, palette]);
-  const questDayStripColors = useMemo(() => questDayStripGradient(themeId, palette), [themeId, palette]);
-  const questActionsFooterColors = useMemo(
-    () => questActionsFooterGradient(themeId, palette),
-    [themeId, palette],
-  );
 
   if (loading && !quest) {
     return (
@@ -711,48 +609,110 @@ export default function DashboardScreen() {
     );
   }
 
-  // Espace sous le dernier bloc (la SafeAreaView gère déjà encoche / home indicator)
-  const scrollBottomPad = 32;
+  const swipeStrings = useMemo(() => ({
+    swipeAccept: homeUi.swipeAccept,
+    swipeChange: homeUi.swipeChange,
+    tapDetails: homeUi.tapDetails,
+    validateCta: homeUi.validateCta,
+    shareCta: homeUi.shareVictoryCta,
+    completedTitle: homeUi.completedTitle,
+    completedSub: homeUi.completedSubtitle,
+    abandonedTitle: homeUi.abandonedTitle,
+    abandonedSub: homeUi.abandonedSub,
+    paceToday: homeUi.paceToday,
+    pacePlanned: homeUi.pacePlanned,
+  }), [homeUi]);
+
+  const drawerStrings = useMemo(() => ({
+    missionHeading: homeUi.missionHeading,
+    hookLabel: homeUi.hookLabel,
+    destinationLabel: homeUi.destinationLabel,
+    destinationHint: homeUi.destinationHint,
+    safetyLabel: homeUi.safetyLabel,
+    reportCta: homeUi.reportCta,
+    abandonCta: homeUi.abandonCta,
+    close: homeUi.close,
+    durationLabel: homeUi.durationLabel,
+    outdoorTag: homeUi.outdoorTag,
+    reportHint: homeUi.reportHint,
+  }), [homeUi]);
+
+  if (loading && !quest) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaView style={styles.safe}>
+          <QuestHomeLoading compact={compact} />
+        </SafeAreaView>
+      </GestureHandlerRootView>
+    );
+  }
+
+  if (error && !quest) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{error}</Text>
+            <Pressable style={styles.retryBtn} onPress={() => void loadQuest()}>
+              <Text style={styles.retryText}>R\u00e9essayer</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </GestureHandlerRootView>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFillObject,
-          {
-            zIndex: 40,
-            opacity: acceptFlashOp,
-            backgroundColor: 'rgba(16, 185, 129, 0.42)',
-          },
-        ]}
-      />
-      {quest?.refinement?.questions && quest.refinement.questions.length > 0 ? (
-        <ProfileRefinementSheet
-          visible={showRefinement}
-          questions={quest.refinement.questions}
-          consentNotice={
-            quest.refinement.consentNotice ??
-            `Ces réponses servent uniquement à adapter tes quêtes. Politique de confidentialité : ${PRIVACY_URL}`
-          }
-          getToken={() => getTokenRef.current()}
-          onDone={() => {
-            setShowRefinement(false);
-            void loadQuest(undefined, undefined, { silent: true });
-          }}
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.safe}>
+        {/* Flash d\u2019acceptation */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            { zIndex: 40, opacity: acceptFlashOp, backgroundColor: 'rgba(16, 185, 129, 0.42)' },
+          ]}
         />
-      ) : null}
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.content,
-          compact && styles.contentCompact,
-          { paddingBottom: scrollBottomPad },
-        ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        bounces
-      >
+
+        {/* Raffinement profil */}
+        {quest?.refinement?.questions && quest.refinement.questions.length > 0 ? (
+          <ProfileRefinementSheet
+            visible={showRefinement}
+            questions={quest.refinement.questions}
+            consentNotice={
+              quest.refinement.consentNotice ??
+              `Ces r\u00e9ponses servent uniquement \u00e0 adapter tes qu\u00eates. Politique de confidentialit\u00e9 : ${PRIVACY_URL}`
+            }
+            getToken={() => getTokenRef.current()}
+            onDone={() => {
+              setShowRefinement(false);
+              void loadQuest(undefined, undefined, { silent: true });
+            }}
+          />
+        ) : null}
+
+        {/* Header minimal */}
+        <View style={styles.minimalHeader}>
+          <Text style={[styles.headerDay, { color: palette.muted }]}>
+            J.{quest?.day ?? 1}
+          </Text>
+          {(quest?.streak ?? 0) > 0 ? (
+            <Text style={[styles.headerStreak, { color: palette.orange }]}>
+              \ud83d\udd25 {quest?.streak}
+            </Text>
+          ) : (
+            <View />
+          )}
+          <Pressable onPress={() => router.push('/profile')} hitSlop={12}>
+            <View style={[styles.headerAvatar, { backgroundColor: `${palette.cyan}22`, borderColor: `${palette.cyan}44` }]}>
+              <Text style={styles.headerAvatarText}>
+                {(user?.firstName ?? '?')[0]}
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Erreur inline */}
         {quest && error ? (
           <View style={styles.inlineErrorBanner}>
             <Text style={styles.inlineErrorText}>{error}</Text>
@@ -761,1229 +721,293 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
         ) : null}
-        <View
-          style={[
-            styles.heroBand,
-            compact && styles.heroBandCompact,
-            narrow && styles.heroBandNarrow,
-          ]}
-        >
-          <LinearGradient
-            colors={heroBandColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <View
-            style={[
-              styles.heroInner,
-              compact && styles.heroInnerCompact,
-              narrow && styles.heroInnerNarrow,
-            ]}
-          >
-            <Pressable
-              onPress={() => router.push('/profile')}
-              accessibilityRole="button"
-              accessibilityLabel="Profil"
-              accessibilityHint="Ouvre la page profil"
-              style={({ pressed }) => [pressed && styles.heroChipPressed]}
-            >
-              <Text
-                style={[styles.heroGreeting, compact && styles.heroGreetingCompact, narrow && styles.heroGreetingNarrow]}
-                numberOfLines={2}
-              >
-                Salut {user?.firstName ?? 'aventurier·e'} 👋
-              </Text>
-            </Pressable>
-            <Text
-              style={[
-                styles.heroQuestLine,
-                compact && styles.heroQuestLineCompact,
-                narrow && styles.heroQuestLineNarrow,
-              ]}
-            >
-              Place à la quête du matin{' '}
-              <Text style={[styles.heroQuestEmoji, compact && styles.heroQuestEmojiCompact]}>⚔️</Text>
-            </Text>
-            <Text
-              style={[styles.heroObjective, compact && styles.heroObjectiveCompact, narrow && styles.heroObjectiveNarrow]}
-              numberOfLines={narrow ? 2 : undefined}
-            >
-              🎯 Objectif : sortir du pilote automatique — mode aventure.
-            </Text>
 
-            <View style={[styles.heroChips, compact && styles.heroChipsCompact]}>
-              <Pressable
-                onPress={() => router.push('/profile')}
-                accessibilityRole="button"
-                accessibilityLabel="Phase et parcours"
-                accessibilityHint="Ouvre le profil"
-                style={({ pressed }) => [
-                  styles.phaseChip,
-                  compact && styles.phaseChipDense,
-                  { backgroundColor: phaseChip.bg, borderColor: phaseChip.border },
-                  pressed && styles.heroChipPressed,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.phaseChipText,
-                    compact && styles.phaseChipTextDense,
-                    { color: phaseChip.color },
-                  ]}
-                >
-                  {phaseInfo.emoji} {phaseInfo.text}
-                </Text>
-              </Pressable>
-              {(quest?.streak ?? 0) > 0 && (
-                <Pressable
-                  onPress={() => router.push('/profile')}
-                  accessibilityRole="button"
-                  accessibilityLabel="Série de jours"
-                  accessibilityHint="Ouvre le profil"
-                  style={({ pressed }) => [
-                    styles.streakBadge,
-                    compact && styles.streakBadgeDense,
-                    pressed && styles.heroChipPressed,
-                  ]}
-                >
-                  <Text style={[styles.streakBadgeText, compact && styles.streakBadgeTextDense]}>
-                    🔥 <Text style={styles.streakBadgeNum}>{quest?.streak}</Text>
-                    {compact
-                      ? ' j. suite'
-                      : ` jour${(quest?.streak ?? 0) !== 1 ? 's' : ''} de suite`}
-                  </Text>
-                </Pressable>
-              )}
-              <Pressable
-                onPress={() => router.push('/profile')}
-                accessibilityRole="button"
-                accessibilityLabel="Jour de parcours"
-                accessibilityHint="Ouvre le profil"
-                style={({ pressed }) => [
-                  styles.parcoursChip,
-                  compact && styles.parcoursChipDense,
-                  pressed && styles.heroChipPressed,
-                ]}
-              >
-                <Text style={[styles.parcoursChipText, compact && styles.parcoursChipTextDense]}>
-                  {compact
-                    ? `📍 J. ${quest?.day ?? 1}`
-                    : `📍 Parcours · jour ${quest?.day ?? 1}`}
-                </Text>
-              </Pressable>
-              {quest?.equippedTitleId && getTitleDefinition(quest.equippedTitleId) ? (
-                <Pressable
-                  onPress={() => router.push('/shop')}
-                  accessibilityRole="button"
-                  accessibilityLabel="Titre boutique"
-                  accessibilityHint="Ouvre la boutique"
-                  style={({ pressed }) => [
-                    styles.titleShopChip,
-                    compact && styles.titleShopChipDense,
-                    pressed && styles.heroChipPressed,
-                  ]}
-                >
-                  <Text style={[styles.titleShopChipText, compact && styles.titleShopChipTextDense]} numberOfLines={1}>
-                    {getTitleDefinition(quest.equippedTitleId)!.emoji}{' '}
-                    {getTitleDefinition(quest.equippedTitleId)!.label}
-                  </Text>
-                </Pressable>
-              ) : null}
-              {(quest?.xpBonusCharges ?? 0) > 0 ? (
-                <Pressable
-                  onPress={() => router.push('/shop')}
-                  accessibilityRole="button"
-                  accessibilityLabel="Bonus XP boutique"
-                  accessibilityHint="Ouvre la boutique"
-                  style={({ pressed }) => [
-                    styles.xpBonusChip,
-                    compact && styles.xpBonusChipDense,
-                    pressed && styles.heroChipPressed,
-                  ]}
-                >
-                  <Text style={[styles.xpBonusChipText, compact && styles.xpBonusChipTextDense]}>
-                    {compact
-                      ? `⚡ ${quest?.xpBonusCharges} XP+`
-                      : `⚡ ${quest?.xpBonusCharges} bonus XP`}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-
-            {quest?.progression ? (
-              <Pressable
-                onPress={() => router.push('/profile')}
-                accessibilityRole="button"
-                accessibilityLabel="Profil et progression"
-                accessibilityHint="Ouvre la page profil"
-                style={({ pressed }) => [
-                  styles.xpStripHero,
-                  compact && styles.xpStripHeroCompact,
-                  pressed && styles.xpStripHeroPressed,
-                ]}
-              >
-                <View style={styles.xpStripTop}>
-                  <Text style={[styles.xpStripLabelHero, compact && styles.xpStripLabelHeroCompact]} numberOfLines={1}>
-                    {compact
-                      ? `⭐ Nv.${quest.progression.level} · ${quest.progression.totalXp} XP`
-                      : `⭐ Niveau ${quest.progression.level} · ${quest.progression.totalXp} XP`}
-                  </Text>
-                  <Text style={[styles.xpStripSubHero, compact && styles.xpStripSubHeroCompact]} numberOfLines={1}>
-                    {compact
-                      ? `+${quest.progression.xpToNext}`
-                      : `+${quest.progression.xpToNext} pour monter`}
-                  </Text>
-                </View>
-                <Text style={[styles.xpStripMetaHero, compact && styles.xpStripMetaHeroCompact]}>
-                  {compact
-                    ? `${quest.progression.xpIntoLevel}/${quest.progression.xpPerLevel}`
-                    : `${quest.progression.xpIntoLevel}/${quest.progression.xpPerLevel} dans ce niveau`}
-                </Text>
-                <View style={[styles.xpTrackHero, compact && styles.xpTrackHeroCompact]}>
-                  <LinearGradient
-                    colors={[palette.cyan, palette.orange]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={[
-                      styles.xpFillHero,
-                      {
-                        width: `${Math.min(
-                          100,
-                          (quest.progression.xpIntoLevel / Math.max(1, quest.progression.xpPerLevel)) * 100,
-                        )}%`,
-                      },
-                    ]}
-                  />
-                </View>
-              </Pressable>
-            ) : null}
-
-            {quest && (quest.city || quest.weather) ? (
-              <View style={[styles.heroWeatherRow, compact && styles.heroWeatherRowCompact]}>
-                <Text style={[styles.heroWeatherText, compact && styles.heroWeatherTextCompact]}>
-                  {weatherEmojiFromText(quest.context?.weatherDescription ?? quest.weather)} {weatherLine}
-                  {quest.city && quest.city !== 'ta ville' ? (
-                    <>
-                      <Text style={styles.heroWeatherSep}> · </Text>
-                      <Text style={styles.heroWeatherCity}>📍 {quest.city}</Text>
-                    </>
-                  ) : null}
-                </Text>
-              </View>
-            ) : null}
+        {/* Carte Swipe ou \u00e9tat vide */}
+        {quest ? (
+          <View style={styles.swipeArea} key={questCardSwapKey}>
+            <QuestSwipeCard
+              quest={quest}
+              locale={appLocale}
+              palette={palette}
+              canReroll={canRerollQuest}
+              onAccept={handleAccept}
+              onReroll={confirmReroll}
+              onOpenDetails={() => setShowDetails(true)}
+              onValidate={doComplete}
+              onShare={() => router.push({ pathname: '/share-card', params: { questDate: quest.questDate } })}
+              strings={swipeStrings}
+            />
           </View>
-        </View>
-
-        {quest && questStatusDisplay ? (
-          <Animated.View
-            style={{
-              opacity: questStripEnter,
-              transform: [
-                {
-                  translateY: questStripEnter.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [26, 0],
-                  }),
-                },
-              ],
-            }}
-          >
-            <View
-              style={[styles.questDayStatusStripOuter, compact && styles.questDayStatusStripOuterCompact]}
-              accessible
-              accessibilityLabel={`Quête du jour ${formatQuestDateForLocale(quest.questDate, appLocale)} — ${questStatusDisplay.label}`}
-            >
-              <LinearGradient
-                colors={questDayStripColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-              />
-              <View
-                style={[styles.questDayStatusGradientFill, compact && styles.questDayStatusGradientFillCompact]}
-              >
-                <View style={styles.questDayStatusAccent} accessibilityElementsHidden />
-                <View style={styles.questDayStatusInner}>
-                  <View style={styles.questDayStatusLeft}>
-                    <Text style={[styles.questDayStatusKicker, compact && styles.questDayStatusKickerCompact]}>
-                      QUÊTE DU JOUR
-                    </Text>
-                    <Text style={[styles.questDayStatusDate, compact && styles.questDayStatusDateCompact]}>
-                      {formatQuestDateForLocale(quest.questDate, appLocale)}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.questDayStatusPill,
-                      {
-                        backgroundColor: questStatusDisplay.pillBg,
-                        borderColor: questStatusDisplay.pillBorder,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.questDayStatusPillText, { color: questStatusDisplay.pillColor }]}>
-                      {questStatusDisplay.emoji} {questStatusDisplay.label}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </Animated.View>
         ) : null}
 
-        {quest && (
-          <View
-            key={questCardSwapKey}
-            style={[
-              styles.questSliderOuter,
-              (isAccepted || isCompleted) && styles.questSliderOuterDone,
-              isAbandoned && styles.questSliderOuterAbandoned,
-              (rerolling || reporting) && { opacity: 0.55 },
-            ]}
-          >
-            <LinearGradient
-              colors={questSliderColors}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
-              pointerEvents="none"
-            />
-            <View style={[styles.questCardBody, compact && styles.questCardBodyCompact]}>
-              <View style={styles.titleBlock}>
-                <View style={styles.questIconBox}>
-                  <Text style={styles.questIcon}>{questDisplayEmoji(quest.emoji)}</Text>
-                </View>
-                <View style={styles.titleBlockText}>
-                  <Text style={[styles.questTitle, compact && styles.questTitleCompact]}>{quest.title}</Text>
-                  {questFamily ? <Text style={styles.questCategory}>{questFamily}</Text> : null}
-                  <Text
-                    style={[
-                      styles.questPacePill,
-                      questPace === 'planned' ? styles.questPacePillPlanned : styles.questPacePillInstant,
-                    ]}
-                  >
-                    {questPace === 'planned' ? 'Rythme : à caler' : 'Rythme : aujourd’hui'}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.missionBlockOuter}>
-                <LinearGradient
-                  colors={missionBlockColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFill}
-                  pointerEvents="none"
-                />
-                <View style={styles.missionBlockInner}>
-                  <View style={styles.missionHeadingRow}>
-                    <Text style={styles.missionHeadingEmoji}>⚡</Text>
-                    <Text style={styles.missionLabel}>Ta mission — quoi faire</Text>
-                  </View>
-                  <Text style={[styles.missionText, compact && styles.missionTextCompact]}>{quest.mission}</Text>
-                  {quest.deferredSocialUntil && isPending ? (
-                    <Text style={styles.deferNote}>
-                      📅 Pour un défi plus ambitieux ou social, repère :{' '}
-                      {formatQuestDateForLocale(quest.deferredSocialUntil, appLocale)} — optionnel.
-                    </Text>
-                  ) : null}
-                  <View style={styles.missionMetaRow}>
-                    <View style={styles.durationPill}>
-                      <Text style={styles.durationPillText}>⏱️ {quest.duration}</Text>
-                    </View>
-                    {quest.isOutdoor && (
-                      <View style={styles.tagOutdoor}>
-                        <Text style={styles.tagOutdoorText}>🌿 Extérieur</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </View>
-
-              {quest.isOutdoor && quest.destination ? (
-                <Pressable
-                  style={styles.mapCta}
-                  onPress={() => {
-                    const d = quest.destination!;
-                    const url =
-                      d.lat != null && d.lon != null
-                        ? `https://www.google.com/maps/search/?api=1&query=${d.lat},${d.lon}`
-                        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.label)}`;
-                    Linking.openURL(url);
-                  }}
-                >
-                  <Text style={styles.mapCtaLabel}>🗺️ Point de rendez-vous</Text>
-                  <Text style={styles.mapCtaHint}>
-                    Lieu suggéré pour ta mission (public, accessible). Ouvre dans Plans / Google Maps.
-                  </Text>
-                  <Text style={styles.mapCtaText}>{quest.destination.label}</Text>
-                </Pressable>
-              ) : null}
-
-              {quest.hook ? (
-                <View style={styles.hookCard}>
-                  <Text style={styles.hookCaption}>Pensée du jour</Text>
-                  <Text style={styles.hookQuote}>
-                    <Text style={styles.hookGuillemet}>« </Text>
-                    <Text style={styles.hookQuoteBody}>{quest.hook}</Text>
-                    <Text style={styles.hookGuillemet}> »</Text>
-                  </Text>
-                </View>
-              ) : null}
-
-              {quest.safetyNote && isPending ? (
-                <View style={styles.safetyNoteBox}>
-                  <Text style={styles.safetyNoteEmoji}>⚠️</Text>
-                  <Text style={styles.safetyNoteText}>{quest.safetyNote}</Text>
-                </View>
-              ) : null}
+        {showSwipeOnboarding && quest?.status === 'pending' ? (
+          <Pressable style={styles.onboardingOverlay} onPress={dismissSwipeOnboarding}>
+            <View style={[styles.onboardingTooltip, { backgroundColor: palette.card, borderColor: `${palette.orange}55` }]}>
+              <Text style={[styles.onboardingText, { color: palette.text }]}>
+                {appLocale === 'en'
+                  ? 'Swipe right to accept, left to change, or tap for details.'
+                  : 'Glisse à droite pour accepter, à gauche pour changer, ou appuie pour les détails.'}
+              </Text>
+              <Text style={[styles.onboardingDismiss, { color: palette.muted }]}>
+                {appLocale === 'en' ? 'Got it' : 'Compris'}
+              </Text>
             </View>
+          </Pressable>
+        ) : null}
 
-            <View style={styles.questActionsFooterShell}>
-              <LinearGradient
-                colors={questActionsFooterColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-              />
-              <View style={styles.questActionsFooter}>
-              {isCompleted ? (
-                <View style={styles.footerActionsInner}>
-                  <Text style={styles.completedFooterTitle}>{homeUi.completedTitle}</Text>
-                  <Text style={styles.completedFooterSub}>{homeUi.completedSubtitle}</Text>
-                  <Link
-                    href={{ pathname: '/share-card', params: { questDate: quest.questDate } }}
-                    asChild
-                  >
-                    <Pressable style={styles.shareLinkBtn}>
-                      <Text style={styles.shareLinkText}>{homeUi.shareVictoryCta}</Text>
-                    </Pressable>
-                  </Link>
-                </View>
-              ) : isAbandoned ? (
-                <View style={styles.footerActionsInner}>
-                  <Text style={styles.abandonedFooterTitle}>Pas cette fois — c’est noté.</Text>
-                  <Text style={styles.abandonedFooterSub}>
-                    Ta série repart à zéro ; demain, une nouvelle carte t’attend.
-                  </Text>
-                </View>
-              ) : isAccepted ? (
-                <View style={styles.footerActionsInner}>
-                  <Pressable style={styles.acceptBtn} onPress={doComplete} disabled={completing}>
-                    <Text style={styles.acceptText}>
-                      {completing ? '…' : '✅  J\'ai fait la quête — valider'}
-                    </Text>
-                  </Pressable>
-                  <Text style={styles.acceptedHint}>
-                    {`Quand c'est fait dans la vraie vie, valide ici pour cocher ta mission.`}
-                  </Text>
-                  <Pressable onPress={() => setShowAbandonModal(true)}>
-                    <Text style={styles.abandonLink}>Je ne peux plus la faire — passer cette carte</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <View style={styles.footerActionsInner}>
-                  <Pressable style={styles.acceptBtn} onPress={handleAccept} disabled={accepting}>
-                    <Text style={styles.acceptText}>
-                      {accepting ? 'Confirmation…' : '⚔️  Je relève le défi !'}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.rerollBtnProminent,
-                      !canRerollQuest && styles.rerollBtnDisabled,
-                      pressed && canRerollQuest && styles.rerollBtnProminentPressed,
-                    ]}
-                    onPress={handleReroll}
-                    disabled={!canRerollQuest || rerolling}
-                  >
-                    <Text style={styles.rerollTextProminent}>
-                      {rerolling ? '…' : `🎲  Changer de quête (${rerollLabel})`}
-                    </Text>
-                  </Pressable>
-                  <View style={styles.secondaryRow}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.secondaryGhostBtn,
-                        pressed && styles.secondaryGhostBtnPressed,
-                      ]}
-                      onPress={() => setShowAbandonModal(true)}
-                    >
-                      <Text style={styles.secondaryGhostText}>Ce n’est pas pour moi</Text>
-                    </Pressable>
-                    {questPace === 'planned' ? (
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.secondaryCtaBtn,
-                          !canRerollQuest && styles.rerollBtnDisabled,
-                          pressed && canRerollQuest && styles.secondaryCtaBtnPressed,
-                        ]}
-                        onPress={() => {
-                          setReportDeferredDate(calendarDay);
-                          setShowReportModal(true);
-                        }}
-                        disabled={!canRerollQuest}
-                      >
-                        <Text style={styles.secondaryCtaText}>{reportUi.reportShortQuest}</Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                  {questPace === 'planned' ? (
-                    <Text style={styles.reportHint}>{reportUi.reportHint}</Text>
-                  ) : null}
-                  {API_BASE_URL.includes('localhost') && (
-                    <View style={styles.localhostWarning}>
-                      <Text style={styles.localhostWarningText}>
-                        {`Sur téléphone, remplace localhost par l'IP de ton PC dans .env`}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-              </View>
-            </View>
-          </View>
+        {/* Drawer de d\u00e9tails */}
+        {quest ? (
+          <QuestDetailDrawer
+            quest={quest}
+            visible={showDetails}
+            palette={palette}
+            canReroll={canRerollQuest}
+            onClose={() => setShowDetails(false)}
+            onReport={questPace === 'planned' ? () => {
+              setShowDetails(false);
+              setReportDeferredDate(calendarDay);
+              setShowReportModal(true);
+            } : undefined}
+            onAbandon={() => {
+              setShowDetails(false);
+              setShowAbandonModal(true);
+            }}
+            strings={drawerStrings}
+          />
+        ) : null}
+
+        {/* Safety sheet */}
+        {showSafety && quest && (
+          <SafetySheet quest={quest} onConfirm={doAccept} onClose={() => setShowSafety(false)} />
         )}
-      </ScrollView>
 
-      {showSafety && quest && (
-        <SafetySheet quest={quest} onConfirm={doAccept} onClose={() => setShowSafety(false)} />
-      )}
-
-      <Modal visible={showReportModal} transparent animationType="fade" onRequestClose={() => setShowReportModal(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{reportUi.reportModalTitle}</Text>
-            <Text style={styles.modalBody}>{reportUi.reportModalBody(REPORT_DEFER_MAX_DAYS)}</Text>
-            <Text style={styles.modalLabel}>{reportUi.reportDateLabel}</Text>
-            <ScrollView style={styles.datePickScroll} nestedScrollEnabled>
-              {reportDateOptions.map((iso) => (
-                <Pressable
-                  key={iso}
-                  onPress={() => setReportDeferredDate(iso)}
-                  style={[
-                    styles.datePickRow,
-                    reportDeferredDate === iso && styles.datePickRowActive,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.datePickRowText,
-                      reportDeferredDate === iso && styles.datePickRowTextActive,
-                    ]}
+        {/* Modal report */}
+        <Modal visible={showReportModal} transparent animationType="fade" onRequestClose={() => setShowReportModal(false)}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>{reportUi.reportModalTitle}</Text>
+              <Text style={styles.modalBody}>{reportUi.reportModalBody(REPORT_DEFER_MAX_DAYS)}</Text>
+              <Text style={styles.modalLabel}>{reportUi.reportDateLabel}</Text>
+              <ScrollView style={styles.datePickScroll} nestedScrollEnabled>
+                {reportDateOptions.map((iso) => (
+                  <Pressable
+                    key={iso}
+                    onPress={() => setReportDeferredDate(iso)}
+                    style={[styles.datePickRow, reportDeferredDate === iso && styles.datePickRowActive]}
                   >
-                    {formatQuestDateForLocale(iso, appLocale)}
-                  </Text>
+                    <Text style={[styles.datePickRowText, reportDeferredDate === iso && styles.datePickRowTextActive]}>
+                      {formatQuestDateForLocale(iso, appLocale)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <View style={styles.modalActions}>
+                <Pressable style={styles.modalBtnGhost} onPress={() => setShowReportModal(false)} disabled={reporting}>
+                  <Text style={styles.modalBtnGhostText}>{homeUi.rerollConfirmCancel}</Text>
                 </Pressable>
-              ))}
-            </ScrollView>
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalBtnGhost} onPress={() => setShowReportModal(false)} disabled={reporting}>
-                <Text style={styles.modalBtnGhostText}>Annuler</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalBtnPrimary, (!canRerollQuest || reporting) && styles.rerollBtnDisabled]}
-                onPress={() => void handleReportConfirm()}
-                disabled={!canRerollQuest || reporting}
-              >
-                <Text style={styles.modalBtnPrimaryText}>{reporting ? '…' : 'Confirmer'}</Text>
-              </Pressable>
+                <Pressable
+                  style={[styles.modalBtnPrimary, (!canRerollQuest || reporting) && styles.rerollBtnDisabled]}
+                  onPress={() => void handleReportConfirm()}
+                  disabled={!canRerollQuest || reporting}
+                >
+                  <Text style={styles.modalBtnPrimaryText}>{reporting ? '\u2026' : homeUi.rerollConfirmAction}</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      <Modal visible={showAbandonModal} transparent animationType="fade" onRequestClose={() => setShowAbandonModal(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Passer cette carte ?</Text>
-            <Text style={styles.modalBody}>
-              Ta série repart à zéro — sans jugement. Demain, une nouvelle quête t’attend.
-            </Text>
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalBtnGhost} onPress={() => setShowAbandonModal(false)} disabled={abandoning}>
-                <Text style={styles.modalBtnGhostText}>Retour</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalBtnAbandon, abandoning && styles.rerollBtnDisabled]}
-                onPress={() => void confirmAbandon()}
-                disabled={abandoning}
-              >
-                <Text style={styles.modalBtnAbandonText}>{abandoning ? '…' : 'Confirmer'}</Text>
-              </Pressable>
+        {/* Modal abandon */}
+        <Modal visible={showAbandonModal} transparent animationType="fade" onRequestClose={() => setShowAbandonModal(false)}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>{homeUi.abandonCta} ?</Text>
+              <Text style={styles.modalBody}>{homeUi.abandonedSub}</Text>
+              <View style={styles.modalActions}>
+                <Pressable style={styles.modalBtnGhost} onPress={() => setShowAbandonModal(false)} disabled={abandoning}>
+                  <Text style={styles.modalBtnGhostText}>{homeUi.rerollConfirmCancel}</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.modalBtnAbandon, abandoning && styles.rerollBtnDisabled]}
+                  onPress={() => void confirmAbandon()}
+                  disabled={abandoning}
+                >
+                  <Text style={styles.modalBtnAbandonText}>{abandoning ? '\u2026' : homeUi.rerollConfirmAction}</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      <QuestRewardOverlay visible={showReward} payload={reward} onContinue={finishRewardAndShare} />
-    </SafeAreaView>
+        {/* Modal reroll confirm */}
+        <Modal visible={showRerollConfirm} transparent animationType="fade" onRequestClose={() => setShowRerollConfirm(false)}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>{homeUi.rerollConfirmTitle}</Text>
+              <Text style={styles.modalBody}>{homeUi.rerollConfirmBody}</Text>
+              <View style={styles.modalActions}>
+                <Pressable style={styles.modalBtnGhost} onPress={() => setShowRerollConfirm(false)}>
+                  <Text style={styles.modalBtnGhostText}>{homeUi.rerollConfirmCancel}</Text>
+                </Pressable>
+                <Pressable style={styles.modalBtnPrimary} onPress={() => void handleReroll()}>
+                  <Text style={styles.modalBtnPrimaryText}>{homeUi.rerollConfirmAction}</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <QuestRewardOverlay visible={showReward} payload={reward} onContinue={finishRewardAndShare} />
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
+
 function buildDashboardStyles(p: ThemePalette, themeId: string) {
-  const elev = elevationAndroidSafe;
-  const cq = themePanelText(themeId, p);
-  const cqMuted = themePanelMuted(themeId, p);
   const isThemed = themeId !== 'default';
   const C = {
     bg: p.bg,
     card: p.card,
     border: p.borderCyan,
     accent: p.cyan,
-    accentWarm: p.orange,
     text: p.text,
     muted: p.muted,
-    success: p.green,
   };
 
   return StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.bg },
-  scroll: { flex: 1 },
-  inlineErrorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(248,113,113,0.45)',
-    backgroundColor: 'rgba(254,242,242,0.95)',
-  },
-  inlineErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#991b1b' },
-  inlineErrorDismiss: { fontSize: 13, fontWeight: '800', color: '#991b1b', textDecorationLine: 'underline' },
-  content: { padding: 20, paddingTop: 14, paddingBottom: 24 },
-  contentCompact: { paddingHorizontal: 16, paddingTop: 10 },
-  errorBox: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
-  errorText: { color: '#f87171', fontSize: 14, textAlign: 'center' },
-  retryBtn: { backgroundColor: C.accent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12 },
-  retryText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  heroBand: {
-    position: 'relative',
-    marginBottom: 14,
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: 'rgba(253,186,116,0.45)',
-    overflow: 'hidden',
-    shadowColor: p.orange,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: elev(4),
-  },
-  heroBandCompact: { marginBottom: 12, borderRadius: 20 },
-  heroBandNarrow: { marginBottom: 10, borderRadius: 18 },
-  heroInner: { paddingHorizontal: 16, paddingVertical: 14, position: 'relative', zIndex: 1 },
-  heroInnerCompact: { paddingHorizontal: 14, paddingVertical: 11 },
-  heroInnerNarrow: { paddingHorizontal: 12, paddingVertical: 9 },
-  heroGreeting: { fontSize: 20, fontWeight: '900', color: cq, lineHeight: 25 },
-  heroGreetingCompact: { fontSize: 19, lineHeight: 24 },
-  heroGreetingNarrow: { fontSize: 17, lineHeight: 22 },
-  heroQuestLine: {
-    marginTop: 4,
-    fontSize: 18,
-    fontWeight: '900',
-    color: p.linkOnBg,
-    letterSpacing: -0.3,
-    lineHeight: 23,
-  },
-  heroQuestLineCompact: { fontSize: 17, lineHeight: 22, marginTop: 3 },
-  heroQuestLineNarrow: { fontSize: 16, lineHeight: 21 },
-  heroQuestEmoji: { fontSize: 17 },
-  heroQuestEmojiCompact: { fontSize: 15 },
-  heroObjective: {
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: '600',
-    color: cqMuted,
-    lineHeight: 18,
-  },
-  heroObjectiveCompact: { marginTop: 6, fontSize: 12, lineHeight: 16 },
-  heroObjectiveNarrow: { fontSize: 11, lineHeight: 15 },
-  heroChips: { marginTop: 11, flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-  heroChipsCompact: { marginTop: 8, gap: 5 },
-  phaseChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderWidth: 1,
-    maxWidth: '100%',
-  },
-  phaseChipDense: { paddingHorizontal: 8, paddingVertical: 4 },
-  phaseChipText: { fontSize: 11, fontWeight: '800', flexShrink: 1 },
-  phaseChipTextDense: { fontSize: 10 },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: 'rgba(251,191,36,0.14)',
-    borderWidth: 1,
-    borderColor: 'rgba(217,119,6,0.28)',
-  },
-  streakBadgeDense: { paddingHorizontal: 8, paddingVertical: 4 },
-  streakBadgeText: { fontSize: 11, fontWeight: '600', color: '#92400e' },
-  streakBadgeTextDense: { fontSize: 10 },
-  streakBadgeNum: { fontWeight: '900' },
-  parcoursChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.45),
-    backgroundColor: 'rgba(255,255,255,0.95)',
-  },
-  parcoursChipDense: { paddingHorizontal: 8, paddingVertical: 4 },
-  parcoursChipText: { fontSize: 11, fontWeight: '900', color: cq },
-  parcoursChipTextDense: { fontSize: 10 },
-  titleShopChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(251,191,36,0.45)',
-    backgroundColor: 'rgba(255,251,235,0.95)',
-    maxWidth: '100%',
-  },
-  titleShopChipDense: { paddingHorizontal: 8, paddingVertical: 4 },
-  titleShopChipText: { fontSize: 10, fontWeight: '900', color: '#78350f', flexShrink: 1 },
-  titleShopChipTextDense: { fontSize: 9 },
-  xpBonusChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.45)',
-    backgroundColor: 'rgba(236,253,245,0.95)',
-  },
-  xpBonusChipDense: { paddingHorizontal: 8, paddingVertical: 4 },
-  xpBonusChipText: { fontSize: 10, fontWeight: '900', color: '#064e3b' },
-  xpBonusChipTextDense: { fontSize: 9 },
-  xpStripHero: {
-    marginTop: 11,
-    paddingVertical: 9,
-    paddingHorizontal: 11,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.4),
-    backgroundColor: 'rgba(236,254,255,0.5)',
-  },
-  xpStripHeroCompact: { marginTop: 8, paddingVertical: 7, paddingHorizontal: 9, borderRadius: 12 },
-  xpStripHeroPressed: { opacity: 0.88 },
-  heroChipPressed: { opacity: 0.88 },
-  xpStripTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3, gap: 6 },
-  xpStripLabelHero: { fontSize: 11, fontWeight: '900', color: p.linkOnBg, flex: 1 },
-  xpStripLabelHeroCompact: { fontSize: 10 },
-  xpStripSubHero: { fontSize: 10, fontWeight: '700', color: C.muted },
-  xpStripSubHeroCompact: { fontSize: 9 },
-  xpStripMetaHero: { fontSize: 9, fontWeight: '600', color: C.muted, marginBottom: 6 },
-  xpStripMetaHeroCompact: { fontSize: 8, marginBottom: 5 },
-  xpTrackHero: {
-    height: 7,
-    borderRadius: 5,
-    backgroundColor: p.trackMuted,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.35),
-  },
-  xpTrackHeroCompact: { height: 6 },
-  xpFillHero: { height: '100%', borderRadius: 5 },
-  heroWeatherRow: {
-    marginTop: 11,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderStyle: 'dashed',
-    borderTopColor: 'rgba(253,186,116,0.45)',
-  },
-  heroWeatherRowCompact: { marginTop: 8, paddingTop: 8 },
-  heroWeatherText: { fontSize: 12, fontWeight: '500', color: cqMuted, lineHeight: 17 },
-  heroWeatherTextCompact: { fontSize: 11, lineHeight: 16 },
-  heroWeatherSep: { color: C.muted },
-  heroWeatherCity: { fontWeight: '800', color: p.linkOnBg },
-  /** Bordure sur la View externe (pas sur le LinearGradient) — évite les artefacts « carré » Android. */
-  questDayStatusStripOuter: {
-    position: 'relative',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(251,146,60,0.5)',
-    overflow: 'hidden',
-    marginBottom: 12,
-    backgroundColor: themeId !== 'default' ? colorWithAlpha(p.surface, 0.72) : 'rgba(255,251,235,0.5)',
-    shadowColor: '#9a3412',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: elev(3),
-  },
-  questDayStatusStripOuterCompact: {
-    marginBottom: 10,
-    borderRadius: 16,
-  },
-  questDayStatusGradientFill: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-  },
-  questDayStatusGradientFillCompact: {
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-  },
-  questDayStatusAccent: {
-    width: 4,
-    alignSelf: 'stretch',
-    minHeight: 48,
-    marginRight: 10,
-    borderRadius: 999,
-    backgroundColor: '#f97316',
-    shadowColor: '#ea580c',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: elev(2),
-  },
-  questDayStatusInner: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  questDayStatusLeft: { flexShrink: 1, gap: 4 },
-  questDayStatusKicker: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 2,
-    color: p.orange,
-    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-  },
-  questDayStatusKickerCompact: { fontSize: 9, letterSpacing: 1.6 },
-  questDayStatusDate: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: cq,
-    marginTop: 2,
-    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-  },
-  questDayStatusDateCompact: { fontSize: 15 },
-  questDayStatusPill: {
-    paddingHorizontal: 13,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 2,
-    maxWidth: '100%',
-  },
-  questDayStatusPillText: { fontSize: 13, fontWeight: '900' },
-  /** Ombre / bordure sur la View — pas sur le LinearGradient (artefacts rectangulaires Android). */
-  questSliderOuter: {
-    position: 'relative',
-    borderRadius: 26,
-    borderWidth: 2,
-    borderColor: 'rgba(249,115,22,0.38)',
-    marginBottom: 16,
-    overflow: 'hidden',
-    shadowColor: '#78350f',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    elevation: elev(5),
-  },
-  questSliderOuterDone: {
-    borderColor: 'rgba(16,185,129,0.38)',
-    shadowColor: '#047857',
-    shadowOpacity: 0.18,
-  },
-  questSliderOuterAbandoned: {
-    borderColor: 'rgba(100,116,139,0.4)',
-    opacity: 0.96,
-  },
-  questCardBody: { paddingHorizontal: 18, paddingTop: 20, paddingBottom: 8 },
-  questCardBodyCompact: { paddingHorizontal: 14, paddingTop: 16 },
-  mapCta: {
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.green, 0.45),
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 18,
-    backgroundColor: colorWithAlpha(p.green, 0.08),
-  },
-  mapCtaLabel: { fontSize: 11, fontWeight: '900', color: p.green, letterSpacing: 2, marginBottom: 8 },
-  mapCtaHint: { fontSize: 12, color: cqMuted, marginBottom: 10, fontWeight: '500', lineHeight: 18 },
-  mapCtaText: { fontSize: 15, fontWeight: '800', color: cq },
-  missionBlockOuter: {
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.45),
-    borderRadius: 18,
-    marginBottom: 18,
-    overflow: 'hidden',
-    shadowColor: p.cyan,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: elev(3),
-  },
-  missionBlockInner: {
-    padding: 18,
-  },
-  missionHeadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  missionHeadingEmoji: { fontSize: 16, lineHeight: 20 },
-  missionLabel: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: p.linkOnBg,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    flex: 1,
-    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-  },
-  missionText: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: cq,
-    lineHeight: 26,
-    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-  },
-  missionTextCompact: { fontSize: 16, lineHeight: 24, color: cq },
-  missionMetaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 14,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: colorWithAlpha(p.cyan, 0.35),
-  },
-  durationPill: {
-    backgroundColor: colorWithAlpha(p.gold, 0.28),
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.orange, 0.4),
-  },
-  durationPillText: { fontSize: 12, fontWeight: '900', color: cq },
-  titleBlock: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 12,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colorWithAlpha(p.orange, 0.25),
-  },
-  titleBlockText: { flex: 1 },
-  questIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: colorWithAlpha(p.cyan, 0.12),
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.28),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  questIcon: { fontSize: 22 },
-  questCategory: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-    fontSize: 11,
-    color: cqMuted,
-    fontWeight: '600',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(cq, 0.14),
-    backgroundColor: isThemed ? colorWithAlpha(p.text, 0.08) : 'rgba(255,255,255,0.92)',
-  },
-  questPacePill: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-    fontSize: 11,
-    fontWeight: '700',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  questPacePillPlanned: {
-    borderColor: isThemed ? 'rgba(167,139,250,0.5)' : 'rgba(139,92,246,0.45)',
-    backgroundColor: isThemed ? 'rgba(139,92,246,0.2)' : 'rgba(245,243,255,0.95)',
-    color: isThemed ? '#c4b5fd' : '#5b21b6',
-  },
-  questPacePillInstant: {
-    borderColor: colorWithAlpha(p.cyan, 0.4),
-    backgroundColor: colorWithAlpha(p.cyan, 0.1),
-    color: p.linkOnBg,
-  },
-  deferNote: {
-    marginTop: 12,
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 18,
-    color: isThemed ? '#c4b5fd' : '#5b21b6',
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: isThemed ? 'rgba(167,139,250,0.45)' : 'rgba(139,92,246,0.35)',
-    backgroundColor: isThemed ? 'rgba(139,92,246,0.12)' : 'rgba(245,243,255,0.65)',
-  },
-  questTitle: { fontSize: 19, fontWeight: '900', color: C.text, lineHeight: 24 },
-  questTitleCompact: { fontSize: 17, lineHeight: 22 },
-  tagOutdoor: {
-    backgroundColor: colorWithAlpha(p.green, 0.1),
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.green, 0.28),
-  },
-  tagOutdoorText: { fontSize: 12, color: C.success, fontWeight: '600' },
-  hookCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.orange, 0.28),
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 18,
-    backgroundColor: p.card,
-    shadowColor: p.cyan,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: elev(2),
-  },
-  hookCaption: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 2,
-    color: cqMuted,
-    textAlign: 'center',
-    marginBottom: 10,
-    textTransform: 'uppercase',
-  },
-  hookQuote: { textAlign: 'center' },
-  hookGuillemet: { fontSize: 15, fontWeight: '800', color: colorWithAlpha(p.orange, 0.85) },
-  hookQuoteBody: { fontSize: 15, fontWeight: '600', lineHeight: 24, color: cq },
-  safetyNoteBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 12,
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.gold, 0.45),
-    backgroundColor: isThemed ? colorWithAlpha(p.gold, 0.1) : 'rgba(254,252,232,0.95)',
-  },
-  safetyNoteEmoji: { fontSize: 18, lineHeight: 22 },
-  safetyNoteText: { flex: 1, fontSize: 14, color: isThemed ? p.orange : '#78350f', fontWeight: '600', lineHeight: 20 },
-  questActionsFooterShell: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderTopWidth: 2,
-    borderTopColor: isThemed ? colorWithAlpha(p.orange, 0.35) : 'rgba(253,186,116,0.35)',
-  },
-  questActionsFooter: {
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    paddingBottom: 18,
-  },
-  footerActionsInner: { gap: 12 },
-  completedFooterTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.35,
-    color: p.green,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  completedFooterSub: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: cqMuted,
-    textAlign: 'center',
-    marginBottom: 4,
-    paddingHorizontal: 8,
-  },
-  acceptedHint: { fontSize: 12, color: cqMuted, textAlign: 'center', lineHeight: 18, marginTop: 2 },
-  abandonLink: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: p.muted,
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-    marginTop: 8,
-  },
-  secondaryRow: { flexDirection: 'row', gap: 8, alignItems: 'stretch' },
-  secondaryGhostBtn: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: 9,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: isThemed ? colorWithAlpha(p.text, 0.22) : 'rgba(148,163,184,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: isThemed ? colorWithAlpha(p.text, 0.08) : 'rgba(255,255,255,0.92)',
-  },
-  secondaryGhostBtnPressed: { opacity: 0.92 },
-  secondaryGhostText: { fontSize: 11, fontWeight: '600', color: p.muted, textAlign: 'center' },
-  secondaryCtaBtn: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: 9,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.42),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colorWithAlpha(p.cyan, 0.1),
-  },
-  secondaryCtaBtnPressed: { opacity: 0.92 },
-  secondaryCtaText: { fontSize: 11, fontWeight: '800', color: p.linkOnBg, textAlign: 'center' },
-  reportHint: {
-    fontSize: 11,
-    color: cqMuted,
-    textAlign: 'center',
-    lineHeight: 15,
-    marginTop: 2,
-    paddingHorizontal: 4,
-  },
-  rerollBtnProminent: {
-    borderWidth: 2,
-    borderColor: isThemed ? colorWithAlpha(p.orange, 0.55) : 'rgba(251,146,60,0.68)',
-    borderRadius: 16,
-    paddingVertical: 15,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: isThemed ? colorWithAlpha(p.gold, 0.12) : 'rgba(255,251,235,0.98)',
-    shadowColor: p.orange,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: isThemed ? 0.35 : 0.3,
-    shadowRadius: 10,
-    elevation: elev(5),
-  },
-  rerollBtnProminentPressed: {
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-  },
-  rerollTextProminent: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: isThemed ? p.orange : '#9a3412',
-    letterSpacing: -0.2,
-    textAlign: 'center',
-  },
-  abandonedFooterTitle: { fontSize: 17, fontWeight: '900', color: p.muted, textAlign: 'center' },
-  abandonedFooterSub: { fontSize: 13, color: cqMuted, textAlign: 'center', lineHeight: 18 },
-  rerollBtnDisabled: { opacity: 0.42 },
-  acceptBtn: {
-    backgroundColor: C.accentWarm,
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    shadowColor: p.orange,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: elev(6),
-  },
-  acceptText: { color: '#fff', fontWeight: '800', fontSize: 16 },
-  localhostWarning: { backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)', borderRadius: 10, padding: 10, marginBottom: 8 },
-  localhostWarningText: { color: '#f59e0b', fontSize: 11, fontWeight: '600', lineHeight: 16 },
-  shareLinkBtn: {
-    borderWidth: 2,
-    borderColor: colorWithAlpha(p.cyan, 0.45),
-    backgroundColor: p.card,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  shareLinkText: { fontWeight: '900', fontSize: 15, color: p.linkOnBg },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15,23,42,0.55)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: p.card,
-    borderRadius: 20,
-    padding: 20,
-    maxHeight: '88%',
-  },
-  modalTitle: { fontSize: 18, fontWeight: '900', color: p.text, marginBottom: 8 },
-  modalBody: { fontSize: 14, color: p.muted, lineHeight: 20, marginBottom: 12 },
-  modalLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: p.muted,
-    marginBottom: 6,
-    textTransform: 'uppercase',
-  },
-  datePickScroll: { maxHeight: 220, marginBottom: 12 },
-  datePickRow: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.25),
-  },
-  datePickRowActive: { borderColor: C.accent, backgroundColor: colorWithAlpha(p.cyan, 0.12) },
-  datePickRowText: { fontSize: 14, fontWeight: '600', color: p.text },
-  datePickRowTextActive: { fontWeight: '900', color: p.linkOnBg },
-  modalActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  modalBtnGhost: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: p.border,
-    alignItems: 'center',
-  },
-  modalBtnGhostText: { fontWeight: '700', color: p.muted },
-  modalBtnPrimary: {
-    flex: 2,
-    paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: C.accent,
-    alignItems: 'center',
-  },
-  modalBtnPrimaryText: { fontWeight: '900', color: '#fff' },
-  modalBtnAbandon: {
-    flex: 2,
-    paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: isThemed ? colorWithAlpha(p.text, 0.12) : '#e2e8f0',
-    alignItems: 'center',
-  },
-  modalBtnAbandonText: { fontWeight: '900', color: p.text },
-  footerTeaser: {
-    marginTop: 8,
-    textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '500',
-    color: C.muted,
-    lineHeight: 18,
-  },
+    safe: { flex: 1, backgroundColor: C.bg },
+    minimalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+    },
+    headerDay: { fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
+    headerStreak: { fontSize: 16, fontWeight: '900' },
+    headerAvatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    headerAvatarText: { fontSize: 15, fontWeight: '900', color: p.linkOnBg },
+    swipeArea: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 12 },
+    inlineErrorBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      marginHorizontal: 16,
+      marginBottom: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: 'rgba(248,113,113,0.45)',
+      backgroundColor: 'rgba(254,242,242,0.95)',
+    },
+    inlineErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#991b1b' },
+    inlineErrorDismiss: { fontSize: 13, fontWeight: '800', color: '#991b1b', textDecorationLine: 'underline' },
+    errorBox: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
+    errorText: { color: '#f87171', fontSize: 14, textAlign: 'center' },
+    retryBtn: { backgroundColor: C.accent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12 },
+    retryText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+    rerollBtnDisabled: { opacity: 0.42 },
+    onboardingOverlay: {
+      position: 'absolute',
+      bottom: 20,
+      left: 20,
+      right: 20,
+      zIndex: 60,
+      alignItems: 'center',
+    },
+    onboardingTooltip: {
+      paddingHorizontal: 20,
+      paddingVertical: 14,
+      borderRadius: 18,
+      borderWidth: 1,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+      elevation: 8,
+      alignItems: 'center',
+      gap: 8,
+    },
+    onboardingText: {
+      fontSize: 13,
+      fontWeight: '600',
+      textAlign: 'center',
+      lineHeight: 19,
+    },
+    onboardingDismiss: {
+      fontSize: 12,
+      fontWeight: '800',
+      textDecorationLine: 'underline' as const,
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(15,23,42,0.55)',
+      justifyContent: 'center',
+      padding: 20,
+    },
+    modalCard: {
+      backgroundColor: p.card,
+      borderRadius: 20,
+      padding: 20,
+      maxHeight: '88%',
+    },
+    modalTitle: { fontSize: 18, fontWeight: '900', color: p.text, marginBottom: 8 },
+    modalBody: { fontSize: 14, color: p.muted, lineHeight: 20, marginBottom: 12 },
+    modalLabel: {
+      fontSize: 11,
+      fontWeight: '800',
+      color: p.muted,
+      marginBottom: 6,
+      textTransform: 'uppercase',
+    },
+    datePickScroll: { maxHeight: 220, marginBottom: 12 },
+    datePickRow: {
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      marginBottom: 6,
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.cyan, 0.25),
+    },
+    datePickRowActive: { borderColor: C.accent, backgroundColor: colorWithAlpha(p.cyan, 0.12) },
+    datePickRowText: { fontSize: 14, fontWeight: '600', color: p.text },
+    datePickRowTextActive: { fontWeight: '900', color: p.linkOnBg },
+    modalActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
+    modalBtnGhost: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: p.border,
+      alignItems: 'center',
+    },
+    modalBtnGhostText: { fontWeight: '700', color: p.muted },
+    modalBtnPrimary: {
+      flex: 2,
+      paddingVertical: 14,
+      borderRadius: 14,
+      backgroundColor: C.accent,
+      alignItems: 'center',
+    },
+    modalBtnPrimaryText: { fontWeight: '900', color: '#fff' },
+    modalBtnAbandon: {
+      flex: 2,
+      paddingVertical: 14,
+      borderRadius: 14,
+      backgroundColor: isThemed ? colorWithAlpha(p.text, 0.12) : '#e2e8f0',
+      alignItems: 'center',
+    },
+    modalBtnAbandonText: { fontWeight: '900', color: p.text },
   });
 }
 

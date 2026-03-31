@@ -718,7 +718,7 @@ async function callModel(user: string, system: string, temperature: number): Pro
       ],
       response_format: { type: 'json_object' },
       temperature,
-      max_tokens: 600,
+      max_completion_tokens: 600,
     });
     const durationMs = Math.round(performance.now() - t0);
     const raw = completion.choices[0]?.message?.content;
@@ -958,7 +958,7 @@ JSON: { "title": "...", "narrative": "...", "motivationalHook": "...", "estimate
       ],
       response_format: { type: 'json_object' },
       temperature: 0.8,
-      max_tokens: 300,
+      max_completion_tokens: 300,
     });
     const raw = completion.choices[0]?.message?.content;
     if (!raw) throw new Error('empty');

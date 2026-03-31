@@ -14,7 +14,7 @@ import {
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useSSO } from '@clerk/expo';
-import { useSignIn, useSignUp } from '@clerk/react/legacy';
+import { useSignIn, useSignUp } from '@clerk/expo/legacy';
 import { DA } from '@questia/ui';
 import { hasOnboardingAnswers } from '../../lib/onboardingGate';
 import { isExpoWebBrowserNativeAvailable } from '../../lib/webBrowser';

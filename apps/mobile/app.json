@@ -83,9 +83,10 @@
         }
       ]
     ],
-    "experiments": {
+      "experiments": {
       "typedRoutes": true
     },
+    "jsEngine": "hermes",
     "owner": "souprojet"
   }
 }

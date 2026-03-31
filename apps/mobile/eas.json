@@ -6,13 +6,11 @@
   "build": {
     "development": {
       "node": "20.19.0",
-      "npm": "11.6.2",
       "developmentClient": true,
       "distribution": "internal"
     },
     "preview": {
       "node": "20.19.0",
-      "npm": "11.6.2",
       "distribution": "internal",
       "ios": { "simulator": true },
       "env": {
@@ -23,7 +21,6 @@
     },
     "production": {
       "node": "20.19.0",
-      "npm": "11.6.2",
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsucXVlc3RpYS5mciQ",

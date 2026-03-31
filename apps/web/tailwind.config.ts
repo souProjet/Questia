@@ -23,6 +23,7 @@ const config: Config = {
         'fade-in': 'fadeIn 0.5s ease-out',
         'fade-up': 'fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fade-up-slow': 'fadeUpSlow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'quest-card-enter': 'questCardEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fadeIn': 'fadeIn 0.35s ease-out',
         /** Entrée de page (template racine) — discret */
         'page-enter': 'pageEnter 0.4s cubic-bezier(0.22, 1, 0.36, 1) both',
@@ -85,6 +86,10 @@ const config: Config = {
         fadeUpSlow: {
           '0%': { opacity: '0', transform: 'translateY(26px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        questCardEnter: {
+          '0%': { opacity: '0', transform: 'translateY(16px) scale(0.97)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
         shareShimmer: {
           '0%, 100%': { opacity: '0.35' },

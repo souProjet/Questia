@@ -19,9 +19,7 @@ import type { AppLocale, DisplayBadge, EscalationPhase, XpBreakdown } from '@que
 import {
   questDisplayEmoji,
   questFamilyLabel,
-  getTitleDefinition,
   isValidQuestDateIso,
-  formatQuestDateForLocale,
   REPORT_DEFER_MAX_DAYS,
   QUEST_LOADER_DAY_STORAGE_KEY,
   getQuestCalendarDateNow,
@@ -93,31 +91,6 @@ interface DailyQuest {
     questions?: RefinementQuestionUi[];
     consentNotice?: string;
   };
-}
-
-// ── Phase → friendly label ─────────────────────────────────────────────────────
-
-const PHASE_LABEL: Record<EscalationPhase, { text: string; pill: string; emoji: string }> = {
-  calibration: { text: 'Semaine de découverte', pill: 'pill-calibration', emoji: '🌱' },
-  expansion:   { text: 'En mode exploration',   pill: 'pill-expansion',   emoji: '🧭' },
-  rupture:     { text: 'Phase d\'intensité',    pill: 'pill-rupture',     emoji: '⚡' },
-};
-
-const PHASE_LABEL_EN: Record<EscalationPhase, { text: string; pill: string; emoji: string }> = {
-  calibration: { text: 'Discovery week', pill: 'pill-calibration', emoji: '🌱' },
-  expansion:   { text: 'Exploration mode', pill: 'pill-expansion', emoji: '🧭' },
-  rupture:     { text: 'Intensity phase', pill: 'pill-rupture', emoji: '⚡' },
-};
-
-function weatherEmojiFromText(desc: string | null | undefined): string {
-  const d = (desc ?? '').toLowerCase();
-  if (d.includes('pluie') || d.includes('averses')) return '🌧️';
-  if (d.includes('neige')) return '❄️';
-  if (d.includes('orage')) return '⛈️';
-  if (d.includes('brouillard')) return '🌫️';
-  if (d.includes('nuage') || d.includes('couvert')) return '☁️';
-  if (d.includes('soleil') || d.includes('clair')) return '☀️';
-  return '🌤️';
 }
 
 // ── Safety consent ─────────────────────────────────────────────────────────────
@@ -227,6 +200,7 @@ function AppPageContent() {
   const [completing, setCompleting] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
   const [rerolling, setRerolling] = useState(false);
+  const [showRerollConfirm, setShowRerollConfirm] = useState(false);
   /** Incrémenté après relance/report pour remonter la carte quête (animation / nouveau contenu). */
   const [questCardSwapKey, setQuestCardSwapKey] = useState(0);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -552,16 +526,18 @@ function AppPageContent() {
 
   // ── Reroll ────────────────────────────────────────────────────────────────
 
-  const handleReroll = async () => {
+  const confirmReroll = () => {
     if (!quest || rerolling) return;
-    // Aligné sur l’UI : boutons visibles si pas acceptée / terminée. Ne pas exiger === 'pending'
-    // (réponse API sans status, typo de casse, etc. — sinon clic sans effet ni message).
     if (quest.status === 'accepted' || quest.status === 'completed' || quest.status === 'abandoned') return;
-
     const daily = quest.rerollsRemaining ?? 1;
     const bonus = quest.bonusRerollCredits ?? 0;
     if (daily + bonus <= 0) return;
+    setShowRerollConfirm(true);
+  };
 
+  const handleReroll = async () => {
+    if (!quest || rerolling) return;
+    setShowRerollConfirm(false);
     setRerolling(true);
     setBannerError(null);
     try {
@@ -661,18 +637,12 @@ function AppPageContent() {
     }
   };
 
-  // ── Phase label ───────────────────────────────────────────────────────────
-
-  const phase = quest?.phase ?? 'calibration';
-  const phaseInfo = (appLocale === 'en' ? PHASE_LABEL_EN : PHASE_LABEL)[phase];
-  const questFamily = quest ? questFamilyLabel(quest.archetypeCategory, appLocale) : null;
-
   const rerollDaily = quest?.rerollsRemaining ?? 1;
   const rerollBonus = quest?.bonusRerollCredits ?? 0;
   const rerollParts: string[] = [];
   if (rerollDaily > 0) rerollParts.push(t('rerollDaily', { n: rerollDaily }));
   if (rerollBonus > 0) rerollParts.push(t('rerollBonus', { n: rerollBonus }));
-  const rerollLabel = rerollParts.length > 0 ? rerollParts.join(' · ') : t('rerollNone');
+  const rerollLabel = rerollParts.length > 0 ? rerollParts.join(' \u00b7 ') : t('rerollNone');
   const canReroll =
     quest &&
     quest.status !== 'accepted' &&
@@ -680,51 +650,31 @@ function AppPageContent() {
     quest.status !== 'abandoned' &&
     rerollDaily + rerollBonus > 0;
 
-  const questStatusDisplay = useMemo(() => {
-    if (!quest) return null;
-    const map: Record<
-      DailyQuest['status'],
-      { label: string; emoji: string; pillClass: string }
-    > = {
-      pending: {
-        label: t('statusPending'),
-        emoji: '⏳',
-        pillClass: 'quest-status-pill--pending',
-      },
-      accepted: {
-        label: t('statusAccepted'),
-        emoji: '⚔️',
-        pillClass: 'quest-status-pill--accepted',
-      },
-      completed: {
-        label: t('statusCompleted'),
-        emoji: '✅',
-        pillClass: 'quest-status-pill--completed',
-      },
-      abandoned: {
-        label: t('statusAbandoned'),
-        emoji: '🌙',
-        pillClass: 'quest-status-pill--abandoned',
-      },
-      rejected: {
-        label: t('statusRejected'),
-        emoji: '✕',
-        pillClass: 'quest-status-pill--rejected',
-      },
-      replaced: {
-        label: t('statusReplaced'),
-        emoji: '🔄',
-        pillClass: 'quest-status-pill--replaced',
-      },
-    };
-    return map[quest.status];
-  }, [quest, t]);
+  const questStatus = quest?.status;
+  const isPending = questStatus === 'pending';
+  const isAccepted = questStatus === 'accepted';
+  const isCompleted = questStatus === 'completed';
+  const isAbandoned = questStatus === 'abandoned';
+  const questPace = quest?.questPace ?? 'instant';
+  const isPlannedQuest = questPace === 'planned';
 
-  // ── Skeleton ──────────────────────────────────────────────────────────────
+  const [showDetails, setShowDetails] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!quest || quest.status !== 'pending') return;
+      if (e.key === 'ArrowRight') { handleAccept(); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft' && canReroll) { confirmReroll(); e.preventDefault(); }
+      else if (e.key === 'ArrowUp' || e.key === 'Enter') { setShowDetails(true); e.preventDefault(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [quest, canReroll]);
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-adventure overflow-x-hidden">
+      <div className="min-h-screen bg-[var(--bg)]">
         <Navbar />
         <QuestHomeLoading />
       </div>
@@ -733,7 +683,7 @@ function AppPageContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-adventure overflow-x-hidden">
+      <div className="min-h-screen bg-[var(--bg)]">
         <Navbar />
         <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-3 sm:px-5 pt-24 pb-20 flex flex-col items-center justify-center text-center gap-6 outline-none">
           <Icon name="Frown" size="2xl" className="text-[var(--subtle)] mx-auto" />
@@ -747,25 +697,13 @@ function AppPageContent() {
     );
   }
 
-  const weatherLine = quest
-    ? `${quest.context?.weatherDescription ?? quest.weather ?? t('weatherFallback')} · ${Math.round(quest.context?.temp ?? quest.weatherTemp ?? 18)}°C`
-    : '';
-
-  const questStatus = quest?.status;
-  const isPending = questStatus === 'pending';
-  const isAccepted = questStatus === 'accepted';
-  const isCompleted = questStatus === 'completed';
-  const isAbandoned = questStatus === 'abandoned';
-  const questPace = quest?.questPace ?? 'instant';
-  const isPlannedQuest = questPace === 'planned';
-
   return (
-    <div className="min-h-screen bg-adventure relative overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg)] relative overflow-x-hidden">
       <Navbar />
 
       {acceptQuestFlash ? (
         <div
-          className="pointer-events-none fixed inset-0 z-[85] bg-gradient-to-br from-emerald-300/45 via-amber-200/35 to-cyan-300/40 motion-safe:animate-quest-accept-flash motion-reduce:hidden"
+          className="pointer-events-none fixed inset-0 z-[85] bg-emerald-400/30 motion-safe:animate-quest-accept-flash motion-reduce:hidden"
           aria-hidden
         />
       ) : null}
@@ -784,28 +722,26 @@ function AppPageContent() {
         />
       ) : null}
 
-      {/* Décors « plateau » comme la landing */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden>
-        <div className="absolute -top-16 left-1/2 w-[min(100rem,200%)] max-w-none -translate-x-1/2 h-[min(38vh,26rem)] rounded-[100%] bg-gradient-to-b from-cyan-200/25 via-orange-100/10 to-transparent blur-3xl motion-safe:animate-glow-soft opacity-70 motion-reduce:animate-none motion-reduce:opacity-45" />
-        <div className="absolute top-28 left-[6%] text-5xl opacity-[0.22] select-none motion-safe:animate-float motion-reduce:animate-none">
-          🧭
-        </div>
-        <div className="absolute top-32 right-[8%] text-[2.75rem] opacity-[0.2] select-none motion-safe:animate-float motion-reduce:animate-none [animation-delay:2s]">
-          🎒
-        </div>
-        <div className="absolute top-[46%] left-[12%] text-4xl opacity-[0.18] select-none motion-safe:animate-float-delayed motion-reduce:animate-none">
-          🎲
-        </div>
-        <div className="absolute bottom-24 right-[14%] text-5xl opacity-[0.2] select-none motion-safe:animate-float motion-reduce:animate-none [animation-delay:1s]">
-          🗺️
-        </div>
+      {/* Minimal header */}
+      <div className="fixed top-16 left-0 right-0 z-30 flex items-center justify-between px-6 py-3 backdrop-blur-sm bg-[var(--bg)]/80 border-b border-[var(--border-ui)]/30 max-w-2xl mx-auto">
+        <span className="text-sm font-black text-[var(--muted)] tracking-wide">
+          J.{quest?.day ?? 1}
+        </span>
+        {(quest?.streak ?? 0) > 0 ? (
+          <span className="text-base font-black text-[var(--orange)]">
+            &#128293; {quest?.streak}
+          </span>
+        ) : <span />}
+        <Link href="/profile" className="w-9 h-9 rounded-full border border-[color:color-mix(in_srgb,var(--cyan)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--cyan)_15%,var(--card))] flex items-center justify-center text-sm font-black text-[var(--link-on-bg)]">
+          {(user?.firstName ?? '?')[0]}
+        </Link>
       </div>
 
-      <main id="main-content" tabIndex={-1} className="relative z-10 max-w-2xl mx-auto px-3 sm:px-5 pt-24 pb-24 outline-none">
+      <main id="main-content" tabIndex={-1} className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] pt-32 pb-8 px-4 outline-none">
         {bannerError && (
           <div
             role="alert"
-            className="mb-6 rounded-2xl border border-red-200 bg-red-50/95 px-4 py-3 text-center text-sm font-semibold text-red-900 shadow-sm"
+            className="mb-4 w-full max-w-md rounded-2xl border border-red-200 bg-red-50/95 px-4 py-3 text-center text-sm font-semibold text-red-900 shadow-sm"
           >
             {bannerError}
             <button
@@ -818,482 +754,239 @@ function AppPageContent() {
           </div>
         )}
 
-        {/* Bandeau joueur : une seule lecture, emojis comme la landing */}
-        <section className="app-app-hero-band mb-8 mt-2 px-5 py-6 md:px-7 md:py-7 motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:40ms] [animation-fill-mode:backwards]">
-
-          <h1 className="font-display font-black text-2xl leading-[1.15] text-[var(--text)] sm:text-3xl md:text-[2.15rem]">
-            {t('greeting', { name: user?.firstName ?? t('defaultName') })}{' '}
-            <span aria-hidden>👋</span>
-            <br />
-            <span className="text-gradient-pop text-[1.02em] md:text-[1.06em] tracking-[-0.02em]">
-              {t('heroTitle')}
-            </span>{' '}
-            <span aria-hidden className="text-[0.95em] not-italic">
-              ⚔️
-            </span>
-          </h1>
-          <p className="mt-3 text-sm font-semibold text-[var(--muted)] md:text-base">
-            {t('heroSubtitle')}
-          </p>
-
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className={`${phaseInfo.pill} shadow-sm`}>
-              <span aria-hidden>{phaseInfo.emoji}</span>
-              {phaseInfo.text}
-            </span>
-            {(quest?.streak ?? 0) > 0 && (
-              <span
-                className="streak-badge text-xs shadow-sm"
-                title={t('streakTitle')}
-              >
-                <span aria-hidden>🔥</span>
-                <span className="font-black">{quest?.streak}</span>
-                <span className="font-semibold">
-                  {' '}
-                  {quest?.streak !== 1 ? t('streakDays') : t('streakDay')} {t('streakInARow')}
-                </span>
-              </span>
-            )}
-            <span
-              className="inline-flex items-center gap-1 rounded-full border border-cyan-500/45 bg-[color:color-mix(in_srgb,var(--card)_92%,transparent)] px-3 py-1 text-xs font-black text-[var(--text)] shadow-sm"
-              title={t('journeyBadgeTooltip')}
-            >
-              <span aria-hidden>📍</span>
-              {t('journeyDay', { day: quest?.day ?? 1 })}
-            </span>
-            {quest?.equippedTitleId && getTitleDefinition(quest.equippedTitleId) ? (
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full border border-[color:color-mix(in_srgb,var(--gold)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--gold)_14%,var(--surface))] px-3 py-1 text-[11px] font-black text-[var(--text)] shadow-sm"
-                title={t('equippedTitleShop')}
-              >
-                <span aria-hidden>{getTitleDefinition(quest.equippedTitleId)!.emoji}</span>
-                {getTitleDefinition(quest.equippedTitleId)!.label}
-              </span>
-            ) : null}
-            {(quest?.xpBonusCharges ?? 0) > 0 ? (
-              <span
-                className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--green)_42%,transparent)] bg-[color:color-mix(in_srgb,var(--green)_12%,var(--surface))] px-3 py-1 text-[11px] font-black text-[var(--green)] shadow-sm"
-                title={t('xpBonusTooltip')}
-              >
-                {t('xpBonusCharges', { n: quest?.xpBonusCharges ?? 0 })}
-              </span>
-            ) : null}
-          </div>
-
-          {quest?.progression && (
-              <div className="app-quest-xp-strip mt-5 px-4 py-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-black text-[var(--link-on-bg)]">
-                <span>
-                  {t('levelLine', { level: quest.progression.level, xp: quest.progression.totalXp })}
-                </span>
-                <span className="font-bold text-[var(--muted)]">
-                  {t('xpToLevel', { xp: quest.progression.xpToNext })}
-                </span>
-              </div>
-              <p className="mt-1 text-xs font-semibold text-[var(--subtle)]">
-                {t('xpInLevel', {
-                  into: quest.progression.xpIntoLevel,
-                  per: quest.progression.xpPerLevel,
-                })}
-              </p>
-              <div className="mt-2 h-2 rounded-full bg-[color:var(--progress-track)] overflow-hidden border border-cyan-200/50">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-orange-400 transition-all duration-700"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      (quest.progression.xpIntoLevel / Math.max(1, quest.progression.xpPerLevel)) * 100,
-                    )}%`,
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {quest && (quest.city || quest.weather) && (
-            <p className="mt-5 border-t border-dashed border-orange-300/50 pt-4 text-sm font-medium text-[var(--muted)]">
-              <span className="mr-1.5" aria-hidden>
-                {weatherEmojiFromText(quest.context?.weatherDescription ?? quest.weather)}
-              </span>
-              {weatherLine}
-              {quest.city && quest.city !== 'ta ville' && (
-                <>
-                  <span className="text-[var(--subtle)]"> · </span>
-                  <span className="font-bold text-[var(--link-on-bg)]">📍 {quest.city}</span>
-                </>
-              )}
-            </p>
-          )}
-        </section>
-
-        {quest && questStatusDisplay ? (
+        {quest ? (
           <div
-            role="status"
-            aria-live="polite"
-            className="app-quest-day-strip relative mb-4 overflow-hidden px-3 py-3 ring-1 ring-[color:color-mix(in_srgb,var(--orange)_25%,transparent)] backdrop-blur-sm motion-safe:animate-fade-up-slow motion-reduce:animate-none motion-reduce:opacity-100 [animation-delay:50ms] [animation-fill-mode:backwards] sm:flex sm:flex-row sm:items-stretch sm:gap-0 sm:px-4 sm:py-3.5"
-          >
-            <div
-              className="pointer-events-none absolute inset-y-0 -left-[28%] z-0 w-[58%] bg-gradient-to-r from-transparent via-[color:color-mix(in_srgb,var(--card)_55%,transparent)] to-transparent opacity-90 motion-safe:animate-quest-day-strip-shine motion-reduce:animate-none"
-              aria-hidden
-            />
-            <div className="relative z-[1] flex flex-row items-stretch gap-3 sm:gap-4">
-              <div
-                className="w-1 shrink-0 self-stretch min-h-[48px] rounded-full bg-gradient-to-b from-orange-400 via-amber-400 to-orange-500 shadow-[0_0_14px_rgba(249,115,22,.45)]"
-                aria-hidden
-              />
-              <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--orange)]">
-                    {t('questOfDay')}
-                  </span>
-                  <time
-                    className="font-display text-[1.05rem] font-black text-[var(--text)] sm:text-lg"
-                    dateTime={quest.questDate}
-                  >
-                    {formatQuestDateForLocale(quest.questDate, appLocale)}
-                  </time>
-                </div>
-                <span
-                  className={`quest-status-pill ${questStatusDisplay.pillClass}`}
-                >
-                  <span aria-hidden>{questStatusDisplay.emoji}</span>
-                  {questStatusDisplay.label}
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Carte quête — même ADN que QuestExamplesSlider (embedded) */}
-        {quest && (
-          <article
             key={questCardSwapKey}
-            className={`quest-slider-embedded overflow-hidden ring-1 transition-[opacity,box-shadow] duration-300 motion-safe:animate-fade-up-slow motion-reduce:animate-none [animation-delay:110ms] [animation-fill-mode:backwards] ${
+            className={`w-full max-w-[480px] rounded-[28px] border-2 overflow-hidden shadow-xl transition-all duration-300 motion-safe:animate-quest-card-enter motion-reduce:animate-none [animation-fill-mode:backwards] ${
               isAbandoned
-                ? 'ring-slate-400/35'
+                ? 'border-slate-400/35'
                 : isAccepted || isCompleted
-                  ? 'ring-emerald-400/40 shadow-[0_12px_40px_-8px_rgba(16,185,129,.2)]'
-                  : 'ring-orange-400/25'
-            } ${rerolling || reporting ? 'pointer-events-none opacity-55' : ''}`}
+                  ? 'border-emerald-400/40 shadow-emerald-500/15'
+                  : 'border-[var(--orange)]/30 shadow-orange-500/10'
+            } bg-[var(--card)] ${rerolling || reporting ? 'pointer-events-none opacity-50 scale-[0.97]' : ''}`}
           >
-            <div className="px-4 pb-5 pt-5 sm:px-6 sm:pt-6">
-              {/* Titre + tag : identité de la quête avant les consignes */}
-              <div className="mb-6 flex items-start gap-3">
-                <span className="text-3xl leading-none select-none sm:text-4xl" aria-hidden>
-                  {questDisplayEmoji(quest.emoji)}
-                </span>
-                <div className="min-w-0 flex-1 pr-2">
-                  <h2 className="font-display text-lg font-black leading-tight text-[var(--text)] sm:text-xl">
+            {isAbandoned ? (
+              <div className="py-16 px-8 text-center">
+                <p className="text-lg font-black text-[var(--muted)]">{t('abandonedTitle')}</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">{t('abandonedSubtitle')}</p>
+              </div>
+            ) : (
+              <>
+                <div className="px-6 pt-8 pb-4 flex flex-col items-center text-center">
+                  <span className="text-[56px] leading-none mb-4 select-none" aria-hidden>
+                    {questDisplayEmoji(quest.emoji)}
+                  </span>
+                  <h2 className="font-display text-[22px] font-black leading-tight text-[var(--text)] mb-3 px-2">
                     {quest.title}
                   </h2>
-                  {(questFamily || questPace) ? (
-                    <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--subtle)]">
-                      {questFamily ? (
-                        <span className="rounded-full border border-[color:color-mix(in_srgb,var(--text)_16%,transparent)] bg-[color:color-mix(in_srgb,var(--card)_88%,transparent)] px-2.5 py-0.5 font-semibold text-[var(--muted)] shadow-sm">
-                          {questFamily}
-                        </span>
-                      ) : null}
-                      <span
-                        className={`rounded-full border px-2.5 py-0.5 font-semibold shadow-sm ${
-                          questPace === 'planned'
-                            ? 'border-[color:color-mix(in_srgb,#a78bfa_45%,transparent)] bg-[color:color-mix(in_srgb,#a78bfa_14%,var(--surface))] text-[var(--text)]'
-                            : 'border-[color:color-mix(in_srgb,var(--violet)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--violet)_10%,var(--surface))] text-[var(--link-on-bg)]'
-                        }`}
-                        title={
-                          questPace === 'planned' ? t('pacePlannedTitle') : t('paceTodayTitle')
-                        }
-                      >
-                        {questPace === 'planned' ? t('pacePlannedLabel') : t('paceTodayLabel')}
+                  <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+                    {quest.archetypeCategory ? (
+                      <span className="rounded-full border border-[var(--muted)]/20 bg-[var(--muted)]/5 px-2.5 py-0.5 text-[11px] font-bold text-[var(--muted)]">
+                        {questFamilyLabel(quest.archetypeCategory, appLocale)}
                       </span>
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-
-              {/* Mission concrète */}
-              <section
-                className="quest-mission-panel mb-6 p-5 ring-1 ring-[color:color-mix(in_srgb,var(--violet)_28%,transparent)] sm:p-6"
-                aria-labelledby="mission-heading"
-              >
-                <p
-                  id="mission-heading"
-                  className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--link-on-bg)]"
-                >
-                  <span className="text-base leading-none" aria-hidden>
-                    ⚡
-                  </span>
-                  {t('missionHeading')}
-                </p>
-                <p className="font-display text-[1.15rem] font-black leading-[1.35] text-[var(--text)] sm:text-xl md:text-[1.35rem] md:leading-snug">
-                  {quest.mission}
-                </p>
-                {quest.deferredSocialUntil && isPending && (
-                  <p className="mt-4 rounded-xl border border-dashed border-[color:color-mix(in_srgb,#a78bfa_45%,transparent)] bg-[color:color-mix(in_srgb,#a78bfa_10%,var(--surface))] px-3 py-2.5 text-xs font-semibold leading-relaxed text-[var(--text)]">
-                    {appLocale === 'en' ? (
-                      <>
-                        📅 For a bolder or social challenge, you chose{' '}
-                        <span className="font-black">
-                          {formatQuestDateForLocale(quest.deferredSocialUntil, appLocale)}
-                        </span>
-                        {' '}
-                        — a reminder, not an obligation.
-                      </>
-                    ) : (
-                      <>
-                        📅 Pour un défi plus ambitieux ou social, tu t’étais fixé·e le{' '}
-                        <span className="font-black">
-                          {formatQuestDateForLocale(quest.deferredSocialUntil, appLocale)}
-                        </span>{' '}
-                        — c’est un repère, pas une obligation.
-                      </>
-                    )}
-                  </p>
-                )}
-                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[color:color-mix(in_srgb,var(--violet)_28%,transparent)] pt-4">
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-[color:color-mix(in_srgb,var(--orange)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--orange)_12%,var(--surface))] px-3 py-1.5 text-xs font-black text-[var(--text)]">
-                    <span aria-hidden>⏱️</span>
-                    {quest.duration}
-                  </span>
-                  {quest.isOutdoor && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--green)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--green)_10%,var(--surface))] px-2.5 py-1 text-[11px] font-bold text-[var(--green)]">
-                      {t('outdoorBadge')}
+                    ) : null}
+                    <span className="rounded-full border border-[var(--link-on-bg)]/30 bg-[var(--link-on-bg)]/8 px-2.5 py-0.5 text-[11px] font-bold text-[var(--link-on-bg)]">
+                      {questPace === 'planned' ? t('pacePlannedLabel') : t('paceTodayLabel')}
                     </span>
-                  )}
+                    {quest.isOutdoor ? (
+                      <span className="rounded-full border border-[var(--green)]/30 bg-[var(--green)]/8 px-2.5 py-0.5 text-[11px] font-bold text-[var(--green)]">
+                        {t('outdoorBadge')}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="text-sm leading-relaxed text-[var(--muted)] line-clamp-3 px-1 mb-3">
+                    {quest.mission}
+                  </p>
+                  <p className="text-xs font-semibold text-[var(--muted)]">
+                    {quest.duration}
+                  </p>
                 </div>
-              </section>
 
-              {quest.isOutdoor && quest.destination ? (
-                <section
-                  className="quest-map-panel mb-6 p-5 ring-1 ring-[color:color-mix(in_srgb,var(--violet)_22%,transparent)] sm:p-6"
-                  aria-labelledby="map-heading"
-                >
-                  <h3
-                    id="map-heading"
-                    className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--link-on-bg)]"
+                {isPending && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDetails(true)}
+                    className="w-full py-3 text-center text-xs font-semibold text-[var(--muted)]/60 hover:text-[var(--muted)] transition-colors"
                   >
-                    <Icon name="Map" size="sm" className="text-[var(--link-on-bg)]" />
-                    {t('mapHeading')}
-                  </h3>
-                  <p className="mb-4 text-sm leading-relaxed text-[var(--muted)]">
-                    {t('mapDescription')}
-                  </p>
-                  <QuestDestinationMap destination={quest.destination} userPosition={userPosition} />
-                </section>
-              ) : null}
+                    {t('swipeTapDetails')}
+                  </button>
+                )}
 
-              <figure className="quest-hook-card mb-2 mt-1">
-                <figcaption className="quest-hook-card__label">{t('hookLabel')}</figcaption>
-                <blockquote className="quest-hook-card__quote">
-                  <span className="quest-hook-card__g" aria-hidden>
-                    «
-                  </span>
-                  <span className="font-medium text-[var(--text)]">{quest.hook}</span>
-                  <span className="quest-hook-card__g" aria-hidden>
-                    »
-                  </span>
-                </blockquote>
-              </figure>
+                {isAccepted && (
+                  <div className="px-5 pb-5">
+                    <button
+                      type="button"
+                      onClick={doComplete}
+                      disabled={completing}
+                      className="btn btn-primary btn-lg w-full text-base font-black"
+                    >
+                      {completing ? '\u2026' : t('validateQuest')}
+                    </button>
+                  </div>
+                )}
 
-              {quest.safetyNote && isPending && (
-                <p className="mt-5 border-l-4 border-[color:color-mix(in_srgb,var(--gold)_55%,transparent)] pl-3 text-sm leading-relaxed text-[var(--muted)]">
-                  {quest.safetyNote}
-                </p>
-              )}
-            </div>
-
-            <div className="app-quest-actions-footer flex flex-col gap-4 px-4 py-5 sm:px-5">
-              {isCompleted ? (
-                <div className="mx-auto max-w-md text-center space-y-3">
-                  <p className="font-display text-xl font-black tracking-tight text-[var(--green)] sm:text-[1.35rem]">
-                    {t('completedTitle')}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">{t('completedSubtitle')}</p>
-                  <div className="flex justify-center">
+                {isCompleted && (
+                  <div className="px-5 pb-5 text-center space-y-2">
+                    <p className="text-lg font-black text-[var(--green)]">{t('completedTitle')}</p>
+                    <p className="text-sm text-[var(--muted)]">{t('completedSubtitle')}</p>
                     <button
                       type="button"
                       onClick={() => setShowShareCard(true)}
-                      className="quest-actions-share-btn btn btn-md w-full sm:w-auto font-black"
+                      className="quest-actions-share-btn btn btn-md w-full font-black mt-2"
                     >
                       {t('shareVictory')}
                     </button>
                   </div>
-                </div>
-              ) : isAbandoned ? (
-                <div className="text-center space-y-2 text-[var(--muted)]">
-                  <p className="font-display text-lg font-black text-[var(--muted)]">
-                    {t('abandonedTitle')}
-                  </p>
-                  <p className="text-sm">
-                    {t('abandonedSubtitle')}
-                  </p>
-                </div>
-              ) : isAccepted ? (
-                completing ? (
-                  <div className="flex items-center justify-center gap-3 py-4">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-                    <p className="font-bold text-[var(--green)]">{t('saving')}</p>
-                  </div>
-                ) : (
-                  <>
-                    <button type="button" onClick={doComplete} className="btn btn-primary btn-lg w-full text-base font-black">
-                      {t('validateQuest')}
+                )}
+
+                {isPending && (
+                  <div className="px-5 pb-5 space-y-2">
+                    <button type="button" onClick={handleAccept} disabled={accepting}
+                      className="btn btn-cta btn-lg w-full text-base font-black">
+                      {accepting ? '\u2026' : t('acceptChallenge')}
                     </button>
-                    <p className="text-center text-xs text-[var(--muted)]">
-                      {t('validateHint')}
-                    </p>
                     <button
                       type="button"
-                      onClick={() => setShowAbandonConfirm(true)}
-                      className="mx-auto mt-2 text-center text-[11px] font-semibold text-[var(--muted)] underline-offset-2 hover:underline"
-                    >
-                      {t('abandonLink')}
-                    </button>
-                  </>
-                )
-              ) : accepting ? (
-                <div className="flex items-center justify-center gap-3 py-4">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-                  <p className="font-bold text-[var(--orange)]">{t('confirming')}</p>
-                </div>
-              ) : (
-                <>
-                  <button type="button" onClick={handleAccept} className="btn btn-cta btn-lg w-full text-base font-black">
-                    {t('acceptChallenge')}
-                  </button>
-                  <div className="quest-actions-reroll">
-                    <button
-                      type="button"
-                      onClick={handleReroll}
+                      onClick={confirmReroll}
                       disabled={rerolling || !canReroll}
-                      className="quest-actions-reroll__btn"
+                      className="w-full py-3 rounded-xl border-2 border-[var(--orange)]/40 bg-[var(--orange)]/5 text-sm font-black text-[var(--orange)] hover:bg-[var(--orange)]/10 transition-colors disabled:opacity-40"
                     >
-                      <Icon name="Dices" size="sm" className="shrink-0 opacity-95" />
-                      {rerolling ? '…' : t('changeQuest', { label: rerollLabel })}
+                      {rerolling ? '\u2026' : t('changeQuest', { label: rerollLabel })}
                     </button>
                   </div>
-                  <div className="quest-actions-secondary">
-                    <div
-                      className={`quest-actions-secondary__row ${!isPlannedQuest ? 'sm:mx-auto sm:max-w-xl' : ''}`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setShowAbandonConfirm(true)}
-                        className={`quest-actions-secondary__btn quest-actions-secondary__btn--pass ${isPlannedQuest ? 'w-full sm:flex-1' : 'w-full'}`}
-                      >
-                        <Icon name="Frown" size="sm" className="opacity-80" />
-                        {t('notForMe')}
-                      </button>
-                      {isPlannedQuest ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setReportDeferredDate(calendarDay);
-                            setShowReportModal(true);
-                          }}
-                          disabled={!canReroll}
-                          className="quest-actions-secondary__btn quest-actions-secondary__btn--report w-full sm:flex-1"
-                        >
-                          <Icon name="ClipboardList" size="sm" />
-                          {t('reportShortQuest')}
-                        </button>
-                      ) : null}
-                    </div>
-                    {isPlannedQuest ? (
-                      <p className="mt-2 px-1 text-center text-[10px] leading-relaxed text-[var(--subtle)]">
-                        {t('reportHint')}
-                      </p>
-                    ) : null}
-                  </div>
-                </>
-              )}
-            </div>
-          </article>
+                )}
+              </>
+            )}
+          </div>
+        ) : null}
+
+        {isPending && quest && (
+          <p className="mt-4 text-xs text-[var(--muted)]/50 text-center">
+            {t('swipeKeyboardHint')}
+          </p>
         )}
       </main>
+
+      {/* Detail panel */}
+      {showDetails && quest && (
+        <div className="fixed inset-0 z-[90] flex items-end md:items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDetails(false)} />
+          <div className="relative z-10 w-full max-w-lg max-h-[85vh] overflow-y-auto bg-[var(--card)] rounded-t-3xl md:rounded-3xl border border-[var(--border-ui)]/40 shadow-2xl">
+            <div className="flex justify-center pt-3 pb-1 md:hidden">
+              <div className="w-10 h-1 rounded-full bg-[var(--muted)]/30" />
+            </div>
+            <div className="px-6 py-5 space-y-5">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[1.5px] text-[var(--orange)] mb-2">{t('missionHeading')}</p>
+                <p className="text-[15px] leading-relaxed font-medium text-[var(--text)]">{quest.mission}</p>
+              </div>
+
+              {quest.hook ? (
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[1.5px] text-[var(--orange)] mb-2">{t('hookLabel')}</p>
+                  <blockquote className="text-sm italic text-center text-[var(--text)] border border-[var(--muted)]/15 rounded-xl p-4">
+                    &ldquo;{quest.hook}&rdquo;
+                  </blockquote>
+                </div>
+              ) : null}
+
+              {quest.isOutdoor && quest.destination ? (
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[1.5px] text-[var(--orange)] mb-2">{t('mapHeading')}</p>
+                  <p className="text-xs text-[var(--muted)] mb-3">{t('mapDescription')}</p>
+                  <QuestDestinationMap destination={quest.destination} userPosition={userPosition} />
+                </div>
+              ) : null}
+
+              {quest.safetyNote && isPending ? (
+                <div className="border border-[var(--orange)]/30 rounded-xl p-4">
+                  <p className="text-[11px] font-black uppercase tracking-[1.5px] text-[var(--orange)] mb-2">{t('safetyTitle')}</p>
+                  <p className="text-sm text-[var(--text)]">{quest.safetyNote}</p>
+                </div>
+              ) : null}
+
+              <div className="flex items-center gap-3 text-xs font-semibold text-[var(--muted)]">
+                <span>{quest.duration}</span>
+                {quest.isOutdoor ? (
+                  <span className="rounded-full border border-[var(--green)]/30 bg-[var(--green)]/8 px-2 py-0.5 text-[10px] font-bold text-[var(--green)]">
+                    {t('outdoorBadge')}
+                  </span>
+                ) : null}
+              </div>
+
+              {isPending ? (
+                <div className="space-y-2 pt-2">
+                  {isPlannedQuest ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDetails(false);
+                        setReportDeferredDate(calendarDay);
+                        setShowReportModal(true);
+                      }}
+                      disabled={!canReroll}
+                      className="w-full py-3.5 rounded-xl border border-[var(--link-on-bg)]/30 text-sm font-bold text-[var(--link-on-bg)] hover:bg-[var(--link-on-bg)]/5 transition-colors disabled:opacity-40"
+                    >
+                      {t('reportShortQuest')}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDetails(false);
+                      setShowAbandonConfirm(true);
+                    }}
+                    className="w-full py-3.5 rounded-xl border border-[var(--muted)]/25 text-sm font-bold text-[var(--muted)] hover:bg-[var(--muted)]/5 transition-colors"
+                  >
+                    {t('notForMe')}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSafety && quest && (
         <SafetySheet quest={quest} onConfirm={doAccept} onClose={() => setShowSafety(false)} />
       )}
 
-      {showReportModal && quest && (quest.questPace ?? 'instant') === 'planned' && (
-        <div
-          className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="report-title"
-        >
-          <div className="max-w-md w-full rounded-2xl border border-[color:var(--border-ui-strong)] bg-[var(--card)] p-6 shadow-2xl">
-            <h3 id="report-title" className="font-display text-lg font-black text-[var(--text)]">
-              {t('reportModalTitle')}
-            </h3>
-            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">
-              {t('reportModalBody', { maxDays: REPORT_DEFER_MAX_DAYS })}
-            </p>
-            <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[var(--subtle)]" htmlFor="report-date">
-              {t('reportDateLabel')}
-            </label>
-            <input
-              id="report-date"
-              type="date"
-              className="mt-1 w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2 text-[var(--text)]"
-              min={calendarDay}
-              max={reportDateMax}
-              value={reportDeferredDate}
-              onChange={(e) => setReportDeferredDate(e.target.value)}
-            />
+      {showRerollConfirm && quest && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4" role="dialog" aria-modal="true" aria-labelledby="reroll-confirm-title">
+          <div className="max-w-md w-full rounded-2xl border border-[color:var(--border-ui-strong)] bg-[var(--card)] p-6 shadow-2xl motion-safe:animate-fade-up motion-reduce:animate-none">
+            <h3 id="reroll-confirm-title" className="font-display text-lg font-black text-[var(--text)]">{t('rerollConfirmTitle')}</h3>
+            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('rerollConfirmBody')}</p>
             <div className="mt-5 flex gap-2">
-              <button
-                type="button"
-                className="btn btn-ghost btn-md flex-1"
-                onClick={() => setShowReportModal(false)}
-                disabled={reporting}
-              >
-                {t('cancel')}
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary btn-md flex-[2] font-black"
-                onClick={() => void handleReportConfirm()}
-                disabled={reporting || !canReroll}
-              >
-                {reporting ? '…' : t('confirm')}
-              </button>
+              <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowRerollConfirm(false)}>{t('cancel')}</button>
+              <button type="button" className="btn btn-cta btn-md flex-[2] font-black" onClick={() => void handleReroll()}>{t('rerollConfirmAction')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReportModal && quest && isPlannedQuest && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4" role="dialog" aria-modal="true" aria-labelledby="report-title">
+          <div className="max-w-md w-full rounded-2xl border border-[color:var(--border-ui-strong)] bg-[var(--card)] p-6 shadow-2xl">
+            <h3 id="report-title" className="font-display text-lg font-black text-[var(--text)]">{t('reportModalTitle')}</h3>
+            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('reportModalBody', { maxDays: REPORT_DEFER_MAX_DAYS })}</p>
+            <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[var(--subtle)]" htmlFor="report-date">{t('reportDateLabel')}</label>
+            <input id="report-date" type="date" className="mt-1 w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2 text-[var(--text)]" min={calendarDay} max={reportDateMax} value={reportDeferredDate} onChange={(e) => setReportDeferredDate(e.target.value)} />
+            <div className="mt-5 flex gap-2">
+              <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowReportModal(false)} disabled={reporting}>{t('cancel')}</button>
+              <button type="button" className="btn btn-primary btn-md flex-[2] font-black" onClick={() => void handleReportConfirm()} disabled={reporting || !canReroll}>{reporting ? '\u2026' : t('confirm')}</button>
             </div>
           </div>
         </div>
       )}
 
       {showAbandonConfirm && quest && (
-        <div
-          className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="abandon-title"
-        >
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4" role="dialog" aria-modal="true" aria-labelledby="abandon-title">
           <div className="max-w-md w-full rounded-2xl border border-[color:var(--border-ui-strong)] bg-[var(--card)] p-6 shadow-2xl">
-            <h3 id="abandon-title" className="font-display text-lg font-black text-[var(--text)]">
-              {t('abandonModalTitle')}
-            </h3>
-            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">
-              {t('abandonModalBody')}
-            </p>
+            <h3 id="abandon-title" className="font-display text-lg font-black text-[var(--text)]">{t('abandonModalTitle')}</h3>
+            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('abandonModalBody')}</p>
             <div className="mt-5 flex gap-2">
-              <button
-                type="button"
-                className="btn btn-ghost btn-md flex-1"
-                onClick={() => setShowAbandonConfirm(false)}
-                disabled={abandoning}
-              >
-                {t('back')}
-              </button>
-              <button
-                type="button"
-                className="btn btn-md flex-[2] border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--text)_10%,var(--card))] font-black text-[var(--text)]"
-                onClick={() => void confirmAbandon()}
-                disabled={abandoning}
-              >
-                {abandoning ? '…' : t('confirm')}
-              </button>
+              <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowAbandonConfirm(false)} disabled={abandoning}>{t('back')}</button>
+              <button type="button" className="btn btn-md flex-[2] border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--text)_10%,var(--card))] font-black text-[var(--text)]" onClick={() => void confirmAbandon()} disabled={abandoning}>{abandoning ? '\u2026' : t('confirm')}</button>
             </div>
           </div>
         </div>
@@ -1305,13 +998,8 @@ function AppPageContent() {
           open
           xpGain={xpCelebration.xpGain}
           badgesUnlocked={xpCelebration.badgesUnlocked}
-          onOpenChange={(open) => {
-            if (!open) setXpCelebration(null);
-          }}
-          onContinue={() => {
-            setXpCelebration(null);
-            setShowShareCard(true);
-          }}
+          onOpenChange={(open) => { if (!open) setXpCelebration(null); }}
+          onContinue={() => { setXpCelebration(null); setShowShareCard(true); }}
         />
       )}
 
@@ -1320,9 +1008,7 @@ function AppPageContent() {
           open={showShareCard}
           onOpenChange={(open) => {
             setShowShareCard(open);
-            if (open) {
-              trackAnalyticsEvent(AnalyticsEvent.shareOpened, { share_channel: 'quest_card' });
-            }
+            if (open) trackAnalyticsEvent(AnalyticsEvent.shareOpened, { share_channel: 'quest_card' });
           }}
           userFirstName={user?.firstName ?? t('shareDefaultName')}
           shareLocale={appLocale === 'en' ? 'en' : 'fr'}
@@ -1344,11 +1030,12 @@ function AppPageContent() {
   );
 }
 
+
 export default function AppPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-adventure">
+        <div className="min-h-screen bg-[var(--bg)]">
           <Navbar />
           <main
             id="main-content"

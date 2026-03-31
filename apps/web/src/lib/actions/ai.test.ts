@@ -127,4 +127,145 @@ describe('ai actions', () => {
     });
     expect(n.narrative).toBe(archetype.description);
   });
+
+  it('injecte les variables de personnalisation dans le prompt', async () => {
+    createMock.mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              icon: 'Compass',
+              title: 'Balade des détails',
+              mission:
+                'Va dans une rue calme à Lyon et note trois détails visuels nouveaux. Termine par une photo sans filtre.',
+              hook: 'Ton quartier cache encore des surprises.',
+              duration: '40 min',
+              isOutdoor: true,
+              safetyNote: 'Reste sur des axes fréquentés.',
+              destinationLabel: 'Quais du Rhône',
+              destinationQuery: 'Quais du Rhône, Lyon, France',
+            }),
+          },
+        },
+      ],
+    });
+    vi.resetModules();
+    const { generateDailyQuest } = await import('./ai');
+    const archetype = QUEST_TAXONOMY.find((q) => q.requiresOutdoor && !q.requiresSocial)!;
+    await generateDailyQuest(
+      {
+        phase: 'rupture',
+        day: 17,
+        congruenceDelta: 0.41,
+        explorerAxis: 'explorer',
+        riskAxis: 'risktaker',
+        questDateIso: '2026-03-29',
+        generationSeed: 'profilA:2026-03-29:rupture',
+        declaredPersonality: uniformPersonality(0.65),
+        exhibitedPersonality: uniformPersonality(0.35),
+        refinementContext: 'Préfère des actions concrètes en soirée et peu de foule.',
+      },
+      archetype,
+      {
+        city: 'Lyon',
+        country: 'France',
+        weatherDescription: 'Dégagé',
+        weatherIcon: 'Sun',
+        temp: 19,
+        isOutdoorFriendly: true,
+        hasUserLocation: true,
+      },
+    );
+
+    const callArg = createMock.mock.calls[0]?.[0] as {
+      temperature: number;
+      messages: Array<{ role: string; content: string }>;
+    };
+    expect(callArg.temperature).toBe(0.84);
+    const userPrompt = callArg.messages.find((m) => m.role === 'user')?.content ?? '';
+
+    expect(userPrompt).toContain('VARIATION (évite la copie)');
+    expect(userPrompt).toContain('Jour n°17');
+    expect(userPrompt).toContain('Niveau (phase effective pour cette quête) : en rupture');
+    expect(userPrompt).toContain('Ville : Lyon, France');
+    expect(userPrompt).toContain('PRÉFÉRENCES UTILISATEUR');
+  });
+
+  it('relance la génération avec température adaptée après réponse invalide', async () => {
+    createMock
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                icon: 'Target',
+                title: 'Titre',
+                mission: 'Mission floue.',
+                hook: 'Hook trop long hook trop long hook trop long hook trop long',
+                duration: '10 min',
+                isOutdoor: false,
+                safetyNote: null,
+                destinationLabel: null,
+                destinationQuery: null,
+              }),
+            },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                icon: 'Target',
+                title: 'Ancrage de fin de journée',
+                mission:
+                  'Prends dix minutes à Bordeaux pour écrire trois lignes sur ta journée puis envoie un message concret à une personne de confiance.',
+                hook: 'Un geste précis bat mille intentions.',
+                duration: '25 min',
+                isOutdoor: false,
+                safetyNote: null,
+                destinationLabel: null,
+                destinationQuery: null,
+              }),
+            },
+          },
+        ],
+      });
+
+    vi.resetModules();
+    const { generateDailyQuest } = await import('./ai');
+    const archetype = QUEST_TAXONOMY.find((q) => !q.requiresOutdoor && q.requiresSocial)!;
+    const out = await generateDailyQuest(
+      {
+        phase: 'expansion',
+        day: 8,
+        congruenceDelta: 0.28,
+        explorerAxis: 'homebody',
+        riskAxis: 'cautious',
+        questDateIso: '2026-03-26',
+        generationSeed: 'profilB:2026-03-26:expansion',
+        declaredPersonality: uniformPersonality(0.45),
+        exhibitedPersonality: uniformPersonality(0.25),
+        isRerollGeneration: true,
+      },
+      archetype,
+      {
+        city: 'Bordeaux',
+        country: 'France',
+        weatherDescription: 'Nuageux',
+        weatherIcon: 'Cloud',
+        temp: 13,
+        isOutdoorFriendly: false,
+        hasUserLocation: true,
+      },
+    );
+
+    expect(createMock).toHaveBeenCalledTimes(2);
+    const firstTemp = (createMock.mock.calls[0]?.[0] as { temperature: number }).temperature;
+    const secondTemp = (createMock.mock.calls[1]?.[0] as { temperature: number }).temperature;
+    expect(firstTemp).toBe(0.9);
+    expect(secondTemp).toBe(0.72);
+    expect(out.title).toBe('Ancrage de fin de journée');
+  });
 });

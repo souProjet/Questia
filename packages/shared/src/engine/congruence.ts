@@ -126,6 +126,28 @@ export function scoreQuestFit(
   return Math.abs(expectedDelta - targetMid);
 }
 
+const COMFORT_NUMERIC: Record<string, number> = {
+  low: 1,
+  moderate: 2,
+  high: 3,
+  extreme: 4,
+};
+
+/**
+ * Score 0-1 : plus il est haut, plus le profil est « doux »
+ * (peu extraverti, peu chercheur de sensations, ouverture modérée, stable).
+ * Sert à doser le confort acceptable d'une quête.
+ */
+export function computeGentleness(p: PersonalityVector): number {
+  return (
+    (1 - (p.extraversion ?? 0.5)) * 0.30 +
+    (1 - (p.thrillSeeking ?? 0.5)) * 0.25 +
+    (1 - (p.openness ?? 0.5)) * 0.20 +
+    (p.emotionalStability ?? 0.5) * 0.10 +
+    (1 - (p.boredomSusceptibility ?? 0.5)) * 0.15
+  );
+}
+
 function mixPersonality(
   declared: PersonalityVector,
   exhibited: PersonalityVector | undefined,
@@ -188,9 +210,34 @@ export function selectQuest(
 
   const bias = categoryBias ?? {};
   const catPen = options?.categoryScorePenalty;
+  const gentle = computeGentleness(scoringVector);
+
   const scored = candidates
     .map((q) => {
       let score = scoreQuestFit(q, scoringVector, targetDelta);
+
+      // Pénalité de confort : un profil doux est pénalisé pour les quêtes intenses.
+      const comfort = COMFORT_NUMERIC[q.comfortLevel] ?? 2;
+      const naturalComfort = 1 + (1 - gentle) * 2.5;
+      const comfortExcess = Math.max(0, comfort - naturalComfort);
+      const phaseComfortMult =
+        phase === 'calibration' ? 0.22 :
+        phase === 'expansion'  ? 0.10 :
+        0.03;
+      score += comfortExcess * phaseComfortMult * gentle;
+
+      // Pénalité de durée : les profils doux préfèrent les actions courtes en début de parcours.
+      if (gentle > 0.4 && phase !== 'rupture') {
+        const durationExcess = Math.max(0, q.minimumDurationMinutes - 60);
+        score += durationExcess * 0.0006 * gentle * (phase === 'calibration' ? 2 : 1);
+      }
+
+      // Bonus social négatif : un profil très peu extraverti en calibration
+      // est pénalisé pour les quêtes qui exigent du social.
+      if (q.requiresSocial && gentle > 0.55 && phase === 'calibration') {
+        score += 0.12 * gentle;
+      }
+
       const b = bias[q.category];
       if (b !== undefined) score -= b;
       const p = catPen?.[q.category];

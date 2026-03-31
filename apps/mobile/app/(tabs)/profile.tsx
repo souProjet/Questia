@@ -18,8 +18,10 @@ import {
   BADGE_CATEGORY_LABEL_FR,
   getBadgeCatalogForUi,
   levelFromTotalXp,
+  getTitleDefinition,
   type ExplorerAxis,
   type RiskAxis,
+  type EscalationPhase,
 } from '@questia/shared';
 import { colorWithAlpha, type ThemePalette } from '@questia/ui';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
@@ -79,6 +81,14 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfilePayload | null>(null);
+  const [todayInfo, setTodayInfo] = useState<{
+    phase?: EscalationPhase;
+    weather?: string;
+    weatherTemp?: number | null;
+    city?: string | null;
+    equippedTitleId?: string | null;
+    xpBonusCharges?: number;
+  } | null>(null);
 
   const barAnim = useRef(new Animated.Value(0)).current;
 
@@ -110,9 +120,29 @@ export default function ProfileScreen() {
     }
   }, [barAnim, s, appLocale]);
 
+  const loadToday = useCallback(async () => {
+    try {
+      const token = await getTokenRef.current();
+      const res = await apiFetch(`${API_BASE_URL}/api/quest/daily?locale=${appLocale}`, token);
+      if (!res.ok) return;
+      const data = await res.json();
+      setTodayInfo({
+        phase: data.phase,
+        weather: data.context?.weatherDescription ?? data.weather,
+        weatherTemp: data.context?.temp ?? data.weatherTemp,
+        city: data.city,
+        equippedTitleId: data.equippedTitleId,
+        xpBonusCharges: data.xpBonusCharges ?? 0,
+      });
+    } catch {
+      /* non bloquant */
+    }
+  }, [appLocale]);
+
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadToday();
+  }, [load, loadToday]);
 
   const totalXp = profile?.totalXp ?? 0;
   const { level, xpIntoLevel, xpToNext, xpPerLevel } = levelFromTotalXp(totalXp);
@@ -213,6 +243,46 @@ export default function ProfileScreen() {
               <Text style={styles.miniLbl}>{s.streak}</Text>
             </Pressable>
           </View>
+
+          {todayInfo ? (
+            <View style={styles.todayInfoGrid}>
+              {todayInfo.phase ? (
+                <View style={styles.todayInfoCard}>
+                  <Text style={styles.todayInfoEmoji}>
+                    {todayInfo.phase === 'calibration' ? '\u{1F331}' : todayInfo.phase === 'expansion' ? '\u{1F9ED}' : '\u{26A1}'}
+                  </Text>
+                  <Text style={styles.todayInfoLabel}>
+                    {appLocale === 'en'
+                      ? todayInfo.phase === 'calibration' ? 'Discovery' : todayInfo.phase === 'expansion' ? 'Exploration' : 'Intensity'
+                      : todayInfo.phase === 'calibration' ? 'Découverte' : todayInfo.phase === 'expansion' ? 'Exploration' : 'Intensité'}
+                  </Text>
+                </View>
+              ) : null}
+              {todayInfo.weather ? (
+                <View style={styles.todayInfoCard}>
+                  <Text style={styles.todayInfoEmoji}>{'\u{2600}\u{FE0F}'}</Text>
+                  <Text style={styles.todayInfoLabel} numberOfLines={1}>
+                    {todayInfo.weather}{todayInfo.weatherTemp != null ? ` ${Math.round(todayInfo.weatherTemp)}°` : ''}
+                  </Text>
+                  {todayInfo.city ? <Text style={styles.todayInfoSub} numberOfLines={1}>{todayInfo.city}</Text> : null}
+                </View>
+              ) : null}
+              {todayInfo.equippedTitleId && getTitleDefinition(todayInfo.equippedTitleId) ? (
+                <View style={styles.todayInfoCard}>
+                  <Text style={styles.todayInfoEmoji}>{getTitleDefinition(todayInfo.equippedTitleId)!.emoji}</Text>
+                  <Text style={styles.todayInfoLabel} numberOfLines={1}>{getTitleDefinition(todayInfo.equippedTitleId)!.label}</Text>
+                </View>
+              ) : null}
+              {(todayInfo.xpBonusCharges ?? 0) > 0 ? (
+                <View style={styles.todayInfoCard}>
+                  <Text style={styles.todayInfoEmoji}>{'\u{26A1}'}</Text>
+                  <Text style={styles.todayInfoLabel}>
+                    {todayInfo.xpBonusCharges} {appLocale === 'en' ? 'XP bonus' : 'bonus XP'}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
 
           <Text style={styles.section}>{s.localeSection}</Text>
           <View style={styles.localeRow}>
@@ -414,6 +484,21 @@ function createProfileStyles(p: ThemePalette) {
     miniEmoji: { fontSize: 18, marginBottom: 4 },
     miniVal: { fontSize: 16, fontWeight: '900', color: C.text },
     miniLbl: { fontSize: 10, color: C.muted, fontWeight: '600', marginTop: 2 },
+
+    todayInfoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
+    todayInfoCard: {
+      flexGrow: 1,
+      minWidth: 80,
+      backgroundColor: C.card,
+      borderRadius: 14,
+      padding: 12,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: C.border,
+    },
+    todayInfoEmoji: { fontSize: 18, marginBottom: 4 },
+    todayInfoLabel: { fontSize: 11, fontWeight: '700', color: C.text, textAlign: 'center' },
+    todayInfoSub: { fontSize: 10, fontWeight: '500', color: C.muted, marginTop: 2, textAlign: 'center' },
 
     localeRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
     localeChip: {

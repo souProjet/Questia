@@ -21,11 +21,34 @@ export type HomeDashboardStrings = {
     replaced: string;
   };
   rerollParts: (daily: number, bonus: number) => string;
+  rerollCta: (label: string) => string;
+  rerollConfirmTitle: string;
+  rerollConfirmBody: string;
+  rerollConfirmAction: string;
+  rerollConfirmCancel: string;
   weatherFallback: string;
-  /** Bandeau quête terminée (accueil) — aligné sur AppQuest côté web */
   completedTitle: string;
   completedSubtitle: string;
   shareVictoryCta: string;
+  swipeAccept: string;
+  swipeChange: string;
+  tapDetails: string;
+  validateCta: string;
+  abandonedTitle: string;
+  abandonedSub: string;
+  paceToday: string;
+  pacePlanned: string;
+  missionHeading: string;
+  hookLabel: string;
+  destinationLabel: string;
+  destinationHint: string;
+  safetyLabel: string;
+  reportCta: string;
+  abandonCta: string;
+  close: string;
+  durationLabel: string;
+  outdoorTag: string;
+  reportHint: string;
 };
 
 function fr(): HomeDashboardStrings {
@@ -56,10 +79,34 @@ function fr(): HomeDashboardStrings {
       if (bonus > 0) parts.push(`${bonus} bonus`);
       return parts.length > 0 ? parts.join(' · ') : 'aucune';
     },
+    rerollCta: (label) => `Changer de quête (${label})`,
+    rerollConfirmTitle: 'Changer de quête ?',
+    rerollConfirmBody: 'Tu consommes une relance et l\u2019XP de la nouvelle quête sera réduit de 25 %. Cette action est irréversible.',
+    rerollConfirmAction: 'Changer',
+    rerollConfirmCancel: 'Annuler',
     weatherFallback: 'Ciel variable',
     completedTitle: 'Quête accomplie',
     completedSubtitle: 'Ta série est enregistrée. À demain pour la suite.',
     shareVictoryCta: 'Partager ta carte',
+    swipeAccept: 'ACCEPTER',
+    swipeChange: 'CHANGER',
+    tapDetails: 'Appuie pour voir les détails',
+    validateCta: "J'ai fait la quête — valider",
+    abandonedTitle: 'À demain',
+    abandonedSub: 'Ta série repart à zéro. Une nouvelle quête t\u2019attend demain.',
+    paceToday: "Aujourd'hui",
+    pacePlanned: 'À caler',
+    missionHeading: 'Ta mission',
+    hookLabel: 'Pensée du jour',
+    destinationLabel: 'Destination',
+    destinationHint: 'Un lieu suggéré pour ta quête.',
+    safetyLabel: 'Sécurité',
+    reportCta: 'Reporter — quête courte',
+    abandonCta: 'Ce n\u2019est pas pour moi',
+    close: 'Fermer',
+    durationLabel: 'Durée :',
+    outdoorTag: 'Extérieur',
+    reportHint: 'Comme « Changer de quête », une relance est utilisée si tu reportes.',
   };
 }
 
@@ -91,10 +138,34 @@ function en(): HomeDashboardStrings {
       if (bonus > 0) parts.push(`${bonus} bonus`);
       return parts.length > 0 ? parts.join(' · ') : 'none';
     },
+    rerollCta: (label) => `Change quest (${label})`,
+    rerollConfirmTitle: 'Change quest?',
+    rerollConfirmBody: 'You\u2019ll use a reroll and the new quest\u2019s XP will be reduced by 25%. This cannot be undone.',
+    rerollConfirmAction: 'Change',
+    rerollConfirmCancel: 'Cancel',
     weatherFallback: 'Mixed skies',
     completedTitle: 'Quest complete',
     completedSubtitle: 'Your streak is saved. See you tomorrow for the next one.',
     shareVictoryCta: 'Share your card',
+    swipeAccept: 'ACCEPT',
+    swipeChange: 'CHANGE',
+    tapDetails: 'Tap to see details',
+    validateCta: 'I did the quest \u2014 complete',
+    abandonedTitle: 'See you tomorrow',
+    abandonedSub: 'Your streak resets. A new quest awaits tomorrow.',
+    paceToday: 'Today',
+    pacePlanned: 'Planned',
+    missionHeading: 'Your mission',
+    hookLabel: 'Thought of the day',
+    destinationLabel: 'Destination',
+    destinationHint: 'A suggested spot for your quest.',
+    safetyLabel: 'Safety',
+    reportCta: 'Defer \u2014 short quest',
+    abandonCta: 'Not for me',
+    close: 'Close',
+    durationLabel: 'Duration:',
+    outdoorTag: 'Outdoor',
+    reportHint: 'Like "Change quest," deferring uses a reroll \u2014 you get a short quest for today.',
   };
 }
 

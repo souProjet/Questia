@@ -18,7 +18,7 @@ const TRAIT_FR: Record<string, string> = {
   agreeableness: 'Agréabilité (chaleur, coopération)',
   emotionalStability: 'Stabilité émotionnelle (calme, résilience)',
   thrillSeeking: 'Recherche de sensations',
-  boredomSusceptibility: 'Sensibilité à l’ennui',
+  boredomSusceptibility: 'Sensibilité à l\u2019ennui',
 };
 
 const TRAIT_EN: Record<string, string> = {
@@ -37,12 +37,12 @@ function band(v: number, locale: AppLocale): string {
     if (v > 0.65) return 'rather high';
     return 'moderate';
   }
-  if (v < 0.35) return 'plutôt basse';
-  if (v > 0.65) return 'plutôt haute';
-  return 'modérée';
+  if (v < 0.35) return 'plut\u00f4t basse';
+  if (v > 0.65) return 'plut\u00f4t haute';
+  return 'mod\u00e9r\u00e9e';
 }
 
-/** Résumé lisible des traits (FR ou EN). */
+/** R\u00e9sum\u00e9 lisible des traits (FR ou EN). */
 export function buildPersonalityPromptBlock(
   declared: PersonalityVector,
   exhibited: PersonalityVector,
@@ -60,7 +60,7 @@ export function buildPersonalityPromptBlock(
     const hasHistory = BIG_KEYS.some((k) => (exhibited[k] ?? 0) > 0.02);
     if (!hasHistory) {
       lines.push(
-        'QUEST HISTORY: little data — lean on the declared profile and the quest family below.',
+        'QUEST HISTORY: little data \u2014 lean on the declared profile and the quest family below.',
       );
     } else {
       lines.push('OBSERVED TENDENCIES (recent behavior from completed/accepted quests):');
@@ -86,13 +86,13 @@ export function buildPersonalityPromptBlock(
     let deltaHint: string;
     if (congruenceDelta < 0.15) {
       deltaHint =
-        'Identity–action gap: small — the mission can refine one concrete detail without overload.';
+        'Identity\u2013action gap: small \u2014 the mission can refine one concrete detail without overload.';
     } else if (congruenceDelta < 0.35) {
       deltaHint =
-        'Identity–action gap: moderate — today’s action can slightly bridge what they want to be and what they do.';
+        'Identity\u2013action gap: moderate \u2014 today\u2019s action can slightly bridge what they want to be and what they do.';
     } else {
       deltaHint =
-        'Identity–action gap: large — the mission must stay realistic and encouraging, no guilt.';
+        'Identity\u2013action gap: large \u2014 the mission must stay realistic and encouraging, no guilt.';
     }
     lines.push(
       `COHERENCE INDICATOR (0 = close, 1 = more drift): ${congruenceDelta.toFixed(2)}. ${deltaHint}`,
@@ -100,7 +100,7 @@ export function buildPersonalityPromptBlock(
     return lines.join('\n');
   }
 
-  lines.push('TENDANCES DÉCLARÉES (ce que la personne dit de soi) :');
+  lines.push('TENDANCES D\u00c9CLAR\u00c9ES (ce que la personne dit de soi) :');
   for (const k of BIG_KEYS) {
     lines.push(`- ${traitLabel(k)} : ${band(declared[k] ?? 0.5, 'fr')}`);
   }
@@ -108,10 +108,10 @@ export function buildPersonalityPromptBlock(
   const hasHistory = BIG_KEYS.some((k) => (exhibited[k] ?? 0) > 0.02);
   if (!hasHistory) {
     lines.push(
-      'HISTORIQUE DE QUÊTES : peu de données — mets l’accent sur le profil déclaré et la famille de quête ci-dessous.',
+      'HISTORIQUE DE QU\u00caTES : peu de donn\u00e9es \u2014 mets l\u2019accent sur le profil d\u00e9clar\u00e9 et la famille de qu\u00eate ci-dessous.',
     );
   } else {
-    lines.push('TENDANCES OBSERVÉES (comportements récents via quêtes complétées / acceptées) :');
+    lines.push('TENDANCES OBSERV\u00c9ES (comportements r\u00e9cents via qu\u00eates compl\u00e9t\u00e9es / accept\u00e9es) :');
     for (const k of BIG_KEYS) {
       lines.push(`- ${traitLabel(k)} : ${band(exhibited[k] ?? 0, 'fr')}`);
     }
@@ -122,35 +122,35 @@ export function buildPersonalityPromptBlock(
       if (Math.abs(d - e) > 0.15) {
         if (d > e)
           gaps.push(
-            `tu te déclares plus ${k === 'extraversion' ? 'sociable' : 'marqué·e'} sur ${traitLabel(k)} que ne le suggèrent tes récentes actions`,
+            `tu te d\u00e9clares plus ${k === 'extraversion' ? 'sociable' : 'marqu\u00e9\u00b7e'} sur ${traitLabel(k)} que ne le sugg\u00e8rent tes r\u00e9centes actions`,
           );
-        else gaps.push(`tes actions récentes montrent plus de ${traitLabel(k)} que tu ne le déclares`);
+        else gaps.push(`tes actions r\u00e9centes montrent plus de ${traitLabel(k)} que tu ne le d\u00e9clares`);
       }
     }
     if (gaps.length > 0) {
-      lines.push(`ÉCARTS POSSIBLES (à respecter sans moraliser) : ${gaps.slice(0, 3).join(' ; ')}.`);
+      lines.push(`\u00c9CARTS POSSIBLES (\u00e0 respecter sans moraliser) : ${gaps.slice(0, 3).join(' ; ')}.`);
     }
   }
 
   let deltaHint: string;
   if (congruenceDelta < 0.15) {
     deltaHint =
-      'Écart identité–actions : faible — la mission peut affiner un détail concret, sans surcharger.';
+      '\u00c9cart identit\u00e9\u2013actions : faible \u2014 la mission peut affiner un d\u00e9tail concret, sans surcharger.';
   } else if (congruenceDelta < 0.35) {
     deltaHint =
-      'Écart identité–actions : modéré — une action du jour peut rapprocher un peu ce que la personne veut être de ce qu’elle fait.';
+      '\u00c9cart identit\u00e9\u2013actions : mod\u00e9r\u00e9 \u2014 une action du jour peut rapprocher un peu ce que la personne veut \u00eatre de ce qu\u2019elle fait.';
   } else {
     deltaHint =
-      'Écart identité–actions : marqué — la mission doit être réaliste et encourageante, sans culpabiliser.';
+      '\u00c9cart identit\u00e9\u2013actions : marqu\u00e9 \u2014 la mission doit \u00eatre r\u00e9aliste et encourageante, sans culpabiliser.';
   }
-  lines.push(`INDICATEUR DE COHÉRENCE (0 = proche, 1 = plus d’écart) : ${congruenceDelta.toFixed(2)}. ${deltaHint}`);
+  lines.push(`INDICATEUR DE COH\u00c9RENCE (0 = proche, 1 = plus d\u2019\u00e9cart) : ${congruenceDelta.toFixed(2)}. ${deltaHint}`);
 
   return lines.join('\n');
 }
 
 /**
- * Pistes opérationnelles pour différencier les missions (sans jargon clinique).
- * Utilise un mélange déclaré / observé quand l’historique existe.
+ * Pistes op\u00e9rationnelles pour diff\u00e9rencier les missions (sans jargon clinique).
+ * Utilise un m\u00e9lange d\u00e9clar\u00e9 / observ\u00e9 quand l\u2019historique existe.
  */
 export function buildPersonalityMissionHints(
   declared: PersonalityVector,
@@ -163,69 +163,112 @@ export function buildPersonalityMissionHints(
       ? (declared[k] ?? 0.5) * 0.55 + (exhibited[k] ?? 0) * 0.45
       : declared[k] ?? 0.5;
 
+  const gentle =
+    (1 - m('extraversion')) * 0.30 +
+    (1 - m('thrillSeeking')) * 0.25 +
+    (1 - m('openness')) * 0.20 +
+    m('emotionalStability') * 0.10 +
+    (1 - m('boredomSusceptibility')) * 0.15;
+
   if (locale === 'en') {
     const lines: string[] = ['MISSION TUNING (make this day feel personal, not generic):'];
+
+    if (gentle > 0.6) {
+      lines.push(
+        '- EFFORT LEVEL: very light \u2014 the mission should feel like a natural extension of the day, not a separate event. Prefer a micro-action (5\u201315 min) that plugs into something they already do (a meal, a commute, a break). Start from what they would do anyway and add one small twist.',
+      );
+      lines.push(
+        '- FRICTION: near zero \u2014 the person should think "I can do this right now without changing my plans." Never frame it as a challenge or a leap of faith.',
+      );
+    } else if (gentle > 0.45) {
+      lines.push(
+        '- EFFORT LEVEL: moderate \u2014 a short but distinct action (20\u201340 min) that asks for a small routine break. Frame it as a gentle invitation, not a demand.',
+      );
+    } else {
+      lines.push(
+        '- EFFORT LEVEL: significant \u2014 this person enjoys being pushed. A real schedule change, an unusual detour, or a bold social move fits well.',
+      );
+    }
+
     const ex = m('extraversion');
     if (ex < 0.38) {
       lines.push(
-        '- Social vibe: quiet — solo or very light contact; avoid “big group energy”.',
+        '- Social vibe: quiet \u2014 solo or very light contact; avoid "big group energy".',
       );
     } else if (ex > 0.62) {
-      lines.push('- Social vibe: lively — a small real interaction can carry the mission.');
+      lines.push('- Social vibe: lively \u2014 a small real interaction can carry the mission.');
     } else {
-      lines.push('- Social vibe: balanced — optional light contact; no forced extroversion.');
+      lines.push('- Social vibe: balanced \u2014 optional light contact; no forced extroversion.');
     }
     const op = m('openness');
     const co = m('conscientiousness');
     if (op > 0.58 && co < 0.45) {
       lines.push('- Lean into a fresh angle or unusual detail; structure can stay loose.');
     } else if (op < 0.4 && co > 0.58) {
-      lines.push('- Prefer a clear, repeatable micro-step over a vague “explore”.');
+      lines.push('- Prefer a clear, repeatable micro-step over a vague "explore".');
     } else {
       lines.push('- Mix one concrete novelty with one clear completion signal.');
     }
     const bore = m('boredomSusceptibility');
     const thrill = m('thrillSeeking');
     if (bore > 0.55 || thrill > 0.55) {
-      lines.push('- Pace: needs a bit of spice — a crisp constraint, twist, or time-box.');
+      lines.push('- Pace: needs a bit of spice \u2014 a crisp constraint, twist, or time-box.');
     } else {
-      lines.push('- Pace: steady — reward calm focus over hype.');
+      lines.push('- Pace: steady \u2014 reward calm focus over hype.');
     }
     if (m('agreeableness') > 0.58) {
-      lines.push('- Tone: warm — small kindness or gentle connection fits the grain.');
+      lines.push('- Tone: warm \u2014 small kindness or gentle connection fits the grain.');
     }
     return lines.join('\n');
   }
 
-  const lines: string[] = ['ACCROCHE MISSION (différencier ce jour — éviter la « quête générique ») :'];
+  const lines: string[] = ['ACCROCHE MISSION (diff\u00e9rencier ce jour \u2014 \u00e9viter la \u00ab qu\u00eate g\u00e9n\u00e9rique \u00bb) :'];
+
+  if (gentle > 0.6) {
+    lines.push(
+      '- INVESTISSEMENT DEMAND\u00c9 : tr\u00e8s l\u00e9ger \u2014 la mission doit sembler un prolongement naturel de la journ\u00e9e, pas un \u00e9v\u00e9nement \u00e0 part. Pr\u00e9f\u00e8re une micro-action (5\u201315 min) qui se greffe sur un moment existant (repas, trajet, pause, routine du soir). Pars de ce que la personne fait d\u00e9j\u00e0 et ajoute un seul petit twist.',
+    );
+    lines.push(
+      '- FRICTION : quasi nulle \u2014 la personne doit se dire \u00ab je peux faire \u00e7a tout de suite sans changer mes plans \u00bb. Ne formule jamais la mission comme un d\u00e9fi ou un saut dans le vide.',
+    );
+  } else if (gentle > 0.45) {
+    lines.push(
+      '- INVESTISSEMENT DEMAND\u00c9 : mod\u00e9r\u00e9 \u2014 une action courte mais distincte (20\u201340 min) qui demande un l\u00e9ger \u00e9cart de routine. Formule comme une invitation douce, pas une injonction.',
+    );
+  } else {
+    lines.push(
+      '- INVESTISSEMENT DEMAND\u00c9 : significatif \u2014 cette personne aime \u00eatre pouss\u00e9e. Un vrai changement de programme, un d\u00e9tour inhabituel ou un geste social audacieux lui convient.',
+    );
+  }
+
   const ex = m('extraversion');
   if (ex < 0.38) {
     lines.push(
-      '- Registre social : plutôt calme — solo ou contact très léger ; pas d’énergie « grand groupe ».',
+      '- Registre social : plut\u00f4t calme \u2014 solo ou contact tr\u00e8s l\u00e9ger ; pas d\u2019\u00e9nergie \u00ab grand groupe \u00bb.',
     );
   } else if (ex > 0.62) {
-    lines.push('- Registre social : plutôt vif — une petite interaction réelle peut porter la mission.');
+    lines.push('- Registre social : plut\u00f4t vif \u2014 une petite interaction r\u00e9elle peut porter la mission.');
   } else {
-    lines.push('- Registre social : équilibré — contact léger possible, sans forcer l’extraversion.');
+    lines.push('- Registre social : \u00e9quilibr\u00e9 \u2014 contact l\u00e9ger possible, sans forcer l\u2019extraversion.');
   }
   const op = m('openness');
   const co = m('conscientiousness');
   if (op > 0.58 && co < 0.45) {
-    lines.push('- Mise sur un angle neuf ou un détail inusité ; la structure peut rester souple.');
+    lines.push('- Mise sur un angle neuf ou un d\u00e9tail inusit\u00e9 ; la structure peut rester souple.');
   } else if (op < 0.4 && co > 0.58) {
-    lines.push('- Privilégie une micro-étape claire et répétable plutôt qu’un vague « explore ».');
+    lines.push('- Privil\u00e9gie une micro-\u00e9tape claire et r\u00e9p\u00e9table plut\u00f4t qu\u2019un vague \u00ab explore \u00bb.');
   } else {
-    lines.push('- Combine une nouveauté concrète avec un signal de fin net (c’est fait quand…).');
+    lines.push('- Combine une nouveaut\u00e9 concr\u00e8te avec un signal de fin net (c\u2019est fait quand\u2026).');
   }
   const bore = m('boredomSusceptibility');
   const thrill = m('thrillSeeking');
   if (bore > 0.55 || thrill > 0.55) {
-    lines.push('- Rythme : il faut un peu de mordant — contrainte ludique, twist ou créneau horaire court.');
+    lines.push('- Rythme : il faut un peu de mordant \u2014 contrainte ludique, twist ou cr\u00e9neau horaire court.');
   } else {
-    lines.push('- Rythme : posé — valorise l’attention calme plutôt que le buzz.');
+    lines.push('- Rythme : pos\u00e9 \u2014 valorise l\u2019attention calme plut\u00f4t que le buzz.');
   }
   if (m('agreeableness') > 0.58) {
-    lines.push('- Ton : chaleureux — petite bienveillance ou lien doux dans le grain.');
+    lines.push('- Ton : chaleureux \u2014 petite bienveillance ou lien doux dans le grain.');
   }
   return lines.join('\n');
 }
@@ -235,11 +278,11 @@ export function archetypeCategoryLabel(category: PsychologicalCategory, locale: 
   return map[category] ?? category;
 }
 
-/** Axes psychologiques ciblés par l’archétype (pour aligner le ton et les verbes). */
+/** Axes psychologiques cibl\u00e9s par l\u2019arch\u00e9type (pour aligner le ton et les verbes). */
 export function describeArchetypeTargetTraits(q: QuestModel, locale: AppLocale = 'fr'): string {
   const t = q.targetTraits;
   if (!t || Object.keys(t).length === 0) {
-    return locale === 'en' ? 'general balance' : 'équilibre général';
+    return locale === 'en' ? 'general balance' : '\u00e9quilibre g\u00e9n\u00e9ral';
   }
   const parts: string[] = [];
   const traitLabel = (k: string) => (locale === 'en' ? TRAIT_EN[k] ?? k : TRAIT_FR[k] ?? k);
@@ -256,8 +299,8 @@ export function describeArchetypeTargetTraits(q: QuestModel, locale: AppLocale =
         : v >= 0.75
           ? 'fort'
           : v >= 0.45
-            ? 'modéré'
-            : 'léger';
+            ? 'mod\u00e9r\u00e9'
+            : 'l\u00e9ger';
     parts.push(`${label} (${strength})`);
   }
   return parts.join(' ; ');
