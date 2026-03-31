@@ -14,22 +14,32 @@ import {
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
+import { useSSO } from '@clerk/expo';
+import { useSignIn, useSignUp } from '@clerk/react/legacy';
 import { DA } from '@questia/ui';
 import { hasOnboardingAnswers } from '../../lib/onboardingGate';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const { useSignIn, useSignUp, useSSO } = require('@clerk/expo') as any;
-
-WebBrowser.maybeCompleteAuthSession();
 
 type AuthMode = 'sign-in' | 'sign-up';
 
 function useWarmUpBrowser() {
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      void WebBrowser.warmUpAsync();
-      return () => { void WebBrowser.coolDownAsync(); };
-    }
+    if (Platform.OS !== 'android') return;
+    void (async () => {
+      try {
+        await WebBrowser.warmUpAsync();
+      } catch {
+        /* warm-up peut échouer sur certains appareils / builds release */
+      }
+    })();
+    return () => {
+      void (async () => {
+        try {
+          await WebBrowser.coolDownAsync();
+        } catch {
+          /* ignore */
+        }
+      })();
+    };
   }, []);
 }
 
@@ -63,10 +73,10 @@ export default function AuthScreen() {
       const { createdSessionId, setActive: setActiveSSO, signUp: oauthSignUp } = await startSSOFlow({
         strategy: 'oauth_google',
         redirectUrl,
-        redirectCompletedUrl: redirectUrl,
       });
       if (createdSessionId) {
-        await (setActiveSSO ?? setActive)({ session: createdSessionId });
+        const setSession = setActiveSSO ?? setActive;
+        if (setSession) await setSession({ session: createdSessionId });
         const hasProfile = await hasOnboardingAnswers();
         // Nouvelle inscription Google sans profil local : aller compléter l’onboarding (signUp renvoyé par Clerk).
         if (!hasProfile && oauthSignUp) {
@@ -89,7 +99,7 @@ export default function AuthScreen() {
     setError('');
     try {
       const result = await signIn.create({ identifier: email, password });
-      if (result.status === 'complete') {
+      if (result.status === 'complete' && setActive) {
         await setActive({ session: result.createdSessionId });
         router.replace('/home' as never);
       }
@@ -133,7 +143,7 @@ export default function AuthScreen() {
         return;
       }
       const result = await signUp.attemptEmailAddressVerification({ code });
-      if (result.status === 'complete') {
+      if (result.status === 'complete' && setActive) {
         await setActive({ session: result.createdSessionId });
         router.replace('/home' as never);
       }
