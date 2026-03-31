@@ -4,13 +4,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClerkProvider, useAuth } from '@clerk/expo';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
 import { DA } from '@questia/ui';
 import { AppLocaleProvider } from '../contexts/AppLocaleContext';
 import { AppThemeProvider, useAppTheme } from '../contexts/AppThemeContext';
 import { setupNotificationHandler } from '../lib/pushNotifications';
 import { hasOnboardingAnswers } from '../lib/onboardingGate';
+import { maybeCompleteAuthSession } from '../lib/webBrowser';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
@@ -99,11 +99,7 @@ function InitialLayout() {
 
 export default function RootLayout() {
   useEffect(() => {
-    try {
-      WebBrowser.maybeCompleteAuthSession();
-    } catch {
-      /* évite un crash natif si le module est invoqué trop tôt (Android release) */
-    }
+    void maybeCompleteAuthSession();
   }, []);
 
   useEffect(() => {

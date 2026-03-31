@@ -17,7 +17,6 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/expo';
-import * as WebBrowser from 'expo-web-browser';
 import { LinearGradient } from 'expo-linear-gradient';
 import { elevationAndroidSafe } from '../../lib/elevationAndroid';
 import {
@@ -38,6 +37,7 @@ import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { getShopScreenStrings } from '../../lib/shopScreenStrings';
 import { hapticError, hapticLight, hapticSuccess } from '../../lib/haptics';
+import { isExpoWebBrowserNativeAvailable } from '../../lib/webBrowser';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -417,7 +417,18 @@ export default function ShopScreen() {
       }
       hapticLight();
       stripeOpenedAt.current = Date.now();
-      await WebBrowser.openBrowserAsync(data.url);
+      if (!isExpoWebBrowserNativeAvailable()) {
+        hapticError();
+        setFlash({ message: s.errCheckout, kind: 'error' });
+        return;
+      }
+      try {
+        const WebBrowser = await import('expo-web-browser');
+        await WebBrowser.openBrowserAsync(data.url);
+      } catch {
+        hapticError();
+        setFlash({ message: s.errCheckout, kind: 'error' });
+      }
     } finally {
       setStripeLoadingSku(null);
     }

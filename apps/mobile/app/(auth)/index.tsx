@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,40 +11,17 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useSSO } from '@clerk/expo';
 import { useSignIn, useSignUp } from '@clerk/react/legacy';
 import { DA } from '@questia/ui';
 import { hasOnboardingAnswers } from '../../lib/onboardingGate';
+import { isExpoWebBrowserNativeAvailable } from '../../lib/webBrowser';
 
 type AuthMode = 'sign-in' | 'sign-up';
 
-function useWarmUpBrowser() {
-  useEffect(() => {
-    if (Platform.OS !== 'android') return;
-    void (async () => {
-      try {
-        await WebBrowser.warmUpAsync();
-      } catch {
-        /* warm-up peut échouer sur certains appareils / builds release */
-      }
-    })();
-    return () => {
-      void (async () => {
-        try {
-          await WebBrowser.coolDownAsync();
-        } catch {
-          /* ignore */
-        }
-      })();
-    };
-  }, []);
-}
-
 export default function AuthScreen() {
-  useWarmUpBrowser();
   const router = useRouter();
 
   const { signIn, isLoaded: signInLoaded, setActive } = useSignIn();
@@ -64,6 +41,12 @@ export default function AuthScreen() {
     setLoadingGoogle(true);
     setError('');
     try {
+      if (!isExpoWebBrowserNativeAvailable()) {
+        setError(
+          'Connexion Google indisponible : réinstalle une build native à jour (npx expo run:android depuis apps/mobile).',
+        );
+        return;
+      }
       if (mode === 'sign-up' && !(await hasOnboardingAnswers())) {
         setError('Complète l’onboarding avant de créer un compte.');
         router.replace('/' as never);
@@ -324,10 +307,13 @@ const s = StyleSheet.create({
   logoIcon: {
     width: 76,
     height: 76,
-    borderRadius: 20,
+    borderRadius: 18,
     overflow: 'hidden',
     marginBottom: 16,
-    padding: 8,
+    padding: 10,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: 'rgba(15,23,42,0.08)',
     shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,

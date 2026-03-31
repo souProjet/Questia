@@ -624,12 +624,14 @@ export default function ShareCardScreen() {
 
               {!photoUri ? (
                 <View style={styles.cardHero}>
-                  <Image
-                    source={require('../assets/icon.png')}
-                    style={styles.heroLogoImg}
-                    resizeMode="contain"
-                    accessibilityIgnoresInvertColors
-                  />
+                  <View style={styles.heroLogoOuter}>
+                    <Image
+                      source={require('../assets/icon.png')}
+                      style={styles.heroLogoImg}
+                      resizeMode="contain"
+                      accessibilityIgnoresInvertColors
+                    />
+                  </View>
                   <Text style={[styles.heroBrand, panelDark && styles.heroBrandLight]}>QUESTIA</Text>
                   <Text style={[styles.heroHost, panelDark && styles.heroHostLight]}>{siteHostDisplay(SITE_PUBLIC)}</Text>
                 </View>
@@ -965,10 +967,21 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     flex: 1,
     minHeight: 0,
   },
-  heroLogoImg: {
+  heroLogoOuter: {
     width: 112,
     height: 112,
     borderRadius: 26,
+    backgroundColor: '#ffffff',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(15,23,42,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  heroLogoImg: {
+    width: '100%',
+    height: '100%',
   },
   heroBrand: {
     fontSize: 12,
@@ -1002,6 +1015,9 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     borderRadius: 7,
     overflow: 'hidden',
     padding: 2,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: 'rgba(15,23,42,0.12)',
   },
   brandLogoImg: { width: '100%', height: '100%' },
   brand: { fontSize: 10, fontWeight: '900', letterSpacing: 3.2, color: p.onCream },

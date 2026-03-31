@@ -19,6 +19,11 @@
       ]
     },
     "android": {
+      "versionCode": 10,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#ffffff"
+      },
       "package": "fr.questia.app",
       "intentFilters": [
         {
