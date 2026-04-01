@@ -731,7 +731,7 @@ function AppPageContent() {
   runSwipeCompletionRef.current = runSwipeCompletion;
 
   const startSwipeFlight = useCallback(
-    (dir: 'right' | 'left' | 'up', dx: number, dy: number) => {
+    (dir: 'right' | 'left' | 'up', _dx: number, _dy: number) => {
       if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         if (isAccepted) {
           void doComplete();
