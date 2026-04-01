@@ -17,4 +17,17 @@ config.watchFolders = [...folders];
 // Empêche Metro de suivre le code Next.js si turbo lance web + mobile
 config.resolver.blockList = [/.*[\\/]apps[\\/]web[\\/].*/];
 
+// Une seule copie de React pour tout le bundle. Sinon Hermes / release peut charger
+// deux instances : les hooks voient ReactSharedInternals.H === null →
+// « Cannot read property 'useEffect' of null » (dispatcher Clerk vs app).
+const reactPkg = path.resolve(monorepoRoot, 'node_modules/react');
+const reactDomPkg = path.resolve(monorepoRoot, 'node_modules/react-dom');
+const reactNativePkg = path.resolve(monorepoRoot, 'node_modules/react-native');
+config.resolver.extraNodeModules = {
+  ...(config.resolver.extraNodeModules ?? {}),
+  react: reactPkg,
+  'react-dom': reactDomPkg,
+  'react-native': reactNativePkg,
+};
+
 module.exports = config;

@@ -13,10 +13,11 @@ import {
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import * as ClerkExpo from '@clerk/expo';
 import { DA } from '@questia/ui';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const { useSignIn, useSignUp, useSSO } = require('@clerk/expo') as any;
+// Types générés (futures) ≠ API runtime documentée pour email/OAuth — aligné sur l’ancien contournement.
+const { useSignIn, useSignUp, useSSO } = ClerkExpo as any;
 
 WebBrowser.maybeCompleteAuthSession();
 
