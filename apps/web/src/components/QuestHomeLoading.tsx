@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { Compass, Sparkles } from 'lucide-react';
+import type { QuestLoaderSession } from '@questia/shared';
 import {
   getDailyQuestLoadingLines,
   resolveQuestLoaderSession,
@@ -11,21 +12,22 @@ import {
 
 /**
  * Écran de chargement accueil — flottant (sans encadré), textes selon première ouverture du jour ou reprise.
- * Session lue une seule fois au montage (localStorage synchrone) pour éviter deux messages différents.
+ * Session alignée SSR / premier rendu client (`first-today`), puis synchronisée depuis localStorage après hydratation.
  */
 export function QuestHomeLoading() {
   const intlLocale = useLocale();
   const questLocale = intlLocale === 'en' ? 'en' : 'fr';
-  const [session] = useState(() => {
-    if (typeof window === 'undefined') return 'first-today' as const;
+  const [session, setSession] = useState<QuestLoaderSession>('first-today');
+
+  useEffect(() => {
     try {
       const today = new Date().toISOString().slice(0, 10);
       const last = localStorage.getItem(QUEST_LOADER_DAY_STORAGE_KEY);
-      return resolveQuestLoaderSession(last, today);
+      setSession(resolveQuestLoaderSession(last, today));
     } catch {
-      return 'first-today' as const;
+      /* noop */
     }
-  });
+  }, []);
 
   const { primary, secondary } = getDailyQuestLoadingLines(undefined, session, questLocale);
 
@@ -69,10 +71,16 @@ export function QuestHomeLoading() {
           />
         </div>
 
-        <p className="font-display text-[1.4rem] font-black leading-snug tracking-tight sm:text-[1.65rem] text-gradient-on-dark max-w-[22rem] text-balance">
+        <p
+          suppressHydrationWarning
+          className="font-display text-[1.4rem] font-black leading-snug tracking-tight sm:text-[1.65rem] text-gradient-on-dark max-w-[22rem] text-balance"
+        >
           {primary}
         </p>
-        <p className="mt-5 max-w-[24rem] text-sm font-semibold leading-relaxed text-[var(--on-cream-muted)] text-balance">
+        <p
+          suppressHydrationWarning
+          className="mt-5 max-w-[24rem] text-sm font-semibold leading-relaxed text-[var(--on-cream-muted)] text-balance"
+        >
           {secondary}
         </p>
 

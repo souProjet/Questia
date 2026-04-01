@@ -40,6 +40,10 @@ const QuestDestinationMap = dynamic(
 /** Seuils de glissé sur la carte quête (web), alignés sur l’app mobile à ~100px / ~72px */
 const QUEST_CARD_SWIPE_X = 100;
 const QUEST_CARD_SWIPE_UP = 72;
+const QUEST_CARD_ROT_MAX = 12;
+/** Rotation finale quand la carte sort de l’écran */
+const QUEST_CARD_FLIGHT_ROT = 26;
+const QUEST_CARD_FLIGHT_MS = 480;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -664,29 +668,128 @@ function AppPageContent() {
 
   const [showDetails, setShowDetails] = useState(false);
 
-  /** Glisser sur la carte (pointeur / tactile), comme sur l’app mobile */
+  /** Glisser sur la carte (pointeur / tactile) */
   const [questSwipeOffset, setQuestSwipeOffset] = useState({ x: 0, y: 0 });
   const [questSwipeDragging, setQuestSwipeDragging] = useState(false);
+  const [swipeFlying, setSwipeFlying] = useState(false);
+  /** Après le vol : la carte reste hors écran tant qu’une modale / le panneau détail est ouvert (évite le retour avant la fermeture). */
+  const [swipeParkedAfterFlight, setSwipeParkedAfterFlight] = useState(false);
   const questSwipeRef = useRef({
     active: false,
     pointerId: null as number | null,
     startX: 0,
     startY: 0,
   });
+  const swipePendingActionRef = useRef<null | 'accept' | 'reroll' | 'details' | 'complete'>(null);
 
   const endQuestSwipe = useCallback(() => {
     questSwipeRef.current = { active: false, pointerId: null, startX: 0, startY: 0 };
     setQuestSwipeOffset({ x: 0, y: 0 });
     setQuestSwipeDragging(false);
+    setSwipeFlying(false);
+    setSwipeParkedAfterFlight(false);
+    swipePendingActionRef.current = null;
   }, []);
 
   useEffect(() => {
     endQuestSwipe();
-  }, [quest?.questDate, questCardSwapKey, endQuestSwipe]);
+  }, [quest?.questDate, quest?.status, questCardSwapKey, endQuestSwipe]);
+
+  const runSwipeCompletion = useCallback(() => {
+    const action = swipePendingActionRef.current;
+    if (!action) return;
+    swipePendingActionRef.current = null;
+    setSwipeFlying(false);
+
+    if (action === 'complete') {
+      void doComplete();
+      setQuestSwipeOffset({ x: 0, y: 0 });
+      return;
+    }
+    if (action === 'reroll') {
+      setSwipeParkedAfterFlight(true);
+      confirmReroll();
+      return;
+    }
+    if (action === 'accept') {
+      if (quest?.isOutdoor) {
+        setSwipeParkedAfterFlight(true);
+        handleAccept();
+        return;
+      }
+      setQuestSwipeOffset({ x: 0, y: 0 });
+      handleAccept();
+      return;
+    }
+    if (action === 'details') {
+      setSwipeParkedAfterFlight(true);
+      setShowDetails(true);
+    }
+  }, [handleAccept, confirmReroll, quest?.isOutdoor, doComplete]);
+
+  const runSwipeCompletionRef = useRef(runSwipeCompletion);
+  runSwipeCompletionRef.current = runSwipeCompletion;
+
+  const startSwipeFlight = useCallback(
+    (dir: 'right' | 'left' | 'up', dx: number, dy: number) => {
+      if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (isAccepted) {
+          void doComplete();
+          endQuestSwipe();
+          return;
+        }
+        if (dir === 'right') handleAccept();
+        else if (dir === 'left' && canReroll) confirmReroll();
+        else if (dir === 'up') setShowDetails(true);
+        endQuestSwipe();
+        return;
+      }
+      const vw = typeof window !== 'undefined' ? window.innerWidth : 400;
+      const vh = typeof window !== 'undefined' ? window.innerHeight : 700;
+      let endX = 0;
+      let endY = 0;
+      if (dir === 'right') {
+        swipePendingActionRef.current = isAccepted ? 'complete' : 'accept';
+        endX = vw + 200;
+      } else if (dir === 'left') {
+        swipePendingActionRef.current = 'reroll';
+        endX = -(vw + 200);
+      } else {
+        swipePendingActionRef.current = 'details';
+        endX = 0;
+        endY = -vh * 0.45;
+      }
+      questSwipeRef.current = { active: false, pointerId: null, startX: 0, startY: 0 };
+      setQuestSwipeDragging(false);
+      setSwipeFlying(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setQuestSwipeOffset({ x: endX, y: endY });
+        });
+      });
+    },
+    [isAccepted, canReroll, handleAccept, confirmReroll, doComplete, endQuestSwipe],
+  );
+
+  useEffect(() => {
+    if (!swipeFlying) return;
+    const id = window.setTimeout(() => {
+      runSwipeCompletionRef.current();
+    }, QUEST_CARD_FLIGHT_MS + 160);
+    return () => window.clearTimeout(id);
+  }, [swipeFlying]);
+
+  /** Quand toutes les surfaces « bloquantes » sont fermées, on ramène la carte au centre. */
+  useEffect(() => {
+    if (!swipeParkedAfterFlight) return;
+    if (showRerollConfirm || showSafety || showDetails) return;
+    setSwipeParkedAfterFlight(false);
+    endQuestSwipe();
+  }, [swipeParkedAfterFlight, showRerollConfirm, showSafety, showDetails, endQuestSwipe]);
 
   const onQuestCardPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isPending || accepting || rerolling || reporting) return;
+      if (!(isPending || isAccepted) || accepting || rerolling || reporting || completing || swipeFlying || swipeParkedAfterFlight) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       if ((e.target as HTMLElement).closest('button')) return;
       questSwipeRef.current = {
@@ -698,16 +801,41 @@ function AppPageContent() {
       setQuestSwipeDragging(true);
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [isPending, accepting, rerolling, reporting],
+    [isPending, isAccepted, accepting, rerolling, reporting, completing, swipeFlying, swipeParkedAfterFlight],
   );
 
-  const onQuestCardPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const s = questSwipeRef.current;
-    if (!s.active || e.pointerId !== s.pointerId) return;
-    const dx = e.clientX - s.startX;
-    const dy = e.clientY - s.startY;
-    setQuestSwipeOffset({ x: dx, y: Math.min(0, dy) });
+  /** Une seule direction à la fois : horizontal (gauche/droite) ou vertical (haut), pas les deux. */
+  const projectSwipeDelta = useCallback((dx: number, dy: number) => {
+    const ax = Math.abs(dx);
+    const ay = Math.abs(dy);
+    if (ax >= ay) {
+      return { x: dx, y: 0 };
+    }
+    return { x: 0, y: Math.min(0, dy) };
   }, []);
+
+  /** En accepté : seul le swipe vers la droite suit le doigt (pas de gauche / haut inutiles). */
+  const projectSwipeDeltaAccepted = useCallback((dx: number, dy: number) => {
+    const ax = Math.abs(dx);
+    const ay = Math.abs(dy);
+    if (ax >= ay) {
+      return { x: Math.max(0, dx), y: 0 };
+    }
+    return { x: 0, y: 0 };
+  }, []);
+
+  const onQuestCardPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const s = questSwipeRef.current;
+      if (!s.active || e.pointerId !== s.pointerId) return;
+      const dx = e.clientX - s.startX;
+      const dy = e.clientY - s.startY;
+      setQuestSwipeOffset(
+        isAccepted ? projectSwipeDeltaAccepted(dx, dy) : projectSwipeDelta(dx, dy),
+      );
+    },
+    [isAccepted, projectSwipeDelta, projectSwipeDeltaAccepted],
+  );
 
   const onQuestCardPointerUp = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -720,20 +848,43 @@ function AppPageContent() {
       }
       const dx = e.clientX - s.startX;
       const dy = e.clientY - s.startY;
-      endQuestSwipe();
+      questSwipeRef.current = { active: false, pointerId: null, startX: 0, startY: 0 };
+      setQuestSwipeDragging(false);
 
       const absX = Math.abs(dx);
       const absY = Math.abs(dy);
-      if (absX > QUEST_CARD_SWIPE_X && absX > absY) {
-        if (dx > 0) handleAccept();
-        else if (canReroll) confirmReroll();
+      const horizontal = absX >= absY;
+
+      if (isAccepted) {
+        if (horizontal && absX > QUEST_CARD_SWIPE_X && dx > 0 && !completing) {
+          startSwipeFlight('right', dx, 0);
+          return;
+        }
+        endQuestSwipe();
         return;
       }
-      if (dy < -QUEST_CARD_SWIPE_UP && absY > absX) {
-        setShowDetails(true);
+
+      if (horizontal) {
+        if (absX > QUEST_CARD_SWIPE_X) {
+          if (dx > 0) {
+            startSwipeFlight('right', dx, 0);
+            return;
+          }
+          if (canReroll) {
+            startSwipeFlight('left', dx, 0);
+            return;
+          }
+        }
+        endQuestSwipe();
+        return;
       }
+      if (dy < -QUEST_CARD_SWIPE_UP) {
+        startSwipeFlight('up', 0, dy);
+        return;
+      }
+      endQuestSwipe();
     },
-    [endQuestSwipe, handleAccept, confirmReroll, canReroll],
+    [isAccepted, completing, endQuestSwipe, startSwipeFlight, canReroll],
   );
 
   const onQuestCardPointerCancel = useCallback(
@@ -750,17 +901,85 @@ function AppPageContent() {
     [endQuestSwipe],
   );
 
+  const onQuestCardTransitionEnd = useCallback((e: React.TransitionEvent<HTMLDivElement>) => {
+    if (e.propertyName !== 'transform') return;
+    if (!swipePendingActionRef.current) return;
+    runSwipeCompletionRef.current();
+  }, []);
+
+  /** Transform / overlays : en attente ou acceptée (swipe pour valider), hors chargements */
+  const questCardTransformsActive =
+    (isPending || isAccepted) && !(rerolling || reporting || accepting) && !completing;
+  /** Gestes : pas pendant l’animation de sortie */
+  const questCardSwipeInteractive =
+    (isPending || isAccepted) &&
+    !(rerolling || reporting || accepting) &&
+    !completing &&
+    !swipeFlying &&
+    !swipeParkedAfterFlight;
+
+  const swipeOverlayOpacity = useMemo(() => {
+    const ox = questSwipeOffset.x;
+    const oy = questSwipeOffset.y;
+    const acceptOp = ox > 0 ? Math.min(1, ox / QUEST_CARD_SWIPE_X) : 0;
+    const changeOp =
+      isPending && ox < 0 ? Math.min(1, (-ox / QUEST_CARD_SWIPE_X) * (canReroll ? 1 : 0.35)) : 0;
+    const detailOp = isPending && oy < 0 ? Math.min(1, -oy / QUEST_CARD_SWIPE_UP) : 0;
+    return { acceptOp, changeOp, detailOp };
+  }, [questSwipeOffset, canReroll, isPending]);
+
+  const questCardSwipeStyle = useMemo((): React.CSSProperties | undefined => {
+    if (!questCardTransformsActive) return undefined;
+    const { x, y } = questSwipeOffset;
+    let rot = Math.max(
+      -QUEST_CARD_ROT_MAX,
+      Math.min(QUEST_CARD_ROT_MAX, (x / 220) * QUEST_CARD_ROT_MAX),
+    );
+    let scale = 1;
+    if (swipeFlying) {
+      if (x > 120) rot = QUEST_CARD_FLIGHT_ROT;
+      else if (x < -120) rot = -QUEST_CARD_FLIGHT_ROT;
+      else if (y < -120) {
+        rot = -6;
+        scale = 0.94;
+      }
+    }
+    const flightEase = 'cubic-bezier(0.22, 0.82, 0.28, 1)';
+    const snapEase = 'cubic-bezier(0.34, 1.25, 0.45, 1)';
+    return {
+      transform: `translate3d(${x}px, ${y}px, 0) rotate(${rot}deg) scale(${scale})`,
+      transition:
+        questSwipeDragging && !swipeFlying
+          ? 'none'
+          : swipeFlying
+            ? `transform ${QUEST_CARD_FLIGHT_MS}ms ${flightEase}, opacity ${QUEST_CARD_FLIGHT_MS}ms ease-out`
+            : swipeParkedAfterFlight
+              ? 'opacity 0.2s ease-out'
+              : `transform 0.45s ${snapEase}, opacity 0.45s ${snapEase}`,
+      opacity: swipeParkedAfterFlight ? 0 : swipeFlying ? 0.88 : 1,
+      touchAction: 'none',
+      willChange: questSwipeDragging || swipeFlying ? 'transform' : undefined,
+    };
+  }, [questCardTransformsActive, questSwipeOffset, questSwipeDragging, swipeFlying, swipeParkedAfterFlight]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const onKey = (e: KeyboardEvent) => {
-      if (!quest || quest.status !== 'pending') return;
-      if (e.key === 'ArrowRight') { handleAccept(); e.preventDefault(); }
-      else if (e.key === 'ArrowLeft' && canReroll) { confirmReroll(); e.preventDefault(); }
-      else if (e.key === 'ArrowUp' || e.key === 'Enter') { setShowDetails(true); e.preventDefault(); }
+      if (!quest) return;
+      if (quest.status === 'pending') {
+        if (e.key === 'ArrowRight') { handleAccept(); e.preventDefault(); }
+        else if (e.key === 'ArrowLeft' && canReroll) { confirmReroll(); e.preventDefault(); }
+        else if (e.key === 'ArrowUp' || e.key === 'Enter') { setShowDetails(true); e.preventDefault(); }
+        return;
+      }
+      if (quest.status === 'accepted' && e.key === 'ArrowRight' && !completing) {
+        e.preventDefault();
+        void doComplete();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [quest, canReroll, handleAccept, confirmReroll]);
+  }, [quest, canReroll, completing, handleAccept, confirmReroll, doComplete]);
 
   if (!isLoaded || loading) {
     return (
@@ -788,7 +1007,7 @@ function AppPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] relative overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg)] relative overflow-x-visible">
       <Navbar />
 
       {acceptQuestFlash ? (
@@ -812,22 +1031,24 @@ function AppPageContent() {
         />
       ) : null}
 
-      {/* Minimal header */}
-      <div className="fixed top-16 left-0 right-0 z-30 flex items-center justify-between px-6 py-3 backdrop-blur-sm bg-[var(--bg)]/80 border-b border-[var(--border-ui)]/30 max-w-2xl mx-auto">
-        <span className="text-sm font-black text-[var(--muted)] tracking-wide">
-          J.{quest?.day ?? 1}
-        </span>
-        {(quest?.streak ?? 0) > 0 ? (
-          <span className="text-base font-black text-[var(--orange)]">
-            &#128293; {quest?.streak}
-          </span>
-        ) : <span />}
-        <Link href="/profile" className="w-9 h-9 rounded-full border border-[color:color-mix(in_srgb,var(--cyan)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--cyan)_15%,var(--card))] flex items-center justify-center text-sm font-black text-[var(--link-on-bg)]">
-          {(user?.firstName ?? '?')[0]}
-        </Link>
-      </div>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col items-stretch px-4 pb-8 pt-[calc(5.5rem+env(safe-area-inset-top,0px))] outline-none sm:px-5 md:pt-24"
+      >
+        {quest ? (
+          <div className="mb-4 flex w-full min-w-0 items-center justify-between gap-3 border-b border-[var(--border-ui)]/25 pb-3">
+            <span className="text-sm font-black tracking-wide text-[var(--muted)]">
+              J.{quest.day ?? 1}
+            </span>
+            {(quest.streak ?? 0) > 0 ? (
+              <span className="text-base font-black text-[var(--orange)] tabular-nums">
+                &#128293; {quest.streak}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
 
-      <main id="main-content" tabIndex={-1} className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] pt-32 pb-8 px-4 outline-none">
         {bannerError && (
           <div
             role="alert"
@@ -844,37 +1065,41 @@ function AppPageContent() {
           </div>
         )}
 
+        <div className="flex w-full flex-1 flex-col items-center justify-center gap-4 py-4 sm:min-h-[min(560px,calc(100dvh-11rem))]">
         {quest ? (
-          <div
+          <div className="relative w-full max-w-[480px]">
+            {questCardTransformsActive && !isAbandoned ? (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-4 top-3 bottom-0 -z-10 scale-[0.93] rounded-[26px] border border-[var(--border-ui)]/35 bg-[var(--muted)]/12 shadow-lg"
+              />
+            ) : null}
+            <div
             key={questCardSwapKey}
-            className={`w-full max-w-[480px] rounded-[28px] border-2 overflow-hidden shadow-xl transition-all duration-300 motion-safe:animate-quest-card-enter motion-reduce:animate-none [animation-fill-mode:backwards] ${
+            className={`relative w-full max-w-[480px] rounded-[28px] border-2 overflow-hidden shadow-xl ${
+              /* quest-card-enter anime aussi transform : ça bloque le swipe (style inline ignoré) */
+              questCardTransformsActive
+                ? 'touch-none'
+                : 'motion-safe:animate-quest-card-enter motion-reduce:animate-none [animation-fill-mode:backwards]'
+            } ${questCardSwipeInteractive ? '' : 'transition-all duration-300'} ${
               isAbandoned
                 ? 'border-slate-400/35'
                 : isAccepted || isCompleted
                   ? 'border-emerald-400/40 shadow-emerald-500/15'
                   : 'border-[var(--orange)]/30 shadow-orange-500/10'
-            } bg-[var(--card)] ${rerolling || reporting || accepting ? 'pointer-events-none opacity-50 scale-[0.97]' : ''} ${
-              isPending && !(rerolling || reporting || accepting)
+            } bg-[var(--card)] ${rerolling || reporting || accepting || completing ? 'pointer-events-none opacity-50 scale-[0.97]' : ''} ${
+              questCardSwipeInteractive
                 ? questSwipeDragging
                   ? 'cursor-grabbing select-none'
                   : 'cursor-grab'
                 : ''
             }`}
-            style={
-              isPending && !(rerolling || reporting || accepting)
-                ? questSwipeOffset.x !== 0 || questSwipeOffset.y !== 0
-                  ? {
-                      transform: `translate3d(${questSwipeOffset.x}px, ${questSwipeOffset.y}px, 0)`,
-                      transition: 'none',
-                      touchAction: 'none',
-                    }
-                  : { touchAction: 'none' }
-                : undefined
-            }
-            onPointerDown={isPending && !(rerolling || reporting || accepting) ? onQuestCardPointerDown : undefined}
-            onPointerMove={isPending && !(rerolling || reporting || accepting) ? onQuestCardPointerMove : undefined}
-            onPointerUp={isPending && !(rerolling || reporting || accepting) ? onQuestCardPointerUp : undefined}
-            onPointerCancel={isPending && !(rerolling || reporting || accepting) ? onQuestCardPointerCancel : undefined}
+            style={questCardSwipeStyle}
+            onPointerDown={questCardSwipeInteractive ? onQuestCardPointerDown : undefined}
+            onPointerMove={questCardSwipeInteractive ? onQuestCardPointerMove : undefined}
+            onPointerUp={questCardSwipeInteractive ? onQuestCardPointerUp : undefined}
+            onPointerCancel={questCardSwipeInteractive ? onQuestCardPointerCancel : undefined}
+            onTransitionEnd={questCardTransformsActive ? onQuestCardTransitionEnd : undefined}
           >
             {isAbandoned ? (
               <div className="py-16 px-8 text-center">
@@ -883,7 +1108,53 @@ function AppPageContent() {
               </div>
             ) : (
               <>
-                <div className="px-6 pt-8 pb-4 flex flex-col items-center text-center">
+                {isPending && (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-[15] overflow-hidden rounded-[28px]"
+                    aria-hidden
+                  >
+                    <div
+                      className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-emerald-500/25"
+                      style={{ opacity: swipeOverlayOpacity.acceptOp }}
+                    >
+                      <span className="-rotate-12 text-2xl font-black tracking-[0.2em] text-emerald-700">
+                        {t('swipeOverlayAccept')}
+                      </span>
+                    </div>
+                    <div
+                      className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-orange-500/25"
+                      style={{ opacity: swipeOverlayOpacity.changeOp }}
+                    >
+                      <span className="rotate-12 text-2xl font-black tracking-[0.2em] text-orange-800">
+                        {t('swipeOverlayChange')}
+                      </span>
+                    </div>
+                    <div
+                      className="absolute left-0 right-0 top-0 flex h-[52px] items-center justify-center rounded-t-[28px] bg-indigo-500/20"
+                      style={{ opacity: swipeOverlayOpacity.detailOp }}
+                    >
+                      <span className="text-base font-black tracking-wide text-indigo-600 dark:text-indigo-400">
+                        {t('swipeOverlayDetails')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {isAccepted && (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-[15] overflow-hidden rounded-[28px]"
+                    aria-hidden
+                  >
+                    <div
+                      className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-emerald-500/25"
+                      style={{ opacity: swipeOverlayOpacity.acceptOp }}
+                    >
+                      <span className="-rotate-12 text-2xl font-black tracking-[0.2em] text-emerald-700">
+                        {t('swipeOverlayValidate')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div className="relative z-0 px-6 pt-8 pb-4 flex flex-col items-center text-center">
                   <span className="text-[56px] leading-none mb-4 select-none" aria-hidden>
                     {questDisplayEmoji(quest.emoji)}
                   </span>
@@ -969,13 +1240,15 @@ function AppPageContent() {
               </>
             )}
           </div>
+          </div>
         ) : null}
 
-        {isPending && quest && (
-          <p className="mt-4 text-xs text-[var(--muted)]/50 text-center">
-            {t('swipeKeyboardHint')}
+        {(isPending || isAccepted) && quest && (
+          <p className="text-xs text-[var(--muted)]/50 text-center">
+            {isPending ? t('swipeKeyboardHint') : t('swipeKeyboardHintAccepted')}
           </p>
         )}
+        </div>
       </main>
 
       {/* Detail panel */}
