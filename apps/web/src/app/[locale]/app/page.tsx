@@ -731,7 +731,7 @@ function AppPageContent() {
   runSwipeCompletionRef.current = runSwipeCompletion;
 
   const startSwipeFlight = useCallback(
-    (dir: 'right' | 'left' | 'up', _dx: number, _dy: number) => {
+    (dir: 'right' | 'left' | 'up') => {
       if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         if (isAccepted) {
           void doComplete();
@@ -857,7 +857,7 @@ function AppPageContent() {
 
       if (isAccepted) {
         if (horizontal && absX > QUEST_CARD_SWIPE_X && dx > 0 && !completing) {
-          startSwipeFlight('right', dx, 0);
+          startSwipeFlight('right');
           return;
         }
         endQuestSwipe();
@@ -867,11 +867,11 @@ function AppPageContent() {
       if (horizontal) {
         if (absX > QUEST_CARD_SWIPE_X) {
           if (dx > 0) {
-            startSwipeFlight('right', dx, 0);
+            startSwipeFlight('right');
             return;
           }
           if (canReroll) {
-            startSwipeFlight('left', dx, 0);
+            startSwipeFlight('left');
             return;
           }
         }
@@ -879,7 +879,7 @@ function AppPageContent() {
         return;
       }
       if (dy < -QUEST_CARD_SWIPE_UP) {
-        startSwipeFlight('up', 0, dy);
+        startSwipeFlight('up');
         return;
       }
       endQuestSwipe();
