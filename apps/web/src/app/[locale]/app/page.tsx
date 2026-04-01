@@ -519,21 +519,21 @@ function AppPageContent() {
     }
   }, [quest, t]);
 
-  const handleAccept = () => {
+  const handleAccept = useCallback(() => {
     if (quest?.isOutdoor) { setShowSafety(true); }
     else { doAccept(); }
-  };
+  }, [quest, doAccept]);
 
   // ── Reroll ────────────────────────────────────────────────────────────────
 
-  const confirmReroll = () => {
+  const confirmReroll = useCallback(() => {
     if (!quest || rerolling) return;
     if (quest.status === 'accepted' || quest.status === 'completed' || quest.status === 'abandoned') return;
     const daily = quest.rerollsRemaining ?? 1;
     const bonus = quest.bonusRerollCredits ?? 0;
     if (daily + bonus <= 0) return;
     setShowRerollConfirm(true);
-  };
+  }, [quest, rerolling]);
 
   const handleReroll = async () => {
     if (!quest || rerolling) return;
@@ -670,7 +670,7 @@ function AppPageContent() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [quest, canReroll]);
+  }, [quest, canReroll, handleAccept, confirmReroll]);
 
   if (!isLoaded || loading) {
     return (
