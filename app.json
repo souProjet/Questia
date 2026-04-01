@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "ea564bf1-e208-44c6-b54b-5ee1fba40095"
+      }
+    },
+    "android": {
+      "package": "fr.questia.app"
+    }
+  }
+}
