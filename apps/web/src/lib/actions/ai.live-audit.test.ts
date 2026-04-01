@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'path';
-import type { PersonalityVector, QuestLog, EscalationPhase } from '@questia/shared';
+import type { PersonalityVector, EscalationPhase } from '@questia/shared';
 import type { QuestContext, DailyQuestProfileInput, GeneratedDailyQuest } from './ai';
 
 const LIVE = Boolean(process.env.RUN_LIVE_AUDIT);
@@ -166,21 +166,6 @@ type AuditResult = {
   checks: Record<string, boolean>;
   latencyMs: number;
 };
-
-function buildQuestLog(questId: number, status: QuestLog['status'], phase: EscalationPhase): QuestLog {
-  return {
-    id: `audit-${questId}`,
-    userId: 'audit-user',
-    questId,
-    assignedAt: new Date().toISOString(),
-    status,
-    congruenceDeltaAtAssignment: 0.2,
-    phaseAtAssignment: phase,
-    wasRerolled: false,
-    wasFallback: false,
-    safetyConsentGiven: false,
-  };
-}
 
 describe.skipIf(!LIVE)('AUDIT LIVE — pertinence des quêtes générées', () => {
   it('campagne multi-profils, multi-phases, multi-villes', async () => {
