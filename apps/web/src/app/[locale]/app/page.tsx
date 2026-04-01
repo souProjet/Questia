@@ -37,6 +37,10 @@ const QuestDestinationMap = dynamic(
   },
 );
 
+/** Seuils de glissé sur la carte quête (web), alignés sur l’app mobile à ~100px / ~72px */
+const QUEST_CARD_SWIPE_X = 100;
+const QUEST_CARD_SWIPE_UP = 72;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface DailyQuest {
@@ -660,6 +664,92 @@ function AppPageContent() {
 
   const [showDetails, setShowDetails] = useState(false);
 
+  /** Glisser sur la carte (pointeur / tactile), comme sur l’app mobile */
+  const [questSwipeOffset, setQuestSwipeOffset] = useState({ x: 0, y: 0 });
+  const [questSwipeDragging, setQuestSwipeDragging] = useState(false);
+  const questSwipeRef = useRef({
+    active: false,
+    pointerId: null as number | null,
+    startX: 0,
+    startY: 0,
+  });
+
+  const endQuestSwipe = useCallback(() => {
+    questSwipeRef.current = { active: false, pointerId: null, startX: 0, startY: 0 };
+    setQuestSwipeOffset({ x: 0, y: 0 });
+    setQuestSwipeDragging(false);
+  }, []);
+
+  useEffect(() => {
+    endQuestSwipe();
+  }, [quest?.questDate, questCardSwapKey, endQuestSwipe]);
+
+  const onQuestCardPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!isPending || accepting || rerolling || reporting) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if ((e.target as HTMLElement).closest('button')) return;
+      questSwipeRef.current = {
+        active: true,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+      };
+      setQuestSwipeDragging(true);
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    [isPending, accepting, rerolling, reporting],
+  );
+
+  const onQuestCardPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const s = questSwipeRef.current;
+    if (!s.active || e.pointerId !== s.pointerId) return;
+    const dx = e.clientX - s.startX;
+    const dy = e.clientY - s.startY;
+    setQuestSwipeOffset({ x: dx, y: Math.min(0, dy) });
+  }, []);
+
+  const onQuestCardPointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const s = questSwipeRef.current;
+      if (!s.active || e.pointerId !== s.pointerId) return;
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        /* déjà relâché */
+      }
+      const dx = e.clientX - s.startX;
+      const dy = e.clientY - s.startY;
+      endQuestSwipe();
+
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+      if (absX > QUEST_CARD_SWIPE_X && absX > absY) {
+        if (dx > 0) handleAccept();
+        else if (canReroll) confirmReroll();
+        return;
+      }
+      if (dy < -QUEST_CARD_SWIPE_UP && absY > absX) {
+        setShowDetails(true);
+      }
+    },
+    [endQuestSwipe, handleAccept, confirmReroll, canReroll],
+  );
+
+  const onQuestCardPointerCancel = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const s = questSwipeRef.current;
+      if (!s.active || e.pointerId !== s.pointerId) return;
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        /* noop */
+      }
+      endQuestSwipe();
+    },
+    [endQuestSwipe],
+  );
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const onKey = (e: KeyboardEvent) => {
@@ -763,7 +853,28 @@ function AppPageContent() {
                 : isAccepted || isCompleted
                   ? 'border-emerald-400/40 shadow-emerald-500/15'
                   : 'border-[var(--orange)]/30 shadow-orange-500/10'
-            } bg-[var(--card)] ${rerolling || reporting ? 'pointer-events-none opacity-50 scale-[0.97]' : ''}`}
+            } bg-[var(--card)] ${rerolling || reporting || accepting ? 'pointer-events-none opacity-50 scale-[0.97]' : ''} ${
+              isPending && !(rerolling || reporting || accepting)
+                ? questSwipeDragging
+                  ? 'cursor-grabbing select-none'
+                  : 'cursor-grab'
+                : ''
+            }`}
+            style={
+              isPending && !(rerolling || reporting || accepting)
+                ? questSwipeOffset.x !== 0 || questSwipeOffset.y !== 0
+                  ? {
+                      transform: `translate3d(${questSwipeOffset.x}px, ${questSwipeOffset.y}px, 0)`,
+                      transition: 'none',
+                      touchAction: 'none',
+                    }
+                  : { touchAction: 'none' }
+                : undefined
+            }
+            onPointerDown={isPending && !(rerolling || reporting || accepting) ? onQuestCardPointerDown : undefined}
+            onPointerMove={isPending && !(rerolling || reporting || accepting) ? onQuestCardPointerMove : undefined}
+            onPointerUp={isPending && !(rerolling || reporting || accepting) ? onQuestCardPointerUp : undefined}
+            onPointerCancel={isPending && !(rerolling || reporting || accepting) ? onQuestCardPointerCancel : undefined}
           >
             {isAbandoned ? (
               <div className="py-16 px-8 text-center">

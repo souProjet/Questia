@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions, Pressable } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -121,7 +121,8 @@ export function QuestSwipeCard({
     runOnJS(triggerDetails)();
   });
 
-  const composed = isPending ? Gesture.Race(pan, tap) : Gesture.Tap().onEnd(() => runOnJS(triggerDetails)());
+  // Exclusive : le pan a la priorité ; le tap ne s’active que si le pan a échoué (pas de glissé).
+  const composed = isPending ? Gesture.Exclusive(pan, tap) : Gesture.Tap().onEnd(() => runOnJS(triggerDetails)());
 
   const cardAnimStyle = useAnimatedStyle(() => {
     const rotation = interpolate(
@@ -185,13 +186,13 @@ export function QuestSwipeCard({
         >
           {isPending && (
             <>
-              <Animated.View style={[styles.overlayAccept, acceptOverlayStyle]}>
+              <Animated.View pointerEvents="none" style={[styles.overlayAccept, acceptOverlayStyle]}>
                 <Text style={styles.overlayAcceptText}>{s.swipeAccept}</Text>
               </Animated.View>
-              <Animated.View style={[styles.overlayReroll, rerollOverlayStyle]}>
+              <Animated.View pointerEvents="none" style={[styles.overlayReroll, rerollOverlayStyle]}>
                 <Text style={styles.overlayRerollText}>{s.swipeChange}</Text>
               </Animated.View>
-              <Animated.View style={[styles.overlayDetail, detailHintStyle]}>
+              <Animated.View pointerEvents="none" style={[styles.overlayDetail, detailHintStyle]}>
                 <Text style={styles.overlayDetailText}>{s.tapDetails}</Text>
               </Animated.View>
             </>
