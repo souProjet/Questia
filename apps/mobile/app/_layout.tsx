@@ -6,11 +6,8 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SecureStore from 'expo-secure-store';
 import { DA } from '@questia/ui';
-import { AppLocaleProvider } from '../contexts/AppLocaleContext';
 import { AppThemeProvider, useAppTheme } from '../contexts/AppThemeContext';
 import { setupNotificationHandler } from '../lib/pushNotifications';
-import { hasOnboardingAnswers } from '../lib/onboardingGate';
-import { maybeCompleteAuthSession } from '../lib/webBrowser';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
@@ -51,43 +48,26 @@ const tokenCache = {
   },
 };
 
-const PUBLISHABLE_KEY = (process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '').trim();
+const PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 
 function InitialLayout() {
-  const { userId, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const { statusBarStyle } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
-  const authed = Boolean(userId);
 
   useEffect(() => {
     if (!isLoaded) return;
-    const segs = (segments ?? []) as string[];
+    const segs = segments as string[];
     const first = segs[0];
     const inAuthGroup = first === '(auth)';
-    // `segs.length === 0` : transition Expo Router — ne pas traiter comme « hors zone protégée ».
     const atOnboarding = segs.length === 0 || first === 'index';
-
-    if (authed && inAuthGroup) {
+    if (isSignedIn && (inAuthGroup || atOnboarding)) {
       router.replace('/home');
-      return;
-    }
-
-    if (authed && atOnboarding) {
-      let cancelled = false;
-      void (async () => {
-        const ok = await hasOnboardingAnswers();
-        if (!cancelled && ok) router.replace('/home');
-      })();
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (!authed && !inAuthGroup && !atOnboarding) {
+    } else if (!isSignedIn && !inAuthGroup && !atOnboarding) {
       router.replace('/(auth)' as never);
     }
-  }, [authed, isLoaded, segments, router]);
+  }, [isSignedIn, isLoaded, segments, router]);
 
   return (
     <>
@@ -98,10 +78,6 @@ function InitialLayout() {
 }
 
 export default function RootLayout() {
-  useEffect(() => {
-    void maybeCompleteAuthSession();
-  }, []);
-
   useEffect(() => {
     void setupNotificationHandler();
   }, []);
@@ -122,11 +98,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY} tokenCache={tokenCache}>
-        <AppLocaleProvider>
-          <AppThemeProvider>
-            <InitialLayout />
-          </AppThemeProvider>
-        </AppLocaleProvider>
+        <AppThemeProvider>
+          <InitialLayout />
+        </AppThemeProvider>
       </ClerkProvider>
     </SafeAreaProvider>
   );

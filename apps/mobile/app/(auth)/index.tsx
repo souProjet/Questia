@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,18 +11,28 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { useRouter } from 'expo-router';
-import { useSSO } from '@clerk/expo';
-import { useSignIn, useSignUp } from '@clerk/expo/legacy';
 import { DA } from '@questia/ui';
-import { hasOnboardingAnswers } from '../../lib/onboardingGate';
-import { isExpoWebBrowserNativeAvailable } from '../../lib/webBrowser';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { useSignIn, useSignUp, useSSO } = require('@clerk/expo') as any;
+
+WebBrowser.maybeCompleteAuthSession();
 
 type AuthMode = 'sign-in' | 'sign-up';
 
+function useWarmUpBrowser() {
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      void WebBrowser.warmUpAsync();
+      return () => { void WebBrowser.coolDownAsync(); };
+    }
+  }, []);
+}
+
 export default function AuthScreen() {
-  const router = useRouter();
+  useWarmUpBrowser();
 
   const { signIn, isLoaded: signInLoaded, setActive } = useSignIn();
   const { signUp, isLoaded: signUpLoaded } = useSignUp();
@@ -41,32 +51,14 @@ export default function AuthScreen() {
     setLoadingGoogle(true);
     setError('');
     try {
-      if (!isExpoWebBrowserNativeAvailable()) {
-        setError(
-          'Connexion Google indisponible : réinstalle une build native à jour (npx expo run:android depuis apps/mobile).',
-        );
-        return;
-      }
-      if (mode === 'sign-up' && !(await hasOnboardingAnswers())) {
-        setError('Complète l’onboarding avant de créer un compte.');
-        router.replace('/' as never);
-        return;
-      }
       const redirectUrl = Linking.createURL('/(auth)');
-      const { createdSessionId, setActive: setActiveSSO, signUp: oauthSignUp } = await startSSOFlow({
+      const { createdSessionId, setActive: setActiveSSO } = await startSSOFlow({
         strategy: 'oauth_google',
         redirectUrl,
+        redirectCompletedUrl: redirectUrl,
       });
       if (createdSessionId) {
-        const setSession = setActiveSSO ?? setActive;
-        if (setSession) await setSession({ session: createdSessionId });
-        const hasProfile = await hasOnboardingAnswers();
-        // Nouvelle inscription Google sans profil local : aller compléter l’onboarding (signUp renvoyé par Clerk).
-        if (!hasProfile && oauthSignUp) {
-          router.replace('/' as never);
-        } else {
-          router.replace('/home' as never);
-        }
+        await (setActiveSSO ?? setActive)({ session: createdSessionId });
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
@@ -74,7 +66,7 @@ export default function AuthScreen() {
     } finally {
       setLoadingGoogle(false);
     }
-  }, [mode, startSSOFlow, setActive, router]);
+  }, [startSSOFlow, setActive]);
 
   const handleSignIn = useCallback(async () => {
     if (!signInLoaded) return;
@@ -82,9 +74,8 @@ export default function AuthScreen() {
     setError('');
     try {
       const result = await signIn.create({ identifier: email, password });
-      if (result.status === 'complete' && setActive) {
+      if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.replace('/home' as never);
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
@@ -92,18 +83,13 @@ export default function AuthScreen() {
     } finally {
       setLoading(false);
     }
-  }, [signInLoaded, signIn, email, password, setActive, router]);
+  }, [signInLoaded, signIn, email, password, setActive]);
 
   const handleSignUp = useCallback(async () => {
     if (!signUpLoaded) return;
     setLoading(true);
     setError('');
     try {
-      if (!(await hasOnboardingAnswers())) {
-        setLoading(false);
-        router.replace('/' as never);
-        return;
-      }
       await signUp.create({ emailAddress: email, password });
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       setPendingVerification(true);
@@ -113,22 +99,16 @@ export default function AuthScreen() {
     } finally {
       setLoading(false);
     }
-  }, [signUpLoaded, signUp, email, password, router]);
+  }, [signUpLoaded, signUp, email, password]);
 
   const handleVerify = useCallback(async () => {
     if (!signUpLoaded) return;
     setLoading(true);
     setError('');
     try {
-      if (!(await hasOnboardingAnswers())) {
-        setError('Complète l’onboarding avant de valider ton compte.');
-        router.replace('/' as never);
-        return;
-      }
       const result = await signUp.attemptEmailAddressVerification({ code });
-      if (result.status === 'complete' && setActive) {
+      if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.replace('/home' as never);
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
@@ -136,7 +116,7 @@ export default function AuthScreen() {
     } finally {
       setLoading(false);
     }
-  }, [signUpLoaded, signUp, code, setActive, router]);
+  }, [signUpLoaded, signUp, code, setActive]);
 
   if (pendingVerification) {
     return (
@@ -269,10 +249,7 @@ export default function AuthScreen() {
         </View>
 
         <Pressable
-          onPress={() => {
-            setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
-            setError('');
-          }}
+          onPress={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); }}
           style={s.switchBtn}
         >
           <Text style={s.switchText}>
@@ -307,13 +284,10 @@ const s = StyleSheet.create({
   logoIcon: {
     width: 76,
     height: 76,
-    borderRadius: 18,
+    borderRadius: 20,
     overflow: 'hidden',
     marginBottom: 16,
-    padding: 10,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: 'rgba(15,23,42,0.08)',
+    padding: 8,
     shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
