@@ -131,43 +131,72 @@ function SafetySheet({
   const ok = checked.size === rules.length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md card rounded-3xl overflow-hidden shadow-xl">
-        <div className="h-1 bg-gradient-to-r from-cyan-500 via-amber-400 to-orange-500" />
-        <div className="p-7">
-          <div className="text-center mb-6">
-            <div className="flex justify-center mb-3"><Icon name="Shield" size="2xl" className="text-orange-500" /></div>
-            <h3 className="font-display font-black text-xl text-[var(--on-cream)] mb-1">
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:p-4 md:items-center">
+      <div className="quest-modal-backdrop absolute inset-0 cursor-pointer" onClick={onClose} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="safety-sheet-title"
+        className="quest-modal-sheet relative z-10 flex max-h-[min(92dvh,100%)] w-full max-w-md flex-col overflow-hidden"
+      >
+        <div className="quest-modal-panel-accent" />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4 pt-3 sm:p-7 sm:pt-6">
+          <div className="text-center">
+            <div className="mb-2 flex justify-center sm:mb-3">
+              <Icon name="Shield" size="2xl" className="text-orange-500" />
+            </div>
+            <h3 id="safety-sheet-title" className="font-display text-lg font-black text-[var(--text)] sm:text-xl">
               {t('safetyTitle')}
             </h3>
-            <p className="text-sm text-[var(--on-cream-muted)]">
+            <p className="mt-1 text-xs leading-snug text-[var(--muted)] sm:text-sm">
               {t('safetySubtitle', { title: quest.title })}
             </p>
           </div>
-          <div className="space-y-2 mb-5">
+          <div className="mt-4 space-y-2 sm:mt-6 sm:space-y-2.5">
             {rules.map((r, i) => (
-              <button key={i} onClick={() => toggle(i)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+              <button
+                key={i}
+                type="button"
+                onClick={() => toggle(i)}
+                className="flex w-full items-start gap-2.5 rounded-xl p-2.5 text-left transition-all sm:gap-3 sm:p-3"
                 style={{
                   background: checked.has(i) ? 'rgba(16,185,129,.1)' : 'rgba(15,23,42,.04)',
                   border: `1px solid ${checked.has(i) ? 'rgba(16,185,129,.35)' : 'rgba(15,23,42,.1)'}`,
-                }}>
-                <div className="w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center"
-                  style={{ background: checked.has(i) ? '#10b981' : '#fff', border: `2px solid ${checked.has(i) ? '#10b981' : 'rgba(15,23,42,.2)'}` }}>
+                }}
+              >
+                <div
+                  className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md"
+                  style={{
+                    background: checked.has(i) ? '#10b981' : '#fff',
+                    border: `2px solid ${checked.has(i) ? '#10b981' : 'rgba(15,23,42,.2)'}`,
+                  }}
+                >
                   {checked.has(i) ? <Icon name="Check" size="xs" className="text-white" /> : null}
                 </div>
-                <span className={`text-sm ${checked.has(i) ? 'text-[var(--on-cream)]' : 'text-[var(--on-cream-muted)]'}`}>{r}</span>
+                <span className={`text-xs leading-snug sm:text-sm ${checked.has(i) ? 'text-[var(--text)]' : 'text-[var(--muted)]'}`}>
+                  {r}
+                </span>
               </button>
             ))}
           </div>
+        </div>
+        <div className="shrink-0 border-t border-[var(--border-ui)]/25 bg-[var(--card)] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
           <div className="flex gap-2">
-            <button onClick={onClose} className="btn btn-ghost btn-md flex-1">
+            <button type="button" onClick={onClose} className="btn btn-ghost btn-md flex-1">
               {t('safetyNotToday')}
             </button>
-            <button onClick={() => ok && onConfirm()} disabled={!ok}
+            <button
+              type="button"
+              onClick={() => ok && onConfirm()}
+              disabled={!ok}
               className="btn btn-md flex-[2] text-white transition-all"
-              style={{ background: ok ? 'linear-gradient(135deg,#f97316,#fbbf24)' : 'rgba(15,23,42,.08)', color: ok ? '#fff' : '#64748b', cursor: ok ? 'pointer' : 'not-allowed', boxShadow: ok ? '0 4px 20px rgba(249,115,22,.35)' : 'none' }}>
+              style={{
+                background: ok ? 'linear-gradient(135deg,#f97316,#fbbf24)' : 'rgba(15,23,42,.08)',
+                color: ok ? '#fff' : '#64748b',
+                cursor: ok ? 'pointer' : 'not-allowed',
+                boxShadow: ok ? '0 4px 20px rgba(249,115,22,.35)' : 'none',
+              }}
+            >
               <span className="flex items-center justify-center gap-2">
                 {t('safetyLetsGo')} <Icon name="Map" size="sm" />
               </span>
@@ -1068,10 +1097,11 @@ function AppPageContent() {
         <div className="flex w-full flex-1 flex-col items-center justify-center gap-4 py-4 sm:min-h-[min(560px,calc(100dvh-11rem))]">
         {quest ? (
           <div className="relative w-full max-w-[480px]">
+            {/* Halo doux sous la carte (pas de « 2e carte » vide façon Tinder : il n’y a pas de profil suivant ici) */}
             {questCardTransformsActive && !isAbandoned ? (
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-x-4 top-3 bottom-0 -z-10 scale-[0.93] rounded-[26px] border border-[var(--border-ui)]/35 bg-[var(--muted)]/12 shadow-lg"
+                className="pointer-events-none absolute -inset-8 -z-10 rounded-[40px] bg-gradient-to-br from-[var(--orange)]/[0.07] via-transparent to-[var(--cyan)]/[0.08] opacity-90"
               />
             ) : null}
             <div
@@ -1195,7 +1225,7 @@ function AppPageContent() {
                 )}
 
                 {isAccepted && (
-                  <div className="px-5 pb-5">
+                  <div className="px-5 pb-5 space-y-2">
                     <button
                       type="button"
                       onClick={doComplete}
@@ -1203,6 +1233,13 @@ function AppPageContent() {
                       className="btn btn-primary btn-lg w-full text-base font-black"
                     >
                       {completing ? '\u2026' : t('validateQuest')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAbandonConfirm(true)}
+                      className="w-full py-2.5 text-center text-xs font-semibold text-[var(--muted)] transition-colors hover:text-[var(--text)] hover:underline decoration-[var(--muted)] underline-offset-4"
+                    >
+                      {t('abandonLink')}
                     </button>
                   </div>
                 )}
@@ -1235,6 +1272,13 @@ function AppPageContent() {
                     >
                       {rerolling ? '\u2026' : t('changeQuest', { label: rerollLabel })}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAbandonConfirm(true)}
+                      className="w-full py-2.5 text-center text-xs font-semibold text-[var(--muted)] transition-colors hover:text-[var(--text)] hover:underline decoration-[var(--muted)] underline-offset-4"
+                    >
+                      {t('abandonLink')}
+                    </button>
                   </div>
                 )}
               </>
@@ -1251,82 +1295,106 @@ function AppPageContent() {
         </div>
       </main>
 
-      {/* Detail panel */}
+      {/* Detail panel — mobile-first : hauteur limitée, scroll interne, actions collées en bas */}
       {showDetails && quest && (
-        <div className="fixed inset-0 z-[90] flex items-end md:items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDetails(false)} />
-          <div className="relative z-10 w-full max-w-lg max-h-[85vh] overflow-y-auto bg-[var(--card)] rounded-t-3xl md:rounded-3xl border border-[var(--border-ui)]/40 shadow-2xl">
-            <div className="flex justify-center pt-3 pb-1 md:hidden">
-              <div className="w-10 h-1 rounded-full bg-[var(--muted)]/30" />
+        <div className="fixed inset-0 z-[90] flex flex-col justify-end sm:justify-center sm:p-4">
+          <div className="quest-modal-backdrop absolute inset-0 cursor-pointer" onClick={() => setShowDetails(false)} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quest-detail-title"
+            className="quest-modal-sheet relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden sm:mx-auto sm:max-h-[min(88vh,820px)]"
+          >
+            <div className="flex shrink-0 justify-center pt-2.5 pb-1 sm:hidden">
+              <div className="h-1 w-10 rounded-full bg-[var(--muted)]/30" />
             </div>
-            <div className="px-6 py-5 space-y-5">
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[1.5px] text-[var(--orange)] mb-2">{t('missionHeading')}</p>
-                <p className="text-[15px] leading-relaxed font-medium text-[var(--text)]">{quest.mission}</p>
+            <div className="quest-modal-panel-accent shrink-0" />
+            <div className="flex shrink-0 items-start justify-between gap-2 border-b border-[var(--border-ui)]/25 px-4 pb-3 pt-1 sm:px-5 sm:pb-4 sm:pt-3">
+              <div className="min-w-0 flex-1 pr-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--orange)]">{t('detailEyebrow')}</p>
+                <h2 id="quest-detail-title" className="font-display text-lg font-black leading-tight text-[var(--text)] sm:text-xl">
+                  {quest.title}
+                </h2>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[var(--muted)] sm:text-xs">
+                  <span>{quest.duration}</span>
+                  {quest.isOutdoor ? (
+                    <span className="rounded-full border border-[var(--green)]/30 bg-[var(--green)]/8 px-2 py-0.5 text-[10px] font-bold text-[var(--green)]">
+                      {t('outdoorBadge')}
+                    </span>
+                  ) : null}
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowDetails(false)}
+                className="shrink-0 rounded-xl px-3 py-2 text-sm font-bold text-[var(--muted)] hover:bg-[var(--muted)]/10"
+                aria-label={t('detailCloseLabel')}
+              >
+                {t('detailCloseLabel')}
+              </button>
+            </div>
 
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 sm:px-5 space-y-4">
               {quest.hook ? (
-                <div>
-                  <p className="text-[11px] font-black uppercase tracking-[1.5px] text-[var(--orange)] mb-2">{t('hookLabel')}</p>
-                  <blockquote className="text-sm italic text-center text-[var(--text)] border border-[var(--muted)]/15 rounded-xl p-4">
+                <section>
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">{t('hookLabel')}</p>
+                  <blockquote className="mt-2 rounded-xl border border-[var(--muted)]/15 bg-[var(--bg)]/40 px-3 py-3 text-center text-sm italic leading-relaxed text-[var(--text)] sm:px-4">
                     &ldquo;{quest.hook}&rdquo;
                   </blockquote>
-                </div>
+                </section>
               ) : null}
 
+              <section>
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">{t('missionHeading')}</p>
+                <p className="mt-2 text-sm font-medium leading-relaxed text-[var(--text)] sm:text-[15px]">{quest.mission}</p>
+              </section>
+
               {quest.isOutdoor && quest.destination ? (
-                <div>
-                  <p className="text-[11px] font-black uppercase tracking-[1.5px] text-[var(--orange)] mb-2">{t('mapHeading')}</p>
-                  <p className="text-xs text-[var(--muted)] mb-3">{t('mapDescription')}</p>
-                  <QuestDestinationMap destination={quest.destination} userPosition={userPosition} />
-                </div>
+                <section>
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">{t('mapHeading')}</p>
+                  <p className="mt-1 text-[11px] leading-snug text-[var(--muted)] sm:text-xs">{t('mapDescription')}</p>
+                  <div className="mt-3">
+                    <QuestDestinationMap destination={quest.destination} userPosition={userPosition} compact />
+                  </div>
+                </section>
               ) : null}
 
               {quest.safetyNote && isPending ? (
-                <div className="border border-[var(--orange)]/30 rounded-xl p-4">
-                  <p className="text-[11px] font-black uppercase tracking-[1.5px] text-[var(--orange)] mb-2">{t('safetyTitle')}</p>
-                  <p className="text-sm text-[var(--text)]">{quest.safetyNote}</p>
-                </div>
+                <section className="rounded-xl border border-[var(--orange)]/30 bg-[var(--orange)]/[0.06] p-3 sm:p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">{t('safetyTitle')}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--text)]">{quest.safetyNote}</p>
+                </section>
               ) : null}
+            </div>
 
-              <div className="flex items-center gap-3 text-xs font-semibold text-[var(--muted)]">
-                <span>{quest.duration}</span>
-                {quest.isOutdoor ? (
-                  <span className="rounded-full border border-[var(--green)]/30 bg-[var(--green)]/8 px-2 py-0.5 text-[10px] font-bold text-[var(--green)]">
-                    {t('outdoorBadge')}
-                  </span>
-                ) : null}
-              </div>
-
-              {isPending ? (
-                <div className="space-y-2 pt-2">
-                  {isPlannedQuest ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowDetails(false);
-                        setReportDeferredDate(calendarDay);
-                        setShowReportModal(true);
-                      }}
-                      disabled={!canReroll}
-                      className="w-full py-3.5 rounded-xl border border-[var(--link-on-bg)]/30 text-sm font-bold text-[var(--link-on-bg)] hover:bg-[var(--link-on-bg)]/5 transition-colors disabled:opacity-40"
-                    >
-                      {t('reportShortQuest')}
-                    </button>
-                  ) : null}
+            {isPending ? (
+              <div className="shrink-0 space-y-2 border-t border-[var(--border-ui)]/25 bg-[var(--card)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5">
+                {isPlannedQuest ? (
                   <button
                     type="button"
                     onClick={() => {
                       setShowDetails(false);
-                      setShowAbandonConfirm(true);
+                      setReportDeferredDate(calendarDay);
+                      setShowReportModal(true);
                     }}
-                    className="w-full py-3.5 rounded-xl border border-[var(--muted)]/25 text-sm font-bold text-[var(--muted)] hover:bg-[var(--muted)]/5 transition-colors"
+                    disabled={!canReroll}
+                    className="w-full rounded-xl border border-[var(--link-on-bg)]/30 py-3 text-sm font-bold text-[var(--link-on-bg)] transition-colors hover:bg-[var(--link-on-bg)]/5 disabled:opacity-40"
                   >
-                    {t('notForMe')}
+                    {t('reportShortQuest')}
                   </button>
-                </div>
-              ) : null}
-            </div>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDetails(false);
+                    setShowAbandonConfirm(true);
+                  }}
+                  className="w-full rounded-xl border border-[var(--muted)]/25 py-3 text-sm font-bold text-[var(--muted)] transition-colors hover:bg-[var(--muted)]/5"
+                >
+                  {t('notForMe')}
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       )}
@@ -1336,41 +1404,53 @@ function AppPageContent() {
       )}
 
       {showRerollConfirm && quest && (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4" role="dialog" aria-modal="true" aria-labelledby="reroll-confirm-title">
-          <div className="max-w-md w-full rounded-2xl border border-[color:var(--border-ui-strong)] bg-[var(--card)] p-6 shadow-2xl motion-safe:animate-fade-up motion-reduce:animate-none">
-            <h3 id="reroll-confirm-title" className="font-display text-lg font-black text-[var(--text)]">{t('rerollConfirmTitle')}</h3>
-            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('rerollConfirmBody')}</p>
-            <div className="mt-5 flex gap-2">
-              <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowRerollConfirm(false)}>{t('cancel')}</button>
-              <button type="button" className="btn btn-cta btn-md flex-[2] font-black" onClick={() => void handleReroll()}>{t('rerollConfirmAction')}</button>
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="reroll-confirm-title">
+          <div className="quest-modal-backdrop absolute inset-0 cursor-pointer" onClick={() => setShowRerollConfirm(false)} aria-hidden />
+          <div className="quest-modal-panel relative z-10 w-full motion-safe:animate-fade-up motion-reduce:animate-none">
+            <div className="quest-modal-panel-accent" />
+            <div className="quest-modal-panel-body">
+              <h3 id="reroll-confirm-title" className="font-display text-lg font-black text-[var(--text)]">{t('rerollConfirmTitle')}</h3>
+              <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('rerollConfirmBody')}</p>
+              <div className="mt-5 flex gap-2">
+                <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowRerollConfirm(false)}>{t('cancel')}</button>
+                <button type="button" className="btn btn-cta btn-md flex-[2] font-black" onClick={() => void handleReroll()}>{t('rerollConfirmAction')}</button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {showReportModal && quest && isPlannedQuest && (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4" role="dialog" aria-modal="true" aria-labelledby="report-title">
-          <div className="max-w-md w-full rounded-2xl border border-[color:var(--border-ui-strong)] bg-[var(--card)] p-6 shadow-2xl">
-            <h3 id="report-title" className="font-display text-lg font-black text-[var(--text)]">{t('reportModalTitle')}</h3>
-            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('reportModalBody', { maxDays: REPORT_DEFER_MAX_DAYS })}</p>
-            <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[var(--subtle)]" htmlFor="report-date">{t('reportDateLabel')}</label>
-            <input id="report-date" type="date" className="mt-1 w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2 text-[var(--text)]" min={calendarDay} max={reportDateMax} value={reportDeferredDate} onChange={(e) => setReportDeferredDate(e.target.value)} />
-            <div className="mt-5 flex gap-2">
-              <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowReportModal(false)} disabled={reporting}>{t('cancel')}</button>
-              <button type="button" className="btn btn-primary btn-md flex-[2] font-black" onClick={() => void handleReportConfirm()} disabled={reporting || !canReroll}>{reporting ? '\u2026' : t('confirm')}</button>
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="report-title">
+          <div className="quest-modal-backdrop absolute inset-0 cursor-pointer" onClick={() => setShowReportModal(false)} aria-hidden />
+          <div className="quest-modal-panel relative z-10 w-full">
+            <div className="quest-modal-panel-accent" />
+            <div className="quest-modal-panel-body">
+              <h3 id="report-title" className="font-display text-lg font-black text-[var(--text)]">{t('reportModalTitle')}</h3>
+              <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('reportModalBody', { maxDays: REPORT_DEFER_MAX_DAYS })}</p>
+              <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[var(--subtle)]" htmlFor="report-date">{t('reportDateLabel')}</label>
+              <input id="report-date" type="date" className="mt-1 w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2 text-[var(--text)]" min={calendarDay} max={reportDateMax} value={reportDeferredDate} onChange={(e) => setReportDeferredDate(e.target.value)} />
+              <div className="mt-5 flex gap-2">
+                <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowReportModal(false)} disabled={reporting}>{t('cancel')}</button>
+                <button type="button" className="btn btn-primary btn-md flex-[2] font-black" onClick={() => void handleReportConfirm()} disabled={reporting || !canReroll}>{reporting ? '\u2026' : t('confirm')}</button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {showAbandonConfirm && quest && (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/55 p-4" role="dialog" aria-modal="true" aria-labelledby="abandon-title">
-          <div className="max-w-md w-full rounded-2xl border border-[color:var(--border-ui-strong)] bg-[var(--card)] p-6 shadow-2xl">
-            <h3 id="abandon-title" className="font-display text-lg font-black text-[var(--text)]">{t('abandonModalTitle')}</h3>
-            <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('abandonModalBody')}</p>
-            <div className="mt-5 flex gap-2">
-              <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowAbandonConfirm(false)} disabled={abandoning}>{t('back')}</button>
-              <button type="button" className="btn btn-md flex-[2] border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--text)_10%,var(--card))] font-black text-[var(--text)]" onClick={() => void confirmAbandon()} disabled={abandoning}>{abandoning ? '\u2026' : t('confirm')}</button>
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="abandon-title">
+          <div className="quest-modal-backdrop absolute inset-0 cursor-pointer" onClick={() => setShowAbandonConfirm(false)} aria-hidden />
+          <div className="quest-modal-panel relative z-10 w-full">
+            <div className="quest-modal-panel-accent" />
+            <div className="quest-modal-panel-body">
+              <h3 id="abandon-title" className="font-display text-lg font-black text-[var(--text)]">{t('abandonModalTitle')}</h3>
+              <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('abandonModalBody')}</p>
+              <div className="mt-5 flex gap-2">
+                <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowAbandonConfirm(false)} disabled={abandoning}>{t('back')}</button>
+                <button type="button" className="btn btn-md flex-[2] border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--text)_10%,var(--card))] font-black text-[var(--text)]" onClick={() => void confirmAbandon()} disabled={abandoning}>{abandoning ? '\u2026' : t('confirm')}</button>
+              </div>
             </div>
           </div>
         </div>

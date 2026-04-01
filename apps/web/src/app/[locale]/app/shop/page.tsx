@@ -1180,11 +1180,12 @@ function ShopPageInner() {
               >
                 <button
                   type="button"
-                  className="absolute inset-0 bg-slate-900/45 backdrop-blur-[2px]"
+                  className="absolute inset-0 quest-modal-backdrop cursor-pointer border-0"
                   aria-label={t('close')}
                   onClick={() => setRechargeOpen(false)}
                 />
-                <div className="relative z-10 w-full max-w-3xl overflow-hidden rounded-t-2xl border border-emerald-200/90 bg-[var(--card)] shadow-2xl motion-safe:animate-shop-modal-in motion-reduce:animate-none sm:rounded-2xl">
+                <div className="quest-modal-sheet relative z-10 flex max-h-[min(92dvh,100%)] w-full max-w-3xl flex-col overflow-hidden motion-safe:animate-shop-modal-in motion-reduce:animate-none">
+                  <div className="quest-modal-panel-accent shrink-0" aria-hidden />
                   <RechargeModalContent
                     coinPacksSorted={coinPacksSorted}
                     coinPackReference={coinPackReference}
@@ -1207,11 +1208,13 @@ function ShopPageInner() {
               >
                 <button
                   type="button"
-                  className="absolute inset-0 bg-slate-900/50 backdrop-blur-[1px]"
+                  className="absolute inset-0 quest-modal-backdrop cursor-pointer border-0"
                   aria-label={t('close')}
                   onClick={() => setInfoModal(null)}
                 />
-                <div className="relative z-10 w-full max-w-md rounded-2xl border border-[color:var(--border-ui)] bg-[var(--card)] p-5 shadow-2xl">
+                <div className="quest-modal-panel relative z-10 w-full max-w-md overflow-hidden shadow-2xl">
+                  <div className="quest-modal-panel-accent shrink-0" aria-hidden />
+                  <div className="relative p-5 pt-4">
                   <button
                     type="button"
                     className="absolute right-2 top-2 rounded-full p-2 text-[var(--subtle)] hover:bg-[var(--surface)]"
@@ -1233,6 +1236,7 @@ function ShopPageInner() {
                   >
                     {t('infoOk')}
                   </button>
+                  </div>
                 </div>
               </div>
             ) : null}

@@ -1,26 +1,20 @@
-const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
+const { getDefaultConfig } = require('expo/metro-config');
 
+// `__dirname` pointe toujours vers apps/mobile (fichier du config), même si Metro est
+// lancé depuis la racine du repo — indispensable pour un bundle complet en EAS / export.
 const projectRoot = __dirname;
 const monorepoRoot = path.resolve(projectRoot, '../..');
 
+// SDK 52+ : ne pas réactiver disableHierarchicalLookup ni nodeModulesPaths manuels :
+// ça casse la résolution des deps hoistées (ex. react-native-screens).
 const config = getDefaultConfig(projectRoot);
 
-// Ne pas surveiller tout le monorepo : Next.js crée/supprime `.next/` et Metro plante
-// sur des chemins comme `apps/web/.next/diagnostics` (ENOENT) si turbo lance web + mobile.
-config.watchFolders = [
-  projectRoot,
-  path.join(monorepoRoot, 'packages', 'shared'),
-  path.join(monorepoRoot, 'packages', 'ui'),
-];
+// Inclure explicitement le monorepo pour @questia/* et workspaces (évite un graphe trop petit).
+const folders = new Set([...(config.watchFolders ?? []), monorepoRoot]);
+config.watchFolders = [...folders];
 
-config.resolver.nodeModulesPaths = [
-  path.resolve(projectRoot, 'node_modules'),
-  path.resolve(monorepoRoot, 'node_modules'),
-];
-config.resolver.disableHierarchicalLookup = true;
-
-// Empêche de résoudre des modules depuis l'app Next.js
+// Empêche Metro de suivre le code Next.js si turbo lance web + mobile
 config.resolver.blockList = [/.*[\\/]apps[\\/]web[\\/].*/];
 
 module.exports = config;

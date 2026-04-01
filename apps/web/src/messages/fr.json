@@ -252,6 +252,8 @@
     "xpToLevel": "+{xp} XP pour monter",
     "xpInLevel": "{into}/{per} dans ce niveau",
     "questOfDay": "Quête du jour",
+    "detailCloseLabel": "Fermer",
+    "detailEyebrow": "Détails",
     "missionHeading": "Ta mission — quoi faire",
     "pacePlannedTitle": "Peut demander du calendrier ou d'autres personnes — une première étape reste faisable vite.",
     "paceTodayTitle": "Pensée pour être bouclée dans la journée.",

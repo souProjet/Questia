@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
-import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, Pressable, ScrollView } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,6 +22,8 @@ const SPRING_CONFIG = { damping: 20, stiffness: 200, mass: 0.8 };
 export interface SwipeCardQuest {
   emoji: string;
   title: string;
+  /** Phrase courte générée avec le pack de narration (style cinéma / poétique / etc.) — ne pas résumer côté client. */
+  hook?: string;
   mission: string;
   archetypeCategory?: string;
   questPace?: 'instant' | 'planned';
@@ -155,7 +157,8 @@ export function QuestSwipeCard({
 
   const family = quest.archetypeCategory ? questFamilyLabel(quest.archetypeCategory, locale) : null;
   const paceLabel = quest.questPace === 'planned' ? s.pacePlanned : s.paceToday;
-  const cardHeight = Math.min(screenHeight * 0.62, 520);
+  const cardHeight = Math.min(screenHeight * 0.68, 580);
+  const hookText = (quest.hook ?? '').trim();
 
   if (isAbandoned) {
     return (
@@ -200,9 +203,7 @@ export function QuestSwipeCard({
 
           <View style={styles.cardInner}>
             <Text style={styles.emoji}>{questDisplayEmoji(quest.emoji)}</Text>
-            <Text style={[styles.title, { color: p.text }]} numberOfLines={2}>
-              {quest.title}
-            </Text>
+            <Text style={[styles.title, { color: p.text }]}>{quest.title}</Text>
 
             <View style={styles.badges}>
               {family ? (
@@ -220,13 +221,21 @@ export function QuestSwipeCard({
               ) : null}
             </View>
 
-            <Text style={[styles.missionPreview, { color: p.muted }]} numberOfLines={3}>
-              {quest.mission}
-            </Text>
+            {hookText ? (
+              <Text style={[styles.hookLine, { color: p.text }]}>{hookText}</Text>
+            ) : null}
 
-            <Text style={[styles.duration, { color: p.muted }]}>
-              {quest.duration}
-            </Text>
+            <ScrollView
+              style={styles.missionScroll}
+              contentContainerStyle={styles.missionScrollContent}
+              showsVerticalScrollIndicator
+              nestedScrollEnabled
+              bounces={false}
+            >
+              <Text style={[styles.missionFull, { color: p.text }]}>{quest.mission}</Text>
+            </ScrollView>
+
+            <Text style={[styles.duration, { color: p.muted }]}>{quest.duration}</Text>
           </View>
 
           {isPending && (
@@ -299,30 +308,31 @@ const styles = StyleSheet.create({
   },
   cardInner: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 12,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    minHeight: 0,
   },
   emoji: {
     fontSize: 56,
     marginBottom: 16,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '900',
     textAlign: 'center',
-    lineHeight: 28,
-    marginBottom: 14,
-    paddingHorizontal: 8,
+    lineHeight: 26,
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 6,
-    marginBottom: 18,
+    marginBottom: 12,
   },
   badge: {
     paddingHorizontal: 10,
@@ -334,16 +344,34 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  missionPreview: {
+  hookLine: {
+    fontSize: 15,
+    lineHeight: 23,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+    opacity: 0.95,
+  },
+  missionScroll: {
+    width: '100%',
+    flex: 1,
+    minHeight: 72,
+    maxHeight: 240,
+    marginBottom: 8,
+  },
+  missionScrollContent: {
+    paddingBottom: 4,
+  },
+  missionFull: {
     fontSize: 14,
     lineHeight: 21,
     textAlign: 'center',
-    paddingHorizontal: 4,
-    marginBottom: 12,
   },
   duration: {
     fontSize: 12,
     fontWeight: '600',
+    marginTop: 'auto',
   },
   fallbackActions: {
     flexDirection: 'row',

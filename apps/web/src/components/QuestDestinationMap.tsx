@@ -43,9 +43,12 @@ async function fetchFootRoute(
 export default function QuestDestinationMap({
   destination,
   userPosition,
+  /** Carte plus basse (ex. panneau détail mobile) pour ne pas saturer l’écran */
+  compact = false,
 }: {
   destination: QuestDestinationPayload;
   userPosition: { lat: number; lon: number } | null;
+  compact?: boolean;
 }) {
   const [route, setRoute] = useState<[number, number][] | null>(null);
   const [routeError, setRouteError] = useState(false);
@@ -133,10 +136,14 @@ export default function QuestDestinationMap({
     );
   }
 
+  const mapFrameClass = compact
+    ? 'h-[min(34vh,200px)] w-full min-h-[140px] sm:h-[200px]'
+    : 'h-[min(58vw,300px)] w-full min-h-[220px] sm:h-[280px]';
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <div className="overflow-hidden rounded-2xl border border-cyan-200/45 bg-white/40 shadow-[0_8px_30px_-12px_rgba(34,211,238,0.25)] ring-1 ring-cyan-100/80">
-        <div className="h-[min(58vw,300px)] w-full min-h-[220px] sm:h-[280px]">
+        <div className={mapFrameClass}>
           <QuestDestinationMapLeaflet
             key={mapInstanceKey}
             mapKey={mapInstanceKey}

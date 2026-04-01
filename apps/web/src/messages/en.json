@@ -250,6 +250,8 @@
     "xpToLevel": "+{xp} XP to level up",
     "xpInLevel": "{into}/{per} in this level",
     "questOfDay": "Today’s quest",
+    "detailCloseLabel": "Close",
+    "detailEyebrow": "Details",
     "missionHeading": "Your mission — what to do",
     "pacePlannedTitle": "May involve scheduling or other people — the first step can still be quick.",
     "paceTodayTitle": "Designed to finish within the day.",

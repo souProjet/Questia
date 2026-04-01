@@ -83,7 +83,7 @@
         }
       ]
     ],
-      "experiments": {
+    "experiments": {
       "typedRoutes": true
     },
     "jsEngine": "hermes",

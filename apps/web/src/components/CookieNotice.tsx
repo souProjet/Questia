@@ -24,16 +24,16 @@ export function CookieNotice() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-[100] border-t border-slate-200/90 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-8px_32px_rgba(15,23,42,0.12)] backdrop-blur-md sm:px-6"
+      className="fixed bottom-0 left-0 right-0 z-[100] border-t border-[var(--border-ui)] bg-[var(--card)]/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-8px_32px_color-mix(in_srgb,var(--text)_10%,transparent)] backdrop-blur-md sm:px-6"
       role="dialog"
       aria-labelledby="cookie-notice-title"
       aria-live="polite"
     >
       <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-        <p id="cookie-notice-title" className="min-w-0 text-sm leading-relaxed text-slate-600">
+        <p id="cookie-notice-title" className="min-w-0 text-sm leading-relaxed text-[var(--muted)]">
           Ce site utilise des cookies pour le fonctionnement et, si tu l’acceptes, pour la mesure d’audience et la
           publicité.{' '}
-          <Link href="/legal/confidentialite#cookies" className="font-semibold text-orange-600 hover:underline">
+          <Link href="/legal/confidentialite#cookies" className="font-semibold text-[var(--orange)] hover:underline">
             En savoir plus
           </Link>
         </p>
@@ -44,7 +44,7 @@ export function CookieNotice() {
               writeMarketingConsent({ analytics: false, ads: false });
               setVisible(false);
             }}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            className="rounded-lg border border-[var(--border-ui)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[color:color-mix(in_srgb,var(--card)_88%,var(--surface))]"
           >
             Refuser
           </button>
@@ -54,7 +54,7 @@ export function CookieNotice() {
               writeMarketingConsent({ analytics: true, ads: true });
               setVisible(false);
             }}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800"
+            className="rounded-lg bg-[var(--orange)] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-105"
           >
             Accepter
           </button>

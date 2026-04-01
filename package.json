@@ -1,6 +1,7 @@
 {
   "name": "questia",
   "private": true,
+  "main": "./apps/mobile/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/souProjet/Questia.git"

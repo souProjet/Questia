@@ -583,6 +583,87 @@
     box-shadow: 0 8px 28px -8px color-mix(in srgb, var(--text) 14%, transparent);
   }
 
+  /**
+   * Modales & overlays (quête, boutique, raffinage) — même AD que les cartes aventure
+   * (cyan · or · orange), pas de slate générique.
+   */
+  /** À combiner avec `absolute inset-0` ou `fixed inset-0` selon le contexte. */
+  .quest-modal-backdrop {
+    background: linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--text) 42%, transparent) 0%,
+      color-mix(in srgb, var(--violet) 22%, #0f172a) 48%,
+      color-mix(in srgb, var(--orange) 18%, #0f172a) 100%
+    );
+    backdrop-filter: blur(11px);
+    -webkit-backdrop-filter: blur(11px);
+  }
+
+  .quest-modal-panel {
+    position: relative;
+    width: 100%;
+    max-width: 28rem;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 2px solid color-mix(in srgb, var(--orange) 36%, var(--border-ui-strong));
+    background: linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--surface) 52%, var(--card)) 0%,
+      var(--card) 50%,
+      color-mix(in srgb, var(--violet) 11%, var(--card)) 100%
+    );
+    box-shadow:
+      0 24px 56px -16px color-mix(in srgb, var(--text) 18%, transparent),
+      0 8px 0 color-mix(in srgb, var(--orange) 10%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
+    color: var(--text);
+  }
+
+  .quest-modal-panel-accent {
+    height: 4px;
+    width: 100%;
+    flex-shrink: 0;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--violet) 78%, transparent),
+      color-mix(in srgb, var(--gold) 72%, transparent),
+      color-mix(in srgb, var(--orange) 80%, transparent)
+    );
+  }
+
+  .quest-modal-panel-body {
+    padding: 1.5rem;
+  }
+
+  /** Panneau large (détail quête) : même langage visuel, bordure violet/orange */
+  .quest-modal-sheet {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 1.5rem 1.5rem 0 0;
+    border: 2px solid color-mix(in srgb, var(--violet) 28%, var(--border-ui-strong));
+    background: linear-gradient(
+      172deg,
+      color-mix(in srgb, var(--surface) 48%, var(--card)) 0%,
+      var(--card) 52%,
+      color-mix(in srgb, var(--orange) 8%, var(--card)) 100%
+    );
+    box-shadow:
+      0 -12px 48px color-mix(in srgb, var(--text) 16%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+    color: var(--text);
+  }
+  @media (min-width: 640px) {
+    .quest-modal-sheet {
+      border-radius: 1.5rem;
+      box-shadow:
+        0 28px 64px -20px color-mix(in srgb, var(--text) 22%, transparent),
+        0 10px 0 color-mix(in srgb, var(--orange) 9%, transparent),
+        inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
+    }
+  }
+
   .card {
     background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(245,251,255,.94));
     border: 1px solid rgba(19,33,45,.12);

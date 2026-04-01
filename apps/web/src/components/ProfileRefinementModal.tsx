@@ -106,14 +106,11 @@ export function ProfileRefinementModal({
       aria-modal="true"
       aria-labelledby={titleId}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-hidden />
+      <div className="quest-modal-backdrop absolute inset-0 cursor-default" aria-hidden />
       <div
-        className="relative z-10 w-full max-w-lg max-h-[min(88vh,640px)] flex flex-col rounded-[1.75rem] overflow-hidden shadow-[0_22px_48px_rgba(249,115,22,.14),0_4px_24px_rgba(15,23,42,.08)] border-2 border-orange-300/45 motion-safe:animate-fade-up-slow motion-reduce:animate-none"
-        style={{
-          background: 'linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,253,245,.96))',
-        }}
+        className="quest-modal-panel relative z-10 flex max-h-[min(88vh,640px)] w-full max-w-lg flex-col overflow-hidden motion-safe:animate-fade-up-slow motion-reduce:animate-none"
       >
-        <div className="h-1.5 shrink-0 bg-gradient-to-r from-cyan-500 via-amber-400 to-orange-500" />
+        <div className="quest-modal-panel-accent h-1.5" />
 
         <div className="flex flex-col flex-1 min-h-0 px-5 pt-5 pb-5 sm:px-7 sm:pt-6 sm:pb-6">
           <div className="flex items-start justify-between gap-3 mb-4">

@@ -930,7 +930,7 @@ export function QuestShareComposer({
           </button>
           <button
             type="button"
-            className="w-full rounded-xl py-3 text-sm font-bold text-slate-500 transition-colors hover:text-slate-800 hover:bg-slate-100/80"
+            className="w-full rounded-xl py-3 text-sm font-bold text-[var(--subtle)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text)]"
             onClick={() => onOpenChange(false)}
           >
             Fermer
@@ -947,8 +947,8 @@ export function QuestShareComposer({
       aria-modal
       aria-labelledby="share-card-title"
     >
-      {/* Barre gradient top — plus fine, type « highlight » */}
-      <div className="h-[3px] bg-gradient-to-r from-cyan-400 via-amber-400 to-orange-500 md:rounded-t-[1.85rem]" />
+      {/* Barre gradient — même langage que les autres modales quête */}
+      <div className="quest-modal-panel-accent h-[3px] shrink-0 md:rounded-t-[1.85rem]" />
 
       {/* Coque verre / papier — DA aventure */}
       <div className="relative border-x border-b border-white/60 md:border border-white/50 bg-white bg-gradient-to-b from-white via-white/98 to-cyan-50/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] md:rounded-b-[1.85rem] rounded-b-[1.85rem] md:shadow-[0_28px_80px_-20px_rgba(15,23,42,0.28),0_0_0_1px_rgba(255,255,255,0.6)_inset]">
@@ -975,15 +975,9 @@ export function QuestShareComposer({
       {/* Couche plein écran : base opaque + flou (évite trous / bords du radial seuls) */}
       <button
         type="button"
-        className={`absolute inset-0 z-0 h-full w-full cursor-pointer border-0 transition-opacity duration-300 ease-out motion-reduce:transition-none ${
+        className={`quest-modal-backdrop absolute inset-0 z-0 h-full w-full cursor-pointer border-0 transition-opacity duration-300 ease-out motion-reduce:transition-none ${
           backdropActive ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
-        style={{
-          background:
-            'linear-gradient(180deg, rgba(15,23,42,0.72) 0%, rgba(15,23,42,0.78) 45%, rgba(15,23,42,0.82) 100%)',
-          backdropFilter: 'saturate(1.1) blur(12px)',
-          WebkitBackdropFilter: 'saturate(1.1) blur(12px)',
-        }}
         aria-label="Fermer"
         onClick={() => onOpenChange(false)}
       />

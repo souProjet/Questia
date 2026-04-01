@@ -234,7 +234,7 @@ export function Navbar() {
         <>
           <button
             type="button"
-            className={`fixed inset-0 z-[100] bg-gradient-to-br from-slate-950/50 via-orange-950/25 to-cyan-950/30 backdrop-blur-[6px] md:hidden transition-opacity duration-300 ease-out motion-reduce:duration-100 ${
+            className={`quest-modal-backdrop fixed inset-0 z-[100] cursor-pointer border-0 md:hidden transition-opacity duration-300 ease-out motion-reduce:duration-100 ${
               drawerReady ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             aria-label={t('closeMenu')}

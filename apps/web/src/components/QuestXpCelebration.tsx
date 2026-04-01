@@ -139,7 +139,7 @@ export function QuestXpCelebration({
     <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/55 backdrop-blur-md motion-safe:animate-fadeIn motion-reduce:animate-none"
+        className="quest-modal-backdrop absolute inset-0 cursor-pointer motion-safe:animate-fadeIn motion-reduce:animate-none"
         aria-label="Fermer"
         onClick={() => onOpenChange(false)}
       />
