@@ -73,9 +73,24 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
   const messages = await getMessages();
   const clerkLocale = locale === 'fr' ? frFR : enUS;
+  /** Aligné sur next-intl (`as-needed`) : les `NEXT_PUBLIC_CLERK_*_URL` du .env pointent vers `/sign-in` sans préfixe (FR). */
+  const clerkPaths =
+    locale === 'en'
+      ? {
+          signInUrl: '/en/sign-in',
+          signUpUrl: '/en/sign-up',
+          signInForceRedirectUrl: '/en/app',
+          signUpForceRedirectUrl: '/en/app',
+        }
+      : {
+          signInUrl: '/sign-in',
+          signUpUrl: '/sign-up',
+          signInForceRedirectUrl: '/app',
+          signUpForceRedirectUrl: '/app',
+        };
 
   return (
-    <ClerkProvider localization={clerkLocale}>
+    <ClerkProvider localization={clerkLocale} {...clerkPaths}>
       <NextIntlClientProvider messages={messages}>
         <HtmlLang />
         <SkipLink />
