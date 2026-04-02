@@ -177,6 +177,23 @@ export function questSliderEmbeddedGradient(themeId: string | null | undefined, 
   return [colorWithAlpha(p.gold, 0.2), p.card, colorWithAlpha(p.cyan, 0.14)];
 }
 
+/**
+ * Bloc « Ajouter une photo » (écran carte à partager) — sur minuit, dégradé discret
+ * (cyan / surface) pour limiter le banding Android et l’or trop fort sur fond sombre.
+ */
+export function shareScreenPhotoAddGradient(
+  themeId: string | null | undefined,
+  p: ThemePalette,
+): [string, string, string] {
+  if (!themeId || themeId === 'default') {
+    return ['#fff7df', '#fff3c6', '#d7f5f9'];
+  }
+  if (themeId === 'midnight') {
+    return [colorWithAlpha(p.cyan, 0.12), p.surface, colorWithAlpha(p.card, 1)];
+  }
+  return questSliderEmbeddedGradient(themeId, p);
+}
+
 export function missionBlockGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
   if (!themeId || themeId === 'default') {
     return ['#ffffff', 'rgba(224,242,254,0.55)', '#ffffff'];
@@ -197,4 +214,132 @@ export function questActionsFooterGradient(themeId: string | null | undefined, p
     return ['rgba(255,255,255,0.88)', 'rgba(255,251,235,0.55)', 'rgba(236,254,255,0.45)'];
   }
   return [colorWithAlpha(p.surface, 0.98), colorWithAlpha(p.card, 0.95), colorWithAlpha(p.cyan, 0.12)];
+}
+
+/**
+ * Dégradé de surface pour la carte quête (accueil) — reste lisible sur tous les thèmes.
+ * 4 stops pour un halo doux cyan / chaud sans masquer le texte.
+ */
+export function questCardFaceGradient(
+  themeId: string | null | undefined,
+  p: ThemePalette,
+): [string, string, string, string] {
+  if (!themeId || themeId === 'default') {
+    return ['#ffffff', 'rgba(255, 251, 235, 0.97)', 'rgba(224, 242, 254, 0.42)', '#ffffff'];
+  }
+  if (themeId === 'midnight') {
+    return [
+      p.card,
+      colorWithAlpha(p.cyan, 0.14),
+      colorWithAlpha(p.orange, 0.1),
+      p.surface,
+    ];
+  }
+  if (themeId === 'aurora') {
+    return [
+      p.card,
+      colorWithAlpha(p.cyan, 0.1),
+      colorWithAlpha(p.gold, 0.08),
+      p.surface,
+    ];
+  }
+  if (themeId === 'parchment') {
+    return [
+      p.card,
+      colorWithAlpha(p.cyan, 0.09),
+      colorWithAlpha(p.orange, 0.07),
+      p.surface,
+    ];
+  }
+  return [p.card, colorWithAlpha(p.cyan, 0.1), colorWithAlpha(p.orange, 0.06), p.surface];
+}
+
+/** Fond plein écran derrière la carte (accueil) — 5 stops, lisible sur chaque thème. */
+export function homeScreenBackdropGradient(
+  themeId: string | null | undefined,
+  p: ThemePalette,
+): [string, string, string, string, string] {
+  if (!themeId || themeId === 'default') {
+    return [
+      '#cff0ff',
+      '#e3f6ff',
+      colorWithAlpha(p.cyan, 0.16),
+      colorWithAlpha(p.orange, 0.08),
+      p.bg,
+    ];
+  }
+  if (themeId === 'midnight') {
+    return [
+      '#060a12',
+      colorWithAlpha(p.cyan, 0.12),
+      p.bg,
+      colorWithAlpha(p.orange, 0.07),
+      '#04060c',
+    ];
+  }
+  if (themeId === 'aurora') {
+    return [
+      colorWithAlpha(p.cyan, 0.14),
+      p.surface,
+      colorWithAlpha(p.gold, 0.1),
+      p.bg,
+      colorWithAlpha(p.cyan, 0.08),
+    ];
+  }
+  if (themeId === 'parchment') {
+    return [
+      '#faf6ee',
+      p.bg,
+      colorWithAlpha(p.cyan, 0.1),
+      colorWithAlpha(p.orange, 0.07),
+      '#ebe4d6',
+    ];
+  }
+  return [
+    p.surface,
+    colorWithAlpha(p.cyan, 0.12),
+    p.bg,
+    colorWithAlpha(p.orange, 0.06),
+    p.surface,
+  ];
+}
+
+/** Halos circulaires derrière la carte (accueil), en teintes du thème. */
+export function homeScreenBackdropOrbTints(
+  themeId: string | null | undefined,
+  p: ThemePalette,
+): { tr: string; bl: string; tl: string } {
+  if (!themeId || themeId === 'default') {
+    return {
+      tr: colorWithAlpha(p.orange, 0.2),
+      bl: colorWithAlpha(p.cyan, 0.22),
+      tl: colorWithAlpha(p.cyan, 0.12),
+    };
+  }
+  if (themeId === 'midnight') {
+    return {
+      tr: colorWithAlpha(p.orange, 0.16),
+      bl: colorWithAlpha(p.cyan, 0.24),
+      tl: colorWithAlpha(p.cyan, 0.1),
+    };
+  }
+  if (themeId === 'aurora') {
+    return {
+      tr: colorWithAlpha(p.orange, 0.16),
+      bl: colorWithAlpha(p.cyan, 0.2),
+      tl: colorWithAlpha(p.cyan, 0.14),
+    };
+  }
+  if (themeId === 'parchment') {
+    return {
+      tr: colorWithAlpha(p.orange, 0.14),
+      bl: colorWithAlpha(p.cyan, 0.16),
+      tl: colorWithAlpha(p.gold, 0.12),
+    };
+  }
+  return {
+    tr: colorWithAlpha(p.orange, 0.16),
+    bl: colorWithAlpha(p.cyan, 0.18),
+    tl: colorWithAlpha(p.cyan, 0.12),
+  };
 }

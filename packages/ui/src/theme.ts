@@ -37,7 +37,11 @@ export {
   heroBandGradient,
   shopBalanceGradient,
   questSliderEmbeddedGradient,
+  shareScreenPhotoAddGradient,
   missionBlockGradient,
   questDayStripGradient,
   questActionsFooterGradient,
+  questCardFaceGradient,
+  homeScreenBackdropGradient,
+  homeScreenBackdropOrbTints,
 } from './themePalettes';

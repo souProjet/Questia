@@ -270,7 +270,11 @@ export async function GET(request: NextRequest) {
   const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs);
   const recentIds = recentLogs.slice(0, 7).map((r) => r.archetypeId);
   /** Après relance/report, les archétypes déjà proposés aujourd’hui ne sont plus dans l’historique BDD — on les cumule ici. */
-  const extraExclude = parseRerollExcludedArchetypeIds(profile);
+  const lastQuestDateStr =
+    profile.lastQuestDate == null ? null : String(profile.lastQuestDate).slice(0, 10);
+  /** Hors « même jour calendaire », ignorer la liste (sinon exclusions d’hier fausseraient le tirage du matin). */
+  const extraExclude =
+    lastQuestDateStr === today ? parseRerollExcludedArchetypeIds(profile) : [];
   const recentIdsForSelect = Array.from(new Set([...recentIds, ...extraExclude]));
   const categoryRerollPenalty = buildCategoryPenaltyFromExcludedIds(extraExclude);
 
@@ -452,7 +456,8 @@ export async function GET(request: NextRequest) {
         flagNextQuestAfterReroll: false,
         flagNextQuestInstantOnly: false,
         rerollExcludeArchetypeId: null,
-        rerollExcludeArchetypeIds: [],
+        /** Tous les archétypes déjà tirés aujourd’hui (relances) — évite de retomber en boucle sur les mêmes quêtes. */
+        rerollExcludeArchetypeIds: Array.from(new Set([...extraExclude, archetype.id])),
       },
     }),
   ]);

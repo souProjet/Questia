@@ -19,7 +19,13 @@ import {
   xpBarSegmentsFromTotals,
   xpBreakdownRowsFr,
 } from '@questia/shared';
-import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import {
+  colorWithAlpha,
+  questSliderEmbeddedGradient,
+  themePanelMuted,
+  themePanelText,
+  type ThemePalette,
+} from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
 import { useAppLocale } from '../contexts/AppLocaleContext';
 import { getHomeDashboardStrings } from '../lib/homeDashboardStrings';
@@ -55,10 +61,14 @@ function rnd(i: number, salt: number) {
 }
 
 export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
-  const { palette } = useAppTheme();
+  const { palette, themeId } = useAppTheme();
   const { locale } = useAppLocale();
   const rewardUi = useMemo(() => getHomeDashboardStrings(locale), [locale]);
-  const styles = useMemo(() => buildRewardStyles(palette), [palette]);
+  const rewardCardGrad = useMemo(
+    () => questSliderEmbeddedGradient(themeId, palette),
+    [themeId, palette],
+  );
+  const styles = useMemo(() => buildRewardStyles(palette, themeId), [palette, themeId]);
 
   const scale = useRef(new Animated.Value(0.82)).current;
   const xpPop = useRef(new Animated.Value(0)).current;
@@ -225,7 +235,7 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor: 'rgba(251, 191, 36, 0.38)',
+              backgroundColor: colorWithAlpha(palette.gold, 0.36),
               opacity: flash,
             },
           ]}
@@ -279,7 +289,7 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
           style={[styles.cardWrap, { maxHeight: CARD_MAX_H, transform: [{ scale }, { translateX: shakeX }] }]}
         >
           <LinearGradient
-            colors={[palette.cardCream, palette.surface, '#fffbeb']}
+            colors={rewardCardGrad}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.card}
@@ -399,7 +409,9 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
   );
 }
 
-function buildRewardStyles(p: ThemePalette) {
+function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) {
+  const panelText = themePanelText(themeId, p);
+  const panelMuted = themePanelMuted(themeId, p);
   return StyleSheet.create({
     backdrop: {
       flex: 1,
@@ -422,8 +434,8 @@ function buildRewardStyles(p: ThemePalette) {
       position: 'absolute',
       top: '30%',
       borderRadius: 2,
-      shadowColor: '#fff',
-      shadowOpacity: 0.4,
+      shadowColor: p.card,
+      shadowOpacity: 0.45,
       shadowRadius: 1,
     },
     cardWrap: {
@@ -462,7 +474,10 @@ function buildRewardStyles(p: ThemePalette) {
       borderColor: colorWithAlpha(p.gold, 0.55),
       paddingVertical: 8,
       paddingHorizontal: 12,
-      backgroundColor: colorWithAlpha(p.cardCream, 0.95),
+      backgroundColor:
+        themeId && themeId !== 'default'
+          ? colorWithAlpha(p.surface, 0.96)
+          : colorWithAlpha(p.cardCream, 0.95),
       alignItems: 'center',
     },
     levelKicker: {
@@ -481,26 +496,26 @@ function buildRewardStyles(p: ThemePalette) {
       marginTop: 4,
       fontSize: 12,
       fontWeight: '800',
-      color: p.onCream,
+      color: panelText,
     },
     levelSubMuted: {
       marginTop: 4,
       fontSize: 12,
       fontWeight: '600',
-      color: p.onCreamMuted,
+      color: panelMuted,
     },
     kicker: {
       fontSize: 12,
       fontWeight: '800',
       letterSpacing: 0.4,
-      color: p.linkOnBg,
+      color: panelText,
       textAlign: 'center',
       marginBottom: 6,
     },
     xpBig: {
       fontSize: 38,
       fontWeight: '900',
-      color: p.onCream,
+      color: panelText,
       textAlign: 'center',
     },
     totalLine: {
@@ -508,7 +523,7 @@ function buildRewardStyles(p: ThemePalette) {
       marginTop: 4,
       marginBottom: 10,
       fontSize: 13,
-      color: p.onCreamMuted,
+      color: panelMuted,
       fontWeight: '600',
     },
     totalBold: { color: p.linkOnBg, fontWeight: '900' },
@@ -527,8 +542,8 @@ function buildRewardStyles(p: ThemePalette) {
       alignItems: 'baseline',
       gap: 8,
     },
-    progressLevelLabel: { fontSize: 12, fontWeight: '900', color: '#155e75' },
-    progressMeta: { fontSize: 11, fontWeight: '700', color: p.onCreamMuted },
+    progressLevelLabel: { fontSize: 12, fontWeight: '900', color: p.linkOnBg },
+    progressMeta: { fontSize: 11, fontWeight: '700', color: panelMuted },
     progressTrack: {
       marginTop: 8,
       height: 8,
@@ -541,17 +556,17 @@ function buildRewardStyles(p: ThemePalette) {
     progressFill: {
       height: '100%',
       borderRadius: 999,
-      backgroundColor: '#22d3ee',
+      backgroundColor: p.cyan,
     },
     progressHint: {
       marginTop: 8,
       fontSize: 10,
       fontWeight: '600',
       lineHeight: 14,
-      color: p.onCreamMuted,
+      color: panelMuted,
     },
     rulesBox: {
-      backgroundColor: p.cardCream,
+      backgroundColor: themeId && themeId !== 'default' ? p.card : p.cardCream,
       borderRadius: 14,
       padding: 10,
       borderWidth: 1,
@@ -576,16 +591,16 @@ function buildRewardStyles(p: ThemePalette) {
       borderRadius: 10,
       borderWidth: 1,
       borderColor: colorWithAlpha(p.cyan, 0.28),
-      backgroundColor: 'rgba(255,255,255,0.92)',
+      backgroundColor: colorWithAlpha(p.card, themeId && themeId !== 'default' ? 0.88 : 0.94),
     },
     ruleCardLabel: {
       fontSize: 11,
       fontWeight: '800',
-      color: '#155e75',
+      color: p.linkOnBg,
       flex: 1,
       minWidth: 0,
     },
-    ruleCardValue: { fontSize: 12, fontWeight: '900', color: p.onCream },
+    ruleCardValue: { fontSize: 12, fontWeight: '900', color: panelText },
     badgeBlock: { marginBottom: 4, gap: 8 },
     badgeKicker: {
       fontSize: 10,
@@ -596,8 +611,8 @@ function buildRewardStyles(p: ThemePalette) {
     },
     badgeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
     badgeEmoji: { fontSize: 22 },
-    badgeTitle: { fontSize: 13, fontWeight: '900', color: p.onCream },
-    badgeCrit: { fontSize: 11, color: p.onCreamMuted, marginTop: 2, fontWeight: '600' },
+    badgeTitle: { fontSize: 13, fontWeight: '900', color: panelText },
+    badgeCrit: { fontSize: 11, color: panelMuted, marginTop: 2, fontWeight: '600' },
     cta: {
       borderRadius: 14,
       overflow: 'hidden',

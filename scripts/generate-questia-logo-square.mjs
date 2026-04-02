@@ -84,8 +84,28 @@ async function main() {
     .png({ compressionLevel: 9 })
     .toBuffer();
 
-  const size1024 = await sharp(square)
-    .resize(1024, 1024, { fit: 'fill', kernel: sharp.kernel.lanczos3 })
+  /** Marge safe zone : le logo ne remplit pas tout le 1024 (masques OS / adaptive Android). */
+  const CANVAS = 1024;
+  const SAFE = 0.76;
+  const inner = Math.round(CANVAS * SAFE);
+  const scaledSquare = await sharp(square)
+    .resize(inner, inner, { fit: 'contain', kernel: sharp.kernel.lanczos3 })
+    .png()
+    .toBuffer();
+  const sm = await sharp(scaledSquare).metadata();
+  const sw = sm.width ?? inner;
+  const sh = sm.height ?? inner;
+  const ox = Math.floor((CANVAS - sw) / 2);
+  const oy = Math.floor((CANVAS - sh) / 2);
+  const size1024 = await sharp({
+    create: {
+      width: CANVAS,
+      height: CANVAS,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([{ input: scaledSquare, left: ox, top: oy }])
     .png()
     .toBuffer();
 
@@ -101,7 +121,7 @@ async function main() {
   await sharp(size1024).toFile(outIcon);
   await sharp(size1024).toFile(outMobile);
 
-  console.log('OK — carré', side, 'px → export 1024×1024, fond transparent.');
+  console.log('OK — carré', side, 'px → export 1024×1024 (logo ~', SAFE * 100, '% max), fond transparent.');
   console.log(outBrand);
   console.log(outIcon);
   console.log(outMobile);

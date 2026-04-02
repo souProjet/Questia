@@ -36,6 +36,7 @@
     "clean": "turbo clean",
     "generate:logo": "node scripts/generate-questia-logo-square.mjs",
     "square-icon:512": "node scripts/square-icon-512.mjs",
+    "icon:safe-zone": "node scripts/pad-app-icon-safe-zone.mjs",
     "clerk:redirect-urls": "node scripts/clerk-register-all-redirect-urls.mjs",
     "clerk:add-redirect-url": "node scripts/clerk-add-redirect-url.mjs"
   },

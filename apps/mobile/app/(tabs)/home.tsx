@@ -25,6 +25,8 @@ import {
 } from '@questia/shared';
 import {
   colorWithAlpha,
+  homeScreenBackdropGradient,
+  homeScreenBackdropOrbTints,
   type ThemePalette,
 } from '@questia/ui';
 import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
@@ -95,17 +97,6 @@ interface DailyQuest {
 }
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
-
-/** Assombrit un #RRGGBB en le rapprochant du noir (0–1). */
-function mixHexTowardsBlack(hex: string, t: number): string {
-  const raw = hex.replace('#', '');
-  if (raw.length !== 6) return hex;
-  const r = Math.round(parseInt(raw.slice(0, 2), 16) * (1 - t));
-  const g = Math.round(parseInt(raw.slice(2, 4), 16) * (1 - t));
-  const b = Math.round(parseInt(raw.slice(4, 6), 16) * (1 - t));
-  const h = (n: number) => n.toString(16).padStart(2, '0');
-  return `#${h(r)}${h(g)}${h(b)}`;
-}
 
 async function apiFetch(
   url: string,
@@ -640,58 +631,29 @@ export default function DashboardScreen() {
     reportHint: homeUi.reportHint,
   }), [homeUi]);
 
-  /** Fond en 4 stops : transitions plus douces, moins « boueuses », léger halo cyan au centre. */
-  const homeBackdropGradient = useMemo(() => {
-    const bg = palette.bg;
-    return [
-      mixHexTowardsBlack(bg, 0.14),
-      mixHexTowardsBlack(bg, 0.04),
-      colorWithAlpha(palette.cyan, 0.045),
-      mixHexTowardsBlack(bg, 0.2),
-    ] as const;
-  }, [palette.bg, palette.cyan]);
-
-  const homeBackdropProps = {
-    colors: [...homeBackdropGradient] as [string, string, string, string],
-    locations: [0, 0.28, 0.52, 1] as [number, number, number, number],
-    start: { x: 0.15, y: 0 },
-    end: { x: 0.85, y: 1 },
-    style: styles.homeGradient,
-  } as const;
-
   if (loading && !quest) {
     return (
-      <GestureHandlerRootView style={[styles.rootShell, { backgroundColor: homeBackdropGradient[3] }]}>
-        <LinearGradient {...homeBackdropProps}>
-          <SafeAreaView style={styles.safe}>
-            <QuestHomeLoading compact={compact} />
-          </SafeAreaView>
-        </LinearGradient>
-      </GestureHandlerRootView>
+      <HomeBackdropShell palette={palette} themeId={themeId} styles={styles}>
+        <QuestHomeLoading compact={compact} />
+      </HomeBackdropShell>
     );
   }
 
   if (error && !quest) {
     return (
-      <GestureHandlerRootView style={[styles.rootShell, { backgroundColor: homeBackdropGradient[3] }]}>
-        <LinearGradient {...homeBackdropProps}>
-          <SafeAreaView style={styles.safe}>
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
-              <Pressable style={styles.retryBtn} onPress={() => void loadQuest()}>
-                <Text style={styles.retryText}>R\u00e9essayer</Text>
-              </Pressable>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-      </GestureHandlerRootView>
+      <HomeBackdropShell palette={palette} themeId={themeId} styles={styles}>
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable style={styles.retryBtn} onPress={() => void loadQuest()}>
+            <Text style={styles.retryText}>R\u00e9essayer</Text>
+          </Pressable>
+        </View>
+      </HomeBackdropShell>
     );
   }
 
   return (
-    <GestureHandlerRootView style={[styles.rootShell, { backgroundColor: homeBackdropGradient[3] }]}>
-      <LinearGradient {...homeBackdropProps}>
-      <SafeAreaView style={styles.safe}>
+    <HomeBackdropShell palette={palette} themeId={themeId} styles={styles}>
         {/* Flash d\u2019acceptation */}
         <Animated.View
           pointerEvents="none"
@@ -757,6 +719,7 @@ export default function DashboardScreen() {
               quest={quest}
               locale={appLocale}
               palette={palette}
+              themeId={themeId}
               canReroll={canRerollQuest}
               onAccept={handleAccept}
               onReroll={confirmReroll}
@@ -888,9 +851,7 @@ export default function DashboardScreen() {
         </Modal>
 
         <QuestRewardOverlay visible={showReward} payload={reward} onContinue={finishRewardAndShare} />
-      </SafeAreaView>
-      </LinearGradient>
-    </GestureHandlerRootView>
+    </HomeBackdropShell>
   );
 }
 
@@ -911,6 +872,30 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
     /** Remplit l’écran ; le SafeAreaView est à l’intérieur pour éviter les bandes / clipping. */
     homeGradient: { flex: 1 },
     safe: { flex: 1, backgroundColor: 'transparent' },
+    homeBackdropBlob: {
+      position: 'absolute',
+    },
+    homeBackdropBlobTR: {
+      top: -100,
+      right: -130,
+      width: 400,
+      height: 400,
+      borderRadius: 200,
+    },
+    homeBackdropBlobBL: {
+      bottom: -80,
+      left: -150,
+      width: 440,
+      height: 440,
+      borderRadius: 220,
+    },
+    homeBackdropBlobTL: {
+      top: '12%',
+      left: -100,
+      width: 260,
+      height: 260,
+      borderRadius: 130,
+    },
     minimalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -1049,6 +1034,43 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
     },
     modalBtnAbandonText: { fontWeight: '900', color: p.text },
   });
+}
+
+type DashboardStyles = ReturnType<typeof buildDashboardStyles>;
+
+/** Dégradé + halos derrière la carte (pas sur la carte elle-même). */
+function HomeBackdropShell({
+  palette,
+  themeId,
+  styles,
+  children,
+}: {
+  palette: ThemePalette;
+  themeId: string;
+  styles: DashboardStyles;
+  children: React.ReactNode;
+}) {
+  const gradientColors = useMemo(() => homeScreenBackdropGradient(themeId, palette), [themeId, palette]);
+  const orbTints = useMemo(() => homeScreenBackdropOrbTints(themeId, palette), [themeId, palette]);
+  const bottom = gradientColors[4];
+  return (
+    <GestureHandlerRootView style={[styles.rootShell, { backgroundColor: bottom }]}>
+      <LinearGradient
+        colors={gradientColors}
+        locations={[0, 0.22, 0.45, 0.72, 1]}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.92, y: 1 }}
+        style={styles.homeGradient}
+      >
+        <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+          <View style={[styles.homeBackdropBlob, styles.homeBackdropBlobTR, { backgroundColor: orbTints.tr }]} />
+          <View style={[styles.homeBackdropBlob, styles.homeBackdropBlobBL, { backgroundColor: orbTints.bl }]} />
+          <View style={[styles.homeBackdropBlob, styles.homeBackdropBlobTL, { backgroundColor: orbTints.tl }]} />
+        </View>
+        <SafeAreaView style={[styles.safe, { zIndex: 1 }]}>{children}</SafeAreaView>
+      </LinearGradient>
+    </GestureHandlerRootView>
+  );
 }
 
 function buildSafetySheetStyles(p: ThemePalette) {

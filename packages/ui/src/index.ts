@@ -8,9 +8,13 @@ export {
   heroBandGradient,
   shopBalanceGradient,
   questSliderEmbeddedGradient,
+  shareScreenPhotoAddGradient,
   missionBlockGradient,
   questDayStripGradient,
   questActionsFooterGradient,
+  questCardFaceGradient,
+  homeScreenBackdropGradient,
+  homeScreenBackdropOrbTints,
   type ThemePalette,
 } from './theme';
 export { OnboardingScreen } from './screens/OnboardingScreen';

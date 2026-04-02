@@ -1,5 +1,13 @@
-import React, { useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions, ActivityIndicator } from 'react-native';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  useWindowDimensions,
+  ActivityIndicator,
+  ScrollView,
+  Pressable as RNPressable,
+} from 'react-native';
 import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -10,8 +18,9 @@ import Animated, {
   Easing,
   Extrapolation,
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { questDisplayEmoji, questFamilyLabel, type AppLocale } from '@questia/shared';
-import type { ThemePalette } from '@questia/ui';
+import { colorWithAlpha, questCardFaceGradient, type ThemePalette } from '@questia/ui';
 import { hapticLight, hapticSuccess, hapticWarning } from '../lib/haptics';
 
 const SWIPE_THRESHOLD = 120;
@@ -68,6 +77,8 @@ interface Props {
   /** Relance en cours : voile aligné sur la carte (même cadre que le swipe). */
   rerolling?: boolean;
   rerollLoadingLabel?: string;
+  /** Thème actif (dégradé + formes décoratives). */
+  themeId?: string | null;
 }
 
 export function QuestSwipeCard({
@@ -83,8 +94,11 @@ export function QuestSwipeCard({
   strings: s,
   rerolling = false,
   rerollLoadingLabel,
+  themeId = null,
 }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const cardFaceColors = useMemo(() => questCardFaceGradient(themeId, p), [themeId, p]);
+  const isDarkCard = themeId === 'midnight';
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const cardScale = useSharedValue(1);
@@ -95,6 +109,8 @@ export function QuestSwipeCard({
   const axisLock = useSharedValue(0);
   /** 0 = pending (swipe accepter / reroll / détails), 1 = accepted (swipe valider uniquement), 2 = autre */
   const panMode = useSharedValue(0);
+  /** 1 = swipe gauche « relancer » autorisé — lu dans les worklets (pas la prop React seule). */
+  const canRerollSV = useSharedValue(canReroll ? 1 : 0);
 
   const isPending = quest.status === 'pending';
   const isAccepted = quest.status === 'accepted';
@@ -126,6 +142,10 @@ export function QuestSwipeCard({
     else if (isAccepted) panMode.value = 1;
     else panMode.value = 2;
   }, [isPending, isAccepted]);
+
+  useEffect(() => {
+    canRerollSV.value = canReroll ? 1 : 0;
+  }, [canReroll, canRerollSV]);
 
   useEffect(() => {
     layoutWidth.value = screenWidth;
@@ -173,7 +193,10 @@ export function QuestSwipeCard({
       }
 
       if (axisLock.value === 1) {
-        translateX.value = tx;
+        const mode0 = panMode.value === 0;
+        const txClamped =
+          mode0 && canRerollSV.value === 0 ? Math.max(0, tx) : tx;
+        translateX.value = txClamped;
         translateY.value = 0;
       } else {
         translateX.value = 0;
@@ -198,7 +221,7 @@ export function QuestSwipeCard({
       if (lock === 1) {
         if (tx > SWIPE_THRESHOLD) {
           runOnJS(triggerAccept)();
-        } else if (tx < -SWIPE_THRESHOLD && canReroll) {
+        } else if (tx < -SWIPE_THRESHOLD && canRerollSV.value === 1) {
           runOnJS(triggerReroll)();
         }
         translateX.value = withTiming(0, snapToCenter);
@@ -258,7 +281,12 @@ export function QuestSwipeCard({
   }));
 
   const rerollOverlayStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [0, -SWIPE_THRESHOLD], [0, canReroll ? 1 : 0.3], Extrapolation.CLAMP),
+    opacity: interpolate(
+      translateX.value,
+      [0, -SWIPE_THRESHOLD],
+      [0, canRerollSV.value ? 1 : 0],
+      Extrapolation.CLAMP,
+    ),
   }));
 
   const detailHintStyle = useAnimatedStyle(() => ({
@@ -282,6 +310,38 @@ export function QuestSwipeCard({
     );
   }
 
+  const questBody = (
+    <View style={styles.cardInner}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.emoji}>{questDisplayEmoji(quest.emoji)}</Text>
+        <Text style={[styles.title, { color: p.text }]}>{quest.title}</Text>
+        {metaLineParts.length > 0 ? (
+          <Text style={[styles.metaLine, { color: p.muted }]} numberOfLines={2}>
+            {metaLineParts.join(' · ')}
+          </Text>
+        ) : null}
+      </View>
+
+      {hookText ? (
+        <Text style={[styles.hookLine, { color: p.text, borderLeftColor: `${p.orange}99` }]}>{hookText}</Text>
+      ) : null}
+
+      <View style={[styles.missionBlock, { borderTopColor: `${p.muted}22` }]}>
+        <Text style={[styles.missionEyebrow, { color: p.muted }]}>{s.missionEyebrow}</Text>
+        <ScrollView
+          scrollEnabled={false}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={styles.missionTextWrap}
+        >
+          <Text style={[styles.missionFull, { color: p.text }]}>{quest.mission}</Text>
+        </ScrollView>
+        <Text style={[styles.duration, { color: p.muted }]}>{quest.duration}</Text>
+      </View>
+    </View>
+  );
+
   return (
     <View style={[styles.cardContainer, { height: cardHeight }]}>
       <Animated.View
@@ -299,32 +359,55 @@ export function QuestSwipeCard({
           cardAnimStyle,
         ]}
       >
-        {/* Boutons fallback sous le contenu puis overlays au-dessus (même zone que le swipe). */}
+        <LinearGradient
+          pointerEvents="none"
+          colors={cardFaceColors}
+          locations={[0, 0.35, 0.68, 1]}
+          start={{ x: 0.08, y: 0 }}
+          end={{ x: 0.94, y: 1 }}
+          style={styles.cardFaceGradient}
+        />
+        <View pointerEvents="none" style={styles.cardDecorLayer}>
+          <View
+            style={[
+              styles.cardBlob,
+              styles.cardBlobTR,
+              { backgroundColor: colorWithAlpha(p.orange, isDarkCard ? 0.052 : 0.034) },
+            ]}
+          />
+          <View
+            style={[
+              styles.cardBlob,
+              styles.cardBlobBL,
+              { backgroundColor: colorWithAlpha(p.cyan, isDarkCard ? 0.045 : 0.028) },
+            ]}
+          />
+          <View
+            style={[
+              styles.cardBlob,
+              styles.cardBlobMid,
+              { backgroundColor: colorWithAlpha(p.gold, isDarkCard ? 0.035 : 0.022) },
+            ]}
+          />
+        </View>
+
+        <View style={styles.cardContentLayer}>
+        {/* Quête terminée : pas de GestureDetector (évite que le Tap RNGH bloque le bouton « Partager ta carte »). */}
+        {isCompleted ? (
+          <View style={styles.gestureArea} collapsable={false}>
+            <RNPressable
+              onPress={triggerDetails}
+              style={styles.gestureAreaTap}
+              accessibilityRole="button"
+              accessibilityLabel={s.tapDetails}
+            >
+              {questBody}
+            </RNPressable>
+          </View>
+        ) : (
         <GestureDetector gesture={composed}>
           <View style={styles.gestureArea} collapsable={false}>
-            <View style={styles.cardInner}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.emoji}>{questDisplayEmoji(quest.emoji)}</Text>
-                <Text style={[styles.title, { color: p.text }]}>{quest.title}</Text>
-                {metaLineParts.length > 0 ? (
-                  <Text style={[styles.metaLine, { color: p.muted }]} numberOfLines={2}>
-                    {metaLineParts.join(' · ')}
-                  </Text>
-                ) : null}
-              </View>
-
-              {hookText ? (
-                <Text style={[styles.hookLine, { color: p.text, borderLeftColor: `${p.orange}99` }]}>{hookText}</Text>
-              ) : null}
-
-              <View style={[styles.missionBlock, { borderTopColor: `${p.muted}22` }]}>
-                <Text style={[styles.missionEyebrow, { color: p.muted }]}>{s.missionEyebrow}</Text>
-                <View style={styles.missionTextWrap}>
-                  <Text style={[styles.missionFull, { color: p.text }]}>{quest.mission}</Text>
-                </View>
-                <Text style={[styles.duration, { color: p.muted }]}>{quest.duration}</Text>
-              </View>
-            </View>
+            {questBody}
 
             {isPending && (
               <View style={styles.fallbackActions}>
@@ -354,8 +437,26 @@ export function QuestSwipeCard({
                 <Animated.View pointerEvents="none" style={[styles.overlayAccept, acceptOverlayStyle]}>
                   <Text style={styles.overlayAcceptText}>{s.swipeAccept}</Text>
                 </Animated.View>
-                <Animated.View pointerEvents="none" style={[styles.overlayReroll, rerollOverlayStyle]}>
-                  <Text style={styles.overlayRerollText}>{s.swipeChange}</Text>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.overlayReroll,
+                    { backgroundColor: colorWithAlpha(p.orange, isDarkCard ? 0.14 : 0.1) },
+                    rerollOverlayStyle,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.overlayRerollPill,
+                      {
+                        borderColor: colorWithAlpha(p.orange, 0.42),
+                        backgroundColor: isDarkCard ? colorWithAlpha(p.surface, 0.94) : 'rgba(255,255,255,0.94)',
+                        shadowColor: p.orange,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.overlayRerollText, { color: p.orange }]}>{s.swipeChange}</Text>
+                  </View>
                 </Animated.View>
                 <Animated.View pointerEvents="none" style={[styles.overlayDetail, detailHintStyle]}>
                   <Text style={styles.overlayDetailText}>{s.tapDetails}</Text>
@@ -370,6 +471,7 @@ export function QuestSwipeCard({
             )}
           </View>
         </GestureDetector>
+        )}
 
         {isAccepted && (
           <Pressable
@@ -384,12 +486,14 @@ export function QuestSwipeCard({
           <View style={styles.completedFooter}>
             <Text style={[styles.completedTitle, { color: p.green }]}>{s.completedTitle}</Text>
             <Text style={[styles.completedSub, { color: p.muted }]}>{s.completedSub}</Text>
-            <Pressable
+            <RNPressable
               style={[styles.shareBtn, { borderColor: `${p.cyan}55` }]}
               onPress={onShare}
+              accessibilityRole="button"
+              accessibilityLabel={s.shareCta}
             >
               <Text style={[styles.shareBtnText, { color: p.linkOnBg }]}>{s.shareCta}</Text>
-            </Pressable>
+            </RNPressable>
           </View>
         )}
 
@@ -399,6 +503,7 @@ export function QuestSwipeCard({
             <Text style={styles.rerollLoadingText}>{rerollLoadingLabel ?? '…'}</Text>
           </View>
         ) : null}
+        </View>
       </Animated.View>
     </View>
   );
@@ -416,16 +521,58 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 2,
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.22,
-    shadowRadius: 32,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.26,
+    shadowRadius: 36,
+    elevation: 14,
     flex: 1,
+  },
+  cardFaceGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cardDecorLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cardBlob: {
+    position: 'absolute',
+  },
+  cardBlobTR: {
+    top: -52,
+    right: -58,
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+  },
+  cardBlobBL: {
+    bottom: 36,
+    left: -68,
+    width: 248,
+    height: 248,
+    borderRadius: 124,
+  },
+  cardBlobMid: {
+    top: '26%',
+    left: '8%',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    opacity: 0.38,
+  },
+  cardContentLayer: {
+    flex: 1,
+    width: '100%',
+    minHeight: 0,
+    zIndex: 1,
   },
   gestureArea: {
     flex: 1,
     minHeight: 0,
     width: '100%',
+  },
+  /** Zone mission cliquable (quête terminée) — flex pour ne pas empiéter sur le footer. */
+  gestureAreaTap: {
+    flex: 1,
+    minHeight: 0,
   },
   cardInner: {
     flex: 1,
@@ -556,18 +703,30 @@ const styles = StyleSheet.create({
   },
   overlayReroll: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(249,115,22,0.22)',
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 30,
   },
+  overlayRerollPill: {
+    maxWidth: '88%',
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    elevation: 4,
+  },
   overlayRerollText: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#c2410c',
-    letterSpacing: 1,
-    transform: [{ rotate: '12deg' }],
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.35,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   overlayDetail: {
     position: 'absolute',
@@ -605,6 +764,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     alignItems: 'center',
     gap: 6,
+    zIndex: 20,
+    elevation: 20,
   },
   completedTitle: {
     fontSize: 18,

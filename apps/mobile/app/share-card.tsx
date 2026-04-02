@@ -30,7 +30,12 @@ import {
   getQuestShareBackgroundById,
   questDisplayEmoji,
 } from '@questia/shared';
-import { type ThemePalette } from '@questia/ui';
+import {
+  colorWithAlpha,
+  shareScreenPhotoAddGradient,
+  themePanelMuted,
+  type ThemePalette,
+} from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
 import { useAppLocale } from '../contexts/AppLocaleContext';
 import { hapticLight, hapticMedium } from '../lib/haptics';
@@ -131,6 +136,25 @@ export default function ShareCardScreen() {
   const appLocale = useAppLocale().locale;
   const shareLocale = appLocale === 'en' ? 'en' : 'fr';
   const styles = useMemo(() => createShareStyles(palette, themeId), [palette, themeId]);
+  const photoAddGrad = useMemo(
+    () => shareScreenPhotoAddGradient(themeId, palette),
+    [themeId, palette],
+  );
+  /** Voile sur la prévisualisation carte — teintes plus neutres en minuit (moins de décalage avec le fond app). */
+  const cardPreviewOverlayPhoto = useMemo(
+    () =>
+      themeId === 'midnight'
+        ? (['transparent', 'rgba(2,10,28,0.9)'] as const)
+        : (['transparent', 'rgba(15,23,42,0.85)'] as const),
+    [themeId],
+  );
+  const cardPreviewOverlayNoPhoto = useMemo(
+    () =>
+      themeId === 'midnight'
+        ? (['rgba(0,0,0,0.22)', 'transparent', 'rgba(0,0,0,0.38)'] as const)
+        : (['rgba(15,23,42,0.08)', 'transparent', 'rgba(15,23,42,0.22)'] as const),
+    [themeId],
+  );
   const fallbackWebUrl = useMemo(() => buildWebAppQuestUrl(SITE_PUBLIC), []);
 
   const load = useCallback(async () => {
@@ -233,6 +257,11 @@ export default function ShareCardScreen() {
       void takePhoto();
     });
   }, [takePhoto]);
+
+  const dismissPhotoSheet = useCallback(() => {
+    hapticLight();
+    setPhotoSheetOpen(false);
+  }, []);
 
   const hasPhotoTransforms = photoRotation % 360 !== 0 || photoFlipH || photoFlipV;
 
@@ -369,9 +398,61 @@ export default function ShareCardScreen() {
   const first = user?.firstName ?? 'Aventurier·e';
   const bg = getQuestShareBackgroundById(bgId);
   const panelDark = bg.darkForeground && !photoUri;
-  const panelBg = panelDark ? 'rgba(15,23,42,0.76)' : 'rgba(255,255,255,0.78)';
-  const panelBorder = panelDark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.65)';
+  const panelBg = panelDark
+    ? colorWithAlpha('#0f172a', 0.76)
+    : colorWithAlpha(palette.card, 0.82);
+  const panelBorder = panelDark
+    ? colorWithAlpha('#ffffff', 0.16)
+    : colorWithAlpha('#ffffff', 0.65);
   const scrollBottomPad = 28;
+
+  const photoSheetInner = (
+    <>
+      <View style={styles.photoSheetHandle} accessibilityElementsHidden />
+      <Text style={styles.photoSheetTitle}>Photo de fond</Text>
+      <Text style={styles.photoSheetSubtitle}>Choisis comment ajouter ton image</Text>
+
+      <Pressable
+        onPress={onPickGalleryFromSheet}
+        style={({ pressed }) => [styles.photoSheetOption, pressed && styles.photoSheetOptionPressed]}
+        accessibilityRole="button"
+        accessibilityLabel="Ouvrir la photothèque"
+      >
+        <View style={[styles.photoSheetIconWrap, { borderColor: `${palette.cyan}55` }]}>
+          <Ionicons name="images-outline" size={26} color={palette.cyan} />
+        </View>
+        <View style={styles.photoSheetOptionTextCol}>
+          <Text style={styles.photoSheetOptionTitle}>Photothèque</Text>
+          <Text style={styles.photoSheetOptionHint}>Choisir une image existante</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={palette.muted} />
+      </Pressable>
+
+      <Pressable
+        onPress={onPickCameraFromSheet}
+        style={({ pressed }) => [styles.photoSheetOption, pressed && styles.photoSheetOptionPressed]}
+        accessibilityRole="button"
+        accessibilityLabel="Prendre une photo"
+      >
+        <View style={[styles.photoSheetIconWrap, { borderColor: `${palette.orange}55` }]}>
+          <Ionicons name="camera-outline" size={26} color={palette.orange} />
+        </View>
+        <View style={styles.photoSheetOptionTextCol}>
+          <Text style={styles.photoSheetOptionTitle}>Appareil photo</Text>
+          <Text style={styles.photoSheetOptionHint}>Prendre une photo maintenant</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={palette.muted} />
+      </Pressable>
+
+      <Pressable
+        onPress={dismissPhotoSheet}
+        style={({ pressed }) => [styles.photoSheetDismiss, pressed && styles.photoSheetOptionPressed]}
+        accessibilityRole="button"
+      >
+        <Text style={styles.photoSheetDismissText}>Annuler</Text>
+      </Pressable>
+    </>
+  );
 
   if (loading) {
     return (
@@ -446,12 +527,16 @@ export default function ShareCardScreen() {
         </Text>
         <Pressable
           onPress={choosePhotoSource}
-          style={({ pressed }) => [styles.photoAddWrap, pressed && styles.photoAddWrapPressed]}
+          style={({ pressed }) => [
+            styles.photoAddWrap,
+            themeId === 'midnight' && styles.photoAddWrapMidnight,
+            pressed && styles.photoAddWrapPressed,
+          ]}
           accessibilityRole="button"
           accessibilityLabel="Ajouter une photo depuis la galerie ou l’appareil photo"
         >
           <LinearGradient
-            colors={['#ecfeff', '#fffbeb', '#ffffff']}
+            colors={photoAddGrad}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.photoAddGradient}
@@ -582,11 +667,7 @@ export default function ShareCardScreen() {
               />
             )}
             <LinearGradient
-              colors={
-                photoUri
-                  ? ['transparent', 'rgba(15,23,42,0.85)']
-                  : ['rgba(15,23,42,0.08)', 'transparent', 'rgba(15,23,42,0.22)']
-              }
+              colors={photoUri ? [...cardPreviewOverlayPhoto] : [...cardPreviewOverlayNoPhoto]}
               locations={photoUri ? undefined : [0, 0.45, 1]}
               style={StyleSheet.absoluteFillObject}
             />
@@ -694,6 +775,7 @@ export default function ShareCardScreen() {
           disabled={exporting}
           style={({ pressed }) => [
             styles.shareBtnOuter,
+            themeId === 'midnight' && styles.shareBtnOuterMidnight,
             pressed && !exporting && styles.shareBtnOuterPressed,
             exporting && styles.shareBtnOuterBusy,
           ]}
@@ -742,59 +824,18 @@ export default function ShareCardScreen() {
           accessibilityLabel="Fermer"
         />
         <SafeAreaView edges={['bottom']} style={styles.photoSheetSafe}>
-          <LinearGradient
-            colors={[palette.card, palette.surface]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={styles.photoSheetCard}
-          >
-            <View style={styles.photoSheetHandle} accessibilityElementsHidden />
-            <Text style={styles.photoSheetTitle}>Photo de fond</Text>
-            <Text style={styles.photoSheetSubtitle}>Choisis comment ajouter ton image</Text>
-
-            <Pressable
-              onPress={onPickGalleryFromSheet}
-              style={({ pressed }) => [styles.photoSheetOption, pressed && styles.photoSheetOptionPressed]}
-              accessibilityRole="button"
-              accessibilityLabel="Ouvrir la photothèque"
+          {themeId === 'midnight' ? (
+            <View style={[styles.photoSheetCard, styles.photoSheetCardSolid]}>{photoSheetInner}</View>
+          ) : (
+            <LinearGradient
+              colors={[palette.card, palette.surface]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.photoSheetCard}
             >
-              <View style={[styles.photoSheetIconWrap, { borderColor: `${palette.cyan}55` }]}>
-                <Ionicons name="images-outline" size={26} color={palette.cyan} />
-              </View>
-              <View style={styles.photoSheetOptionTextCol}>
-                <Text style={styles.photoSheetOptionTitle}>Photothèque</Text>
-                <Text style={styles.photoSheetOptionHint}>Choisir une image existante</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={palette.muted} />
-            </Pressable>
-
-            <Pressable
-              onPress={onPickCameraFromSheet}
-              style={({ pressed }) => [styles.photoSheetOption, pressed && styles.photoSheetOptionPressed]}
-              accessibilityRole="button"
-              accessibilityLabel="Prendre une photo"
-            >
-              <View style={[styles.photoSheetIconWrap, { borderColor: `${palette.orange}55` }]}>
-                <Ionicons name="camera-outline" size={26} color={palette.orange} />
-              </View>
-              <View style={styles.photoSheetOptionTextCol}>
-                <Text style={styles.photoSheetOptionTitle}>Appareil photo</Text>
-                <Text style={styles.photoSheetOptionHint}>Prendre une photo maintenant</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={palette.muted} />
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                hapticLight();
-                setPhotoSheetOpen(false);
-              }}
-              style={({ pressed }) => [styles.photoSheetDismiss, pressed && styles.photoSheetOptionPressed]}
-              accessibilityRole="button"
-            >
-              <Text style={styles.photoSheetDismissText}>Annuler</Text>
-            </Pressable>
-          </LinearGradient>
+              {photoSheetInner}
+            </LinearGradient>
+          )}
         </SafeAreaView>
       </View>
     </Modal>
@@ -803,12 +844,13 @@ export default function ShareCardScreen() {
 }
 
 function createShareStyles(p: ThemePalette, themeId: string) {
-  const cardFrameBg = themeId === 'midnight' ? p.surface : '#0f172a';
+  const screenMuted = themePanelMuted(themeId, p);
+  const cardFrameBg = themeId === 'midnight' ? p.surface : colorWithAlpha(p.text, 0.92);
   return StyleSheet.create({
   safe: { flex: 1, backgroundColor: p.bg },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
   muted: { color: p.muted, fontSize: 14 },
-  err: { color: '#f87171', textAlign: 'center', fontSize: 14 },
+  err: { color: p.orange, textAlign: 'center', fontSize: 14, fontWeight: '700' },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -852,7 +894,7 @@ function createShareStyles(p: ThemePalette, themeId: string) {
   photoHint: {
     fontSize: 13,
     fontWeight: '600',
-    color: p.onCreamMuted,
+    color: screenMuted,
     marginBottom: 12,
     lineHeight: 19,
     paddingHorizontal: 2,
@@ -861,16 +903,24 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     marginBottom: 10,
     borderRadius: 18,
     overflow: 'hidden',
-    shadowColor: '#0891b2',
+    shadowColor: p.cyan,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.28,
     shadowRadius: 12,
     elevation: 6,
   },
+  /** Sur minuit : pas d’élévation sur le même nœud que le LinearGradient (artefacts Android) — bordure à la place. */
+  photoAddWrapMidnight: {
+    elevation: 0,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.32),
+  },
   photoAddWrapPressed: { opacity: 0.94, transform: [{ scale: 0.99 }] },
   photoAddGradient: {
     borderWidth: 2,
-    borderColor: 'rgba(34,211,238,0.58)',
+    borderColor: colorWithAlpha(p.cyan, 0.55),
     borderRadius: 18,
     paddingVertical: 16,
     paddingHorizontal: 16,
@@ -880,14 +930,14 @@ function createShareStyles(p: ThemePalette, themeId: string) {
   },
   photoAddEmoji: { fontSize: 30, lineHeight: 34 },
   photoAddTextCol: { flex: 1, minWidth: 0 },
-  photoAddTitle: { fontSize: 17, fontWeight: '900', color: '#0e7490', letterSpacing: -0.3 },
-  photoAddSub: { fontSize: 12, fontWeight: '600', color: p.muted, marginTop: 4, lineHeight: 16 },
+  photoAddTitle: { fontSize: 17, fontWeight: '900', color: p.linkOnBg, letterSpacing: -0.3 },
+  photoAddSub: { fontSize: 12, fontWeight: '600', color: screenMuted, marginTop: 4, lineHeight: 16 },
   clearPhotoWrap: { alignSelf: 'flex-end', marginBottom: 16 },
   clearPhoto: { color: p.muted, fontWeight: '800', fontSize: 13, textDecorationLine: 'underline' },
   retouchHint: {
     fontSize: 12,
     fontWeight: '600',
-    color: p.muted,
+    color: screenMuted,
     marginBottom: 12,
     lineHeight: 17,
     paddingHorizontal: 2,
@@ -928,7 +978,7 @@ function createShareStyles(p: ThemePalette, themeId: string) {
   retouchChipLabelMuted: {
     color: p.muted,
   },
-  cardWrap: { alignItems: 'center', marginBottom: 24 },
+  cardWrap: { alignItems: 'center', alignSelf: 'stretch', marginBottom: 24 },
   cardOuter: {
     borderRadius: 24,
     overflow: 'hidden',
@@ -971,10 +1021,10 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     width: 112,
     height: 112,
     borderRadius: 26,
-    backgroundColor: '#ffffff',
+    backgroundColor: p.card,
     padding: 10,
     borderWidth: 1,
-    borderColor: 'rgba(15,23,42,0.08)',
+    borderColor: colorWithAlpha(p.text, 0.1),
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -1107,6 +1157,13 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     shadowRadius: 18,
     elevation: 10,
   },
+  shareBtnOuterMidnight: {
+    elevation: 0,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.orange, 0.45),
+  },
   shareBtnOuterPressed: {
     transform: [{ scale: 0.985 }],
     opacity: 0.94,
@@ -1134,8 +1191,8 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     marginTop: 10,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: `${p.cyan}88`,
-    backgroundColor: `${p.cyan}14`,
+    borderColor: colorWithAlpha(p.cyan, 0.55),
+    backgroundColor: colorWithAlpha(p.cyan, 0.12),
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1159,7 +1216,7 @@ function createShareStyles(p: ThemePalette, themeId: string) {
   },
   photoSheetBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.52)',
+    backgroundColor: p.overlay,
   },
   photoSheetSafe: {
     width: '100%',
@@ -1175,11 +1232,10 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     borderWidth: 1,
     borderBottomWidth: 0,
     borderColor: p.borderCyan,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 12,
+  },
+  /** Minuit : fond uni (pas de dégradé + elevation sur le même conteneur) pour éviter les artefacts. */
+  photoSheetCardSolid: {
+    backgroundColor: p.surface,
   },
   photoSheetHandle: {
     width: 42,
@@ -1265,6 +1321,6 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     paddingHorizontal: 28,
     borderRadius: 14,
   },
-  primaryBtnText: { color: p.onCream, fontWeight: '800', fontSize: 15 },
+  primaryBtnText: { color: '#ffffff', fontWeight: '800', fontSize: 15 },
   });
 }
