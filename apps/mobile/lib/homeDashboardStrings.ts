@@ -26,6 +26,8 @@ export type HomeDashboardStrings = {
   rerollConfirmBody: string;
   rerollConfirmAction: string;
   rerollConfirmCancel: string;
+  /** Pendant l’appel API après confirmation de relance */
+  rerollLoading: string;
   weatherFallback: string;
   completedTitle: string;
   completedSubtitle: string;
@@ -84,6 +86,7 @@ function fr(): HomeDashboardStrings {
     rerollConfirmBody: 'Tu consommes une relance et l\u2019XP de la nouvelle quête sera réduit de 25 %. Cette action est irréversible.',
     rerollConfirmAction: 'Changer',
     rerollConfirmCancel: 'Annuler',
+    rerollLoading: 'Nouvelle quête en cours…',
     weatherFallback: 'Ciel variable',
     completedTitle: 'Quête accomplie',
     completedSubtitle: 'Ta série est enregistrée. À demain pour la suite.',
@@ -143,6 +146,7 @@ function en(): HomeDashboardStrings {
     rerollConfirmBody: 'You\u2019ll use a reroll and the new quest\u2019s XP will be reduced by 25%. This cannot be undone.',
     rerollConfirmAction: 'Change',
     rerollConfirmCancel: 'Cancel',
+    rerollLoading: 'Drawing your new quest…',
     weatherFallback: 'Mixed skies',
     completedTitle: 'Quest complete',
     completedSubtitle: 'Your streak is saved. See you tomorrow for the next one.',

@@ -49,7 +49,7 @@ export interface QuestContext {
 export interface GeneratedDailyQuest {
   icon: string; // Lucide icon name
   title: string;
-  mission: string; // 2-3 sentences, concrete actions
+  mission: string; // une phrase courte, concrète (limite côté validation)
   hook: string; // short motivational punch line
   duration: string; // human readable
   isOutdoor: boolean;
@@ -334,7 +334,8 @@ function ensureCityInMission(mission: string, city: string): string {
   const m = mission.trim();
   if (!m) return m;
   if (m.toLowerCase().includes(c.toLowerCase())) return m;
-  return `${m} — à ${c}.`;
+  const base = m.replace(/\s*[.!?]+\s*$/, '').trim();
+  return `${base} — à ${c}.`;
 }
 
 /** Réponse de secours : texte canon de l’archétype (taxonomie), pas une variante IA. */
@@ -354,7 +355,7 @@ function buildFallbackDailyQuest(
   return {
     icon: 'Swords',
     title,
-    mission: description,
+    mission: clampMissionToOneSentence(description),
     hook: fallbackHookStyling(baseHook, profile.narrationDirective, locale),
     duration: `${archetype.minimumDurationMinutes} min`,
     isOutdoor: computedIsOutdoor,
@@ -366,6 +367,34 @@ function buildFallbackDailyQuest(
 }
 
 const DAILY_QUEST_MAX_ATTEMPTS = 3;
+
+/** Limite stricte : une seule phrase (marge pour le suffixe éventuel « — à Ville »). */
+const MISSION_MAX_CHARS = 300;
+const MISSION_MAX_WORDS = 48;
+
+function missionWordCount(mission: string): number {
+  return mission.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/** Phrases séparées par [.!?] puis espace — le modèle doit n’en produire qu’une. */
+function missionSentenceCount(mission: string): number {
+  const t = mission.trim();
+  if (!t) return 0;
+  return t.split(/(?<=[.!?])\s+/).filter((p) => p.length > 0).length;
+}
+
+/** Garde-fou serveur : une seule phrase stockée (1er segment [.!?], puis avant `;` si besoin). */
+function clampMissionToOneSentence(mission: string): string {
+  let s = mission.trim();
+  if (!s) return s;
+  const parts = s.split(/(?<=[.!?])\s+/).filter((p) => p.length > 0);
+  if (parts.length > 0) s = parts[0].trim();
+  if (/\s*;\s/.test(s)) {
+    s = s.split(/\s*;\s*/)[0].trim();
+  }
+  if (s.length > MISSION_MAX_CHARS) s = s.slice(0, MISSION_MAX_CHARS).trim();
+  return s;
+}
 
 function validateGeneratedPayload(
   parsed: {
@@ -397,6 +426,38 @@ function validateGeneratedPayload(
       reason: en
         ? 'mission not concrete enough (too short)'
         : 'mission pas assez concrète (trop courte)',
+    };
+  }
+  if (/\r|\n/.test(mission)) {
+    return {
+      ok: false,
+      reason: en
+        ? 'mission must be a single line (one sentence)'
+        : 'mission : une seule ligne, une phrase',
+    };
+  }
+  if (missionSentenceCount(mission) > 1) {
+    return {
+      ok: false,
+      reason: en
+        ? 'mission must be a single sentence (one period max)'
+        : 'mission : une seule phrase (pas de 2e phrase après un point)',
+    };
+  }
+  if (/\s;\s/.test(mission)) {
+    return {
+      ok: false,
+      reason: en
+        ? 'mission: do not use semicolon between two clauses — one flowing sentence only'
+        : 'mission : pas de point-virgule entre deux instructions — une seule phrase fluide',
+    };
+  }
+  if (mission.length > MISSION_MAX_CHARS || missionWordCount(mission) > MISSION_MAX_WORDS) {
+    return {
+      ok: false,
+      reason: en
+        ? 'mission too long (one short sentence, max ~300 characters)'
+        : 'mission trop longue (une phrase courte, environ 300 caractères max)',
     };
   }
   if (hook.length < 6 || hook.split(/\s+/).length > 22) {
@@ -516,7 +577,7 @@ function buildUserPrompt(
       profile.substitutedInstantAfterDefer
         ? ''
         : archetype.questPace === 'planned'
-          ? `\n“Planned” pace: intention can be ambitious — give one CONCRETE step for today (ideally 15–45 min) and optionally one line on how to continue later (no guilt).\n`
+          ? `\n“Planned” pace: one CONCRETE step for today (15–45 min) in exactly ONE short sentence — no second sentence, no paragraph.\n`
           : `\n“Instant” pace: doable today without heavy scheduling.\n`;
     const repairBlock = repairHint
       ? `\nFIX REQUESTED (previous answer was invalid):\n${repairHint}\nRewrite title, mission, hook${computedIsOutdoor ? ', destinationLabel, destinationQuery' : ''} completely.\n`
@@ -575,7 +636,7 @@ Summary (paraphrase freely; do not copy-paste): ${archetypeSummary}
 Minimum duration: ${archetype.minimumDurationMinutes} minutes
 
 ABSOLUTE RULES:
-1. Mission must be CONCRETE (specific actions, objects, places, duration) — not only “reflect”.
+1. Mission must be CONCRETE (specific actions, objects, places, duration) — not only “reflect”. BREVITY: the "mission" field is exactly ONE short sentence, under 300 characters total (including spaces). No second sentence after a period; no semicolon between two clauses (use commas if needed); no storytelling, numbered lists, or preamble.
 2. Must be doable TODAY${context.hasUserLocation && cityMustAppearInMission(context.city) ? ` in ${context.city}` : ''}.
 3. ${!context.hasUserLocation ? 'Without shared GPS: no outdoor mapped outing — isOutdoor stays false.' : context.isOutdoorFriendly ? 'May be outdoors if isOutdoor is true.' : 'Keep indoors or sheltered.'}
 4. Match duration to weather.
@@ -593,7 +654,7 @@ Reply with strict JSON. Pick ONE icon name from: ${[...ICON_ALLOWLIST].join(', '
 {
   "icon": "...",
   "title": "short intriguing title (4-6 words max)",
-  "mission": "2-3 precise sentences${context.hasUserLocation && cityMustAppearInMission(context.city) ? `, naturally mention ${context.city}` : ''}",
+  "mission": "one short sentence only (under 300 chars)${context.hasUserLocation && cityMustAppearInMission(context.city) ? `; naturally mention ${context.city}` : ''}",
   "hook": "max 15 words",
   "duration": "e.g. 45 min, 1h30",
   "isOutdoor": ${computedIsOutdoor},
@@ -615,7 +676,7 @@ Reply with strict JSON. Pick ONE icon name from: ${[...ICON_ALLOWLIST].join(', '
     profile.substitutedInstantAfterDefer
       ? ''
       : archetype.questPace === 'planned'
-        ? `\nRythme « planifié » : l’intention peut être ambitieuse — propose une première étape CONCRÈTE faisable aujourd’hui (idéalement 15–45 min) et, si utile, une phrase courte sur comment poursuivre plus tard (sans culpabiliser).\n`
+        ? `\nRythme « planifié » : une première étape CONCRÈTE pour aujourd’hui (15–45 min), formulée en **une seule phrase courte** — pas de 2e phrase après un point, pas de paragraphe.\n`
         : `\nRythme « instantané » : mission tenable dans la journée, sans calendrier lourd.\n`;
 
   const repairBlock = repairHint
@@ -679,7 +740,7 @@ Résumé (paraphrase libre ; ne pas copier-coller) : ${archetypeSummary}
 Durée minimale : ${archetype.minimumDurationMinutes} minutes
 
 RÈGLES ABSOLUES :
-1. La mission doit être CONCRÈTE (actions précises, objets, lieux, durée) — pas seulement « réfléchir ».
+1. La mission doit être CONCRÈTE (actions précises, objets, lieux, durée) — pas seulement « réfléchir ». CONCISION : le champ "mission" est **une seule phrase courte**, **moins de 300 caractères** au total (espaces compris). Pas de 2e phrase après un point d’exclamation ou d’interrogation ; **pas de point-virgule** entre deux ordres (un seul fil avec des virgules si besoin) ; pas de récit, pas de listes numérotées, pas d’introduction.
 2. Elle doit être faisable AUJOURD'HUI${context.hasUserLocation && cityMustAppearInMission(context.city) ? ` à ${context.city}` : ''}.
 3. ${!context.hasUserLocation ? 'Sans position GPS partagée : pas de sortie extérieure avec lieu sur carte — isOutdoor reste false.' : context.isOutdoorFriendly ? 'Peut se passer en extérieur si isOutdoor est true.' : 'Doit se passer en intérieur ou sous abri.'}
 4. Adapte la durée à la météo.
@@ -697,7 +758,7 @@ Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[.
 {
   "icon": "...",
   "title": "titre court (4-6 mots max), intrigant",
-  "mission": "2-3 phrases précises${context.hasUserLocation && cityMustAppearInMission(context.city) ? `, mention naturelle de ${context.city}` : ''}",
+  "mission": "une seule phrase courte (moins de 300 caractères)${context.hasUserLocation && cityMustAppearInMission(context.city) ? ` ; mention naturelle de ${context.city}` : ''}",
   "hook": "max 15 mots",
   "duration": "ex: 45 min, 1h30",
   "isOutdoor": ${computedIsOutdoor},
@@ -853,7 +914,9 @@ ${QUEST_SYSTEM_GUARDRAILS}`;
         icon: normalizeIcon(parsedRaw.icon ?? parsedRaw.emoji),
         title: typeof parsedRaw.title === 'string' ? parsedRaw.title.trim() : '',
         mission: ensureCityInMission(
-          typeof parsedRaw.mission === 'string' ? parsedRaw.mission.trim() : '',
+          clampMissionToOneSentence(
+            typeof parsedRaw.mission === 'string' ? parsedRaw.mission.trim() : '',
+          ),
           context.city,
         ),
         hook: typeof parsedRaw.hook === 'string' ? parsedRaw.hook.trim() : '',

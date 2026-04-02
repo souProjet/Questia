@@ -36,6 +36,7 @@ import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../compone
 import { QuestHomeLoading } from '../../components/QuestHomeLoading';
 import { QuestSwipeCard } from '../../components/QuestSwipeCard';
 import { QuestDetailDrawer } from '../../components/QuestDetailDrawer';
+import { LinearGradient } from 'expo-linear-gradient';
 import { hapticError, hapticMedium, hapticSuccess, hapticWarning } from '../../lib/haptics';
 import { getQuestReportStrings } from '../../lib/questReportStrings';
 
@@ -94,6 +95,17 @@ interface DailyQuest {
 }
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+
+/** Assombrit un #RRGGBB en le rapprochant du noir (0–1). */
+function mixHexTowardsBlack(hex: string, t: number): string {
+  const raw = hex.replace('#', '');
+  if (raw.length !== 6) return hex;
+  const r = Math.round(parseInt(raw.slice(0, 2), 16) * (1 - t));
+  const g = Math.round(parseInt(raw.slice(2, 4), 16) * (1 - t));
+  const b = Math.round(parseInt(raw.slice(4, 6), 16) * (1 - t));
+  const h = (n: number) => n.toString(16).padStart(2, '0');
+  return `#${h(r)}${h(g)}${h(b)}`;
+}
 
 async function apiFetch(
   url: string,
@@ -384,6 +396,9 @@ export default function DashboardScreen() {
           Animated.timing(acceptFlashOp, { toValue: 1, duration: 72, easing: Easing.out(Easing.quad), useNativeDriver: true }),
           Animated.timing(acceptFlashOp, { toValue: 0, duration: 620, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
         ]).start();
+      } else {
+        hapticError();
+        setQuestCardSwapKey((k) => k + 1);
       }
     } finally {
       setAccepting(false);
@@ -430,6 +445,7 @@ export default function DashboardScreen() {
         }
       } else {
         hapticError();
+        setQuestCardSwapKey((k) => k + 1);
       }
     } finally {
       setCompleting(false);
@@ -456,8 +472,12 @@ export default function DashboardScreen() {
     rerollDaily + rerollBonus > 0;
 
   const handleAccept = () => {
-    if (quest?.isOutdoor) setShowSafety(true);
-    else doAccept();
+    if (quest?.isOutdoor) {
+      setShowSafety(true);
+      setQuestCardSwapKey((k) => k + 1);
+      return;
+    }
+    void doAccept();
   };
 
   const confirmReroll = () => {
@@ -480,6 +500,7 @@ export default function DashboardScreen() {
         const data = await res.json().catch(() => ({}));
         setError((data as { error?: string }).error ?? homeUi.errReroll);
         hapticError();
+        setQuestCardSwapKey((k) => k + 1);
         return;
       }
       const ok = await loadQuest(undefined, undefined, { questDate: quest.questDate, silent: true });
@@ -490,6 +511,7 @@ export default function DashboardScreen() {
       } else {
         setError(homeUi.errReroll);
         hapticError();
+        setQuestCardSwapKey((k) => k + 1);
       }
     } finally {
       setRerolling(false);
@@ -588,27 +610,6 @@ export default function DashboardScreen() {
   const { palette, themeId } = useAppTheme();
   const styles = useMemo(() => buildDashboardStyles(palette, themeId), [palette, themeId]);
 
-  if (loading && !quest) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <QuestHomeLoading compact={compact} />
-      </SafeAreaView>
-    );
-  }
-
-  if (error && !quest) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
-          <Pressable style={styles.retryBtn} onPress={() => void loadQuest()}>
-            <Text style={styles.retryText}>Réessayer</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   const swipeStrings = useMemo(() => ({
     swipeAccept: homeUi.swipeAccept,
     swipeChange: homeUi.swipeChange,
@@ -621,6 +622,8 @@ export default function DashboardScreen() {
     abandonedSub: homeUi.abandonedSub,
     paceToday: homeUi.paceToday,
     pacePlanned: homeUi.pacePlanned,
+    missionEyebrow: homeUi.missionHeading,
+    outdoorTag: homeUi.outdoorTag,
   }), [homeUi]);
 
   const drawerStrings = useMemo(() => ({
@@ -637,33 +640,57 @@ export default function DashboardScreen() {
     reportHint: homeUi.reportHint,
   }), [homeUi]);
 
+  /** Fond en 4 stops : transitions plus douces, moins « boueuses », léger halo cyan au centre. */
+  const homeBackdropGradient = useMemo(() => {
+    const bg = palette.bg;
+    return [
+      mixHexTowardsBlack(bg, 0.14),
+      mixHexTowardsBlack(bg, 0.04),
+      colorWithAlpha(palette.cyan, 0.045),
+      mixHexTowardsBlack(bg, 0.2),
+    ] as const;
+  }, [palette.bg, palette.cyan]);
+
+  const homeBackdropProps = {
+    colors: [...homeBackdropGradient] as [string, string, string, string],
+    locations: [0, 0.28, 0.52, 1] as [number, number, number, number],
+    start: { x: 0.15, y: 0 },
+    end: { x: 0.85, y: 1 },
+    style: styles.homeGradient,
+  } as const;
+
   if (loading && !quest) {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView style={styles.safe}>
-          <QuestHomeLoading compact={compact} />
-        </SafeAreaView>
+      <GestureHandlerRootView style={[styles.rootShell, { backgroundColor: homeBackdropGradient[3] }]}>
+        <LinearGradient {...homeBackdropProps}>
+          <SafeAreaView style={styles.safe}>
+            <QuestHomeLoading compact={compact} />
+          </SafeAreaView>
+        </LinearGradient>
       </GestureHandlerRootView>
     );
   }
 
   if (error && !quest) {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView style={styles.safe}>
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Pressable style={styles.retryBtn} onPress={() => void loadQuest()}>
-              <Text style={styles.retryText}>R\u00e9essayer</Text>
-            </Pressable>
-          </View>
-        </SafeAreaView>
+      <GestureHandlerRootView style={[styles.rootShell, { backgroundColor: homeBackdropGradient[3] }]}>
+        <LinearGradient {...homeBackdropProps}>
+          <SafeAreaView style={styles.safe}>
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+              <Pressable style={styles.retryBtn} onPress={() => void loadQuest()}>
+                <Text style={styles.retryText}>R\u00e9essayer</Text>
+              </Pressable>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
       </GestureHandlerRootView>
     );
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={[styles.rootShell, { backgroundColor: homeBackdropGradient[3] }]}>
+      <LinearGradient {...homeBackdropProps}>
       <SafeAreaView style={styles.safe}>
         {/* Flash d\u2019acceptation */}
         <Animated.View
@@ -698,7 +725,7 @@ export default function DashboardScreen() {
           </Text>
           {(quest?.streak ?? 0) > 0 ? (
             <Text style={[styles.headerStreak, { color: palette.orange }]}>
-              \ud83d\udd25 {quest?.streak}
+              {'\uD83D\uDD25'} {quest?.streak}
             </Text>
           ) : (
             <View />
@@ -726,6 +753,7 @@ export default function DashboardScreen() {
         {quest ? (
           <View style={styles.swipeArea} key={questCardSwapKey}>
             <QuestSwipeCard
+              key={`${quest.questDate}-${quest.status}`}
               quest={quest}
               locale={appLocale}
               palette={palette}
@@ -736,6 +764,8 @@ export default function DashboardScreen() {
               onValidate={doComplete}
               onShare={() => router.push({ pathname: '/share-card', params: { questDate: quest.questDate } })}
               strings={swipeStrings}
+              rerolling={rerolling}
+              rerollLoadingLabel={homeUi.rerollLoading}
             />
           </View>
         ) : null}
@@ -859,6 +889,7 @@ export default function DashboardScreen() {
 
         <QuestRewardOverlay visible={showReward} payload={reward} onContinue={finishRewardAndShare} />
       </SafeAreaView>
+      </LinearGradient>
     </GestureHandlerRootView>
   );
 }
@@ -876,7 +907,10 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
   };
 
   return StyleSheet.create({
-    safe: { flex: 1, backgroundColor: C.bg },
+    rootShell: { flex: 1 },
+    /** Remplit l’écran ; le SafeAreaView est à l’intérieur pour éviter les bandes / clipping. */
+    homeGradient: { flex: 1 },
+    safe: { flex: 1, backgroundColor: 'transparent' },
     minimalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -895,7 +929,13 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
       alignItems: 'center',
     },
     headerAvatarText: { fontSize: 15, fontWeight: '900', color: p.linkOnBg },
-    swipeArea: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 12 },
+    swipeArea: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingBottom: 12,
+      position: 'relative',
+    },
     inlineErrorBanner: {
       flexDirection: 'row',
       alignItems: 'center',

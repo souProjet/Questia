@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
   interpolate,
+  runOnJS,
+  cancelAnimation,
   Extrapolation,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -60,17 +63,19 @@ export function QuestDetailDrawer({
   onAbandon,
   strings: s,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const progress = useSharedValue(SNAP_BOTTOM);
   const isPending = quest.status === 'pending';
   const isPlanned = quest.questPace === 'planned';
 
   useEffect(() => {
-    progress.value = withSpring(visible ? SNAP_TOP : SNAP_BOTTOM, {
-      damping: 22,
-      stiffness: 180,
-      mass: 0.9,
-    });
-  }, [visible, progress]);
+    if (visible) {
+      cancelAnimation(progress);
+      progress.value = SNAP_TOP;
+    } else {
+      progress.value = withTiming(SNAP_BOTTOM, { duration: 240 });
+    }
+  }, [visible]);
 
   const dragGesture = Gesture.Pan()
     .onUpdate((e) => {
@@ -80,21 +85,29 @@ export function QuestDetailDrawer({
     .onEnd((e) => {
       if (e.translationY > 100 || e.velocityY > 600) {
         progress.value = withTiming(SNAP_BOTTOM, { duration: 250 });
-        // runOnJS needed but we rely on visible prop from parent
+        runOnJS(onClose)();
       } else {
         progress.value = withSpring(SNAP_TOP, { damping: 22, stiffness: 180 });
       }
     });
 
+  /** [SNAP_TOP, SNAP_BOTTOM] → [0, 800] : à l’ouverture translateY = 0 (avant [0,1] laissait ~144px de décalage). */
   const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: interpolate(progress.value, [0, 1], [0, 800], Extrapolation.CLAMP) }],
+    transform: [
+      {
+        translateY: interpolate(progress.value, [SNAP_TOP, SNAP_BOTTOM], [0, 800], Extrapolation.CLAMP),
+      },
+    ],
     opacity: interpolate(progress.value, [SNAP_TOP, SNAP_BOTTOM - 0.1, SNAP_BOTTOM], [1, 0.5, 0], Extrapolation.CLAMP),
   }));
 
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [SNAP_TOP, SNAP_BOTTOM], [1, 0], Extrapolation.CLAMP),
-    pointerEvents: visible ? ('auto' as const) : ('none' as const),
-  }));
+  const backdropStyle = useAnimatedStyle(
+    () => ({
+      opacity: interpolate(progress.value, [SNAP_TOP, SNAP_BOTTOM], [1, 0], Extrapolation.CLAMP),
+      pointerEvents: visible ? ('auto' as const) : ('none' as const),
+    }),
+    [visible],
+  );
 
   const openMap = () => {
     if (!quest.destination?.lat || !quest.destination?.lon) return;
@@ -108,25 +121,34 @@ export function QuestDetailDrawer({
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
 
-      <GestureDetector gesture={dragGesture}>
-        <Animated.View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: p.card,
-              borderColor: `${p.borderCyan}44`,
-            },
-            sheetStyle,
-          ]}
-        >
-          <View style={styles.handle}>
+      <Animated.View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: p.card,
+            borderColor: `${p.borderCyan}44`,
+          },
+          sheetStyle,
+        ]}
+      >
+        {/* Pan uniquement sur la poignée : sinon le geste vole le scroll du ScrollView. */}
+        <GestureDetector gesture={dragGesture}>
+          <View style={styles.handle} collapsable={false}>
             <View style={[styles.handleBar, { backgroundColor: `${p.muted}44` }]} />
           </View>
+        </GestureDetector>
 
+        <View style={styles.scrollWrap}>
           <ScrollView
             style={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            bounces={false}
+            contentContainerStyle={[
+              styles.scrollInner,
+              { paddingBottom: Math.max(28, insets.bottom + 16) },
+            ]}
+            showsVerticalScrollIndicator
+            bounces
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
           >
             <Text style={[styles.sectionLabel, { color: p.orange }]}>
               {s.missionHeading}
@@ -212,10 +234,10 @@ export function QuestDetailDrawer({
               </View>
             ) : null}
 
-            <View style={{ height: 40 }} />
+            <View style={{ height: 12 }} />
           </ScrollView>
-        </Animated.View>
-      </GestureDetector>
+        </View>
+      </Animated.View>
     </>
   );
 }
@@ -241,19 +263,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 16,
     elevation: 12,
+    flexDirection: 'column',
+    overflow: 'hidden',
   },
   handle: {
     alignItems: 'center',
+    justifyContent: 'center',
     paddingTop: 10,
-    paddingBottom: 6,
+    paddingBottom: 10,
+    minHeight: 44,
   },
   handleBar: {
     width: 40,
     height: 4,
     borderRadius: 2,
   },
+  scrollWrap: {
+    flex: 1,
+    minHeight: 0,
+  },
   scrollContent: {
     flex: 1,
+  },
+  scrollInner: {
     paddingHorizontal: 22,
   },
   sectionLabel: {

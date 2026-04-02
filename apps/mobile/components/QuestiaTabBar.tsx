@@ -41,17 +41,19 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
         styles.outer,
         {
           paddingBottom: bottom,
+          paddingTop: 8,
           backgroundColor: palette.surface,
-          borderTopColor: colorWithAlpha(palette.cyan, 0.35),
+          borderTopWidth: 2,
+          borderTopColor: colorWithAlpha(palette.cyan, 0.52),
         },
         Platform.select({
           ios: {
             shadowColor: palette.text,
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.12,
+            shadowRadius: 14,
+            shadowOffset: { width: 0, height: -5 },
           },
-          android: { elevation: 12 },
+          android: { elevation: 14 },
         }),
       ]}
     >
@@ -121,8 +123,8 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
 const styles = StyleSheet.create({
   outer: {
     flexDirection: 'row',
-    borderTopWidth: 1,
-    paddingTop: 6,
+    borderTopWidth: 0,
+    paddingTop: 0,
   },
   tab: {
     flex: 1,

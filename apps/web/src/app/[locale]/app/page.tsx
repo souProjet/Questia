@@ -41,9 +41,11 @@ const QuestDestinationMap = dynamic(
 const QUEST_CARD_SWIPE_X = 100;
 const QUEST_CARD_SWIPE_UP = 72;
 const QUEST_CARD_ROT_MAX = 12;
-/** Rotation finale quand la carte sort de l’écran */
-const QUEST_CARD_FLIGHT_ROT = 26;
-const QUEST_CARD_FLIGHT_MS = 480;
+/** Rotation au « mur » (même logique que mobile : la carte ne quitte pas l’écran) */
+const QUEST_CARD_BUMP_ROT = 14;
+/** Phase 1 : vers le mur ; phase 2 : retour au centre */
+const QUEST_CARD_BUMP_MS = 200;
+const QUEST_CARD_RETURN_MS = 210;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -701,7 +703,9 @@ function AppPageContent() {
   const [questSwipeOffset, setQuestSwipeOffset] = useState({ x: 0, y: 0 });
   const [questSwipeDragging, setQuestSwipeDragging] = useState(false);
   const [swipeFlying, setSwipeFlying] = useState(false);
-  /** Après le vol : la carte reste hors écran tant qu’une modale / le panneau détail est ouvert (évite le retour avant la fermeture). */
+  /** null = pas d’anim bump ; out = vers le mur ; back = retour au centre puis complétion */
+  const [swipeBumpPhase, setSwipeBumpPhase] = useState<null | 'out' | 'back'>(null);
+  /** Après le bump + complétion : la carte peut rester masquée tant qu’une modale / le panneau détail est ouvert. */
   const [swipeParkedAfterFlight, setSwipeParkedAfterFlight] = useState(false);
   const questSwipeRef = useRef({
     active: false,
@@ -716,6 +720,7 @@ function AppPageContent() {
     setQuestSwipeOffset({ x: 0, y: 0 });
     setQuestSwipeDragging(false);
     setSwipeFlying(false);
+    setSwipeBumpPhase(null);
     setSwipeParkedAfterFlight(false);
     swipePendingActionRef.current = null;
   }, []);
@@ -729,6 +734,7 @@ function AppPageContent() {
     if (!action) return;
     swipePendingActionRef.current = null;
     setSwipeFlying(false);
+    setSwipeBumpPhase(null);
 
     if (action === 'complete') {
       void doComplete();
@@ -737,7 +743,6 @@ function AppPageContent() {
     }
     if (action === 'reroll') {
       setSwipeParkedAfterFlight(true);
-      confirmReroll();
       return;
     }
     if (action === 'accept') {
@@ -752,9 +757,8 @@ function AppPageContent() {
     }
     if (action === 'details') {
       setSwipeParkedAfterFlight(true);
-      setShowDetails(true);
     }
-  }, [handleAccept, confirmReroll, quest?.isOutdoor, doComplete]);
+  }, [handleAccept, quest?.isOutdoor, doComplete]);
 
   const runSwipeCompletionRef = useRef(runSwipeCompletion);
   runSwipeCompletionRef.current = runSwipeCompletion;
@@ -775,21 +779,26 @@ function AppPageContent() {
       }
       const vw = typeof window !== 'undefined' ? window.innerWidth : 400;
       const vh = typeof window !== 'undefined' ? window.innerHeight : 700;
+      const wallX = Math.min(vw * 0.22, 112);
+      const wallY = -Math.min(vh * 0.12, 88);
       let endX = 0;
       let endY = 0;
       if (dir === 'right') {
         swipePendingActionRef.current = isAccepted ? 'complete' : 'accept';
-        endX = vw + 200;
+        endX = wallX;
       } else if (dir === 'left') {
         swipePendingActionRef.current = 'reroll';
-        endX = -(vw + 200);
+        endX = -wallX;
+        confirmReroll();
       } else {
         swipePendingActionRef.current = 'details';
         endX = 0;
-        endY = -vh * 0.45;
+        endY = wallY;
+        setShowDetails(true);
       }
       questSwipeRef.current = { active: false, pointerId: null, startX: 0, startY: 0 };
       setQuestSwipeDragging(false);
+      setSwipeBumpPhase('out');
       setSwipeFlying(true);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -797,14 +806,14 @@ function AppPageContent() {
         });
       });
     },
-    [isAccepted, canReroll, handleAccept, confirmReroll, doComplete, endQuestSwipe],
+    [isAccepted, canReroll, handleAccept, confirmReroll, doComplete, endQuestSwipe, setShowDetails],
   );
 
   useEffect(() => {
     if (!swipeFlying) return;
     const id = window.setTimeout(() => {
       runSwipeCompletionRef.current();
-    }, QUEST_CARD_FLIGHT_MS + 160);
+    }, QUEST_CARD_BUMP_MS + QUEST_CARD_RETURN_MS + 400);
     return () => window.clearTimeout(id);
   }, [swipeFlying]);
 
@@ -932,9 +941,21 @@ function AppPageContent() {
 
   const onQuestCardTransitionEnd = useCallback((e: React.TransitionEvent<HTMLDivElement>) => {
     if (e.propertyName !== 'transform') return;
-    if (!swipePendingActionRef.current) return;
-    runSwipeCompletionRef.current();
-  }, []);
+    if (!swipeFlying) return;
+    setSwipeBumpPhase((phase) => {
+      if (phase === 'out') {
+        setQuestSwipeOffset({ x: 0, y: 0 });
+        return 'back';
+      }
+      if (phase === 'back') {
+        queueMicrotask(() => {
+          runSwipeCompletionRef.current();
+        });
+        return 'back';
+      }
+      return phase;
+    });
+  }, [swipeFlying]);
 
   /** Transform / overlays : en attente ou acceptée (swipe pour valider), hors chargements */
   const questCardTransformsActive =
@@ -966,30 +987,40 @@ function AppPageContent() {
     );
     let scale = 1;
     if (swipeFlying) {
-      if (x > 120) rot = QUEST_CARD_FLIGHT_ROT;
-      else if (x < -120) rot = -QUEST_CARD_FLIGHT_ROT;
-      else if (y < -120) {
+      if (x > 40) rot = QUEST_CARD_BUMP_ROT;
+      else if (x < -40) rot = -QUEST_CARD_BUMP_ROT;
+      else if (y < -40) {
         rot = -6;
-        scale = 0.94;
+        scale = 0.97;
       }
     }
-    const flightEase = 'cubic-bezier(0.22, 0.82, 0.28, 1)';
+    const bumpOutEase = 'cubic-bezier(0.22, 0.82, 0.28, 1)';
+    const bumpBackEase = 'cubic-bezier(0.34, 1.25, 0.45, 1)';
     const snapEase = 'cubic-bezier(0.34, 1.25, 0.45, 1)';
     return {
       transform: `translate3d(${x}px, ${y}px, 0) rotate(${rot}deg) scale(${scale})`,
       transition:
         questSwipeDragging && !swipeFlying
           ? 'none'
-          : swipeFlying
-            ? `transform ${QUEST_CARD_FLIGHT_MS}ms ${flightEase}, opacity ${QUEST_CARD_FLIGHT_MS}ms ease-out`
+          : swipeFlying && swipeBumpPhase === 'out'
+            ? `transform ${QUEST_CARD_BUMP_MS}ms ${bumpOutEase}`
+            : swipeFlying && swipeBumpPhase === 'back'
+              ? `transform ${QUEST_CARD_RETURN_MS}ms ${bumpBackEase}`
             : swipeParkedAfterFlight
               ? 'opacity 0.2s ease-out'
               : `transform 0.45s ${snapEase}, opacity 0.45s ${snapEase}`,
-      opacity: swipeParkedAfterFlight ? 0 : swipeFlying ? 0.88 : 1,
+      opacity: swipeParkedAfterFlight ? 0 : 1,
       touchAction: 'none',
       willChange: questSwipeDragging || swipeFlying ? 'transform' : undefined,
     };
-  }, [questCardTransformsActive, questSwipeOffset, questSwipeDragging, swipeFlying, swipeParkedAfterFlight]);
+  }, [
+    questCardTransformsActive,
+    questSwipeOffset,
+    questSwipeDragging,
+    swipeFlying,
+    swipeBumpPhase,
+    swipeParkedAfterFlight,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1138,87 +1169,46 @@ function AppPageContent() {
               </div>
             ) : (
               <>
-                {isPending && (
-                  <div
-                    className="pointer-events-none absolute inset-0 z-[15] overflow-hidden rounded-[28px]"
-                    aria-hidden
-                  >
-                    <div
-                      className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-emerald-500/25"
-                      style={{ opacity: swipeOverlayOpacity.acceptOp }}
-                    >
-                      <span className="-rotate-12 text-2xl font-black tracking-[0.2em] text-emerald-700">
-                        {t('swipeOverlayAccept')}
-                      </span>
-                    </div>
-                    <div
-                      className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-orange-500/25"
-                      style={{ opacity: swipeOverlayOpacity.changeOp }}
-                    >
-                      <span className="rotate-12 text-2xl font-black tracking-[0.2em] text-orange-800">
-                        {t('swipeOverlayChange')}
-                      </span>
-                    </div>
-                    <div
-                      className="absolute left-0 right-0 top-0 flex h-[52px] items-center justify-center rounded-t-[28px] bg-indigo-500/20"
-                      style={{ opacity: swipeOverlayOpacity.detailOp }}
-                    >
-                      <span className="text-base font-black tracking-wide text-indigo-600 dark:text-indigo-400">
-                        {t('swipeOverlayDetails')}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {isAccepted && (
-                  <div
-                    className="pointer-events-none absolute inset-0 z-[15] overflow-hidden rounded-[28px]"
-                    aria-hidden
-                  >
-                    <div
-                      className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-emerald-500/25"
-                      style={{ opacity: swipeOverlayOpacity.acceptOp }}
-                    >
-                      <span className="-rotate-12 text-2xl font-black tracking-[0.2em] text-emerald-700">
-                        {t('swipeOverlayValidate')}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <div className="relative z-0 px-6 pt-8 pb-4 flex flex-col items-center text-center">
-                  <span className="text-[56px] leading-none mb-4 select-none" aria-hidden>
-                    {questDisplayEmoji(quest.emoji)}
-                  </span>
-                  <h2 className="font-display text-[22px] font-black leading-tight text-[var(--text)] mb-3 px-2">
-                    {quest.title}
-                  </h2>
-                  <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-                    {quest.archetypeCategory ? (
-                      <span className="rounded-full border border-[var(--muted)]/20 bg-[var(--muted)]/5 px-2.5 py-0.5 text-[11px] font-bold text-[var(--muted)]">
-                        {questFamilyLabel(quest.archetypeCategory, appLocale)}
-                      </span>
-                    ) : null}
-                    <span className="rounded-full border border-[var(--link-on-bg)]/30 bg-[var(--link-on-bg)]/8 px-2.5 py-0.5 text-[11px] font-bold text-[var(--link-on-bg)]">
-                      {questPace === 'planned' ? t('pacePlannedLabel') : t('paceTodayLabel')}
+                <div className="relative z-0 flex flex-col px-5 pb-1 pt-7 sm:px-6">
+                  <div className="flex flex-col items-center text-center">
+                    <span className="mb-3 text-[52px] leading-none select-none" aria-hidden>
+                      {questDisplayEmoji(quest.emoji)}
                     </span>
-                    {quest.isOutdoor ? (
-                      <span className="rounded-full border border-[var(--green)]/30 bg-[var(--green)]/8 px-2.5 py-0.5 text-[11px] font-bold text-[var(--green)]">
-                        {t('outdoorBadge')}
-                      </span>
+                    <h2 className="font-display max-w-[22ch] px-1 text-xl font-black leading-snug text-[var(--text)] sm:text-[22px]">
+                      {quest.title}
+                    </h2>
+                    <p className="mt-3 max-w-md text-[13px] leading-snug text-[var(--muted)]">
+                      {[
+                        quest.archetypeCategory ? questFamilyLabel(quest.archetypeCategory, appLocale) : null,
+                        isPlannedQuest ? t('questCardMetaPacePlanned') : t('questCardMetaPaceToday'),
+                        quest.isOutdoor ? t('questCardOutdoorShort') : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                    {quest.hook?.trim() ? (
+                      <p className="mt-4 w-full max-w-md border-l-[3px] border-[var(--orange)]/45 pl-3 text-left text-sm italic leading-relaxed text-[var(--text)]/90 line-clamp-3">
+                        {quest.hook.trim()}
+                      </p>
                     ) : null}
                   </div>
-                  <p className="text-sm leading-relaxed text-[var(--muted)] line-clamp-3 px-1 mb-3">
-                    {quest.mission}
-                  </p>
-                  <p className="text-xs font-semibold text-[var(--muted)]">
-                    {quest.duration}
-                  </p>
+
+                  <div className="mt-6 w-full border-t border-[var(--border-ui)]/35 pt-5 text-left">
+                    <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+                      {t('questCardMissionEyebrow')}
+                    </p>
+                    <div className="max-h-[min(12.5rem,38vh)] overflow-y-auto pr-1">
+                      <p className="text-[15px] leading-relaxed text-[var(--text)]">{quest.mission}</p>
+                    </div>
+                    <p className="mt-4 text-xs font-semibold tabular-nums text-[var(--muted)]">{quest.duration}</p>
+                  </div>
                 </div>
 
                 {isPending && (
                   <button
                     type="button"
                     onClick={() => setShowDetails(true)}
-                    className="w-full py-3 text-center text-xs font-semibold text-[var(--muted)]/60 hover:text-[var(--muted)] transition-colors"
+                    className="w-full border-t border-[var(--border-ui)]/25 py-3 text-center text-xs font-semibold text-[var(--muted)]/70 transition-colors hover:text-[var(--muted)]"
                   >
                     {t('swipeTapDetails')}
                   </button>
@@ -1259,11 +1249,7 @@ function AppPageContent() {
                 )}
 
                 {isPending && (
-                  <div className="px-5 pb-5 space-y-2">
-                    <button type="button" onClick={handleAccept} disabled={accepting}
-                      className="btn btn-cta btn-lg w-full text-base font-black">
-                      {accepting ? '\u2026' : t('acceptChallenge')}
-                    </button>
+                  <div className="relative z-0 px-5 pb-5 space-y-2">
                     <button
                       type="button"
                       onClick={confirmReroll}
@@ -1271,6 +1257,10 @@ function AppPageContent() {
                       className="w-full py-3 rounded-xl border-2 border-[var(--orange)]/40 bg-[var(--orange)]/5 text-sm font-black text-[var(--orange)] hover:bg-[var(--orange)]/10 transition-colors disabled:opacity-40"
                     >
                       {rerolling ? '\u2026' : t('changeQuest', { label: rerollLabel })}
+                    </button>
+                    <button type="button" onClick={handleAccept} disabled={accepting}
+                      className="btn btn-cta btn-lg w-full text-base font-black">
+                      {accepting ? '\u2026' : t('acceptChallenge')}
                     </button>
                     <button
                       type="button"
@@ -1281,6 +1271,69 @@ function AppPageContent() {
                     </button>
                   </div>
                 )}
+
+                {isPending && (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-[35] overflow-hidden rounded-[28px]"
+                    aria-hidden
+                  >
+                    <div
+                      className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-emerald-500/25"
+                      style={{ opacity: swipeOverlayOpacity.acceptOp }}
+                    >
+                      <span className="-rotate-12 text-2xl font-black tracking-[0.2em] text-emerald-700">
+                        {t('swipeOverlayAccept')}
+                      </span>
+                    </div>
+                    <div
+                      className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-orange-500/25"
+                      style={{ opacity: swipeOverlayOpacity.changeOp }}
+                    >
+                      <span className="rotate-12 text-2xl font-black tracking-[0.2em] text-orange-800">
+                        {t('swipeOverlayChange')}
+                      </span>
+                    </div>
+                    <div
+                      className="absolute left-0 right-0 top-0 flex h-[52px] items-center justify-center rounded-t-[28px] bg-indigo-500/20"
+                      style={{ opacity: swipeOverlayOpacity.detailOp }}
+                    >
+                      <span className="text-base font-black tracking-wide text-indigo-600 dark:text-indigo-400">
+                        {t('swipeOverlayDetails')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {isAccepted && (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-[20] overflow-hidden rounded-[28px]"
+                    aria-hidden
+                  >
+                    <div
+                      className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-emerald-500/25"
+                      style={{ opacity: swipeOverlayOpacity.acceptOp }}
+                    >
+                      <span className="-rotate-12 text-2xl font-black tracking-[0.2em] text-emerald-700">
+                        {t('swipeOverlayValidate')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {rerolling ? (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-[50] flex flex-col items-center justify-center gap-3 overflow-hidden rounded-[28px] bg-[rgba(18,18,20,0.88)]"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span
+                      className="h-10 w-10 motion-safe:animate-spin rounded-full border-2 border-[var(--orange)] border-t-transparent motion-reduce:animate-none"
+                      aria-hidden
+                    />
+                    <p className="max-w-[min(100%,20rem)] px-4 text-center text-sm font-bold text-white drop-shadow-md">
+                      {t('rerollLoading')}
+                    </p>
+                  </div>
+                ) : null}
               </>
             )}
           </div>

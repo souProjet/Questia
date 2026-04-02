@@ -1,13 +1,13 @@
-import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
-import { Gesture, GestureDetector, Pressable, ScrollView } from 'react-native-gesture-handler';
+import React, { useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, useWindowDimensions, ActivityIndicator } from 'react-native';
+import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
   interpolate,
   runOnJS,
+  Easing,
   Extrapolation,
 } from 'react-native-reanimated';
 import { questDisplayEmoji, questFamilyLabel, type AppLocale } from '@questia/shared';
@@ -16,8 +16,13 @@ import { hapticLight, hapticSuccess, hapticWarning } from '../lib/haptics';
 
 const SWIPE_THRESHOLD = 120;
 const SWIPE_UP_THRESHOLD = 80;
+/** Au-delà de ce déplacement, on fige soit le swipe horizontal, soit le vertical (pas les deux). */
+const AXIS_LOCK_PX = 14;
 const ROTATION_DEG = 12;
-const SPRING_CONFIG = { damping: 20, stiffness: 200, mass: 0.8 };
+/** Retour au centre au relâchement : court, sans rebond (évite le « délai » du double spring bump → retour). */
+const SNAP_MS = 115;
+const SNAP_EASING = Easing.out(Easing.cubic);
+const snapToCenter = { duration: SNAP_MS, easing: SNAP_EASING } as const;
 
 export interface SwipeCardQuest {
   emoji: string;
@@ -56,7 +61,13 @@ interface Props {
     abandonedSub: string;
     paceToday: string;
     pacePlanned: string;
+    /** Court libellé au-dessus du texte de mission (ex. « Ta mission »). */
+    missionEyebrow: string;
+    outdoorTag: string;
   };
+  /** Relance en cours : voile aligné sur la carte (même cadre que le swipe). */
+  rerolling?: boolean;
+  rerollLoadingLabel?: string;
 }
 
 export function QuestSwipeCard({
@@ -70,11 +81,20 @@ export function QuestSwipeCard({
   onValidate,
   onShare,
   strings: s,
+  rerolling = false,
+  rerollLoadingLabel,
 }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const cardScale = useSharedValue(1);
+  /** Évite de lire des props React dans les worklets (Reanimated 4 / worklets) — crash Android possible au swipe sinon. */
+  const layoutWidth = useSharedValue(screenWidth);
+  const layoutHeight = useSharedValue(screenHeight);
+  /** 0 = pas encore choisi, 1 = horizontal, 2 = vertical (détails) */
+  const axisLock = useSharedValue(0);
+  /** 0 = pending (swipe accepter / reroll / détails), 1 = accepted (swipe valider uniquement), 2 = autre */
+  const panMode = useSharedValue(0);
 
   const isPending = quest.status === 'pending';
   const isAccepted = quest.status === 'accepted';
@@ -96,40 +116,130 @@ export function QuestSwipeCard({
     onOpenDetails();
   }, [onOpenDetails]);
 
+  const triggerValidate = useCallback(() => {
+    hapticSuccess();
+    onValidate();
+  }, [onValidate]);
+
+  useEffect(() => {
+    if (isPending) panMode.value = 0;
+    else if (isAccepted) panMode.value = 1;
+    else panMode.value = 2;
+  }, [isPending, isAccepted]);
+
+  useEffect(() => {
+    layoutWidth.value = screenWidth;
+    layoutHeight.value = screenHeight;
+  }, [screenWidth, screenHeight]);
+
   const pan = Gesture.Pan()
-    .enabled(isPending)
+    .enabled(isPending || isAccepted)
+    .onBegin(() => {
+      axisLock.value = 0;
+    })
     .onUpdate((e) => {
-      translateX.value = e.translationX;
-      translateY.value = Math.min(0, e.translationY);
+      const mode = panMode.value;
+      const tx = e.translationX;
+      const ty = e.translationY;
+      const ax = Math.abs(tx);
+      const ay = Math.abs(ty);
+
+      if (mode === 1) {
+        if (axisLock.value === 0) {
+          if (ax < AXIS_LOCK_PX && ay < AXIS_LOCK_PX) {
+            translateX.value = 0;
+            translateY.value = 0;
+            return;
+          }
+          axisLock.value = ax > ay ? 1 : 2;
+        }
+        if (axisLock.value === 1) {
+          translateX.value = tx;
+          translateY.value = 0;
+        } else {
+          translateX.value = 0;
+          translateY.value = 0;
+        }
+        return;
+      }
+
+      if (axisLock.value === 0) {
+        if (ax < AXIS_LOCK_PX && ay < AXIS_LOCK_PX) {
+          translateX.value = 0;
+          translateY.value = 0;
+          return;
+        }
+        axisLock.value = ax > ay ? 1 : 2;
+      }
+
+      if (axisLock.value === 1) {
+        translateX.value = tx;
+        translateY.value = 0;
+      } else {
+        translateX.value = 0;
+        translateY.value = Math.min(0, ty);
+      }
     })
     .onEnd((e) => {
-      if (e.translationX > SWIPE_THRESHOLD) {
-        translateX.value = withTiming(screenWidth * 1.2, { duration: 280 });
-        runOnJS(triggerAccept)();
-      } else if (e.translationX < -SWIPE_THRESHOLD && canReroll) {
-        translateX.value = withTiming(-screenWidth * 1.2, { duration: 280 });
-        runOnJS(triggerReroll)();
-      } else if (e.translationY < -SWIPE_UP_THRESHOLD) {
-        translateY.value = withSpring(0, SPRING_CONFIG);
-        translateX.value = withSpring(0, SPRING_CONFIG);
-        runOnJS(triggerDetails)();
-      } else {
-        translateX.value = withSpring(0, SPRING_CONFIG);
-        translateY.value = withSpring(0, SPRING_CONFIG);
+      const mode = panMode.value;
+      const tx = e.translationX;
+      const ty = e.translationY;
+      const lock = axisLock.value;
+
+      if (mode === 1) {
+        if (lock === 1 && tx > SWIPE_THRESHOLD) {
+          runOnJS(triggerValidate)();
+        }
+        translateX.value = withTiming(0, snapToCenter);
+        translateY.value = withTiming(0, snapToCenter);
+        return;
       }
+
+      if (lock === 1) {
+        if (tx > SWIPE_THRESHOLD) {
+          runOnJS(triggerAccept)();
+        } else if (tx < -SWIPE_THRESHOLD && canReroll) {
+          runOnJS(triggerReroll)();
+        }
+        translateX.value = withTiming(0, snapToCenter);
+        translateY.value = withTiming(0, snapToCenter);
+      } else if (lock === 2) {
+        if (ty < -SWIPE_UP_THRESHOLD) {
+          runOnJS(triggerDetails)();
+        }
+        translateX.value = withTiming(0, snapToCenter);
+        translateY.value = withTiming(0, snapToCenter);
+      } else {
+        translateX.value = withTiming(0, snapToCenter);
+        translateY.value = withTiming(0, snapToCenter);
+      }
+    })
+    .onFinalize(() => {
+      axisLock.value = 0;
     });
 
-  const tap = Gesture.Tap().onEnd(() => {
-    runOnJS(triggerDetails)();
-  });
+  /** runOnJS() depuis un handler déjà sur le thread JS fait planter l’app — le Tap doit tourner sur le JS. */
+  const tap = Gesture.Tap()
+    .runOnJS(true)
+    .onEnd(() => {
+      triggerDetails();
+    });
 
-  // Exclusive : le pan a la priorité ; le tap ne s’active que si le pan a échoué (pas de glissé).
-  const composed = isPending ? Gesture.Exclusive(pan, tap) : Gesture.Tap().onEnd(() => runOnJS(triggerDetails)());
+  const panTapExclusive = Gesture.Exclusive(pan, tap);
+  const composed =
+    isPending || isAccepted
+      ? panTapExclusive
+      : Gesture.Tap()
+          .runOnJS(true)
+          .onEnd(() => {
+            triggerDetails();
+          });
 
   const cardAnimStyle = useAnimatedStyle(() => {
+    const w = layoutWidth.value;
     const rotation = interpolate(
       translateX.value,
-      [-screenWidth * 0.5, 0, screenWidth * 0.5],
+      [-w * 0.5, 0, w * 0.5],
       [-ROTATION_DEG, 0, ROTATION_DEG],
       Extrapolation.CLAMP,
     );
@@ -157,6 +267,9 @@ export function QuestSwipeCard({
 
   const family = quest.archetypeCategory ? questFamilyLabel(quest.archetypeCategory, locale) : null;
   const paceLabel = quest.questPace === 'planned' ? s.pacePlanned : s.paceToday;
+  const metaLineParts = [family, paceLabel, quest.isOutdoor ? s.outdoorTag : null].filter(
+    (x): x is string => Boolean(x),
+  );
   const cardHeight = Math.min(screenHeight * 0.68, 580);
   const hookText = (quest.hook ?? '').trim();
 
@@ -171,119 +284,122 @@ export function QuestSwipeCard({
 
   return (
     <View style={[styles.cardContainer, { height: cardHeight }]}>
-      <GestureDetector gesture={composed}>
-        <Animated.View
-          style={[
-            styles.card,
-            {
-              backgroundColor: p.card,
-              borderColor: isCompleted
-                ? 'rgba(16,185,129,0.5)'
-                : isAccepted
-                  ? 'rgba(16,185,129,0.3)'
-                  : `${p.orange}44`,
-              shadowColor: p.orange,
-            },
-            cardAnimStyle,
-          ]}
-        >
-          {isPending && (
-            <>
-              <Animated.View pointerEvents="none" style={[styles.overlayAccept, acceptOverlayStyle]}>
-                <Text style={styles.overlayAcceptText}>{s.swipeAccept}</Text>
-              </Animated.View>
-              <Animated.View pointerEvents="none" style={[styles.overlayReroll, rerollOverlayStyle]}>
-                <Text style={styles.overlayRerollText}>{s.swipeChange}</Text>
-              </Animated.View>
-              <Animated.View pointerEvents="none" style={[styles.overlayDetail, detailHintStyle]}>
-                <Text style={styles.overlayDetailText}>{s.tapDetails}</Text>
-              </Animated.View>
-            </>
-          )}
-
-          <View style={styles.cardInner}>
-            <Text style={styles.emoji}>{questDisplayEmoji(quest.emoji)}</Text>
-            <Text style={[styles.title, { color: p.text }]}>{quest.title}</Text>
-
-            <View style={styles.badges}>
-              {family ? (
-                <View style={[styles.badge, { borderColor: `${p.muted}33`, backgroundColor: `${p.muted}11` }]}>
-                  <Text style={[styles.badgeText, { color: p.muted }]}>{family}</Text>
-                </View>
-              ) : null}
-              <View style={[styles.badge, { borderColor: `${p.linkOnBg}44`, backgroundColor: `${p.linkOnBg}11` }]}>
-                <Text style={[styles.badgeText, { color: p.linkOnBg }]}>{paceLabel}</Text>
+      <Animated.View
+        style={[
+          styles.card,
+          {
+            backgroundColor: p.card,
+            borderColor: isCompleted
+              ? 'rgba(16,185,129,0.5)'
+              : isAccepted
+                ? 'rgba(16,185,129,0.3)'
+                : `${p.orange}44`,
+            shadowColor: p.orange,
+          },
+          cardAnimStyle,
+        ]}
+      >
+        {/* Boutons fallback sous le contenu puis overlays au-dessus (même zone que le swipe). */}
+        <GestureDetector gesture={composed}>
+          <View style={styles.gestureArea} collapsable={false}>
+            <View style={styles.cardInner}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.emoji}>{questDisplayEmoji(quest.emoji)}</Text>
+                <Text style={[styles.title, { color: p.text }]}>{quest.title}</Text>
+                {metaLineParts.length > 0 ? (
+                  <Text style={[styles.metaLine, { color: p.muted }]} numberOfLines={2}>
+                    {metaLineParts.join(' · ')}
+                  </Text>
+                ) : null}
               </View>
-              {quest.isOutdoor ? (
-                <View style={[styles.badge, { borderColor: `${p.green}44`, backgroundColor: `${p.green}11` }]}>
-                  <Text style={[styles.badgeText, { color: p.green }]}>Exterieur</Text>
+
+              {hookText ? (
+                <Text style={[styles.hookLine, { color: p.text, borderLeftColor: `${p.orange}99` }]}>{hookText}</Text>
+              ) : null}
+
+              <View style={[styles.missionBlock, { borderTopColor: `${p.muted}22` }]}>
+                <Text style={[styles.missionEyebrow, { color: p.muted }]}>{s.missionEyebrow}</Text>
+                <View style={styles.missionTextWrap}>
+                  <Text style={[styles.missionFull, { color: p.text }]}>{quest.mission}</Text>
                 </View>
-              ) : null}
+                <Text style={[styles.duration, { color: p.muted }]}>{quest.duration}</Text>
+              </View>
             </View>
 
-            {hookText ? (
-              <Text style={[styles.hookLine, { color: p.text }]}>{hookText}</Text>
-            ) : null}
-
-            <ScrollView
-              style={styles.missionScroll}
-              contentContainerStyle={styles.missionScrollContent}
-              showsVerticalScrollIndicator
-              nestedScrollEnabled
-              bounces={false}
-            >
-              <Text style={[styles.missionFull, { color: p.text }]}>{quest.mission}</Text>
-            </ScrollView>
-
-            <Text style={[styles.duration, { color: p.muted }]}>{quest.duration}</Text>
-          </View>
-
-          {isPending && (
-            <View style={styles.fallbackActions}>
-              <Pressable
-                style={[styles.fallbackBtn, { backgroundColor: `${p.green}18`, borderColor: `${p.green}44` }]}
-                onPress={onAccept}
-                accessibilityRole="button"
-                accessibilityLabel={s.swipeAccept}
-              >
-                <Text style={[styles.fallbackBtnText, { color: p.green }]}>{s.swipeAccept}</Text>
-              </Pressable>
-              {canReroll ? (
+            {isPending && (
+              <View style={styles.fallbackActions}>
+                {canReroll ? (
+                  <Pressable
+                    style={[styles.fallbackBtn, { backgroundColor: `${p.orange}18`, borderColor: `${p.orange}44` }]}
+                    onPress={onReroll}
+                    accessibilityRole="button"
+                    accessibilityLabel={s.swipeChange}
+                  >
+                    <Text style={[styles.fallbackBtnText, { color: p.orange }]}>{s.swipeChange}</Text>
+                  </Pressable>
+                ) : null}
                 <Pressable
-                  style={[styles.fallbackBtn, { backgroundColor: `${p.orange}18`, borderColor: `${p.orange}44` }]}
-                  onPress={onReroll}
+                  style={[styles.fallbackBtn, { backgroundColor: `${p.green}18`, borderColor: `${p.green}44` }]}
+                  onPress={onAccept}
                   accessibilityRole="button"
-                  accessibilityLabel={s.swipeChange}
+                  accessibilityLabel={s.swipeAccept}
                 >
-                  <Text style={[styles.fallbackBtnText, { color: p.orange }]}>{s.swipeChange}</Text>
+                  <Text style={[styles.fallbackBtnText, { color: p.green }]}>{s.swipeAccept}</Text>
                 </Pressable>
-              ) : null}
-            </View>
-          )}
+              </View>
+            )}
 
-          {isAccepted && (
+            {isPending && (
+              <>
+                <Animated.View pointerEvents="none" style={[styles.overlayAccept, acceptOverlayStyle]}>
+                  <Text style={styles.overlayAcceptText}>{s.swipeAccept}</Text>
+                </Animated.View>
+                <Animated.View pointerEvents="none" style={[styles.overlayReroll, rerollOverlayStyle]}>
+                  <Text style={styles.overlayRerollText}>{s.swipeChange}</Text>
+                </Animated.View>
+                <Animated.View pointerEvents="none" style={[styles.overlayDetail, detailHintStyle]}>
+                  <Text style={styles.overlayDetailText}>{s.tapDetails}</Text>
+                </Animated.View>
+              </>
+            )}
+
+            {isAccepted && (
+              <Animated.View pointerEvents="none" style={[styles.overlayAccept, acceptOverlayStyle]}>
+                <Text style={styles.overlayAcceptText}>{s.validateCta}</Text>
+              </Animated.View>
+            )}
+          </View>
+        </GestureDetector>
+
+        {isAccepted && (
+          <Pressable
+            style={[styles.validateBtn, { backgroundColor: p.green }]}
+            onPress={onValidate}
+          >
+            <Text style={styles.validateText}>{s.validateCta}</Text>
+          </Pressable>
+        )}
+
+        {isCompleted && (
+          <View style={styles.completedFooter}>
+            <Text style={[styles.completedTitle, { color: p.green }]}>{s.completedTitle}</Text>
+            <Text style={[styles.completedSub, { color: p.muted }]}>{s.completedSub}</Text>
             <Pressable
-              style={[styles.validateBtn, { backgroundColor: p.green }]}
-              onPress={onValidate}
+              style={[styles.shareBtn, { borderColor: `${p.cyan}55` }]}
+              onPress={onShare}
             >
-              <Text style={styles.validateText}>{s.validateCta}</Text>
+              <Text style={[styles.shareBtnText, { color: p.linkOnBg }]}>{s.shareCta}</Text>
             </Pressable>
-          )}
+          </View>
+        )}
 
-          {isCompleted && (
-            <View style={styles.completedFooter}>
-              <Text style={[styles.completedTitle, { color: p.green }]}>{s.completedTitle}</Text>
-              <Text style={[styles.completedSub, { color: p.muted }]}>{s.completedSub}</Text>
-              <Pressable
-                style={[styles.shareBtn, { borderColor: `${p.cyan}55` }]}
-                onPress={onShare}
-              >
-                <Text style={[styles.shareBtnText, { color: p.linkOnBg }]}>{s.shareCta}</Text>
-              </Pressable>
-            </View>
-          )}
-        </Animated.View>
-      </GestureDetector>
+        {rerolling ? (
+          <View style={styles.rerollLoadingOverlay} pointerEvents="none" accessibilityLiveRegion="polite">
+            <ActivityIndicator size="large" color="#ffffff" />
+            <Text style={styles.rerollLoadingText}>{rerollLoadingLabel ?? '…'}</Text>
+          </View>
+        ) : null}
+      </Animated.View>
     </View>
   );
 }
@@ -300,78 +416,110 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 2,
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.22,
+    shadowRadius: 32,
+    elevation: 12,
     flex: 1,
+  },
+  gestureArea: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
   },
   cardInner: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    alignItems: 'center',
+    paddingTop: 22,
+    paddingBottom: 14,
+    alignItems: 'stretch',
     justifyContent: 'flex-start',
     minHeight: 0,
   },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   emoji: {
-    fontSize: 56,
-    marginBottom: 16,
+    fontSize: 52,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '900',
     textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    lineHeight: 27,
+    marginBottom: 8,
+    paddingHorizontal: 6,
   },
-  badges: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 6,
-    marginBottom: 12,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
+  metaLine: {
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+    paddingHorizontal: 8,
+    marginBottom: 4,
   },
   hookLine: {
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: 14,
+    lineHeight: 21,
     fontStyle: 'italic',
-    textAlign: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 4,
-    opacity: 0.95,
+    textAlign: 'left',
+    marginTop: 8,
+    marginBottom: 10,
+    paddingLeft: 12,
+    paddingRight: 4,
+    borderLeftWidth: 3,
+    opacity: 0.92,
   },
-  missionScroll: {
-    width: '100%',
+  missionBlock: {
+    marginTop: 8,
+    paddingTop: 14,
+    borderTopWidth: 1,
     flex: 1,
-    minHeight: 72,
-    maxHeight: 240,
-    marginBottom: 8,
+    minHeight: 0,
+    width: '100%',
   },
-  missionScrollContent: {
+  missionEyebrow: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    textAlign: 'left',
+  },
+  missionTextWrap: {
+    width: '100%',
     paddingBottom: 4,
   },
   missionFull: {
-    fontSize: 14,
-    lineHeight: 21,
-    textAlign: 'center',
+    fontSize: 15,
+    lineHeight: 23,
+    textAlign: 'left',
   },
   duration: {
     fontSize: 12,
     fontWeight: '600',
-    marginTop: 'auto',
+    marginTop: 10,
+    textAlign: 'left',
+  },
+  /** Pas d’elevation ici : sur Android ça crée une couche ombrée / dégradés bizarres au-dessus du contenu. */
+  rerollLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: 'rgba(18,18,20,0.88)',
+    zIndex: 200,
+    elevation: 0,
+  },
+  rerollLoadingText: {
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: 22,
+    maxWidth: '92%',
+    color: 'rgba(255,255,255,0.96)',
   },
   fallbackActions: {
     flexDirection: 'row',
@@ -397,7 +545,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    zIndex: 30,
   },
   overlayAcceptText: {
     fontSize: 28,
@@ -412,7 +560,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    zIndex: 30,
   },
   overlayRerollText: {
     fontSize: 28,
@@ -432,7 +580,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    zIndex: 30,
   },
   overlayDetailText: {
     fontSize: 16,

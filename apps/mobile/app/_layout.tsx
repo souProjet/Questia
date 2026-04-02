@@ -6,6 +6,7 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SecureStore from 'expo-secure-store';
 import { DA } from '@questia/ui';
+import { AppLocaleProvider } from '../contexts/AppLocaleContext';
 import { AppThemeProvider, useAppTheme } from '../contexts/AppThemeContext';
 import { setupNotificationHandler } from '../lib/pushNotifications';
 
@@ -14,9 +15,6 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
     <View style={errStyles.container}>
       <Text style={errStyles.title}>Erreur</Text>
       <Text style={errStyles.message}>{error.message}</Text>
-      <Text style={errStyles.hint}>
-        Vérifie que .env contient EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY et redémarre Expo (Ctrl+C puis npx expo start).
-      </Text>
       <Pressable style={errStyles.btn} onPress={retry}>
         <Text style={errStyles.btnText}>Réessayer</Text>
       </Pressable>
@@ -98,9 +96,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY} tokenCache={tokenCache}>
-        <AppThemeProvider>
-          <InitialLayout />
-        </AppThemeProvider>
+        <AppLocaleProvider>
+          <AppThemeProvider>
+            <InitialLayout />
+          </AppThemeProvider>
+        </AppLocaleProvider>
       </ClerkProvider>
     </SafeAreaProvider>
   );
