@@ -16,8 +16,6 @@ export type ShopScreenStrings = {
   flashPaymentOk: string;
   kindLabel(kind: ShopCatalogEntry['kind']): string;
   themeLabel(id: string): string;
-  narrationPackLabel(id: string): string;
-  defaultNarration: string;
   noTitle: string;
   marketingBadge(b: ShopMarketingBadge): string;
   moreInfoA11y(name: string): string;
@@ -38,12 +36,9 @@ export type ShopScreenStrings = {
   customization: string;
   customizationLead: string;
   fieldTheme: string;
-  fieldNarration: string;
   fieldTitle: string;
   themeCurrentA11y(name: string): string;
   themeOpenHint: string;
-  narrationCurrentA11y(name: string): string;
-  narrationOpenHint: string;
   titleCurrentA11y(name: string): string;
   titleOpenHint: string;
   bonusRerolls: string;
@@ -56,14 +51,12 @@ export type ShopScreenStrings = {
   sectionLook: string;
   sectionThemes: string;
   sectionTitles: string;
-  sectionNarration: string;
   sectionRerolls: string;
   txJournal: string;
   txHistoryLink: string;
   txEmpty: string;
   balanceAfter: (n: number) => string;
   selectThemeTitle: string;
-  selectNarrationTitle: string;
   selectTitleTitle: string;
   rechargeTitle: string;
   rechargeSubtitle: string;
@@ -75,18 +68,6 @@ export type ShopScreenStrings = {
   payEur: (eur: string) => string;
   qcPerEur: (n: number) => string;
   bonusVsSmall: (pct: number) => string;
-};
-
-const NARRATION_FR: Record<string, string> = {
-  cinematic: 'Cinématique',
-  poetic: 'Poétique',
-  noir: 'Mystère urbain',
-};
-
-const NARRATION_EN: Record<string, string> = {
-  cinematic: 'Cinematic',
-  poetic: 'Poetic',
-  noir: 'Urban mystery',
 };
 
 function themeLabelFr(id: string): string {
@@ -137,8 +118,6 @@ function frStrings(): ShopScreenStrings {
           return 'Titre';
         case 'xp_booster':
           return 'Bonus XP';
-        case 'narration_pack':
-          return 'Ton des quêtes';
         case 'reroll_pack':
           return 'Relances';
         case 'bundle':
@@ -148,8 +127,6 @@ function frStrings(): ShopScreenStrings {
       }
     },
     themeLabel: themeLabelFr,
-    narrationPackLabel: (id) => NARRATION_FR[id] ?? id,
-    defaultNarration: 'Style Questia (par défaut)',
     noTitle: 'Aucun titre',
     marketingBadge,
     moreInfoA11y: (name) => `Plus d'infos : ${name}`,
@@ -166,16 +143,13 @@ function frStrings(): ShopScreenStrings {
     walletHistoryA11y: 'Historique du portefeuille',
     walletHistoryHint: 'Ouvre le journal des mouvements Quest Coins',
     prefsHeading: 'Équipement & affichage',
-    prefsIntro: 'Thème, ton des quêtes et titre — appliqués tout de suite dans l’app.',
+    prefsIntro: 'Thème et titre — appliqués tout de suite dans l’app.',
     customization: 'Personnalisation',
     customizationLead: 'Règle l’apparence comme sur ton inventaire',
     fieldTheme: 'Thème actif',
-    fieldNarration: 'Ton des textes de quête',
     fieldTitle: 'Titre sur le profil',
     themeCurrentA11y: (name) => `Thème actuel : ${name}`,
     themeOpenHint: 'Ouvre le choix de thème',
-    narrationCurrentA11y: (name) => `Ton des textes de quête : ${name}`,
-    narrationOpenHint: 'Ouvre le choix du style de narration',
     titleCurrentA11y: (name) => `Titre sur le profil : ${name}`,
     titleOpenHint: 'Ouvre le choix du titre affiché',
     bonusRerolls: 'Relances bonus',
@@ -188,14 +162,12 @@ function frStrings(): ShopScreenStrings {
     sectionLook: 'Apparence',
     sectionThemes: 'Thèmes',
     sectionTitles: 'Titres',
-    sectionNarration: 'Ton des quêtes',
     sectionRerolls: 'Relances',
     txJournal: 'Journal des transactions',
     txHistoryLink: 'Historique détaillé',
     txEmpty: 'Aucune opération pour l’instant.',
     balanceAfter: (n) => `Solde après : ${n} QC`,
     selectThemeTitle: 'Thème actif',
-    selectNarrationTitle: 'Ton des textes de quête',
     selectTitleTitle: 'Titre sur le profil',
     rechargeTitle: 'Ajouter des Quest Coins',
     rechargeSubtitle:
@@ -243,8 +215,6 @@ function enStrings(): ShopScreenStrings {
           return 'Title';
         case 'xp_booster':
           return 'XP boost';
-        case 'narration_pack':
-          return 'Quest tone';
         case 'reroll_pack':
           return 'Rerolls';
         case 'bundle':
@@ -254,8 +224,6 @@ function enStrings(): ShopScreenStrings {
       }
     },
     themeLabel: themeLabelEn,
-    narrationPackLabel: (id) => NARRATION_EN[id] ?? id,
-    defaultNarration: 'Questia style (default)',
     noTitle: 'No title',
     marketingBadge,
     moreInfoA11y: (name) => `More info: ${name}`,
@@ -272,16 +240,13 @@ function enStrings(): ShopScreenStrings {
     walletHistoryA11y: 'Wallet history',
     walletHistoryHint: 'Opens Quest Coin transactions',
     prefsHeading: 'Gear & display',
-    prefsIntro: 'Theme, quest tone, and title — applied immediately in the app.',
+    prefsIntro: 'Theme and title — applied immediately in the app.',
     customization: 'Customization',
     customizationLead: 'Tune the look like in your inventory',
     fieldTheme: 'Active theme',
-    fieldNarration: 'Quest text tone',
     fieldTitle: 'Profile title',
     themeCurrentA11y: (name) => `Current theme: ${name}`,
     themeOpenHint: 'Opens theme picker',
-    narrationCurrentA11y: (name) => `Quest text tone: ${name}`,
-    narrationOpenHint: 'Opens narration style picker',
     titleCurrentA11y: (name) => `Profile title: ${name}`,
     titleOpenHint: 'Opens title picker',
     bonusRerolls: 'Bonus rerolls',
@@ -294,14 +259,12 @@ function enStrings(): ShopScreenStrings {
     sectionLook: 'Look',
     sectionThemes: 'Themes',
     sectionTitles: 'Titles',
-    sectionNarration: 'Quest tone',
     sectionRerolls: 'Rerolls',
     txJournal: 'Transaction log',
     txHistoryLink: 'Full history',
     txEmpty: 'No transactions yet.',
     balanceAfter: (n) => `Balance after: ${n} QC`,
     selectThemeTitle: 'Active theme',
-    selectNarrationTitle: 'Quest text tone',
     selectTitleTitle: 'Profile title',
     rechargeTitle: 'Add Quest Coins',
     rechargeSubtitle:

@@ -21,7 +21,6 @@ export type OverviewJson = {
     rerollsBonus: number;
     lastQuestDate: string | null;
     activeThemeId: string;
-    activeNarrationPackId: string | null;
     refinementSchemaVersion: number;
     reminderPushEnabled: boolean;
     reminderEmailEnabled: boolean;

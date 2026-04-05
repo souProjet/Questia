@@ -4,16 +4,14 @@
  * **Ajouter un produit sans toucher au CSS :**
  * 1. Titres : ajouter l’id dans `shop/titles.ts` (TITLES_REGISTRY), puis une entrée `kind: 'title'` avec `grants: { titles: ['id'] }`.
  * 2. Bonus XP : `kind: 'xp_booster'` et `grants: { xpBonusCharges: N }` (consommé à chaque quête validée).
- * 3. Styles de texte : `kind: 'narration_pack'` + `grants.narrationPacks`.
- * 4. Relances : `grants.bonusRerolls`.
- * 5. Thèmes : préférer **un** `theme_pack` qui liste plusieurs `themes: [...]` — les styles sont dans `globals.css` (`data-theme`), pas un fichier par SKU.
+ * 3. Relances : `grants.bonusRerolls`.
+ * 4. Thèmes : préférer **un** `theme_pack` qui liste plusieurs `themes: [...]` — les styles sont dans `globals.css` (`data-theme`), pas un fichier par SKU.
  */
 import { XP_SHOP_BONUS_PER_CHARGE } from './constants';
 import type { ShopMarketingMeta } from './marketing';
 
 export type ShopItemKind =
   | 'theme_pack'
-  | 'narration_pack'
   | 'reroll_pack'
   | 'bundle'
   | 'title'
@@ -28,7 +26,6 @@ export interface ShopCatalogEntry {
   emoji: string;
   grants: {
     themes?: string[];
-    narrationPacks?: string[];
     bonusRerolls?: number;
     /** ids présents dans TITLES_REGISTRY */
     titles?: string[];
@@ -149,54 +146,6 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     },
   },
   {
-    sku: 'pack_narration_cinematic',
-    kind: 'narration_pack',
-    name: 'Style cinématique',
-    description:
-      'Les textes de ta quête du jour sont rédigés comme une petite scène : rythme de film, images nettes, mise en avant des actions.',
-    priceCoins: 600,
-    emoji: '🎬',
-    grants: { narrationPacks: ['cinematic'] },
-    includedItems: [
-      'Change le ton des phrases de ta quête du jour',
-      'S’applique aux prochaines quêtes après achat (pas aux anciennes)',
-    ],
-    contentsDetail:
-      'Une fois le pack choisi dans les réglages, chaque nouvelle quête du jour utilisera ce style jusqu’à ce que tu changes pour un autre style débloqué. Le fond de l’histoire et les objectifs restent les mêmes — seule la façon d’écrire change.',
-  },
-  {
-    sku: 'pack_narration_poetic',
-    kind: 'narration_pack',
-    name: 'Style poétique',
-    description:
-      'Phrases plus imagées et léger rythme littéraire — toujours lisible et bienveillant.',
-    priceCoins: 600,
-    emoji: '✒️',
-    grants: { narrationPacks: ['poetic'] },
-    includedItems: [
-      'Ton plus « image » pour les textes du jour',
-      'Valable pour les prochaines quêtes après activation',
-    ],
-    contentsDetail:
-      'Pensé pour qui aime un peu de métaphore sans lourdeur. Tu peux repasser au style par défaut Questia quand tu veux.',
-  },
-  {
-    sku: 'pack_narration_noir',
-    kind: 'narration_pack',
-    name: 'Style mystère urbain',
-    description:
-      'Ambiance ville la nuit, tension douce façon polar — sans violence ni contenu sombre.',
-    priceCoins: 700,
-    emoji: '🌃',
-    grants: { narrationPacks: ['noir'] },
-    includedItems: [
-      'Ambiance « film noir » légère pour les textes du jour',
-      'Après achat : prochaines quêtes uniquement',
-    ],
-    contentsDetail:
-      'Le décor et les défis de la quête ne changent pas : c’est uniquement la couleur du récit. Reste bienveillant et adapté à tous les publics.',
-  },
-  {
     sku: 'pack_reroll_3',
     kind: 'reroll_pack',
     name: 'Pack 3 relances',
@@ -214,33 +163,31 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
       'Utile si la quête du jour ne te convient pas : une relance consomme un crédit et en génère une nouvelle. Les crédits restent jusqu’à utilisation.',
   },
   {
-    /** Un seul achat en QC par compte une fois tout le contenu « permanent » obtenu ; avant le 1er achat du SKU, achetable même si thèmes / narration / titre déjà pris à l’unité (pour les bonus XP du lot). */
+    /** Un seul achat en QC par compte une fois tout le contenu « permanent » obtenu ; avant le 1er achat du SKU, achetable même si thèmes / titre déjà pris à l’unité (pour les bonus XP du lot). */
     sku: 'bundle_explorer',
     kind: 'bundle',
     name: 'Bundle Explorateur',
     description:
-      'Un lot : les trois thèmes d’interface, le style cinématique pour les textes du jour, 5 charges de bonus XP et le titre Étincelle.',
-    priceCoins: 1650,
+      'Un lot : les trois thèmes d’interface, 5 charges de bonus XP et le titre Étincelle.',
+    priceCoins: 1390,
     emoji: '🧭',
     grants: {
       themes: ['midnight', 'aurora', 'parchment'],
-      narrationPacks: ['cinematic'],
       xpBonusCharges: 5,
       titles: ['spark'],
     },
     includedItems: [
       '3 thèmes visuels (Nuit boréale, Aurore, Parchemin)',
-      '1 style de texte pour les quêtes : cinématique',
       `5× bonus +${XP_SHOP_BONUS_PER_CHARGE} XP à chaque quête validée`,
       '1 titre profil : Étincelle',
     ],
     contentsDetail:
-      'Tu débloques tout le visuel, un ton pour les textes de quête, un peu de XP en rabais sur les prochaines validations, et un titre à afficher. Les thèmes et le titre se règlent dans les préférences ; le style de texte se choisit comme les autres packs « ton des quêtes ».',
+      'Tu débloques tout le visuel, un peu de XP en rabais sur les prochaines validations, et un titre à afficher. Les thèmes et le titre se règlent dans les préférences.',
     marketing: {
       badge: 'featured',
       hook: 'Plus avantageux que d’acheter chaque pièce séparément.',
-      savingsCoins: 230,
-      compareAtCoins: 1880,
+      savingsCoins: 190,
+      compareAtCoins: 1580,
     },
   },
 ];

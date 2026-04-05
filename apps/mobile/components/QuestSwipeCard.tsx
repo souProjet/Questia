@@ -36,7 +36,7 @@ const snapToCenter = { duration: SNAP_MS, easing: SNAP_EASING } as const;
 export interface SwipeCardQuest {
   emoji: string;
   title: string;
-  /** Phrase courte générée avec le pack de narration (style cinéma / poétique / etc.) — ne pas résumer côté client. */
+  /** Accroche courte fournie par le serveur — ne pas résumer côté client. */
   hook?: string;
   mission: string;
   archetypeCategory?: string;

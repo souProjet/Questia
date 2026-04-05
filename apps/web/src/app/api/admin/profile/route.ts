@@ -58,8 +58,6 @@ export async function GET(request: NextRequest) {
     deferredSocialUntil: profile.deferredSocialUntil,
     activeThemeId: profile.activeThemeId,
     ownedThemes: profile.ownedThemes,
-    activeNarrationPackId: profile.activeNarrationPackId,
-    ownedNarrationPacks: profile.ownedNarrationPacks,
     ownedTitleIds: profile.ownedTitleIds,
     equippedTitleId: profile.equippedTitleId,
     reminderPushEnabled: profile.reminderPushEnabled,

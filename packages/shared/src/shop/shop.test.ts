@@ -31,14 +31,13 @@ describe('bundleOwnership', () => {
   const bundle = SHOP_CATALOG.find((c) => c.kind === 'bundle')!;
   it('hasAllPermanentBundleGrants false si non bundle', () => {
     const title = SHOP_CATALOG.find((c) => c.kind === 'title')!;
-    expect(hasAllPermanentBundleGrants(title, [], [], [])).toBe(false);
+    expect(hasAllPermanentBundleGrants(title, [], [])).toBe(false);
   });
   it('hasAllPermanentBundleGrants quand tout est possédé', () => {
     expect(
       hasAllPermanentBundleGrants(
         bundle,
         bundle.grants.themes ?? [],
-        bundle.grants.narrationPacks ?? [],
         bundle.grants.titles ?? [],
       ),
     ).toBe(true);
@@ -67,25 +66,16 @@ describe('bundleOwnership', () => {
   it('catalogItemFullyOwned — bundle avec achat coin', () => {
     const shop = {
       ownedThemes: bundle.grants.themes,
-      ownedNarrationPacks: bundle.grants.narrationPacks,
       ownedTitleIds: bundle.grants.titles,
     };
     expect(catalogItemFullyOwned(bundle, shop, new Set([bundle.sku]))).toBe(true);
   });
-  it('catalogItemFullyOwned — title et narration_pack', () => {
+  it('catalogItemFullyOwned — title', () => {
     const titleItem = SHOP_CATALOG.find((c) => c.kind === 'title' && c.grants.titles?.length === 1)!;
     expect(
       catalogItemFullyOwned(
         titleItem,
         { ownedTitleIds: titleItem.grants.titles },
-        new Set(),
-      ),
-    ).toBe(true);
-    const narr = SHOP_CATALOG.find((c) => c.kind === 'narration_pack')!;
-    expect(
-      catalogItemFullyOwned(
-        narr,
-        { ownedNarrationPacks: narr.grants.narrationPacks },
         new Set(),
       ),
     ).toBe(true);

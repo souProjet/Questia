@@ -31,8 +31,6 @@ const baseProfile = {
   bonusRerollCredits: 0,
   activeThemeId: 'default',
   ownedThemes: ['default'],
-  ownedNarrationPacks: [],
-  activeNarrationPackId: null,
   coinBalance: 0,
   ownedTitleIds: [],
   equippedTitleId: null,

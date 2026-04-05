@@ -8,12 +8,11 @@ import { prisma } from '@/lib/db';
 import { parseStringArray } from '@/lib/shop/parse';
 
 function isFullyOwned(
-  profile: { ownedThemes: unknown; ownedNarrationPacks: unknown; ownedTitleIds?: unknown },
+  profile: { ownedThemes: unknown; ownedTitleIds?: unknown },
   item: ShopCatalogEntry,
 ): boolean {
   if (item.kind === 'reroll_pack' || item.kind === 'xp_booster') return false;
   const themes = parseStringArray(profile.ownedThemes);
-  const packs = parseStringArray(profile.ownedNarrationPacks);
   const titles = parseStringArray(profile.ownedTitleIds);
 
   if (item.kind === 'theme_pack') {
@@ -21,9 +20,6 @@ function isFullyOwned(
   }
   if (item.kind === 'title') {
     return item.grants.titles?.every((t) => titles.includes(t)) ?? false;
-  }
-  if (item.kind === 'narration_pack') {
-    return item.grants.narrationPacks?.every((p) => packs.includes(p)) ?? false;
   }
   return false;
 }
@@ -60,11 +56,10 @@ export async function POST(request: Request) {
       if (!profile) return { ok: false, message: 'Profil introuvable' };
 
       const themes = parseStringArray(profile.ownedThemes);
-      const packs = parseStringArray(profile.ownedNarrationPacks);
       const titles = parseStringArray((profile as { ownedTitleIds?: unknown }).ownedTitleIds);
 
       if (item.kind === 'bundle') {
-        if (hasAllPermanentBundleGrants(item, themes, packs, titles)) {
+        if (hasAllPermanentBundleGrants(item, themes, titles)) {
           const already = await tx.shopTransaction.count({
             where: {
               profileId: profile.id,

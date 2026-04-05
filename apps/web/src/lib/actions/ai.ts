@@ -76,8 +76,6 @@ export interface DailyQuestProfileInput {
   declaredPersonality: PersonalityVector;
   /** Personnalité inférée depuis l’historique de quêtes */
   exhibitedPersonality: PersonalityVector;
-  /** Directive optionnelle (pack narration acheté) */
-  narrationDirective?: string;
   /** Relance du jour : exiger une formulation nettement différente */
   isRerollGeneration?: boolean;
   /** Après « Reporter » : quête de remplacement 100 % instantanée (message + contraintes) */
@@ -297,25 +295,6 @@ function truncateArchetypeDescription(text: string, max = 320): string {
   return `${t.slice(0, max).trim()}…`;
 }
 
-function fallbackHookStyling(
-  hook: string,
-  narrationDirective: string | undefined,
-  locale: AppLocale,
-): string {
-  if (!narrationDirective) return hook;
-  const d = narrationDirective.toLowerCase();
-  if (d.includes('cinémat') || d.includes('cinemat')) {
-    return locale === 'en' ? `Cut to scene: ${hook}` : `Cut scene : ${hook}`;
-  }
-  if (d.includes('poéti') || d.includes('poetic')) {
-    return locale === 'en' ? `${hook} Like a line of verse.` : `${hook} Comme un vers discret.`;
-  }
-  if (d.includes('mystère') || d.includes('mystere') || d.includes('noir')) {
-    return locale === 'en' ? `${hook} Keep the urban mystery alive.` : `${hook} Garde un léger mystere urbain.`;
-  }
-  return hook;
-}
-
 function normalizeIcon(raw: unknown): string {
   const s = typeof raw === 'string' ? raw.trim() : '';
   if (ICON_ALLOWLIST.has(s)) return s;
@@ -356,7 +335,7 @@ function buildFallbackDailyQuest(
     icon: 'Swords',
     title,
     mission: clampMissionToOneSentence(description),
-    hook: fallbackHookStyling(baseHook, profile.narrationDirective, locale),
+    hook: baseHook,
     duration: `${archetype.minimumDurationMinutes} min`,
     isOutdoor: computedIsOutdoor,
     safetyNote: computedIsOutdoor ? outdoorNote : null,
@@ -628,7 +607,6 @@ QUEST FAMILY (intent only; do not name the category as a label):
 - ${categoryLabel}
 - Archetype emphasis (light touch): ${targetTraitsLine}
 
-${profile.narrationDirective ? `STYLE DIRECTIVE (follow without quoting):\n${profile.narrationDirective}\n` : ''}
 ${profile.refinementContext ? `USER PREFERENCES (adapt; don’t cite the source):\n${profile.refinementContext}\n` : ''}
 
 ARCHETYPE HINT (do not repeat the canonical title verbatim): “${arch.title}”
@@ -732,7 +710,6 @@ FAMILLE DE QUÊTE (intention seulement ; ne cite pas la catégorie comme étique
 - ${categoryLabel}
 - Emphase archétype (léger) : ${targetTraitsLine}
 
-${profile.narrationDirective ? `DIRECTIVE DE STYLE (respecte-la sans la citer mot pour mot) :\n${profile.narrationDirective}\n` : ''}
 ${profile.refinementContext ? `PRÉFÉRENCES UTILISATEUR (adapter la mission, sans citer la source) :\n${profile.refinementContext}\n` : ''}
 
 INDICATION D’ARCHÉTYPE (ne répète pas le titre canon mot pour mot) : « ${arch.title} »
@@ -835,7 +812,6 @@ export async function generateDailyQuest(
       truncateForPrompt(profile.refinementContext ?? undefined, 1500) ??
       profile.refinementContext ??
       null,
-    narrationDirective: truncateForPrompt(profile.narrationDirective, 2500),
   };
 
   const locale = safeProfile.locale ?? 'fr';

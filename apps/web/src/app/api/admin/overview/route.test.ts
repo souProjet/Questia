@@ -72,7 +72,6 @@ describe('GET /api/admin/overview', () => {
         explorerAxis: 'explorer',
         riskAxis: 'cautious',
         activeThemeId: 'default',
-        activeNarrationPackId: null,
         refinementSchemaVersion: 0,
         reminderPushEnabled: false,
         reminderEmailEnabled: false,

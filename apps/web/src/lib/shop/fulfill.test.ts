@@ -23,7 +23,6 @@ describe('applyGrantsToProfile', () => {
     findUnique.mockResolvedValue({
       id: 'p1',
       ownedThemes: ['default'],
-      ownedNarrationPacks: [],
       bonusRerollCredits: 0,
       ownedTitleIds: [],
       activeThemeId: 'default',

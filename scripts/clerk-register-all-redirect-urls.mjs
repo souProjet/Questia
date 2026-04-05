@@ -2,7 +2,8 @@
 /**
  * Enregistre en une fois les URLs de redirection Clerk utiles pour Questia (mobile Expo + schéma questia).
  *
- * Prérequis : CLERK_SECRET_KEY (même instance que tes clés publishable — test ou prod selon ce que tu veux configurer).
+ * Prérequis : CLERK_SECRET_KEY (même instance que tes clés publishable).
+ * Pour la prod Play Store / site : utilise la clé secrète **live** (`sk_live_...`) sur l’instance **production** Clerk.
  *
  * Usage :
  *   CLERK_SECRET_KEY=sk_test_... node scripts/clerk-register-all-redirect-urls.mjs
@@ -25,16 +26,24 @@ if (!key) {
 
 /** URLs stables pour Questia (Expo Router + groupe (auth)). */
 const DEFAULT_URLS = [
-  // Build native / EAS / dev client — scheme app.json (voir getGoogleOAuthRedirectUrl dans l’app)
+  // Build native / EAS / dev client — scheme app.json (OAuth mobile, voir Linking.createURL('/(auth)'))
   'questia:///(auth)',
+  // Fallback possible si un flux OAuth utilise makeRedirectUri({ path: 'sso-callback' }) sans URL explicite
+  'questia://sso-callback',
   // Metro / Expo Go — machine locale
   'exp://127.0.0.1:8081/--/(auth)',
   'exp://localhost:8081/--/(auth)',
   // Émulateur Android → Metro sur la machine hôte
   'exp://10.0.2.2:8081/--/(auth)',
-  'https://questia.fr/(auth)',
+  // Next.js (middleware / routes Clerk) — domaine prod
+  'https://questia.fr',
   'https://questia.fr/app',
-  'https://questia.fr'
+  'https://questia.fr/sign-in',
+  'https://questia.fr/sign-up',
+  'https://questia.fr/en/sign-in',
+  'https://questia.fr/en/sign-up',
+  // Ancienne entrée utile si tu avais des liens vers un groupe « (auth) » côté web (mobile-like)
+  'https://questia.fr/(auth)',
 ];
 
 const extra = (process.env.CLERK_EXTRA_REDIRECT_URLS ?? '')

@@ -24,7 +24,6 @@ export async function applyGrantsToProfile(
   let themes = parseStringArray(profile.ownedThemes);
   if (!themes.includes('default')) themes = mergeUnique(['default'], themes);
 
-  let narrationPacks = parseStringArray(profile.ownedNarrationPacks);
   let bonusRerollCredits = profile.bonusRerollCredits ?? 0;
   let titles = parseStringArray((profile as { ownedTitleIds?: unknown }).ownedTitleIds);
   let xpBonusCharges = (profile as { xpBonusCharges?: number | null }).xpBonusCharges ?? 0;
@@ -33,9 +32,6 @@ export async function applyGrantsToProfile(
     const g = entry.grants;
     if (g.themes?.length) {
       themes = mergeUnique(themes, g.themes);
-    }
-    if (g.narrationPacks?.length) {
-      narrationPacks = mergeUnique(narrationPacks, g.narrationPacks);
     }
     if (g.bonusRerolls && g.bonusRerolls > 0) {
       bonusRerollCredits += g.bonusRerolls;
@@ -54,7 +50,6 @@ export async function applyGrantsToProfile(
 
   const data = {
     ownedThemes: themes as unknown as Prisma.InputJsonValue,
-    ownedNarrationPacks: narrationPacks as unknown as Prisma.InputJsonValue,
     bonusRerollCredits,
     ownedTitleIds: titles as unknown as Prisma.InputJsonValue,
     xpBonusCharges,

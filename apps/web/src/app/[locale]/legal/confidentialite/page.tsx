@@ -98,7 +98,7 @@ export default function ConfidentialitePage() {
               <li>
                 <strong>Profil de jeu</strong> : préférences d’onboarding (axes explorateur / prudence, personnalité
                 déclarée), progression (jour, phase, XP, badges), historique de quêtes, paramètres de rappels et de
-                boutique (thèmes, packs narration, solde de monnaie virtuelle, etc.).
+                boutique (thèmes, solde de monnaie virtuelle, etc.).
               </li>
               <li>
                 <strong>Questionnaire de raffinement</strong> (optionnel) : réponses aux questions pour adapter le ton

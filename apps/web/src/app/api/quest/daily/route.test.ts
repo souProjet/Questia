@@ -77,8 +77,6 @@ const profileRow = {
   congruenceDelta: 0,
   explorerAxis: 'explorer',
   riskAxis: 'cautious',
-  ownedNarrationPacks: [],
-  activeNarrationPackId: null,
   rerollsRemaining: 1,
   bonusRerollCredits: 0,
   activeThemeId: 'default',

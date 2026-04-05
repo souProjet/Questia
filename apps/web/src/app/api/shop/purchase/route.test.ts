@@ -96,7 +96,6 @@ describe('POST /api/shop/purchase', () => {
             id: 'p1',
             clerkId: 'u1',
             ownedThemes: [],
-            ownedNarrationPacks: [],
             ownedTitleIds: [],
             coinBalance: 99999,
           }),

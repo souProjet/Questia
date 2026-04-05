@@ -5,7 +5,6 @@ import { BADGE_DEFINITIONS, getThemeIds, TITLE_IDS } from '@questia/shared';
 import type { OverviewJson } from './adminOverviewTypes';
 
 const THEME_IDS = getThemeIds();
-const NARRATION_IDS = ['cinematic', 'poetic', 'noir'] as const;
 
 const PHASE_LIB: Record<string, string> = {
   calibration: 'Étalonnage',
@@ -27,12 +26,6 @@ const THEME_LIB: Record<string, string> = {
   midnight: 'Minuit',
   aurora: 'Aurore',
   parchment: 'Parchemin',
-};
-
-const NARRATION_LIB: Record<string, string> = {
-  cinematic: 'Cinématique',
-  poetic: 'Poétique',
-  noir: 'Noir',
 };
 
 function libelleStatutQuete(s: string) {
@@ -99,8 +92,6 @@ export default function AdminConsoleClient() {
   const [badgeGrantId, setBadgeGrantId] = useState<string>(BADGE_DEFINITIONS[0]?.id ?? 'premiere_quete');
   const [badgesJson, setBadgesJson] = useState('[]');
   const [themePick, setThemePick] = useState('default');
-  const [narrOwned, setNarrOwned] = useState<string[]>([]);
-  const [narrActive, setNarrActive] = useState<string>('');
   const [explorerAxis, setExplorerAxis] = useState<'homebody' | 'explorer'>('explorer');
   const [riskAxis, setRiskAxis] = useState<'cautious' | 'risktaker'>('cautious');
   const [ownedTitlesCsv, setOwnedTitlesCsv] = useState('');
@@ -447,13 +438,7 @@ export default function AdminConsoleClient() {
             <strong className="text-[var(--on-cream)]">{d.snapshot.streak}</strong> ·{' '}
             <strong className="text-[var(--on-cream)]">{d.snapshot.coins}</strong> QC · relances{' '}
             {d.snapshot.rerollsDaily}+{d.snapshot.rerollsBonus} · thème{' '}
-            <span className="font-mono text-xs">{THEME_LIB[d.snapshot.activeThemeId] ?? d.snapshot.activeThemeId}</span> ·
-            narration{' '}
-            <span className="font-mono text-xs">
-              {d.snapshot.activeNarrationPackId
-                ? NARRATION_LIB[d.snapshot.activeNarrationPackId] ?? d.snapshot.activeNarrationPackId
-                : '—'}
-            </span>
+            <span className="font-mono text-xs">{THEME_LIB[d.snapshot.activeThemeId] ?? d.snapshot.activeThemeId}</span>
           </p>
           <p className="text-xs font-bold text-amber-900/90">
             Raffinement v{d.snapshot.refinementSchemaVersion} · rappel notification{' '}
@@ -743,7 +728,7 @@ export default function AdminConsoleClient() {
           </button>
         </div>
 
-        <h3 className="mt-10 font-display text-sm font-black uppercase tracking-[0.12em] text-[var(--muted)]">Thèmes et narration</h3>
+        <h3 className="mt-10 font-display text-sm font-black uppercase tracking-[0.12em] text-[var(--muted)]">Thèmes</h3>
         <div className="mt-3 flex flex-wrap gap-2">
           <select className={`${inputClass} !w-auto`} value={themePick} onChange={(e) => setThemePick(e.target.value)}>
             {THEME_IDS.map((t) => (
@@ -770,46 +755,6 @@ export default function AdminConsoleClient() {
             tout débloquer
           </button>
         </p>
-
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <span className="text-xs font-bold text-[var(--muted)]">Packs narration possédés</span>
-          {NARRATION_IDS.map((id) => (
-            <label key={id} className="flex items-center gap-1.5 text-sm font-semibold">
-              <input
-                type="checkbox"
-                checked={narrOwned.includes(id)}
-                onChange={(e) => {
-                  setNarrOwned((prev) => (e.target.checked ? [...prev, id] : prev.filter((x) => x !== id)));
-                }}
-              />
-              {NARRATION_LIB[id]}
-            </label>
-          ))}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <select className={`${inputClass} !w-auto`} value={narrActive} onChange={(e) => setNarrActive(e.target.value)}>
-            <option value="">(aucun style actif)</option>
-            {NARRATION_IDS.map((id) => (
-              <option key={id} value={id}>
-                {NARRATION_LIB[id]}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            disabled={godBusy}
-            onClick={() =>
-              void god({
-                action: 'set_narration',
-                ...(narrOwned.length ? { ownedNarrationPacks: narrOwned } : {}),
-                activeNarrationPackId: narrActive || null,
-              })
-            }
-            className="btn btn-primary btn-md font-black"
-          >
-            Appliquer narration
-          </button>
-        </div>
 
         <h3 className="mt-10 font-display text-sm font-black uppercase tracking-[0.12em] text-[var(--muted)]">Titres boutique</h3>
         <GodField label="Identifiants de titres (séparés par des virgules)">

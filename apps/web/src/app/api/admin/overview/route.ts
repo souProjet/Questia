@@ -34,7 +34,6 @@ function snapshotFromProfile(
     rerollsBonus: profile.bonusRerollCredits,
     lastQuestDate: profile.lastQuestDate,
     activeThemeId: profile.activeThemeId,
-    activeNarrationPackId: profile.activeNarrationPackId,
     refinementSchemaVersion: profile.refinementSchemaVersion,
     reminderPushEnabled: profile.reminderPushEnabled,
     reminderEmailEnabled: profile.reminderEmailEnabled,

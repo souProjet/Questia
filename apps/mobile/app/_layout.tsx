@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClerkProvider, useAuth } from '@clerk/expo';
+import { tokenCache } from '@clerk/expo/token-cache';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as SecureStore from 'expo-secure-store';
 import { DA } from '@questia/ui';
 import { AppLocaleProvider } from '../contexts/AppLocaleContext';
 import { AppThemeProvider, useAppTheme } from '../contexts/AppThemeContext';
@@ -30,21 +30,6 @@ const errStyles = StyleSheet.create({
   btn: { backgroundColor: '#f97316', paddingVertical: 14, borderRadius: 14, alignItems: 'center', shadowColor: '#f97316', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 4 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });
-
-const tokenCache = {
-  async getToken(key: string) {
-    try { return await SecureStore.getItemAsync(key); }
-    catch { return null; }
-  },
-  async saveToken(key: string, value: string) {
-    try { await SecureStore.setItemAsync(key, value); }
-    catch {}
-  },
-  async clearToken(key: string) {
-    try { await SecureStore.deleteItemAsync(key); }
-    catch {}
-  },
-};
 
 const PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 

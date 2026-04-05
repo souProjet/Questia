@@ -58,8 +58,6 @@ type ProfileShop = {
   coinBalance: number;
   activeThemeId: string;
   ownedThemes: string[];
-  ownedNarrationPacks: string[];
-  activeNarrationPackId: string | null;
   bonusRerollCredits: number;
   ownedTitleIds: string[];
   equippedTitleId: string | null;
@@ -82,16 +80,14 @@ type TxRow = {
 };
 
 const TITLE_NONE = '__title_none__';
-const NARRATION_NONE = '__narration_none__';
 
 function kindOrder(kind: ShopCatalogEntry['kind']): number {
   const order: Record<ShopCatalogEntry['kind'], number> = {
     theme_pack: 0,
     title: 1,
     xp_booster: 2,
-    narration_pack: 3,
-    reroll_pack: 4,
-    bundle: 5,
+    reroll_pack: 3,
+    bundle: 4,
   };
   return order[kind] ?? 9;
 }
@@ -215,7 +211,7 @@ export default function ShopScreen() {
   );
   const coinPackReference = coinPacksSorted[0];
 
-  const { featuredBundle, xpItems, themeItems, titleItems, narrationItems, rerollItems } = useMemo(() => {
+  const { featuredBundle, xpItems, themeItems, titleItems, rerollItems } = useMemo(() => {
     const bundle = items.find((i) => i.kind === 'bundle');
     const rest = items.filter((i) => i.kind !== 'bundle');
     return {
@@ -223,7 +219,6 @@ export default function ShopScreen() {
       xpItems: rest.filter((i) => i.kind === 'xp_booster'),
       themeItems: rest.filter((i) => i.kind === 'theme_pack'),
       titleItems: rest.filter((i) => i.kind === 'title'),
-      narrationItems: rest.filter((i) => i.kind === 'narration_pack'),
       rerollItems: rest.filter((i) => i.kind === 'reroll_pack'),
     };
   }, [items]);
@@ -236,7 +231,7 @@ export default function ShopScreen() {
   const [stripeLoadingSku, setStripeLoadingSku] = useState<string | null>(null);
   const [coinPurchaseSku, setCoinPurchaseSku] = useState<string | null>(null);
   const [flash, setFlash] = useState<ShopFlash | null>(null);
-  const [selectKind, setSelectKind] = useState<null | 'theme' | 'narration' | 'title'>(null);
+  const [selectKind, setSelectKind] = useState<null | 'theme' | 'title'>(null);
   const [rechargeModalVisible, setRechargeModalVisible] = useState(false);
   const stripeOpenedAt = useRef<number | null>(null);
   const [purchaseHighlightSku, setPurchaseHighlightSku] = useState<string | null>(null);
@@ -311,15 +306,6 @@ export default function ShopScreen() {
       .map((id) => ({ value: id, label: s.themeLabel(id) }));
   }, [shop, s]);
 
-  const narrationOptions = useMemo(() => {
-    if (!shop) return [] as SelectOpt[];
-    const rows: SelectOpt[] = [{ value: NARRATION_NONE, label: s.defaultNarration }];
-    for (const id of shop.ownedNarrationPacks ?? []) {
-      rows.push({ value: id, label: s.narrationPackLabel(id) });
-    }
-    return rows;
-  }, [shop, s]);
-
   const titleOptions = useMemo(() => {
     if (!shop) return [] as SelectOpt[];
     const rows: SelectOpt[] = [{ value: TITLE_NONE, label: s.noTitle }];
@@ -329,12 +315,6 @@ export default function ShopScreen() {
     }
     return rows;
   }, [shop, s]);
-
-  const narrationDisplayLabel = (profileShop: ProfileShop) => {
-    const id = profileShop.activeNarrationPackId;
-    if (!id) return s.defaultNarration;
-    return s.narrationPackLabel(id);
-  };
 
   const titleDisplayLabel = (profileShop: ProfileShop) => {
     const id = profileShop.equippedTitleId;
@@ -458,7 +438,6 @@ export default function ShopScreen() {
 
   const savePreferences = async (patch: {
     activeThemeId?: string;
-    activeNarrationPackId?: string | null;
     equippedTitleId?: string | null;
   }) => {
     setFlash(null);
@@ -726,21 +705,6 @@ export default function ShopScreen() {
                       </Pressable>
                     </View>
                     <View style={styles.prefsFieldCard}>
-                      <Text style={styles.prefsFieldLabel}>{s.fieldNarration}</Text>
-                      <Pressable
-                        style={styles.prefsSelectRow}
-                        onPress={() => setSelectKind('narration')}
-                        accessibilityRole="button"
-                        accessibilityLabel={s.narrationCurrentA11y(narrationDisplayLabel(shop))}
-                        accessibilityHint={s.narrationOpenHint}
-                      >
-                        <Text style={styles.prefsSelectRowText}>{narrationDisplayLabel(shop)}</Text>
-                        <Text style={styles.prefsSelectChevron} importantForAccessibility="no">
-                          ▼
-                        </Text>
-                      </Pressable>
-                    </View>
-                    <View style={styles.prefsFieldCard}>
                       <Text style={styles.prefsFieldLabel}>{s.fieldTitle}</Text>
                       <Pressable
                         style={styles.prefsSelectRow}
@@ -885,11 +849,6 @@ export default function ShopScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.h2}>{s.sectionNarration}</Text>
-              {narrationItems.map(renderCatalogCard)}
-            </View>
-
-            <View style={styles.section}>
               <Text style={styles.h2}>{s.sectionRerolls}</Text>
               {rerollItems.map(renderCatalogCard)}
             </View>
@@ -952,35 +911,23 @@ export default function ShopScreen() {
           title={
             selectKind === 'theme'
               ? s.selectThemeTitle
-              : selectKind === 'narration'
-                ? s.selectNarrationTitle
-                : selectKind === 'title'
-                  ? s.selectTitleTitle
-                  : ''
+              : selectKind === 'title'
+                ? s.selectTitleTitle
+                : ''
           }
           options={
-            selectKind === 'theme'
-              ? themeOptions
-              : selectKind === 'narration'
-                ? narrationOptions
-                : selectKind === 'title'
-                  ? titleOptions
-                  : []
+            selectKind === 'theme' ? themeOptions : selectKind === 'title' ? titleOptions : []
           }
           selectedValue={
             selectKind === 'theme'
               ? shop.activeThemeId
-              : selectKind === 'narration'
-                ? (shop.activeNarrationPackId ?? NARRATION_NONE)
-                : selectKind === 'title'
-                  ? (shop.equippedTitleId ?? TITLE_NONE)
-                  : ''
+              : selectKind === 'title'
+                ? (shop.equippedTitleId ?? TITLE_NONE)
+                : ''
           }
           onSelect={(v) => {
             if (selectKind === 'theme') void savePreferences({ activeThemeId: v });
-            else if (selectKind === 'narration') {
-              void savePreferences({ activeNarrationPackId: v === NARRATION_NONE ? null : v });
-            } else if (selectKind === 'title') {
+            else if (selectKind === 'title') {
               void savePreferences({ equippedTitleId: v === TITLE_NONE ? null : v });
             }
           }}
@@ -1685,7 +1632,7 @@ function createShopStyles(p: ThemePalette) {
     lineHeight: 16,
     marginBottom: 8,
   },
-  /** Feuille des selects (thème, narration, titre) — cartes arrondies, pas de liste à traits. */
+  /** Feuille des selects (thème, titre) — cartes arrondies, pas de liste à traits. */
   selectSheetSheet: {
     paddingTop: 10,
     paddingHorizontal: 12,

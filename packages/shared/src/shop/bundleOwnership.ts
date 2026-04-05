@@ -7,22 +7,19 @@ function themeSetFromOwned(ownedThemes: string[] | undefined): Set<string> {
 }
 
 /**
- * Tous les éléments « permanents » du bundle (thèmes, tons, titres) sont déjà possédés.
+ * Tous les éléments « permanents » du bundle (thèmes, titres) sont déjà possédés.
  * Ne tient pas compte des charges XP / relances (toujours cumulables via autres articles).
  */
 export function hasAllPermanentBundleGrants(
   item: ShopCatalogEntry,
   ownedThemes: string[] | undefined,
-  ownedNarrationPacks: string[] | undefined,
   ownedTitleIds: string[] | undefined,
 ): boolean {
   if (item.kind !== 'bundle') return false;
   const ownedThemeIds = themeSetFromOwned(ownedThemes);
-  const ownedNarration = new Set(ownedNarrationPacks ?? []);
   const ownedTitles = new Set(ownedTitleIds ?? []);
   return (
     (item.grants.themes?.every((t) => ownedThemeIds.has(t)) ?? true) &&
-    (item.grants.narrationPacks?.every((n) => ownedNarration.has(n)) ?? true) &&
     (item.grants.titles?.every((t) => ownedTitles.has(t)) ?? true)
   );
 }
@@ -49,13 +46,11 @@ export function catalogItemFullyOwned(
   item: ShopCatalogEntry,
   shop: {
     ownedThemes?: string[];
-    ownedNarrationPacks?: string[];
     ownedTitleIds?: string[];
   },
   coinPurchasedSkus: Set<string>,
 ): boolean {
   const ownedThemeIds = themeSetFromOwned(shop.ownedThemes);
-  const ownedNarration = new Set(shop.ownedNarrationPacks ?? []);
   const ownedTitles = new Set(shop.ownedTitleIds ?? []);
 
   if (item.kind === 'reroll_pack' || item.kind === 'xp_booster') return false;
@@ -63,7 +58,6 @@ export function catalogItemFullyOwned(
   if (item.kind === 'bundle') {
     const permanent =
       (item.grants.themes?.every((t) => ownedThemeIds.has(t)) ?? true) &&
-      (item.grants.narrationPacks?.every((n) => ownedNarration.has(n)) ?? true) &&
       (item.grants.titles?.every((t) => ownedTitles.has(t)) ?? true);
     if (!permanent) return false;
     return coinPurchasedSkus.has(item.sku);
@@ -74,9 +68,6 @@ export function catalogItemFullyOwned(
   }
   if (item.kind === 'title') {
     return item.grants.titles?.every((t) => ownedTitles.has(t)) ?? false;
-  }
-  if (item.kind === 'narration_pack') {
-    return item.grants.narrationPacks?.every((n) => ownedNarration.has(n)) ?? false;
   }
   return false;
 }

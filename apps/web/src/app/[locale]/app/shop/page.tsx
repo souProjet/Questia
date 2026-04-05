@@ -216,8 +216,6 @@ type ProfileShop = {
   coinBalance: number;
   activeThemeId: string;
   ownedThemes: string[];
-  ownedNarrationPacks: string[];
-  activeNarrationPackId: string | null;
   bonusRerollCredits: number;
   ownedTitleIds: string[];
   equippedTitleId: string | null;
@@ -242,9 +240,8 @@ function kindOrder(kind: ShopCatalogEntry['kind']): number {
     theme_pack: 0,
     title: 1,
     xp_booster: 2,
-    narration_pack: 3,
-    reroll_pack: 4,
-    bundle: 5,
+    reroll_pack: 3,
+    bundle: 4,
   };
   return order[kind] ?? 9;
 }
@@ -287,8 +284,6 @@ function ShopPageInner() {
           return t('kindTitle');
         case 'xp_booster':
           return t('kindXp');
-        case 'narration_pack':
-          return t('kindNarration');
         case 'reroll_pack':
           return t('kindReroll');
         case 'bundle':
@@ -297,14 +292,6 @@ function ShopPageInner() {
           return '';
       }
     },
-    [t],
-  );
-  const narrationLabels = useMemo(
-    () => ({
-      cinematic: t('narrationCinematic'),
-      poetic: t('narrationPoetic'),
-      noir: t('narrationNoir'),
-    }),
     [t],
   );
   const searchParams = useSearchParams();
@@ -338,7 +325,7 @@ function ShopPageInner() {
     window.setTimeout(() => setPurchaseHighlightSku(null), 1800);
   }, []);
 
-  const { featuredBundle, xpItems, themeItems, titleItems, narrationItems, rerollItems } = useMemo(() => {
+  const { featuredBundle, xpItems, themeItems, titleItems, rerollItems } = useMemo(() => {
     const bundle = items.find((i) => i.kind === 'bundle');
     const rest = items.filter((i) => i.kind !== 'bundle');
     return {
@@ -346,7 +333,6 @@ function ShopPageInner() {
       xpItems: rest.filter((i) => i.kind === 'xp_booster'),
       themeItems: rest.filter((i) => i.kind === 'theme_pack'),
       titleItems: rest.filter((i) => i.kind === 'title'),
-      narrationItems: rest.filter((i) => i.kind === 'narration_pack'),
       rerollItems: rest.filter((i) => i.kind === 'reroll_pack'),
     };
   }, [items]);
@@ -515,7 +501,6 @@ function ShopPageInner() {
 
   const savePreferences = async (patch: {
     activeThemeId?: string;
-    activeNarrationPackId?: string | null;
     equippedTitleId?: string | null;
   }) => {
     setFlash(null);
@@ -534,7 +519,6 @@ function ShopPageInner() {
   };
 
   const ownedThemeIds = new Set(shop?.ownedThemes ?? ['default']);
-  const ownedNarration = new Set(shop?.ownedNarrationPacks ?? []);
   const balance = shop?.coinBalance ?? 0;
   const unownedItems = useMemo(() => {
     if (!shop) return [] as ShopCatalogEntry[];
@@ -804,9 +788,6 @@ function ShopPageInner() {
                   <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
                     🔁 {t('sectionRerolls')}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
-                    🎬 {t('sectionNarration')}
-                  </span>
                 </div>
 
                 {unlockNow.length > 0 ? (
@@ -875,7 +856,7 @@ function ShopPageInner() {
                   </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2">
                   <div className="shop-pref-field p-4 flex flex-col gap-2">
                     <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
                       {t('activeTheme')}
@@ -900,30 +881,6 @@ function ShopPageInner() {
                                     : id}
                           </option>
                         ))}
-                    </select>
-                  </div>
-                  <div className="shop-pref-field p-4 flex flex-col gap-2">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
-                      {t('narrationLabel')}
-                    </label>
-                    <select
-                      className="shop-pref-select"
-                      value={shop.activeNarrationPackId ?? ''}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        void savePreferences({
-                          activeNarrationPackId: v === '' ? null : v,
-                        });
-                      }}
-                    >
-                      <option value="">{t('narrationDefault')}</option>
-                      {ownedNarration.size > 0
-                        ? [...ownedNarration].map((id) => (
-                            <option key={id} value={id}>
-                              {narrationLabels[id as keyof typeof narrationLabels] ?? id}
-                            </option>
-                          ))
-                        : null}
                     </select>
                   </div>
                   <div className="shop-pref-field p-4 flex flex-col gap-2">
@@ -1097,13 +1054,6 @@ function ShopPageInner() {
               <ul className="grid gap-4 sm:grid-cols-2 mb-8">{themeItems.map(renderCatalogCard)}</ul>
               <h3 className="text-xs font-black uppercase tracking-wider text-[var(--subtle)] mb-3">{t('sectionTitles')}</h3>
               <ul className="grid gap-4 sm:grid-cols-2">{titleItems.map(renderCatalogCard)}</ul>
-            </section>
-
-            <section className="mb-10" aria-labelledby="shop-narration-heading">
-              <h2 id="shop-narration-heading" className="font-display font-black text-lg text-[var(--text)] mb-3">
-                {t('sectionNarration')}
-              </h2>
-              <ul className="grid gap-4 sm:grid-cols-2">{narrationItems.map(renderCatalogCard)}</ul>
             </section>
 
             <section className="mb-10" aria-labelledby="shop-reroll-heading">

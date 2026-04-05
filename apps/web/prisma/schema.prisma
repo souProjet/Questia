@@ -69,10 +69,6 @@ model Profile {
   activeThemeId         String          @default("default") @map("active_theme_id")
   /** Liste des ids de thèmes possédés (JSON string[]) */
   ownedThemes           Json            @default("[\"default\"]") @map("owned_themes")
-  /** Packs narration débloqués (JSON string[] : cinematic | poetic | noir) */
-  ownedNarrationPacks   Json            @default("[]") @map("owned_narration_packs")
-  /** Pack narration appliqué à la génération (null = style Questia de base) */
-  activeNarrationPackId String?         @map("active_narration_pack_id")
   /** Monnaie virtuelle (Quest Coins) — recharge via Stripe (packs) uniquement */
   coinBalance           Int             @default(0) @map("coin_balance")
   /** Titres boutique débloqués (JSON string[] — ids TITLES_REGISTRY) */

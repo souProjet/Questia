@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const pack = getCoinPack(sku);
   if (!pack) {
     return NextResponse.json(
-      { error: 'Pack de coins inconnu. Utilise la boutique pour les thèmes et packs narration.' },
+      { error: 'Pack de coins inconnu. Utilise la boutique pour les thèmes et autres articles.' },
       { status: 400 },
     );
   }

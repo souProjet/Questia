@@ -7,7 +7,6 @@ import { parseStringArray } from '@/lib/shop/parse';
 
 const BADGE_ID_SET = new Set<string>(BADGE_DEFINITIONS.map((b) => b.id));
 const THEME_ID_SET = new Set(getThemeIds());
-const NARRATION_ID_SET = new Set<string>(['cinematic', 'poetic', 'noir']);
 const TITLE_ID_SET = new Set(TITLE_IDS);
 
 export type GodmodeBody = {
@@ -28,7 +27,6 @@ export type GodmodeBody = {
     | 'set_active_theme'
     | 'add_owned_theme'
     | 'set_owned_themes'
-    | 'set_narration'
     | 'reset_refinement'
     | 'set_reminders'
     | 'set_quest_status'
@@ -50,8 +48,6 @@ export type GodmodeBody = {
   badgesJson?: unknown;
   themeId?: string;
   ownedThemes?: string[];
-  activeNarrationPackId?: string | null;
-  ownedNarrationPacks?: string[];
   reminderPushEnabled?: boolean;
   reminderEmailEnabled?: boolean;
   reminderTimeMinutes?: number;
@@ -290,39 +286,6 @@ export async function runGodmodeAction(profile: Profile, body: GodmodeBody, toda
           data: { ownedThemes: uniq, activeThemeId: active },
         });
         return NextResponse.json({ ok: true, ownedThemes: uniq, activeThemeId: active });
-      }
-      case 'set_narration': {
-        const ownedIn = body.ownedNarrationPacks;
-        const active = body.activeNarrationPackId;
-        const data: {
-          ownedNarrationPacks?: string[];
-          activeNarrationPackId?: string | null;
-        } = {};
-        if (ownedIn !== undefined) {
-          if (!Array.isArray(ownedIn)) {
-            return NextResponse.json({ error: 'ownedNarrationPacks : tableau attendu.' }, { status: 400 });
-          }
-          for (const p of ownedIn) {
-            if (typeof p !== 'string' || !NARRATION_ID_SET.has(p)) {
-              return NextResponse.json({ error: 'Pack narration inconnu.' }, { status: 400 });
-            }
-          }
-          data.ownedNarrationPacks = [...new Set(ownedIn)];
-        }
-        if (active !== undefined) {
-          if (active !== null && (typeof active !== 'string' || !NARRATION_ID_SET.has(active))) {
-            return NextResponse.json({ error: 'activeNarrationPackId invalide.' }, { status: 400 });
-          }
-          data.activeNarrationPackId = active;
-        }
-        if (Object.keys(data).length === 0) {
-          return NextResponse.json({ error: 'Fournis ownedNarrationPacks et/ou activeNarrationPackId.' }, { status: 400 });
-        }
-        await prisma.profile.update({
-          where: { id: profile.id },
-          data,
-        });
-        return NextResponse.json({ ok: true, ...data });
       }
       case 'reset_refinement': {
         await prisma.profile.update({

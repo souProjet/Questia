@@ -16,7 +16,6 @@ import * as Linking from 'expo-linking';
 import * as ClerkExpo from '@clerk/expo';
 import { DA } from '@questia/ui';
 
-// Types générés (futures) ≠ API runtime documentée pour email/OAuth — aligné sur l’ancien contournement.
 const { useSignIn, useSignUp, useSSO } = ClerkExpo as any;
 
 WebBrowser.maybeCompleteAuthSession();
@@ -26,8 +25,10 @@ type AuthMode = 'sign-in' | 'sign-up';
 function useWarmUpBrowser() {
   useEffect(() => {
     if (Platform.OS === 'android') {
-      void WebBrowser.warmUpAsync();
-      return () => { void WebBrowser.coolDownAsync(); };
+      void WebBrowser.warmUpAsync().catch(() => {});
+      return () => {
+        void WebBrowser.coolDownAsync().catch(() => {});
+      };
     }
   }, []);
 }

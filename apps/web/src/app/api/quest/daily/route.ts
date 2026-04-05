@@ -37,7 +37,6 @@ import { Prisma } from '@prisma/client';
 import { parseAppLocaleFromRequest } from '@/lib/requestLocale';
 import { badgeIdsSet, parseBadgesEarned, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
-import { getNarrationDirectiveForPack } from '@/lib/narrationPack';
 import { getRefinementSurveyPayload } from '@/lib/refinementPayload';
 
 export const dynamic = 'force-dynamic';
@@ -112,17 +111,11 @@ function shopClientPayload(profile: {
   bonusRerollCredits: number;
   activeThemeId: string;
   ownedThemes: unknown;
-  ownedNarrationPacks: unknown;
-  activeNarrationPackId: string | null;
   coinBalance?: number | null;
   ownedTitleIds?: unknown;
   equippedTitleId?: string | null;
   xpBonusCharges?: number | null;
 }) {
-  const ownedNarrationPacks = parseStringArray(profile.ownedNarrationPacks);
-  const activePack = profile.activeNarrationPackId;
-  const narrationActive =
-    activePack && ownedNarrationPacks.includes(activePack) ? activePack : null;
   const ownedTitles = parseStringArray(profile.ownedTitleIds);
   let equipped = profile.equippedTitleId ?? null;
   if (equipped && !ownedTitles.includes(equipped)) equipped = null;
@@ -132,8 +125,6 @@ function shopClientPayload(profile: {
     bonusRerollCredits: profile.bonusRerollCredits ?? 0,
     activeThemeId: profile.activeThemeId ?? 'default',
     ownedThemes: parseStringArray(profile.ownedThemes),
-    ownedNarrationPacks,
-    activeNarrationPackId: narrationActive,
     ownedTitleIds: ownedTitles,
     equippedTitleId: equipped,
     xpBonusCharges: profile.xpBonusCharges ?? 0,
@@ -333,13 +324,6 @@ export async function GET(request: NextRequest) {
     archetype = QUEST_TAXONOMY.find((q) => q.id === FALLBACK_QUEST_ID) ?? QUEST_TAXONOMY[0];
   }
 
-  const ownedPacks = parseStringArray(profile.ownedNarrationPacks);
-  const activePack = profile.activeNarrationPackId;
-  const narrationDirective =
-    activePack && ownedPacks.includes(activePack)
-      ? getNarrationDirectiveForPack(activePack)
-      : undefined;
-
   // Generate the quest via OpenAI (phase effective + delta calculés = alignés avec le choix d’archétype)
   const generated = await generateDailyQuest(
     {
@@ -350,7 +334,6 @@ export async function GET(request: NextRequest) {
       riskAxis: profile.riskAxis as RiskAxis,
       questDateIso: today,
       generationSeed: `${profile.id}:${today}:${effectivePhase}:${regenTier}`,
-      narrationDirective,
       declaredPersonality,
       exhibitedPersonality: exhibited,
       isRerollGeneration: profile.flagNextQuestAfterReroll === true,
