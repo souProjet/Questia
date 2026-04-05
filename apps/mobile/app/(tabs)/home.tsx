@@ -98,6 +98,14 @@ interface DailyQuest {
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
+/** Interprète les séquences littérales \uXXXX (ex. chaîne API mal sérialisée) pour l’affichage. */
+function normalizeDisplayText(text: string): string {
+  if (!text.includes('\\u')) return text;
+  return text.replace(/\\u([0-9a-fA-F]{4})/gi, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
+}
+
 async function apiFetch(
   url: string,
   token: string | null,
@@ -169,7 +177,7 @@ export default function DashboardScreen() {
   const questDateFromRoute =
     typeof questDateParam === 'string' && isValidQuestDateIso(questDateParam) ? questDateParam : null;
 
-  const { getToken, isLoaded: authLoaded } = useAuth();
+  const { getToken, isLoaded: authLoaded, signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
 
@@ -640,13 +648,24 @@ export default function DashboardScreen() {
   }
 
   if (error && !quest) {
+    const sessionExpired = error === homeUi.errSession;
     return (
       <HomeBackdropShell palette={palette} themeId={themeId} styles={styles}>
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>{normalizeDisplayText(error)}</Text>
           <Pressable style={styles.retryBtn} onPress={() => void loadQuest()}>
-            <Text style={styles.retryText}>R\u00e9essayer</Text>
+            <Text style={styles.retryText}>{homeUi.errorRetry}</Text>
           </Pressable>
+          {sessionExpired ? (
+            <Pressable
+              style={styles.signOutOutlineBtn}
+              onPress={() => {
+                void signOut();
+              }}
+            >
+              <Text style={styles.signOutOutlineText}>{homeUi.errorSignOut}</Text>
+            </Pressable>
+          ) : null}
         </View>
       </HomeBackdropShell>
     );
@@ -654,7 +673,7 @@ export default function DashboardScreen() {
 
   return (
     <HomeBackdropShell palette={palette} themeId={themeId} styles={styles}>
-        {/* Flash d\u2019acceptation */}
+        {/* Flash d’acceptation */}
         <Animated.View
           pointerEvents="none"
           style={[
@@ -670,7 +689,7 @@ export default function DashboardScreen() {
             questions={quest.refinement.questions}
             consentNotice={
               quest.refinement.consentNotice ??
-              `Ces r\u00e9ponses servent uniquement \u00e0 adapter tes qu\u00eates. Politique de confidentialit\u00e9 : ${PRIVACY_URL}`
+              `Ces réponses servent uniquement à adapter tes quêtes. Politique de confidentialité : ${PRIVACY_URL}`
             }
             getToken={() => getTokenRef.current()}
             onDone={() => {
@@ -687,7 +706,7 @@ export default function DashboardScreen() {
           </Text>
           {(quest?.streak ?? 0) > 0 ? (
             <Text style={[styles.headerStreak, { color: palette.orange }]}>
-              {'\uD83D\uDD25'} {quest?.streak}
+              {'🔥'} {quest?.streak}
             </Text>
           ) : (
             <View />
@@ -704,14 +723,14 @@ export default function DashboardScreen() {
         {/* Erreur inline */}
         {quest && error ? (
           <View style={styles.inlineErrorBanner}>
-            <Text style={styles.inlineErrorText}>{error}</Text>
+            <Text style={styles.inlineErrorText}>{normalizeDisplayText(error)}</Text>
             <Pressable onPress={() => setError(null)} hitSlop={8}>
               <Text style={styles.inlineErrorDismiss}>OK</Text>
             </Pressable>
           </View>
         ) : null}
 
-        {/* Carte Swipe ou \u00e9tat vide */}
+        {/* Carte Swipe ou état vide */}
         {quest ? (
           <View style={styles.swipeArea} key={questCardSwapKey}>
             <QuestSwipeCard
@@ -748,7 +767,7 @@ export default function DashboardScreen() {
           </Pressable>
         ) : null}
 
-        {/* Drawer de d\u00e9tails */}
+        {/* Drawer de détails */}
         {quest ? (
           <QuestDetailDrawer
             quest={quest}
@@ -803,7 +822,7 @@ export default function DashboardScreen() {
                   onPress={() => void handleReportConfirm()}
                   disabled={!canRerollQuest || reporting}
                 >
-                  <Text style={styles.modalBtnPrimaryText}>{reporting ? '\u2026' : homeUi.rerollConfirmAction}</Text>
+                  <Text style={styles.modalBtnPrimaryText}>{reporting ? '…' : homeUi.rerollConfirmAction}</Text>
                 </Pressable>
               </View>
             </View>
@@ -825,7 +844,7 @@ export default function DashboardScreen() {
                   onPress={() => void confirmAbandon()}
                   disabled={abandoning}
                 >
-                  <Text style={styles.modalBtnAbandonText}>{abandoning ? '\u2026' : homeUi.rerollConfirmAction}</Text>
+                  <Text style={styles.modalBtnAbandonText}>{abandoning ? '…' : homeUi.rerollConfirmAction}</Text>
                 </Pressable>
               </View>
             </View>
@@ -941,6 +960,15 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
     errorText: { color: '#f87171', fontSize: 14, textAlign: 'center' },
     retryBtn: { backgroundColor: C.accent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12 },
     retryText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+    signOutOutlineBtn: {
+      paddingVertical: 14,
+      paddingHorizontal: 24,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: 'rgba(248,113,113,0.55)',
+      backgroundColor: 'transparent',
+    },
+    signOutOutlineText: { color: '#fca5a5', fontWeight: '700', fontSize: 15 },
     rerollBtnDisabled: { opacity: 0.42 },
     onboardingOverlay: {
       position: 'absolute',

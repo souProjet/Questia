@@ -127,15 +127,15 @@ export default function AuthScreen() {
       >
         <View style={s.verifyInner}>
           <View style={s.verifyIconBox}>
-            <Text style={s.verifyIconText}>{'\u{1F4E7}'}</Text>
+            <Text style={s.verifyIconText}>📧</Text>
           </View>
-          <Text style={s.verifyTitle}>V\u00e9rifie ton email</Text>
+          <Text style={s.verifyTitle}>Vérifie ton email</Text>
           <Text style={s.verifySubtitle}>
-            Code envoy\u00e9 \u00e0 <Text style={s.emailHighlight}>{email}</Text>
+            Code envoyé à <Text style={s.emailHighlight}>{email}</Text>
           </Text>
           <TextInput
             style={s.input}
-            placeholder="Code \u00e0 6 chiffres"
+            placeholder="Code à 6 chiffres"
             placeholderTextColor="#94a3b8"
             value={code}
             onChangeText={setCode}
@@ -181,13 +181,13 @@ export default function AuthScreen() {
           <Text style={s.appTitle}>QUESTIA</Text>
           <View style={s.badgeRow}>
             <Text style={s.badgeText}>
-              {mode === 'sign-in' ? '\u{1F9ED} Reprendre ta progression' : '\u{1F680} D\u00e9bloquer ta premi\u00e8re qu\u00eate'}
+              {mode === 'sign-in' ? '🧭 Reprendre ta progression' : '🚀 Débloquer ta première quête'}
             </Text>
           </View>
           <Text style={s.appTagline}>
             {mode === 'sign-in'
-              ? 'Connecte-toi pour retrouver ta qu\u00eate du jour.'
-              : 'Inscris-toi \u2014 ta premi\u00e8re qu\u00eate t\'attend.'}
+              ? 'Connecte-toi pour retrouver ta quête du jour.'
+              : 'Inscris-toi — ta première quête t\'attend.'}
           </Text>
         </View>
 
@@ -243,7 +243,7 @@ export default function AuthScreen() {
             {loading
               ? <ActivityIndicator color="#fff" />
               : <Text style={s.primaryButtonText}>
-                  {mode === 'sign-in' ? 'Se connecter' : 'Cr\u00e9er mon compte'}
+                  {mode === 'sign-in' ? 'Se connecter' : 'Créer mon compte'}
                 </Text>
             }
           </Pressable>
@@ -254,7 +254,7 @@ export default function AuthScreen() {
           style={s.switchBtn}
         >
           <Text style={s.switchText}>
-            {mode === 'sign-in' ? 'Pas de compte ? ' : 'D\u00e9j\u00e0 inscrit ? '}
+            {mode === 'sign-in' ? 'Pas de compte ? ' : 'Déjà inscrit ? '}
             <Text style={s.switchHighlight}>
               {mode === 'sign-in' ? "S'inscrire" : 'Se connecter'}
             </Text>

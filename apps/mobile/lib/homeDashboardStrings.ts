@@ -12,6 +12,10 @@ export type HomeDashboardStrings = {
   errReroll: string;
   errReport: string;
   errAbandon: string;
+  /** Bouton sur l’écran d’erreur plein écran */
+  errorRetry: string;
+  /** Déconnexion Clerk quand la session JWT est refusée (401) */
+  errorSignOut: string;
   questStatus: {
     pending: string;
     accepted: string;
@@ -67,6 +71,8 @@ function fr(): HomeDashboardStrings {
     errReroll: 'Erreur relance',
     errReport: 'Erreur report',
     errAbandon: 'Erreur abandon',
+    errorRetry: 'Réessayer',
+    errorSignOut: 'Se déconnecter',
     questStatus: {
       pending: 'En attente de ton choix',
       accepted: 'En cours',
@@ -83,7 +89,8 @@ function fr(): HomeDashboardStrings {
     },
     rerollCta: (label) => `Changer de quête (${label})`,
     rerollConfirmTitle: 'Changer de quête ?',
-    rerollConfirmBody: 'Tu consommes une relance et l\u2019XP de la nouvelle quête sera réduit de 25 %. Cette action est irréversible.',
+    rerollConfirmBody:
+      'Tu consommes une relance et l’XP de la nouvelle quête sera réduit de 25 %. Cette action est irréversible.',
     rerollConfirmAction: 'Changer',
     rerollConfirmCancel: 'Annuler',
     rerollLoading: 'Nouvelle quête en cours…',
@@ -96,7 +103,7 @@ function fr(): HomeDashboardStrings {
     tapDetails: 'Appuie pour voir les détails',
     validateCta: "J'ai fait la quête — valider",
     abandonedTitle: 'À demain',
-    abandonedSub: 'Ta série repart à zéro. Une nouvelle quête t\u2019attend demain.',
+    abandonedSub: 'Ta série repart à zéro. Une nouvelle quête t’attend demain.',
     paceToday: "Aujourd'hui",
     pacePlanned: 'À caler',
     missionHeading: 'Ta mission',
@@ -105,7 +112,7 @@ function fr(): HomeDashboardStrings {
     destinationHint: 'Un lieu suggéré pour ta quête.',
     safetyLabel: 'Sécurité',
     reportCta: 'Reporter — quête courte',
-    abandonCta: 'Ce n\u2019est pas pour moi',
+    abandonCta: 'Ce n’est pas pour moi',
     close: 'Fermer',
     durationLabel: 'Durée :',
     outdoorTag: 'Extérieur',
@@ -127,6 +134,8 @@ function en(): HomeDashboardStrings {
     errReroll: 'Reroll error',
     errReport: 'Report error',
     errAbandon: 'Abandon error',
+    errorRetry: 'Retry',
+    errorSignOut: 'Sign out',
     questStatus: {
       pending: 'Waiting for your choice',
       accepted: 'In progress',
@@ -143,7 +152,7 @@ function en(): HomeDashboardStrings {
     },
     rerollCta: (label) => `Change quest (${label})`,
     rerollConfirmTitle: 'Change quest?',
-    rerollConfirmBody: 'You\u2019ll use a reroll and the new quest\u2019s XP will be reduced by 25%. This cannot be undone.',
+    rerollConfirmBody: 'You’ll use a reroll and the new quest’s XP will be reduced by 25%. This cannot be undone.',
     rerollConfirmAction: 'Change',
     rerollConfirmCancel: 'Cancel',
     rerollLoading: 'Drawing your new quest…',
@@ -154,7 +163,7 @@ function en(): HomeDashboardStrings {
     swipeAccept: 'ACCEPT',
     swipeChange: 'CHANGE',
     tapDetails: 'Tap to see details',
-    validateCta: 'I did the quest \u2014 complete',
+    validateCta: 'I did the quest — complete',
     abandonedTitle: 'See you tomorrow',
     abandonedSub: 'Your streak resets. A new quest awaits tomorrow.',
     paceToday: 'Today',
@@ -164,12 +173,12 @@ function en(): HomeDashboardStrings {
     destinationLabel: 'Destination',
     destinationHint: 'A suggested spot for your quest.',
     safetyLabel: 'Safety',
-    reportCta: 'Defer \u2014 short quest',
+    reportCta: 'Defer — short quest',
     abandonCta: 'Not for me',
     close: 'Close',
     durationLabel: 'Duration:',
     outdoorTag: 'Outdoor',
-    reportHint: 'Like "Change quest," deferring uses a reroll \u2014 you get a short quest for today.',
+    reportHint: 'Like "Change quest," deferring uses a reroll — you get a short quest for today.',
   };
 }
 
