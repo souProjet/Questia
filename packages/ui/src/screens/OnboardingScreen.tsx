@@ -61,33 +61,22 @@ export function OnboardingScreen() {
             </View>
             <Text style={styles.appTitle}>QUESTIA</Text>
             <Text style={styles.tagline}>Tu t'ennuies parce que{'\n'}t'as pas de quêtes secondaires.</Text>
-            <Text style={styles.subTagline}>
-              La vie c'est pas juste travailler + dormir.
-            </Text>
-            <View style={styles.featureList}>
-              {['🎯  Quêtes quotidiennes personnalisées', '🧠  Algorithme psychologique adaptatif', '⚡  Système d\'escalade progressif'].map((f) => (
-                <View key={f} style={styles.featureItem}>
-                  <Text style={styles.featureText}>{f}</Text>
-                </View>
-              ))}
-            </View>
+            <Text style={styles.subTagline}>🎯 Quêtes du jour · Sur ton rythme · Qui évoluent avec toi</Text>
             <Pressable style={styles.primaryButton} onPress={() => goTo('question1')}>
-              <Text style={styles.primaryButtonText}>Commencer l'aventure</Text>
+              <Text style={styles.primaryButtonText}>C'est parti ⚔️</Text>
             </Pressable>
           </>
         )}
 
         {step === 'question1' && (
           <>
-            <Text style={styles.questionStep}>Question 1 / 2 — ton rythme</Text>
+            <Text style={styles.questionStep}>1 / 2 — Ton rythme</Text>
             <Text style={styles.questionTitle}>Un dimanche libre, tu fais quoi ?</Text>
-            <Text style={styles.questionText}>
-              Pas de bonne réponse : choisis ce qui te ressemble. On calibre si tu préfères tes repères ou bouger — pour des quêtes à ta mesure.
-            </Text>
+            <Text style={styles.questionText}>Un clic, celui qui te parle le plus.</Text>
             <PersonalityQuadrantPicker
               options={[
-                { value: 'homebody', label: '🏠  Casanier', description: 'Je préfère le confort et la sécurité de chez moi.' },
-                { value: 'explorer', label: '🌍  Explorateur', description: "J'aime partir à l'aventure et découvrir l'inconnu." },
+                { value: 'homebody', label: '🏠  Casanier', description: 'Coco, dodo, zéro galère.' },
+                { value: 'explorer', label: '🌍  Explorateur', description: 'Nouveaux spots, imprévus.' },
               ]}
               selected={explorerAxis}
               onSelect={(val) => {
@@ -100,15 +89,13 @@ export function OnboardingScreen() {
 
         {step === 'question2' && (
           <>
-            <Text style={styles.questionStep}>Question 2 / 2 — l'imprévu</Text>
+            <Text style={styles.questionStep}>2 / 2 — L'imprévu</Text>
             <Text style={styles.questionTitle}>Quand un plan tombe à l'eau…</Text>
-            <Text style={styles.questionText}>
-              Dernière question : tu préfères anticiper et sécuriser, ou improviser ? Ça règle le niveau de surprise dans tes défis.
-            </Text>
+            <Text style={styles.questionText}>Dernier clic, même règle : fun &gt; perfection.</Text>
             <PersonalityQuadrantPicker
               options={[
-                { value: 'cautious', label: '🛡️  Prudent', description: 'Je planifie, je sécurise, je prévois.' },
-                { value: 'risktaker', label: '🎲  Téméraire', description: "J'embrasse l'imprévu et le chaos contrôlé." },
+                { value: 'cautious', label: '🛡️  Prudent', description: 'Quand c’est prévu, c’est parfait.' },
+                { value: 'risktaker', label: '🎲  Téméraire', description: 'L’imprévu, j’adore.' },
               ]}
               selected={riskAxis}
               onSelect={(val) => {
@@ -125,12 +112,9 @@ export function OnboardingScreen() {
             <View style={styles.completeBadge}>
               <Text style={styles.completeEmoji}>🎯</Text>
             </View>
-            <Text style={styles.completeTitle}>Récap de tes choix</Text>
-            <Text style={styles.recapExplain}>
-              Ce bloc résume tes réponses — ce n'est plus une question. Appuie sur le bouton pour continuer.
-            </Text>
+            <Text style={styles.completeTitle}>Ton combo</Text>
             <View style={styles.quadrantCard}>
-              <Text style={styles.quadrantLabel}>Résumé (non cliquable)</Text>
+              <Text style={styles.quadrantLabel}>Ton style</Text>
               <Text style={styles.quadrantValue}>
                 {explorerAxis === 'explorer' ? '🌍 Explorateur' : '🏠 Casanier'}{' '}
                 ×{' '}
@@ -138,9 +122,8 @@ export function OnboardingScreen() {
               </Text>
             </View>
             <Text style={styles.completeDesc}>
-              L'algorithme va calibrer tes{' '}
-              <Text style={styles.highlight}>3 premières quêtes</Text>{' '}
-              dans ta zone de confort pour créer l'habitude. Puis l'expansion commence.
+              On commence en douce sur{' '}
+              <Text style={styles.highlight}>3 quêtes</Text>, puis on monte le niveau avec toi.
             </Text>
             <Pressable style={styles.primaryButton} onPress={handleComplete} accessibilityLabel="Continuer après le récapitulatif">
               <Text style={styles.primaryButtonText}>Continuer ⚔️</Text>
@@ -220,24 +203,7 @@ const styles = StyleSheet.create({
     color: DA.muted,
     textAlign: 'center',
     marginBottom: 32,
-  },
-  featureList: {
-    width: '100%',
-    gap: 10,
-    marginBottom: 36,
-  },
-  featureItem: {
-    backgroundColor: DA.card,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: DA.border,
-  },
-  featureText: {
-    color: DA.text,
-    fontSize: 14,
-    fontWeight: '500',
+    lineHeight: 22,
   },
 
   // Question
@@ -271,14 +237,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 12,
     textTransform: 'uppercase',
-  },
-  recapExplain: {
-    fontSize: 14,
-    color: DA.muted,
-    textAlign: 'center',
-    lineHeight: 21,
-    marginBottom: 16,
-    paddingHorizontal: 8,
   },
   // Complete
   completeBadge: {

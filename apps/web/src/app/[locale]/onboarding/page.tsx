@@ -15,13 +15,13 @@ const Q1_OPTIONS = [
     id: 'homebody' as ExplorerAxis,
     icon: 'Home' as const,
     title: 'Je reste au chaud.',
-    desc: 'Le canapé, un bon film, ma routine. Je me ressource chez moi.',
+    desc: 'Coco, série, zéro galère.',
   },
   {
     id: 'explorer' as ExplorerAxis,
     icon: 'Globe' as const,
     title: 'Je pars explorer.',
-    desc: 'Les nouvelles adresses, les quartiers inconnus, les imprévus — j\'adore.',
+    desc: 'Nouveaux spots, imprévus, j’adore.',
   },
 ];
 
@@ -30,21 +30,21 @@ const Q2_OPTIONS = [
     id: 'cautious' as RiskAxis,
     icon: 'ClipboardList' as const,
     title: 'Je prépare, je planifie.',
-    desc: 'Quand les choses se passent comme prévu, c\'est parfait.',
+    desc: 'Quand ça se passe comme prévu : top.',
   },
   {
     id: 'risktaker' as RiskAxis,
     icon: 'Dices' as const,
-    title: 'J\'improvise, je fonce.',
-    desc: 'Les plans qui tombent à l\'eau ? C\'est souvent quand il se passe quelque chose d\'intéressant.',
+    title: 'J’improvise, je fonce.',
+    desc: 'Plan foiré = souvent le meilleur moment.',
   },
 ];
 
 const PROFILE_RESULTS: Record<string, { icon: string; label: string; desc: string }> = {
-  explorer_risktaker: { icon: 'Zap', label: 'L\'Aventurier',     desc: 'Tu vivras des quêtes intenses, en mouvement, souvent dehors.' },
-  explorer_cautious:  { icon: 'Compass', label: 'L\'Explorateur Méthodique', desc: 'Tes aventures seront riches et bien cadrées, sans mauvaises surprises.' },
-  homebody_risktaker: { icon: 'Drama', label: 'Le Risqueur Discret', desc: 'Des challenges à ta porte — inattendus mais toujours maîtrisés.' },
-  homebody_cautious:  { icon: 'Leaf', label: 'Le Découvreur Doux', desc: 'Des aventures accessibles qui agrandiront doucement ton monde.' },
+  explorer_risktaker: { icon: 'Zap', label: "L'Aventurier", desc: 'Quêtes nerveuses, souvent dehors.' },
+  explorer_cautious: { icon: 'Compass', label: "L'Explorateur cool", desc: 'Belles sorties, zéro chaos.' },
+  homebody_risktaker: { icon: 'Drama', label: 'Le Fou du salon', desc: 'Surprise… mais chez toi.' },
+  homebody_cautious: { icon: 'Leaf', label: 'Le Zen', desc: 'Doucement, sûrement.' },
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -113,14 +113,9 @@ export default function OnboardingPage() {
           <QuestiaLogo variant="onboarding" priority />
           <span className="font-display font-black text-2xl tracking-tight text-[var(--text)]">QUESTIA</span>
           {step < 2 && (
-            <>
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--link-on-bg)]">
-                🧭 Deux questions pour personnaliser tes quêtes
-              </span>
-              <p className="text-center text-sm text-[var(--text)]/75 max-w-sm mt-2 leading-relaxed">
-                Pas de bonne réponse : choisis ce qui te ressemble le plus. Ça sert uniquement à calibrer le rythme et le type de défis — pas à te classer.
-              </p>
-            </>
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--link-on-bg)]">
+              🎲 2 choix — des quêtes à ta sauce
+            </span>
           )}
         </div>
 
@@ -150,15 +145,12 @@ export default function OnboardingPage() {
         {step === 0 && (
           <div className="motion-safe:animate-onboarding-step motion-reduce:animate-none">
             <div className="mb-8 text-center">
-              <p className="label mb-3">Question 1 sur 2 — ton rythme</p>
+              <p className="label mb-3">1 / 2 — Ton rythme</p>
               <h1 className="font-display font-black text-3xl text-[var(--text)] leading-tight">
-                Un dimanche après-midi libre,<br />
+                Dimanche libre,<br />
                 <span className="text-gradient">tu fais quoi ?</span>
               </h1>
-              <p className="text-sm text-[var(--text)]/80 mt-3 font-medium leading-relaxed">
-                On te demande si tu préfères rester dans tes repères confortables ou aller voir ailleurs — pour proposer des quêtes ni trop sédentaires, ni trop extérieures pour toi.
-              </p>
-              <p className="text-xs text-[var(--text)]/65 mt-2">Clique sur l&apos;option qui te parle le plus.</p>
+              <p className="text-sm text-[var(--text)]/70 mt-3">Le clic qui te ressemble ✨</p>
             </div>
             <div className="space-y-3">
               {Q1_OPTIONS.map((o, idx) => (
@@ -188,15 +180,12 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="motion-safe:animate-onboarding-step motion-reduce:animate-none">
             <div className="mb-8 text-center">
-              <p className="label mb-3">Question 2 sur 2 — l&apos;imprévu</p>
+              <p className="label mb-3">2 / 2 — L&apos;imprévu</p>
               <h1 className="font-display font-black text-3xl text-[var(--text)] leading-tight">
-                Un plan qui tombe à l'eau,<br />
-                <span className="text-gradient">c'est comment pour toi ?</span>
+                Plan foiré,<br />
+                <span className="text-gradient">tu réagis comment ?</span>
               </h1>
-              <p className="text-sm text-[var(--text)]/80 mt-3 font-medium leading-relaxed">
-                Ici on mesure si tu préfères anticiper et sécuriser, ou improviser quand ça bouge — pour ajuster le niveau de surprise dans tes quêtes.
-              </p>
-              <p className="text-xs text-[var(--text)]/65 mt-2">Dernière question : même principe, un seul clic.</p>
+              <p className="text-sm text-[var(--text)]/70 mt-3">Dernier clic 🎯</p>
             </div>
             <div className="space-y-3">
               {Q2_OPTIONS.map((o, idx) => (
@@ -234,24 +223,21 @@ export default function OnboardingPage() {
           <div
             className="motion-safe:animate-onboarding-step motion-reduce:animate-none text-center"
             role="region"
-            aria-label="Récapitulatif de ton profil — plus de questions à répondre"
+            aria-label="Ton profil Questia"
           >
-            <p className="label mb-2">Plus de questions ✓</p>
-            <h2 className="font-display font-black text-2xl sm:text-3xl text-[var(--text)] mb-3 leading-tight">
-              Voici ton récap avant de créer ton compte
+            <p className="label mb-2">C&apos;est tout ✓</p>
+            <h2 className="font-display font-black text-2xl sm:text-3xl text-[var(--text)] mb-2 leading-tight">
+              Ton profil en un clin d&apos;œil
             </h2>
-            <p className="text-sm text-[var(--text)]/80 mb-6 leading-relaxed font-medium max-w-sm mx-auto">
-              Ce qui suit est un <strong className="text-[var(--text)]/95 font-bold">résumé</strong> de tes réponses — pas une nouvelle question. Tu n&apos;as rien d&apos;autre à choisir ici.
-            </p>
             <div className="flex justify-center mb-4"><Icon name={profile.icon as 'Zap' | 'Compass' | 'Drama' | 'Leaf'} size="2xl" className="text-cyan-800 w-16 h-16" /></div>
-            <p className="text-xs font-bold uppercase tracking-wider text-[var(--link-on-bg)] mb-2">Profil suggéré</p>
-            <h3 className="font-display font-black text-2xl text-[var(--text)] mb-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--link-on-bg)] mb-2">Ta vibe</p>
+            <h3 className="font-display font-black text-2xl text-[var(--text)] mb-2">
               {profile.label}
             </h3>
-            <p className="text-[var(--text)]/80 mb-6 leading-relaxed font-medium">{profile.desc}</p>
+            <p className="text-[var(--text)]/80 mb-5 leading-snug font-medium">{profile.desc}</p>
 
             <p className="text-left text-xs font-bold uppercase tracking-wider text-[var(--text)]/55 mb-2 pl-0.5">
-              Résumé de tes choix (non cliquable)
+              Ton duo
             </p>
             <div className="rounded-2xl p-5 mb-6 text-left space-y-3 border border-dashed border-[color:color-mix(in_srgb,var(--cyan)_40%,var(--border-ui))] bg-[color:color-mix(in_srgb,var(--card)_88%,rgba(224,242,254,.5))]">
               <div className="flex items-center gap-3">
@@ -269,24 +255,20 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl px-5 py-4 mb-5 border border-[color:color-mix(in_srgb,var(--cyan)_28%,var(--border-ui))] border-l-[3px] border-l-cyan-700/75 bg-[color:color-mix(in_srgb,var(--card)_70%,rgba(224,242,254,.95))] shadow-[inset_0_1px_0_rgba(255,255,255,.65)]">
-              <p className="text-sm text-[var(--text)] leading-relaxed">
-                Tes quêtes seront générées chaque matin à partir de ce profil et de ce que tu
-                acceptes dans l’app — le tout pour rester à ta mesure.
+            <div className="rounded-2xl px-4 py-3 mb-5 border border-[color:color-mix(in_srgb,var(--cyan)_28%,var(--border-ui))] border-l-[3px] border-l-cyan-700/75 bg-[color:color-mix(in_srgb,var(--card)_70%,rgba(224,242,254,.95))] shadow-[inset_0_1px_0_rgba(255,255,255,.65)]">
+              <p className="text-sm text-[var(--text)] leading-snug">
+                Chaque matin : des quêtes calées sur ce profil.
               </p>
             </div>
 
-            <p className="text-sm font-semibold text-[var(--text)] mb-3">
-              Prochaine étape : enregistrer tout ça avec un compte
-            </p>
             <button type="button" onClick={handleFinish} disabled={saving}
               className="btn btn-cta btn-lg w-full text-base transition-[transform,opacity,box-shadow] duration-200 ease-out hover:brightness-[1.03] active:scale-[0.99] disabled:opacity-60 disabled:hover:brightness-100 disabled:active:scale-100">
               {saving ? (
                 <span className="flex items-center gap-2 justify-center">
                   <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                  Un instant…
+                  Patience…
                 </span>
-              ) : '🚀 Créer mon compte et voir ma première quête'}
+              ) : '🚀 Créer mon compte'}
             </button>
 
             <button

@@ -65,10 +65,10 @@ export default function OnboardingPage() {
   };
 
   const PROFILES: Record<string, { icon: string; label: string; desc: string }> = {
-    explorer_risktaker: { icon: '⚡', label: "L'Aventurier",           desc: 'Quêtes intenses, en mouvement, souvent dehors.' },
-    explorer_cautious:  { icon: '🧭', label: "L'Explorateur Méthodique", desc: 'Aventures riches et bien cadrées.' },
-    homebody_risktaker: { icon: '🎭', label: 'Le Risqueur Discret',    desc: 'Challenges inattendus mais toujours maîtrisés.' },
-    homebody_cautious:  { icon: '🌱', label: 'Le Découvreur Doux',     desc: 'Aventures douces qui agrandissent ton monde.' },
+    explorer_risktaker: { icon: '⚡', label: "L'Aventurier", desc: 'Quêtes nerveuses, souvent dehors.' },
+    explorer_cautious: { icon: '🧭', label: "L'Explorateur cool", desc: 'Belles sorties, zéro chaos.' },
+    homebody_risktaker: { icon: '🎭', label: 'Le Fou du salon', desc: 'Surprise… mais chez toi.' },
+    homebody_cautious: { icon: '🌱', label: 'Le Zen', desc: 'Doucement, sûrement.' },
   };
 
   const profileKey = explorer && risk ? `${explorer}_${risk}` : null;
@@ -122,11 +122,9 @@ export default function OnboardingPage() {
             </View>
             <Text style={[s.title, compact && s.titleCompact]}>Questia</Text>
             <Text style={[s.subtitle, compact && s.subtitleCompact]}>Une aventure quotidienne,{'\n'}rien que pour toi.</Text>
-            <Text style={s.body}>
-              Deux questions rapides : pas de bonne réponse, choisis ce qui te ressemble. Ça sert à calibrer tes quêtes (rythme, nouveauté, surprise) — pas à te juger.
-            </Text>
+            <Text style={s.body}>2 questions fun, zéro piège — on calibre tes quêtes.</Text>
             <Pressable style={s.btn} onPress={() => goTo('q1')}>
-              <Text style={s.btnText}>Commencer →</Text>
+              <Text style={s.btnText}>C&apos;est parti →</Text>
             </Pressable>
             {renderLoginFooter(false)}
           </>
@@ -135,14 +133,12 @@ export default function OnboardingPage() {
         {/* ── Q1 ── */}
         {step === 'q1' && (
           <>
-            <Text style={s.stepLabel}>Question 1 / 2 — ton rythme</Text>
-            <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Un dimanche libre,{'\n'}tu fais quoi ?</Text>
-            <Text style={s.questionHint}>
-              On voit si tu préfères tes repères ou bouger — pour des quêtes à ton niveau. Touche l'option qui te parle.
-            </Text>
+            <Text style={s.stepLabel}>1 / 2 — Ton rythme</Text>
+            <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Dimanche libre,{'\n'}tu fais quoi ?</Text>
+            <Text style={s.questionHint}>Le tap qui te parle ✨</Text>
             {[
-              { id: 'homebody' as ExplorerAxis, icon: '🏠', title: 'Je reste au chaud.', desc: 'Canapé, film, routine.' },
-              { id: 'explorer' as ExplorerAxis, icon: '🌍', title: 'Je pars explorer.',  desc: 'Nouvelles adresses, imprévus.' },
+              { id: 'homebody' as ExplorerAxis, icon: '🏠', title: 'Je reste au chaud.', desc: 'Coco, série, tranquille.' },
+              { id: 'explorer' as ExplorerAxis, icon: '🌍', title: 'Je pars explorer.', desc: 'Nouveaux spots, imprévus.' },
             ].map((o) => (
               <Pressable
                 key={o.id}
@@ -171,14 +167,12 @@ export default function OnboardingPage() {
         {/* ── Q2 ── */}
         {step === 'q2' && (
           <>
-            <Text style={s.stepLabel}>Question 2 / 2 — l'imprévu</Text>
-            <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Un plan tombe à l'eau,{'\n'}c'est comment ?</Text>
-            <Text style={s.questionHint}>
-              Dernière question : tu préfères anticiper ou improviser ? Ça règle le niveau de surprise dans tes défis.
-            </Text>
+            <Text style={s.stepLabel}>2 / 2 — L'imprévu</Text>
+            <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Plan foiré,{'\n'}tu réagis comment ?</Text>
+            <Text style={s.questionHint}>Dernier tap 🎯</Text>
             {[
-              { id: 'cautious' as RiskAxis, icon: '📋', title: 'Je prépare, je planifie.', desc: 'Quand tout se passe comme prévu, parfait.' },
-              { id: 'risktaker' as RiskAxis, icon: '🎲', title: "J'improvise, je fonce.",   desc: 'Les imprévus mènent aux meilleures histoires.' },
+              { id: 'cautious' as RiskAxis, icon: '📋', title: 'Je prépare, je planifie.', desc: 'Ça se passe comme prévu : top.' },
+              { id: 'risktaker' as RiskAxis, icon: '🎲', title: "J'improvise, je fonce.", desc: 'Souvent là que ça devient mémorable.' },
             ].map((o) => (
               <Pressable
                 key={o.id}
@@ -210,16 +204,14 @@ export default function OnboardingPage() {
         {/* ── DONE ── */}
         {step === 'done' && profile && (
           <>
-            <Text style={s.doneBadge}>Plus de questions ✓</Text>
-            <Text style={s.doneTitle}>Récap avant inscription</Text>
-            <Text style={s.doneExplain}>
-              Ce qui suit résume tes réponses — ce n'est plus une question. Prochaine étape : créer ton compte pour enregistrer ton profil.
-            </Text>
+            <Text style={s.doneBadge}>C&apos;est tout ✓</Text>
+            <Text style={s.doneTitle}>Ton profil en un clin d&apos;œil</Text>
+            <Text style={s.doneExplain}>Crée un compte pour le garder.</Text>
             <Text style={s.profileIcon}>{profile.icon}</Text>
-            <Text style={s.profileLabel}>Profil suggéré</Text>
+            <Text style={s.profileLabel}>Ta vibe</Text>
             <Text style={s.profileName}>{profile.label}</Text>
             <Text style={s.profileDesc}>{profile.desc}</Text>
-            <Text style={s.recapHeading}>Résumé de tes choix</Text>
+            <Text style={s.recapHeading}>Ton duo</Text>
             <View style={s.recapCard} accessibilityLabel="Résumé de tes réponses, non interactif">
               <Text style={s.recapItem}>
                 {explorer === 'explorer' ? '🌍  Tu aimes explorer' : '🏠  Tu aimes ta routine'}
@@ -229,7 +221,6 @@ export default function OnboardingPage() {
                 {risk === 'risktaker' ? '🎲  Tu fonces dans l\'inconnu' : '📋  Tu préfères planifier'}
               </Text>
             </View>
-            <Text style={s.ctaLead}>Enregistrer tout ça :</Text>
             <Pressable style={s.btn} onPress={finish} accessibilityLabel="Créer mon compte pour sauvegarder mon profil">
               <Text style={s.btnText}>Créer mon compte →</Text>
             </Pressable>
@@ -291,7 +282,6 @@ const s = StyleSheet.create({
   profileIcon: { fontSize: 64, textAlign: 'center', marginBottom: 12 },
   profileLabel: { fontSize: 11, fontWeight: '700', color: C.accentWarm, letterSpacing: 2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 8 },
   recapHeading: { fontSize: 12, fontWeight: '700', color: C.muted, textAlign: 'left', alignSelf: 'stretch', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
-  ctaLead: { fontSize: 15, fontWeight: '700', color: C.text, textAlign: 'center', marginBottom: 10 },
   profileName: { fontSize: 28, fontWeight: '900', color: C.text, textAlign: 'center', marginBottom: 10 },
   profileDesc: { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 24, marginBottom: 24 },
   recapCard: {

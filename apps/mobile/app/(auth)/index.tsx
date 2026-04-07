@@ -202,9 +202,9 @@ export default function AuthScreen() {
 
         {mode === 'sign-up' && onboardingReady === false ? (
           <View style={s.onboardingHint}>
-            <Text style={s.onboardingHintTitle}>Profil pas encore calibré</Text>
+            <Text style={s.onboardingHintTitle}>2 petites questions ?</Text>
             <Text style={s.onboardingHintBody}>
-              Les deux questions sur l'écran d'accueil servent à personnaliser tes quêtes. Tu peux t'inscrire quand même, mais c'est mieux d'y passer avant.
+              Sur l’accueil — pour des quêtes à ton goût. Rapide et optionnel si tu préfères zapper.
             </Text>
             <Pressable
               style={({ pressed }) => [s.onboardingHintBtn, pressed && s.buttonPressed]}
@@ -212,7 +212,7 @@ export default function AuthScreen() {
               accessibilityRole="button"
               accessibilityLabel="Retour au questionnaire d'accueil"
             >
-              <Text style={s.onboardingHintBtnText}>Retour au questionnaire (2 questions)</Text>
+              <Text style={s.onboardingHintBtnText}>Faire les 2 questions</Text>
             </Pressable>
           </View>
         ) : null}

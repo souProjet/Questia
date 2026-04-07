@@ -1,6 +1,7 @@
 /**
  * Envoi d’événements vers GTM (dataLayer), GA4 direct (gtag), et PostHog.
- * N’envoie rien sans consentement analytics (RGPD), sauf PostHog côté config (désactivé sans clé).
+ * Sans consentement analytics, les événements sont mis en file puis envoyés dès « Accepter »
+ * (évite de perdre onboarding_started, etc. si le bandeau est encore affiché).
  */
 import { questAnalyticsId as questAnalyticsIdFromShared } from '@questia/shared';
 import { analyticsConfig } from '@/config/analytics';
@@ -16,14 +17,11 @@ declare global {
   }
 }
 
-/** Pousse un événement analytics (snake_case côté noms dans events.ts). */
-export function trackAnalyticsEvent(
-  eventName: string,
-  params?: Record<string, unknown>,
-): void {
-  if (typeof window === 'undefined') return;
-  if (!hasAnalyticsConsent()) return;
+const MAX_PENDING = 80;
+const pending: Array<{ eventName: string; params?: Record<string, unknown> }> = [];
 
+function dispatchAnalyticsEvent(eventName: string, params?: Record<string, unknown>): void {
+  if (typeof window === 'undefined') return;
   capturePostHogEvent(eventName, params);
 
   if (analyticsConfig.gtmId) {
@@ -35,6 +33,38 @@ export function trackAnalyticsEvent(
   if (analyticsConfig.gaMeasurementId && typeof window.gtag === 'function') {
     window.gtag('event', eventName, params ?? {});
   }
+}
+
+function flushPendingAnalytics(): void {
+  while (pending.length) {
+    const next = pending.shift();
+    if (next) dispatchAnalyticsEvent(next.eventName, next.params);
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('questia-consent-change', () => {
+    if (!hasAnalyticsConsent()) {
+      pending.length = 0;
+      return;
+    }
+    /** Après les listeners sync (ex. opt-in PostHog). */
+    queueMicrotask(() => flushPendingAnalytics());
+  });
+}
+
+/** Pousse un événement analytics (snake_case côté noms dans events.ts). */
+export function trackAnalyticsEvent(
+  eventName: string,
+  params?: Record<string, unknown>,
+): void {
+  if (typeof window === 'undefined') return;
+  if (!hasAnalyticsConsent()) {
+    if (pending.length < MAX_PENDING) pending.push({ eventName, params });
+    return;
+  }
+
+  dispatchAnalyticsEvent(eventName, params);
 }
 
 /**
