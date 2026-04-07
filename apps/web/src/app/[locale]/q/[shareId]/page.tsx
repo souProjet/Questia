@@ -1,12 +1,69 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { questDisplayEmoji } from '@questia/shared';
 import { prisma } from '@/lib/db';
+import { alternatesForLocalePath, canonicalUrlFor } from '@/lib/seo/alternates';
 
 type PageParams = {
   locale: string;
   shareId: string;
 };
+
+const sharedQuestSelect = {
+  questDate: true,
+  generatedEmoji: true,
+  generatedTitle: true,
+  generatedMission: true,
+  generatedHook: true,
+  generatedDuration: true,
+  status: true,
+} as const;
+
+async function loadSharedQuest(shareId: string) {
+  return prisma.questLog.findUnique({
+    where: { shareId },
+    select: sharedQuestSelect,
+  });
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<PageParams>;
+}): Promise<Metadata> {
+  const { locale, shareId } = await params;
+  const log = await loadSharedQuest(shareId);
+  if (!log || log.status !== 'completed') {
+    return { title: 'Questia' };
+  }
+  const displayEmoji = questDisplayEmoji(log.generatedEmoji);
+  const title = `${displayEmoji} ${log.generatedTitle} | Questia`;
+  const description =
+    log.generatedMission.length > 155
+      ? `${log.generatedMission.slice(0, 152)}…`
+      : log.generatedMission;
+  const path = `/q/${shareId}`;
+  return {
+    title,
+    description,
+    alternates: alternatesForLocalePath(locale, path),
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrlFor(locale, path),
+      type: 'website',
+      locale: locale === 'en' ? 'en_US' : 'fr_FR',
+      siteName: 'Questia',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+    robots: { index: true, follow: true },
+  };
+}
 
 export default async function SharedQuestPage({
   params,
@@ -16,18 +73,7 @@ export default async function SharedQuestPage({
   const { locale, shareId } = await params;
   const isEn = locale === 'en';
 
-  const log = await prisma.questLog.findUnique({
-    where: { shareId },
-    select: {
-      questDate: true,
-      generatedEmoji: true,
-      generatedTitle: true,
-      generatedMission: true,
-      generatedHook: true,
-      generatedDuration: true,
-      status: true,
-    },
-  });
+  const log = await loadSharedQuest(shareId);
 
   if (!log || log.status !== 'completed') notFound();
 

@@ -9,7 +9,6 @@ import { AppStoreButtons } from '@/components/AppStoreButtons';
 import { LandingJsonLd } from '@/components/LandingJsonLd';
 import { LandingReveal } from '@/components/LandingReveal';
 import { hasAnyStoreLink } from '@/config/marketing';
-import { siteUrl } from '@/config/marketing';
 
 export async function generateMetadata({
   params,
@@ -28,18 +27,17 @@ export async function generateMetadata({
     title,
     description: desc,
     keywords,
-    alternates: { canonical: locale === 'en' ? '/en' : '/' },
     openGraph: {
       title: t('ogTitle'),
       description: desc,
-      url: siteUrl,
       type: 'website',
       locale: locale === 'en' ? 'en_US' : 'fr_FR',
+      alternateLocale: locale === 'en' ? ['fr_FR'] : ['en_US'],
       siteName: 'Questia',
       images: [{ url: '/brand/questia-logo.png', width: 512, height: 512, alt: 'Questia' }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: t('twitterTitle'),
       description: twitterDesc,
       images: ['/brand/questia-logo.png'],

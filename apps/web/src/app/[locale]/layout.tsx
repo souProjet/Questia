@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import { Suspense } from 'react';
 import { ClerkProvider } from '@clerk/nextjs';
 import { frFR, enUS } from '@clerk/localizations';
@@ -8,6 +9,7 @@ import { hasLocale } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { siteUrl } from '@/config/marketing';
+import { alternatesForLocalePath, canonicalUrlFor, stripLocalePrefix } from '@/lib/seo/alternates';
 import { CookieNotice } from '@/components/CookieNotice';
 import { AnalyticsClerkTracker } from '@/components/analytics/AnalyticsClerkTracker';
 import { AnalyticsPageViewTracker } from '@/components/analytics/AnalyticsPageViewTracker';
@@ -35,23 +37,38 @@ export async function generateMetadata({
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'RootLayout' });
 
+  const h = await headers();
+  const pathname = h.get('x-questia-pathname') ?? '/';
+  const logical = stripLocalePrefix(pathname);
+  const alternates = alternatesForLocalePath(locale, logical);
+  const ogUrl = canonicalUrlFor(locale, logical);
+  const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
+
   return {
     metadataBase: new URL(siteUrl),
+    icons: {
+      icon: [{ url: '/brand/questia-logo.png', sizes: '512x512', type: 'image/png' }],
+      apple: [{ url: '/brand/questia-logo.png', sizes: '512x512' }],
+    },
     title: {
       default: t('titleDefault'),
       template: '%s | Questia',
     },
     description: t('description'),
+    alternates,
+    ...(googleVerification ? { verification: { google: googleVerification } } : {}),
     openGraph: {
       title: t('ogTitle'),
       description: t('ogDescription'),
       type: 'website',
+      url: ogUrl,
       locale: locale === 'en' ? 'en_US' : 'fr_FR',
+      alternateLocale: locale === 'en' ? ['fr_FR'] : ['en_US'],
       siteName: 'Questia',
       images: [{ url: '/brand/questia-logo.png', width: 512, height: 512, alt: 'Questia' }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: t('twitterTitle'),
       description: t('twitterDescription'),
       images: ['/brand/questia-logo.png'],

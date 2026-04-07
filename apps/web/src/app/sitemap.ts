@@ -4,11 +4,9 @@ import { siteUrl } from '@/config/marketing';
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
+  /** Pas de pages noindex (auth, onboarding) : évite d’envoyer des URL que le sitemap ne doit pas faire indexer. */
   const paths = [
     { path: '', priority: 1, changeFrequency: 'weekly' as const },
-    { path: '/onboarding', priority: 0.8, changeFrequency: 'monthly' as const },
-    { path: '/sign-in', priority: 0.5, changeFrequency: 'monthly' as const },
-    { path: '/sign-up', priority: 0.5, changeFrequency: 'monthly' as const },
     { path: '/legal/confidentialite', priority: 0.3, changeFrequency: 'yearly' as const },
     { path: '/legal/mentions-legales', priority: 0.3, changeFrequency: 'yearly' as const },
     { path: '/legal/cgu', priority: 0.3, changeFrequency: 'yearly' as const },

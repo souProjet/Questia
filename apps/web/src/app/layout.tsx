@@ -1,4 +1,5 @@
 import { Inter, Space_Grotesk } from 'next/font/google';
+import { headers } from 'next/headers';
 import './globals.css';
 
 const inter = Inter({
@@ -16,11 +17,13 @@ const spaceGrotesk = Space_Grotesk({
 /**
  * Layout racine minimal : pas d’appels `getLocale()` / `getMessages()` ici — la locale
  * n’est connue qu’après le segment `[locale]` (sinon erreur 500 avec next-intl).
- * `lang` est mis à jour côté client via `<HtmlLang />` dans `[locale]/layout`.
+ * `lang` côté serveur via middleware (`x-questia-locale`) ; `<HtmlLang />` aligne les navigations client.
  */
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const h = await headers();
+  const lang = h.get('x-questia-locale') ?? 'fr';
   return (
-    <html lang="fr" className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
+    <html lang={lang} className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );

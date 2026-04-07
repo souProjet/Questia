@@ -7,6 +7,10 @@
     "twitterTitle": "Questia — Daily IRL quests",
     "twitterDescription": "One quest a day in your real life. iOS, Android, and web."
   },
+  "OnboardingMetadata": {
+    "title": "Discover your quest style",
+    "description": "A short quiz to tune your Questia profile before you sign up — explorer or homebody, planner or improviser."
+  },
   "Navbar": {
     "ariaMain": "Main navigation",
     "ariaHome": "Questia, home",

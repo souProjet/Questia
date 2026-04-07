@@ -1,6 +1,6 @@
 import createMiddleware from 'next-intl/middleware';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { routing } from './i18n/routing';
 
 const intlMiddleware = createMiddleware(routing);
@@ -49,7 +49,14 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
   }
 
-  const intlResponse = intlMiddleware(req);
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-questia-pathname', pathname);
+  requestHeaders.set(
+    'x-questia-locale',
+    pathname === '/en' || pathname.startsWith('/en/') ? 'en' : 'fr',
+  );
+  const reqForIntl = new NextRequest(req.url, { headers: requestHeaders });
+  const intlResponse = intlMiddleware(reqForIntl);
 
   /** Laisser next-intl appliquer redirections (ex. négociation `Accept-Language` → `/en`). */
   if (intlResponse.status >= 300 && intlResponse.status < 400) {

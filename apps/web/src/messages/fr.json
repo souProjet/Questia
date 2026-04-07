@@ -7,6 +7,10 @@
     "twitterTitle": "Questia — App de quêtes quotidiennes IRL",
     "twitterDescription": "Une quête par jour dans ta vraie vie. iOS, Android et web."
   },
+  "OnboardingMetadata": {
+    "title": "Découvre ton style de quête",
+    "description": "Quelques questions pour calibrer ton profil Questia avant de créer ton compte — explorer ou cocooning, prudence ou improvisation."
+  },
   "Navbar": {
     "ariaMain": "Navigation principale",
     "ariaHome": "Questia, accueil",
