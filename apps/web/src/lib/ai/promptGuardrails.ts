@@ -2,6 +2,15 @@
  * Règles de conformité injectées dans les prompts système (sécurité, RGPD, usage responsable).
  * Texte stable pour audit et cohérence entre générateurs.
  */
+/** Style linguistique injecté pour la génération en français (quête du jour, etc.). */
+export const QUEST_SYSTEM_LANG_FR = `Style linguistique (français) :
+- Français courant et naturel ; tutoiement cohérent du début à la fin des textes.
+- Évite les anglicismes inutiles (ex. challenge, focus, mindset, tips, random) ; préfère défi, priorité, idée fixe, conseils, au hasard, selon le contexte.
+- Pas de calques sur l’anglais : syntaxe et ordre des mots doivent sonner comme du français parlé, pas comme une traduction mot à mot.
+- Accords et formulations corrects ; phrases complètes, comme une consigne claire à un ami.
+- Pas de mots rares, techniques ou « marketing » mal placés pour paraître original.
+- Les champs titre, mission et hook : même registre, fluide et direct, sans mélange franglais.`;
+
 export const QUEST_SYSTEM_GUARDRAILS = `Garde-fous obligatoires :
 - Aucun contenu visant à nuire, harceler, discriminer, inciter à la violence, au crime, à l’automutilation ou à toute activité illégale.
 - Pas de conseils médicaux, psychothérapeutiques ou de diagnostic : l’app est ludique ; si un sujet de santé physique ou mentale apparaît, reste neutre et ne remplace pas un professionnel.

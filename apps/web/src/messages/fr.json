@@ -14,6 +14,7 @@
     "navExamples": "Exemples",
     "navHow": "Fonctionnement",
     "navDownload": "Télécharger",
+    "navDownloadWeb": "Le site",
     "navTestimonials": "Avis",
     "navFaq": "FAQ",
     "openApp": "Ouvrir l'app",
@@ -35,8 +36,11 @@
   "HomeMetadata": {
     "title": "Questia — App de quêtes quotidiennes IRL (iOS, Android & Web)",
     "description": "Questia : application de quêtes quotidiennes dans la vraie vie. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer — iOS, Android et web.",
+    "titleWeb": "Questia — Quêtes quotidiennes IRL sur le web",
+    "descriptionWeb": "Questia : quêtes quotidiennes dans la vraie vie, dans ton navigateur. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer.",
     "ogTitle": "Questia — App de quêtes quotidiennes dans la vraie vie",
     "twitterTitle": "Questia — App de quêtes quotidiennes IRL",
+    "twitterDescriptionWeb": "Une quête par jour dans ta vraie vie — sur le web.",
     "keywords": [
       "Questia",
       "application quête quotidienne",
@@ -50,18 +54,24 @@
     ]
   },
   "HomePage": {
+    "appStore": {
+      "ariaDownload": "Télécharger l'application Questia",
+      "ariaWeb": "Questia sur le web",
+      "webOnly": "Joue depuis ton navigateur : onboarding, quêtes du jour et progression — tout sur le site."
+    },
     "jsonLd": {
       "appDescription": "Application de quêtes quotidiennes dans la vraie vie : missions courtes personnalisées selon ton profil et ton style de joueur.",
       "webDescription": "Questia transforme ton quotidien en aventure : une quête IRL par jour, personnalisée."
     },
     "hero": {
       "line1": "L'app de",
+      "line1Web": "Le site des",
       "gradient": "quêtes quotidiennes",
       "line2": "dans la vraie vie",
       "lead": "Une mission chaque matin, <strong>ajustée à ton profil</strong> et à ton rythme — pour sortir un peu plus, sans te mettre la pression.",
       "preferWeb": "Tu préfères le web ?",
       "continueBrowser": "Continuer dans le navigateur",
-      "webOnly": "Commence sur le web — quand l’app sort, tu te connectes avec le même compte.",
+      "webOnly": "Tout se passe sur le web : crée ton profil et joue depuis ton navigateur.",
       "ctaFree": "Commencer gratuitement",
       "seeExamples": "Voir des exemples de missions",
       "soonStores": "Bientôt sur iPhone & Android",
@@ -71,6 +81,7 @@
       "label": "Fonctionnement",
       "title": "Trois étapes, puis ta quête du matin",
       "subtitle": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur l’app mobile, tout dans la poche ; sur le web, même expérience depuis un navigateur.",
+      "subtitleWeb": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission — tout depuis ton navigateur, sans installation.",
       "stepLabel": "Étape"
     },
     "steps": [
@@ -120,6 +131,9 @@
       "label": "Télécharger",
       "title": "iPhone & Android",
       "subtitle": "Quête du jour et progression sur ton téléphone. Tu peux aussi tout faire depuis le web avec le même compte.",
+      "labelWeb": "Sur le web",
+      "titleWeb": "Joue depuis ton navigateur",
+      "subtitleWeb": "Crée ton profil, reçois ta quête du matin et coche tes missions — tout sur le site, avec le même compte partout.",
       "webLink": "Utiliser Questia sur le web"
     },
     "testimonials": {
@@ -148,7 +162,8 @@
     "faq": {
       "label": "FAQ",
       "title": "Questions fréquentes",
-      "subtitle": "Tout ce qu’il faut savoir avant de te lancer — web ou mobile."
+      "subtitle": "Tout ce qu’il faut savoir avant de te lancer — web ou mobile.",
+      "subtitleWeb": "Tout ce qu’il faut savoir avant de te lancer sur le site."
     },
     "faqItems": [
       {
@@ -156,16 +171,16 @@
         "answer": "Chaque matin tu reçois une mission courte, calibrée sur ton profil, ton style de jeu et le niveau de défi que tu t’es choisi. L’objectif : une petite action réalisable dans la vraie vie, avec une fin claire — pas une todo qui s’allonge sans fin."
       },
       {
-        "question": "Puis-je commencer sur le web et continuer sur l’app ?",
-        "answer": "Oui. Un seul compte : tu peux créer ton profil sur le web, installer l’app plus tard et te reconnecter, ou l’inverse. Tes quêtes et ta progression restent cohérentes."
+        "question": "Un seul compte pour tout ?",
+        "answer": "Oui. Profil, quêtes et progression : tout se passe sur le site, dans ton navigateur, avec un seul compte."
       },
       {
         "question": "L’app est-elle gratuite ?",
-        "answer": "Tu peux commencer gratuitement pour calibrer ton profil et découvrir le fonctionnement. Si des options payantes arrivent plus tard, elles seront indiquées clairement dans l’app."
+        "answer": "Tu peux commencer gratuitement pour calibrer ton profil et découvrir le fonctionnement sur le site. Si des options payantes arrivent plus tard, elles seront indiquées clairement."
       },
       {
         "question": "Comment Questia personnalise-t-il mes quêtes ?",
-        "answer": "À partir de ton profil et des réglages que tu acceptes dans l’app, les missions sont ajustées pour rester réalistes pour toi — ni trop molles, ni injouables. Tu gardes la main sur ce que tu tentes vraiment."
+        "answer": "À partir de ton profil et des réglages que tu acceptes, les missions sont ajustées pour rester réalistes pour toi — ni trop molles, ni injouables. Tu gardes la main sur ce que tu tentes vraiment."
       },
       {
         "question": "Questia remplace-t-il un professionnel de santé ou un coach ?",
@@ -183,10 +198,12 @@
       "titleAfter": "?",
       "storesReady": "Gratuit pour commencer — sur les stores ou dans ton navigateur, avec le même compte.",
       "storesPending": "Crée ton profil sur le web ; quand l’app sera dispo, tu reprends avec le même compte.",
+      "storesPendingWeb": "Crée ton profil et lance ta première quête — tout sur le web, gratuit pour commencer.",
       "or": "ou",
       "continueWeb": "Continuer sur le web",
       "ctaFree": "Commencer gratuitement",
-      "appStoresLink": "L’app sur iPhone et Android"
+      "appStoresLink": "L’app sur iPhone et Android",
+      "appStoresLinkWeb": "Découvrir Questia sur le web"
     },
     "footer": {
       "tagline": "Des quêtes secondaires dans la vraie vie — une mission par jour, sans te mettre la pression.",
@@ -194,6 +211,7 @@
       "examples": "Exemples",
       "how": "Comment ça marche",
       "download": "Télécharger",
+      "downloadWeb": "Le site",
       "faq": "FAQ",
       "signIn": "Connexion",
       "privacy": "Confidentialité",

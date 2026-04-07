@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { appStoreUrl, hasAppStoreLink, hasPlayStoreLink, playStoreUrl } from '@/config/marketing';
 
 /**
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export function AppStoreButtons({ variant = 'default', className = '' }: Props) {
+  const t = useTranslations('HomePage.appStore');
   const ios = hasAppStoreLink();
   const android = hasPlayStoreLink();
 
@@ -35,7 +37,7 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
     <div
       className={`flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 sm:gap-6 w-full min-w-0 ${className}`}
       role="group"
-      aria-label="Télécharger l'application Questia"
+      aria-label={ios || android ? t('ariaDownload') : t('ariaWeb')}
     >
       {ios ? (
         <a
@@ -83,8 +85,7 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
 
       {!ios && !android && (
         <p className="text-sm font-bold text-slate-700 text-center sm:text-left px-2 max-w-md leading-relaxed">
-          L’app mobile arrive sur l’App Store et Google Play. En attendant, commence sur le web — même
-          parcours, mêmes quêtes.
+          {t('webOnly')}
         </p>
       )}
     </div>

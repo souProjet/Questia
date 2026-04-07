@@ -18,11 +18,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   setRequestLocale(locale);
+  const stores = hasAnyStoreLink();
   const t = await getTranslations({ locale, namespace: 'HomeMetadata' });
   const keywords = t.raw('keywords') as string[];
-  const desc = t('description');
+  const desc = stores ? t('description') : t('descriptionWeb');
+  const title = stores ? t('title') : t('titleWeb');
+  const twitterDesc = stores ? desc : t('twitterDescriptionWeb');
   return {
-    title: t('title'),
+    title,
     description: desc,
     keywords,
     alternates: { canonical: locale === 'en' ? '/en' : '/' },
@@ -38,7 +41,7 @@ export async function generateMetadata({
     twitter: {
       card: 'summary',
       title: t('twitterTitle'),
-      description: desc,
+      description: twitterDesc,
       images: ['/brand/questia-logo.png'],
     },
   };
@@ -89,7 +92,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 id="hero-heading"
                 className="font-display font-black text-[clamp(1.5rem,3.2vw+0.85rem,2.75rem)] sm:text-[clamp(1.85rem,2.2vw+1.1rem,2.5rem)] md:text-5xl lg:text-[clamp(2.5rem,2vw+1.75rem,3.5rem)] xl:text-[3.5rem] leading-[1.08] sm:leading-[1.1] text-[var(--on-cream)] mb-1 sm:mb-2 motion-safe:animate-fade-up motion-reduce:opacity-100 [overflow-wrap:anywhere] text-balance"
               >
-              {t('hero.line1')}{' '}
+              {t(storesReady ? 'hero.line1' : 'hero.line1Web')}{' '}
               <span className="text-gradient-pop text-[1.06em] md:text-[1.1em] lg:text-[1.12em] tracking-[-0.02em]">
                 {t('hero.gradient')}
               </span>
@@ -137,12 +140,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   >
                     {t('hero.seeExamples')}
                   </a>
-                  <div className="rounded-2xl border-2 border-dashed border-orange-300/60 bg-gradient-to-br from-amber-50/80 to-cyan-50/50 px-4 py-4">
-                    <p className="text-xs font-black uppercase tracking-wider text-orange-900 mb-2 text-center">
-                      {t('hero.soonStores')}
-                    </p>
-                    <AppStoreButtons variant="compact" />
-                  </div>
                 </>
               )}
             </div>
@@ -173,7 +170,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               {t('how.title')}
             </h2>
             <p className="text-slate-600 text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed px-1">
-              {t('how.subtitle')}
+              {t(storesReady ? 'how.subtitle' : 'how.subtitleWeb')}
             </p>
           </div>
 
@@ -210,13 +207,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <LandingReveal delayMs={40}>
         <div className="max-w-3xl mx-auto text-center space-y-5 sm:space-y-6 px-1">
           <p className="label flex items-center justify-center gap-2 text-cyan-900">
-            <span aria-hidden>📲</span> {t('download.label')}
+            <span aria-hidden>📲</span> {t(storesReady ? 'download.label' : 'download.labelWeb')}
           </p>
           <h2 id="download-heading" className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
-            {t('download.title')}
+            {t(storesReady ? 'download.title' : 'download.titleWeb')}
           </h2>
           <p className="text-slate-600 text-base sm:text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
-            {t('download.subtitle')}
+            {t(storesReady ? 'download.subtitle' : 'download.subtitleWeb')}
           </p>
           <div className="pt-4 flex flex-col items-center gap-4">
             <AppStoreButtons className="justify-center" />
@@ -279,7 +276,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               {t('faq.title')}
             </h2>
             <p className="text-slate-600 text-sm sm:text-base md:text-lg font-medium max-w-lg mx-auto leading-relaxed">
-              {t('faq.subtitle')}
+              {t(storesReady ? 'faq.subtitle' : 'faq.subtitleWeb')}
             </p>
           </div>
           <div
@@ -338,7 +335,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   {t('cta.titleAfter')}
                 </h2>
                 <p className="text-slate-700 text-sm sm:text-base md:text-lg font-medium leading-relaxed max-w-2xl mx-auto pt-1 px-0.5">
-                  {storesReady ? t('cta.storesReady') : t('cta.storesPending')}
+                  {storesReady ? t('cta.storesReady') : t('cta.storesPendingWeb')}
                 </p>
               </div>
 
@@ -375,7 +372,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                     href="#telecharger"
                     className="text-sm font-bold text-cyan-900/90 underline-offset-2 hover:underline decoration-orange-300/80"
                   >
-                    {t('cta.appStoresLink')}
+                    {t('cta.appStoresLinkWeb')}
                   </a>
                 </div>
               )}
@@ -408,7 +405,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 {t('footer.how')}
               </a>
               <a href="#telecharger" className="hover:text-slate-900 transition-colors">
-                {t('footer.download')}
+                {storesReady ? t('footer.download') : t('footer.downloadWeb')}
               </a>
               <a href="#faq" className="hover:text-slate-900 transition-colors">
                 {t('footer.faq')}

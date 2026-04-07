@@ -9,6 +9,7 @@ import type { LucideIcon } from 'lucide-react';
 import { AdminNavLink } from '@/components/AdminNavLink';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { QuestiaLogo } from '@/components/QuestiaLogo';
+import { hasAnyStoreLink } from '@/config/marketing';
 
 const burgerBar =
   'absolute left-0 w-[22px] h-0.5 rounded-full bg-gradient-to-r from-cyan-600 via-orange-500 to-amber-500 shadow-[0_1px_0_rgba(255,255,255,.35)]';
@@ -39,16 +40,21 @@ export function Navbar() {
   const pathname = usePathname();
   const t = useTranslations('Navbar');
   const { isSignedIn } = useAuth();
+  const storesReady = hasAnyStoreLink();
 
   const marketingMenu = useMemo(
     (): { href: string; label: string; Icon: LucideIcon }[] => [
       { href: '#hero-examples', label: t('navExamples'), Icon: Map },
       { href: '#how', label: t('navHow'), Icon: Zap },
-      { href: '#telecharger', label: t('navDownload'), Icon: Smartphone },
+      {
+        href: '#telecharger',
+        label: storesReady ? t('navDownload') : t('navDownloadWeb'),
+        Icon: Smartphone,
+      },
       { href: '#testimonials', label: t('navTestimonials'), Icon: MessageCircle },
       { href: '#faq', label: t('navFaq'), Icon: HelpCircle },
     ],
-    [t],
+    [t, storesReady],
   );
   const panelId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);

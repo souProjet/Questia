@@ -22,6 +22,7 @@ import { logStructured, logStructuredError } from '../observability';
 import {
   QUEST_SYSTEM_GUARDRAILS,
   QUEST_SYSTEM_GUARDRAILS_EN,
+  QUEST_SYSTEM_LANG_FR,
   truncateForPrompt,
 } from '../ai/promptGuardrails';
 
@@ -161,9 +162,9 @@ const FALLBACK_HOOKS: string[] = [
   'Chaque sortie est un vote pour la version de toi qui ose.',
   'Les grandes histoires commencent par un « et si j’essayais ? »',
   'Ton corps sait marcher — laisse ton esprit suivre.',
-  'Aujourd’hui, privilégie le réel au scroll.',
+  'Aujourd’hui, privilégie le monde réel au fil d’écran.',
   'La météo dans ta tête n’est pas une fatalité.',
-  'Un rituel nouveau suffit à casser l’autopilot.',
+  'Un rituel nouveau suffit à casser le pilote automatique.',
   'Tu n’as pas à impressionner — seulement à te sentir vivant·e.',
   'Le hasard aime ceux qui bougent les pieds.',
   'Remplace « plus tard » par « dix minutes ».',
@@ -185,7 +186,7 @@ const FALLBACK_HOOKS: string[] = [
   'La lumière change quand tu changes d’angle.',
   'Tu n’es pas en retard : tu es au bon jour pour commencer.',
   'Choisis l’inconfort léger plutôt que la rumination.',
-  'Une rencontre, un lieu, un geste — pick one.',
+  'Une rencontre, un lieu, un geste — choisis l’un des trois.',
   'Aujourd’hui, écris une ligne nouvelle dans ton histoire.',
 ];
 
@@ -730,6 +731,7 @@ RÈGLES ABSOLUES :
    - COHÉRENCE GÉO : le lieu doit coller à la mission (même type de lieu : parc si la mission parle d’un parc). Si la mission est locale (quartier, village, rencontre du jour, café du coin), reste dans l’aire de ${context.city}. Si la mission décrit explicitement un autre lieu, une autre commune ou un déplacement plus large, destinationQuery doit nommer clairement cette zone pour que le point sur la carte soit pertinent.` : 'Si isOutdoor false : destinationLabel et destinationQuery à null.'}
 ${archetype.requiresSocial ? '9. Cette famille implique une interaction sociale réelle (inconnu, proche, message, appel…) — intègre-la dans la mission.\n' : ''}
 10. Respecte les garde-fous de sécurité : pas de danger physique, pas de conseils médicaux ou thérapeutiques, pas d’incitation à l’illégalité ou à la haine.
+11. LANGUE : tous les champs texte (title, mission, hook, duration, safetyNote, destinationLabel) en **français naturel** — pas d’anglicismes ni de mots anglais dans la phrase, pas de tournure calquée sur l’anglais ; phrases courtes et idiomatiques.
 
 Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[...ICON_ALLOWLIST].join(', ')}.
 {
@@ -823,7 +825,9 @@ export async function generateDailyQuest(
 ${QUEST_SYSTEM_GUARDRAILS_EN}`
       : `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d’exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores. Priorise le profil opérationnel et les pistes « accroche mission » plutôt que de recopier l’archétype ; la famille de quête est un fil conducteur, pas un texte à répéter.
 
-${QUEST_SYSTEM_GUARDRAILS}`;
+${QUEST_SYSTEM_GUARDRAILS}
+
+${QUEST_SYSTEM_LANG_FR}`;
 
   const computedIsOutdoor =
     context.hasUserLocation && context.isOutdoorFriendly && archetype.requiresOutdoor;
@@ -985,7 +989,7 @@ export async function generateQuestNarration(
       messages: [
         {
           role: 'system',
-          content: `Tu produis des textes courts pour une app de quêtes ludiques. Pas de conseils médicaux ni psychothérapeutiques. ${QUEST_SYSTEM_GUARDRAILS}`,
+          content: `Tu produis des textes courts pour une app de quêtes ludiques. Pas de conseils médicaux ni psychothérapeutiques. ${QUEST_SYSTEM_GUARDRAILS} ${QUEST_SYSTEM_LANG_FR}`,
         },
         {
           role: 'user',

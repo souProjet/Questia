@@ -23,7 +23,7 @@ export async function LandingJsonLd({ locale }: { locale: string }) {
     name: 'Questia',
     image: `${siteUrl}/brand/questia-logo.png`,
     applicationCategory: 'LifestyleApplication',
-    operatingSystem: 'iOS, Android, Web',
+    operatingSystem: hasAnyStoreLink() ? 'iOS, Android, Web' : 'Web',
     description: t('jsonLd.appDescription'),
     offers: {
       '@type': 'Offer',

@@ -14,6 +14,7 @@
     "navExamples": "Examples",
     "navHow": "How it works",
     "navDownload": "Download",
+    "navDownloadWeb": "The site",
     "navTestimonials": "Stories",
     "navFaq": "FAQ",
     "openApp": "Open the app",
@@ -35,8 +36,11 @@
   "HomeMetadata": {
     "title": "Questia — Daily IRL quest app (iOS, Android & Web)",
     "description": "Questia: daily real-life quest app. Motivation, IRL challenges, and small wins tailored to your profile and pace. Start free on iOS, Android, and web.",
+    "titleWeb": "Questia — Daily IRL quests on the web",
+    "descriptionWeb": "Questia: daily real-life quests in your browser. Motivation, IRL challenges, and small wins tailored to your profile and pace. Start free.",
     "ogTitle": "Questia — Daily real-life quests",
     "twitterTitle": "Questia — Daily IRL quests",
+    "twitterDescriptionWeb": "One quest a day in your real life — on the web.",
     "keywords": [
       "Questia",
       "daily quest app",
@@ -48,18 +52,24 @@
     ]
   },
   "HomePage": {
+    "appStore": {
+      "ariaDownload": "Download the Questia app",
+      "ariaWeb": "Questia on the web",
+      "webOnly": "Play in your browser: onboarding, daily quests, and progress — all on the site."
+    },
     "jsonLd": {
       "appDescription": "Daily real-life quest app: short missions tailored to your profile and play style.",
       "webDescription": "Questia turns your day into an adventure: one personalized IRL quest every day."
     },
     "hero": {
       "line1": "The app for",
+      "line1Web": "The site for",
       "gradient": "daily quests",
       "line2": "in real life",
       "lead": "One mission every morning, <strong>tuned to your profile</strong> and pace — to get out a bit more, without pressure.",
       "preferWeb": "Prefer the web?",
       "continueBrowser": "Continue in the browser",
-      "webOnly": "Start on the web — when the native app ships, sign in with the same account.",
+      "webOnly": "Everything happens on the web: create your profile and play in your browser.",
       "ctaFree": "Start for free",
       "seeExamples": "See example missions",
       "soonStores": "Coming soon on iPhone & Android",
@@ -69,6 +79,7 @@
       "label": "How it works",
       "title": "Three steps, then your morning quest",
       "subtitle": "You calibrate in about a minute, then every morning you get your mission. On mobile, everything in your pocket; on the web, the same experience in a browser.",
+      "subtitleWeb": "You calibrate in about a minute, then every morning you get your mission — all in your browser, nothing to install.",
       "stepLabel": "Step"
     },
     "steps": [
@@ -118,6 +129,9 @@
       "label": "Download",
       "title": "iPhone & Android",
       "subtitle": "Your daily quest and progress on your phone — or do everything on the web with the same account.",
+      "labelWeb": "On the web",
+      "titleWeb": "Play in your browser",
+      "subtitleWeb": "Create your profile, get your morning quest, and check off missions — all on the site, one account.",
       "webLink": "Use Questia on the web"
     },
     "testimonials": {
@@ -146,7 +160,8 @@
     "faq": {
       "label": "FAQ",
       "title": "Frequently asked questions",
-      "subtitle": "What you should know before you start — web or mobile."
+      "subtitle": "What you should know before you start — web or mobile.",
+      "subtitleWeb": "What you should know before you start on the site."
     },
     "faqItems": [
       {
@@ -154,16 +169,16 @@
         "answer": "Each morning you get a short mission, tuned to your profile, play style, and chosen difficulty. The goal: a small, doable action in real life with a clear ending — not an endless backlog."
       },
       {
-        "question": "Can I start on the web and continue in the app?",
-        "answer": "Yes. One account: build your profile on the web, install the app later and sign back in, or the other way around. Your quests and progress stay in sync."
+        "question": "One account for everything?",
+        "answer": "Yes. Profile, quests, and progress all live on the site in your browser — one account."
       },
       {
         "question": "Is the app free?",
-        "answer": "You can start for free to tune your profile and learn how it works. If paid options appear later, they’ll be clearly labelled in the app."
+        "answer": "You can start for free to tune your profile and learn how it works on the site. If paid options appear later, they’ll be clearly labelled."
       },
       {
         "question": "How does Questia personalize my quests?",
-        "answer": "From your profile and the settings you accept in the app, missions stay realistic for you — not too soft, not impossible. You stay in control of what you actually try."
+        "answer": "From your profile and the settings you accept, missions stay realistic for you — not too soft, not impossible. You stay in control of what you actually try."
       },
       {
         "question": "Does Questia replace a health professional or coach?",
@@ -181,10 +196,12 @@
       "titleAfter": "?",
       "storesReady": "Start free — on the stores or in your browser, with the same account.",
       "storesPending": "Create your profile on the web; when the app is ready, pick up with the same account.",
+      "storesPendingWeb": "Create your profile and start your first quest — all on the web, free to begin.",
       "or": "or",
       "continueWeb": "Continue on the web",
       "ctaFree": "Start for free",
-      "appStoresLink": "The app on iPhone and Android"
+      "appStoresLink": "The app on iPhone and Android",
+      "appStoresLinkWeb": "Discover Questia on the web"
     },
     "footer": {
       "tagline": "Side quests in real life — one mission a day, without pressure.",
@@ -192,6 +209,7 @@
       "examples": "Examples",
       "how": "How it works",
       "download": "Download",
+      "downloadWeb": "The site",
       "faq": "FAQ",
       "signIn": "Sign in",
       "privacy": "Privacy",
