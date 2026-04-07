@@ -10,7 +10,6 @@ import { DA } from '../theme';
 
 type OnboardingStep = 'welcome' | 'question1' | 'question2' | 'complete';
 
-const STEPS: OnboardingStep[] = ['welcome', 'question1', 'question2', 'complete'];
 const STEP_INDEX: Record<OnboardingStep, number> = { welcome: 0, question1: 1, question2: 2, complete: 3 };
 
 export function OnboardingScreen() {
@@ -80,10 +79,10 @@ export function OnboardingScreen() {
 
         {step === 'question1' && (
           <>
-            <Text style={styles.questionStep}>Question 1 / 2</Text>
-            <Text style={styles.questionTitle}>Ton style d'aventure</Text>
+            <Text style={styles.questionStep}>Question 1 / 2 — ton rythme</Text>
+            <Text style={styles.questionTitle}>Un dimanche libre, tu fais quoi ?</Text>
             <Text style={styles.questionText}>
-              Es-tu plutôt du genre casanier (soirée film) ou aimes-tu sortir sans savoir où la nuit te mènera ?
+              Pas de bonne réponse : choisis ce qui te ressemble. On calibre si tu préfères tes repères ou bouger — pour des quêtes à ta mesure.
             </Text>
             <PersonalityQuadrantPicker
               options={[
@@ -101,10 +100,10 @@ export function OnboardingScreen() {
 
         {step === 'question2' && (
           <>
-            <Text style={styles.questionStep}>Question 2 / 2</Text>
-            <Text style={styles.questionTitle}>Ton rapport au risque</Text>
+            <Text style={styles.questionStep}>Question 2 / 2 — l'imprévu</Text>
+            <Text style={styles.questionTitle}>Quand un plan tombe à l'eau…</Text>
             <Text style={styles.questionText}>
-              En vacances, préfères-tu un hébergement planifié à l'avance ou l'imprévu de trouver un abri à la dernière minute ?
+              Dernière question : tu préfères anticiper et sécuriser, ou improviser ? Ça règle le niveau de surprise dans tes défis.
             </Text>
             <PersonalityQuadrantPicker
               options={[
@@ -122,12 +121,16 @@ export function OnboardingScreen() {
 
         {step === 'complete' && (
           <>
+            <Text style={styles.recapBadge}>Plus de questions ✓</Text>
             <View style={styles.completeBadge}>
               <Text style={styles.completeEmoji}>🎯</Text>
             </View>
-            <Text style={styles.completeTitle}>Profil établi !</Text>
+            <Text style={styles.completeTitle}>Récap de tes choix</Text>
+            <Text style={styles.recapExplain}>
+              Ce bloc résume tes réponses — ce n'est plus une question. Appuie sur le bouton pour continuer.
+            </Text>
             <View style={styles.quadrantCard}>
-              <Text style={styles.quadrantLabel}>Ton quadrant opérationnel</Text>
+              <Text style={styles.quadrantLabel}>Résumé (non cliquable)</Text>
               <Text style={styles.quadrantValue}>
                 {explorerAxis === 'explorer' ? '🌍 Explorateur' : '🏠 Casanier'}{' '}
                 ×{' '}
@@ -139,8 +142,8 @@ export function OnboardingScreen() {
               <Text style={styles.highlight}>3 premières quêtes</Text>{' '}
               dans ta zone de confort pour créer l'habitude. Puis l'expansion commence.
             </Text>
-            <Pressable style={styles.primaryButton} onPress={handleComplete}>
-              <Text style={styles.primaryButtonText}>Recevoir ma première quête ⚔️</Text>
+            <Pressable style={styles.primaryButton} onPress={handleComplete} accessibilityLabel="Continuer après le récapitulatif">
+              <Text style={styles.primaryButtonText}>Continuer ⚔️</Text>
             </Pressable>
           </>
         )}
@@ -261,6 +264,22 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
 
+  recapBadge: {
+    fontSize: 12,
+    color: '#22d3ee',
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 12,
+    textTransform: 'uppercase',
+  },
+  recapExplain: {
+    fontSize: 14,
+    color: DA.muted,
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
   // Complete
   completeBadge: {
     width: 88,

@@ -14,7 +14,9 @@ import {
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import * as ClerkExpo from '@clerk/expo';
+import { useRouter } from 'expo-router';
 import { DA } from '@questia/ui';
+import { hasOnboardingAnswers } from '../../lib/onboardingGate';
 
 const { useSignIn, useSignUp, useSSO } = ClerkExpo as any;
 
@@ -35,6 +37,7 @@ function useWarmUpBrowser() {
 
 export default function AuthScreen() {
   useWarmUpBrowser();
+  const router = useRouter();
 
   const { signIn, isLoaded: signInLoaded, setActive } = useSignIn();
   const { signUp, isLoaded: signUpLoaded } = useSignUp();
@@ -48,6 +51,11 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [error, setError] = useState('');
+  const [onboardingReady, setOnboardingReady] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    void hasOnboardingAnswers().then(setOnboardingReady);
+  }, []);
 
   const handleGoogleSignIn = useCallback(async () => {
     setLoadingGoogle(true);
@@ -192,6 +200,23 @@ export default function AuthScreen() {
           </Text>
         </View>
 
+        {mode === 'sign-up' && onboardingReady === false ? (
+          <View style={s.onboardingHint}>
+            <Text style={s.onboardingHintTitle}>Profil pas encore calibré</Text>
+            <Text style={s.onboardingHintBody}>
+              Les deux questions sur l'écran d'accueil servent à personnaliser tes quêtes. Tu peux t'inscrire quand même, mais c'est mieux d'y passer avant.
+            </Text>
+            <Pressable
+              style={({ pressed }) => [s.onboardingHintBtn, pressed && s.buttonPressed]}
+              onPress={() => router.replace('/')}
+              accessibilityRole="button"
+              accessibilityLabel="Retour au questionnaire d'accueil"
+            >
+              <Text style={s.onboardingHintBtnText}>Retour au questionnaire (2 questions)</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {/* Form card */}
         <View style={s.formCard}>
           <Pressable
@@ -325,6 +350,43 @@ const s = StyleSheet.create({
     color: DA.muted,
     textAlign: 'center',
     lineHeight: 20,
+  },
+
+  onboardingHint: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: 'rgba(34,211,238,0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(14,116,144,0.25)',
+    padding: 16,
+    marginBottom: 20,
+    gap: 10,
+  },
+  onboardingHintTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0e7490',
+    textAlign: 'center',
+  },
+  onboardingHintBody: {
+    fontSize: 13,
+    color: DA.muted,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+  onboardingHintBtn: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: 'rgba(14,116,144,0.35)',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  onboardingHintBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0e7490',
   },
 
   formCard: {

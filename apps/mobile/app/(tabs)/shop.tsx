@@ -22,6 +22,7 @@ import { elevationAndroidSafe } from '../../lib/elevationAndroid';
 import {
   SHOP_CATALOG,
   COIN_PACKS,
+  getCoinPack,
   getThemeIds,
   getTitleDefinition,
   XP_SHOP_BONUS_PER_CHARGE,
@@ -29,6 +30,7 @@ import {
   questCoinsPerEuro,
   catalogItemFullyOwned,
   buildCoinPurchasedSkuSet,
+  AnalyticsEvent,
   type ShopCatalogEntry,
   type ShopMarketingBadge,
 } from '@questia/shared';
@@ -38,6 +40,7 @@ import { useAppTheme } from '../../contexts/AppThemeContext';
 import { getShopScreenStrings } from '../../lib/shopScreenStrings';
 import { hapticError, hapticLight, hapticSuccess } from '../../lib/haptics';
 import { isExpoWebBrowserNativeAvailable } from '../../lib/webBrowser';
+import { trackMobileEvent } from '../../lib/analytics/track';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -234,6 +237,7 @@ export default function ShopScreen() {
   const [selectKind, setSelectKind] = useState<null | 'theme' | 'title'>(null);
   const [rechargeModalVisible, setRechargeModalVisible] = useState(false);
   const stripeOpenedAt = useRef<number | null>(null);
+  const stripeCheckoutSku = useRef<string | null>(null);
   const [purchaseHighlightSku, setPurchaseHighlightSku] = useState<string | null>(null);
 
   const coinPurchasedSkus = useMemo(() => buildCoinPurchasedSkuSet(transactions), [transactions]);
@@ -364,6 +368,19 @@ export default function ShopScreen() {
       const t = stripeOpenedAt.current;
       if (t != null && Date.now() - t < 180_000) {
         stripeOpenedAt.current = null;
+        const sku = stripeCheckoutSku.current;
+        stripeCheckoutSku.current = null;
+        if (sku) {
+          const pack = getCoinPack(sku);
+          const valueEur = pack ? pack.priceCents / 100 : 0;
+          trackMobileEvent(AnalyticsEvent.purchase, {
+            currency: 'EUR',
+            value: valueEur,
+            transaction_id: `stripe_coin_${sku}_${Date.now()}`,
+            items: [{ item_id: sku, item_name: pack?.name ?? sku }],
+            payment_type: 'stripe',
+          });
+        }
         void load({ silent: true }).then(() => runPurchaseCelebration());
         setFlash({
           message: s.flashPaymentOk,
@@ -384,6 +401,13 @@ export default function ShopScreen() {
     setStripeLoadingSku(sku);
     setFlash(null);
     try {
+      const pack = getCoinPack(sku);
+      const valueEur = pack ? pack.priceCents / 100 : 0;
+      trackMobileEvent(AnalyticsEvent.beginCheckout, {
+        currency: 'EUR',
+        value: valueEur,
+        items: [{ item_id: sku, item_name: pack?.name ?? sku }],
+      });
       const token = await getTokenRef.current();
       const res = await apiFetch(`${API_BASE_URL}/api/shop/checkout`, token, {
         method: 'POST',
@@ -397,7 +421,9 @@ export default function ShopScreen() {
       }
       hapticLight();
       stripeOpenedAt.current = Date.now();
+      stripeCheckoutSku.current = sku;
       if (!isExpoWebBrowserNativeAvailable()) {
+        stripeCheckoutSku.current = null;
         hapticError();
         setFlash({ message: s.errCheckout, kind: 'error' });
         return;
@@ -406,6 +432,7 @@ export default function ShopScreen() {
         const WebBrowser = await import('expo-web-browser');
         await WebBrowser.openBrowserAsync(data.url);
       } catch {
+        stripeCheckoutSku.current = null;
         hapticError();
         setFlash({ message: s.errCheckout, kind: 'error' });
       }
@@ -429,6 +456,13 @@ export default function ShopScreen() {
         setFlash({ message: data.error ?? s.errPurchase, kind: 'error' });
         return;
       }
+      const cat = SHOP_CATALOG.find((e) => e.sku === sku);
+      trackMobileEvent(AnalyticsEvent.purchase, {
+        currency: 'EUR',
+        value: 0,
+        items: [{ item_id: sku, item_name: cat?.name ?? sku }],
+        payment_type: 'quest_coins',
+      });
       await load({ silent: true });
       runPurchaseCelebration(sku);
     } finally {

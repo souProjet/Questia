@@ -9,6 +9,7 @@ import { DA } from '@questia/ui';
 import { AppLocaleProvider } from '../contexts/AppLocaleContext';
 import { AppThemeProvider, useAppTheme } from '../contexts/AppThemeContext';
 import { setupNotificationHandler } from '../lib/pushNotifications';
+import { PostHogRoot } from '../lib/analytics/PostHogRoot';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
@@ -83,7 +84,9 @@ export default function RootLayout() {
       <ClerkProvider publishableKey={PUBLISHABLE_KEY} tokenCache={tokenCache}>
         <AppLocaleProvider>
           <AppThemeProvider>
-            <InitialLayout />
+            <PostHogRoot>
+              <InitialLayout />
+            </PostHogRoot>
           </AppThemeProvider>
         </AppLocaleProvider>
       </ClerkProvider>

@@ -105,9 +105,11 @@ function truncate(s: string, max: number): string {
 export default function ShareCardScreen() {
   const { width: screenW } = useWindowDimensions();
   const compact = screenW < 400;
-  const horizPad = compact ? 14 : 20;
-  const cardW = Math.min(360, screenW - horizPad * 2);
-  const cardH = Math.round((cardW * 16) / 9);
+  const horizPad = compact ? 12 : 20;
+  /** Même ratio que le web (360×640). Marge min pour très petits écrans. */
+  const cardW = Math.max(260, Math.min(360, screenW - horizPad * 2));
+  const cardH = Math.round((cardW * 640) / 360);
+  const cardScale = cardW / 360;
   const { questDate: questDateParam } = useLocalSearchParams<{ questDate?: string | string[] }>();
   const questDate = Array.isArray(questDateParam) ? questDateParam[0] : questDateParam;
   const router = useRouter();
@@ -135,7 +137,7 @@ export default function ShareCardScreen() {
   const { palette, themeId } = useAppTheme();
   const appLocale = useAppLocale().locale;
   const shareLocale = appLocale === 'en' ? 'en' : 'fr';
-  const styles = useMemo(() => createShareStyles(palette, themeId), [palette, themeId]);
+  const styles = useMemo(() => createShareStyles(palette, themeId, cardScale), [palette, themeId, cardScale]);
   const photoAddGrad = useMemo(
     () => shareScreenPhotoAddGradient(themeId, palette),
     [themeId, palette],
@@ -481,12 +483,14 @@ export default function ShareCardScreen() {
   return (
     <>
     <SafeAreaView style={styles.safe}>
-      <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
+      <View style={[styles.topBar, { paddingHorizontal: compact ? 10 : 16 }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={{ flexShrink: 0 }}>
           <Text style={styles.back}>← Retour</Text>
         </Pressable>
-        <Text style={styles.topTitle}>Carte à partager</Text>
-        <View style={{ width: 72 }} />
+        <Text style={styles.topTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
+          Carte à partager
+        </Text>
+        <View style={{ width: compact ? 56 : 72 }} />
       </View>
 
       <ScrollView
@@ -733,10 +737,10 @@ export default function ShareCardScreen() {
                   <Text style={styles.bigEmoji}>{questDisplayEmoji(quest.emoji)}</Text>
                   <View style={styles.panelText}>
                     <Text style={[styles.titleEyebrow, panelDark && styles.titleEyebrowLight]}>
-                      {truncate(quest.title, 56)}
+                      {truncate(quest.title, Math.max(28, Math.floor(56 * cardScale)))}
                     </Text>
                     <Text style={[styles.missionHero, panelDark && styles.missionHeroLight]}>
-                      {truncate(quest.mission, 118)}
+                      {truncate(quest.mission, Math.max(48, Math.floor(118 * cardScale)))}
                     </Text>
                   </View>
                 </View>
@@ -761,7 +765,9 @@ export default function ShareCardScreen() {
                     </Text>
                   );
                 })()}
-                <Text style={[styles.hook, panelDark && styles.hookLight]}>« {truncate(quest.hook, 100)} »</Text>
+                <Text style={[styles.hook, panelDark && styles.hookLight]}>
+                  « {truncate(quest.hook, Math.max(40, Math.floor(100 * cardScale)))} »
+                </Text>
                 <Text style={[styles.footerName, panelDark && styles.footerNameLight]}>
                   {shareLocale === 'en' ? `${first} · Quest complete` : `${first} · Quête accomplie`}
                 </Text>
@@ -843,9 +849,18 @@ export default function ShareCardScreen() {
   );
 }
 
-function createShareStyles(p: ThemePalette, themeId: string) {
+/** Met à l’échelle les mesures de la carte (référence 360 px de large) pour petits écrans. */
+function sc(cardScale: number, n: number, opts?: { min?: number; max?: number }) {
+  const v = Math.round(n * cardScale);
+  if (opts?.min != null) return Math.max(opts.min, v);
+  if (opts?.max != null) return Math.min(opts.max, v);
+  return v;
+}
+
+function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) {
   const screenMuted = themePanelMuted(themeId, p);
   const cardFrameBg = themeId === 'midnight' ? p.surface : colorWithAlpha(p.text, 0.92);
+  const S = (n: number, o?: { min?: number; max?: number }) => sc(cardScale, n, o);
   return StyleSheet.create({
   safe: { flex: 1, backgroundColor: p.bg },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
@@ -861,7 +876,7 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     borderBottomColor: p.borderCyan,
   },
   back: { color: p.cyan, fontWeight: '700', fontSize: 15 },
-  topTitle: { fontWeight: '900', fontSize: 15, color: p.text },
+  topTitle: { fontWeight: '900', fontSize: 15, color: p.text, flex: 1, textAlign: 'center', paddingHorizontal: 4 },
   scroll: { padding: 20, paddingBottom: 32 },
   scrollCompact: { paddingHorizontal: 14, paddingTop: 12 },
   sectionLabel: {
@@ -993,10 +1008,10 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 4,
-    gap: 12,
+    paddingHorizontal: S(16, { min: 10 }),
+    paddingTop: S(14, { min: 10 }),
+    paddingBottom: S(4),
+    gap: S(12, { min: 8 }),
   },
   cardTopRowSoloDate: {
     justifyContent: 'flex-end',
@@ -1007,22 +1022,22 @@ function createShareStyles(p: ThemePalette, themeId: string) {
   },
   cardHero: {
     flex: 1,
-    minHeight: 48,
+    minHeight: S(48, { min: 36 }),
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    gap: 10,
+    paddingHorizontal: S(12, { min: 8 }),
+    gap: S(10, { min: 6 }),
   },
   cardHeroSpacer: {
     flex: 1,
     minHeight: 0,
   },
   heroLogoOuter: {
-    width: 112,
-    height: 112,
-    borderRadius: 26,
+    width: S(112, { min: 72, max: 112 }),
+    height: S(112, { min: 72, max: 112 }),
+    borderRadius: S(26, { min: 18 }),
     backgroundColor: p.card,
-    padding: 10,
+    padding: S(10, { min: 6 }),
     borderWidth: 1,
     borderColor: colorWithAlpha(p.text, 0.1),
     justifyContent: 'center',
@@ -1034,14 +1049,14 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     height: '100%',
   },
   heroBrand: {
-    fontSize: 12,
+    fontSize: S(12, { min: 10 }),
     fontWeight: '900',
-    letterSpacing: 3.6,
+    letterSpacing: S(3.6, { min: 2.4 }),
     color: p.onCream,
   },
   heroBrandLight: { color: 'rgba(248,250,252,0.96)' },
   heroHost: {
-    fontSize: 13,
+    fontSize: S(13, { min: 11 }),
     fontWeight: '800',
     color: p.onCreamMuted,
     letterSpacing: 0.3,
@@ -1050,9 +1065,9 @@ function createShareStyles(p: ThemePalette, themeId: string) {
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1, minWidth: 0 },
   brandTextCol: { flex: 1, minWidth: 0, justifyContent: 'center' },
   brandHostOnPhoto: {
-    fontSize: 10,
+    fontSize: S(10, { min: 9 }),
     fontWeight: '700',
-    marginTop: 2,
+    marginTop: S(2),
     letterSpacing: 0.35,
     color: 'rgba(248,250,252,0.92)',
     textShadowColor: 'rgba(0,0,0,0.65)',
@@ -1060,9 +1075,9 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     textShadowRadius: 5,
   },
   brandLogoWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
+    width: S(28, { min: 22 }),
+    height: S(28, { min: 22 }),
+    borderRadius: S(7, { min: 5 }),
     overflow: 'hidden',
     padding: 2,
     backgroundColor: '#ffffff',
@@ -1070,51 +1085,56 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     borderColor: 'rgba(15,23,42,0.12)',
   },
   brandLogoImg: { width: '100%', height: '100%' },
-  brand: { fontSize: 10, fontWeight: '900', letterSpacing: 3.2, color: p.onCream },
+  brand: { fontSize: S(10, { min: 9 }), fontWeight: '900', letterSpacing: S(3.2, { min: 2 }), color: p.onCream },
   brandLight: { color: 'rgba(248,250,252,0.95)' },
   date: {
-    fontSize: 11,
+    fontSize: S(11, { min: 9 }),
     fontWeight: '600',
     color: p.onCreamMuted,
     textAlign: 'right',
     flexShrink: 1,
-    maxWidth: 200,
-    lineHeight: 15,
+    maxWidth: S(200, { min: 120, max: 200 }),
+    lineHeight: S(15, { min: 13 }),
   },
   dateLight: { color: 'rgba(248,250,252,0.92)' },
   panel: {
-    marginHorizontal: 14,
-    marginBottom: 16,
-    borderRadius: 20,
-    padding: 15,
+    marginHorizontal: S(14, { min: 8 }),
+    marginBottom: S(16, { min: 10 }),
+    borderRadius: S(20, { min: 14 }),
+    padding: S(15, { min: 10 }),
     borderWidth: 1,
   },
-  panelTop: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', marginBottom: 12 },
-  bigEmoji: { fontSize: 40, lineHeight: 44, marginTop: 2 },
+  panelTop: {
+    flexDirection: 'row',
+    gap: S(12, { min: 8 }),
+    alignItems: 'flex-start',
+    marginBottom: S(12, { min: 8 }),
+  },
+  bigEmoji: { fontSize: S(40, { min: 28 }), lineHeight: S(44, { min: 32 }), marginTop: S(2) },
   panelText: { flex: 1 },
   titleEyebrow: {
-    fontSize: 10,
+    fontSize: S(10, { min: 8 }),
     fontWeight: '800',
-    letterSpacing: 2.2,
+    letterSpacing: S(2.2, { min: 1.4 }),
     color: p.onCreamMuted,
-    marginBottom: 8,
+    marginBottom: S(8, { min: 5 }),
     textTransform: 'uppercase',
   },
   titleEyebrowLight: { color: 'rgba(148,163,184,0.95)' },
   missionHero: {
-    fontSize: 19,
+    fontSize: S(19, { min: 14, max: 21 }),
     fontWeight: '900',
     color: p.onCream,
-    lineHeight: 25,
+    lineHeight: S(25, { min: 19, max: 27 }),
     letterSpacing: -0.3,
   },
   missionHeroLight: { color: '#f8fafc' },
   metaCompact: {
-    fontSize: 11,
+    fontSize: S(11, { min: 9 }),
     fontWeight: '600',
     color: p.onCreamMuted,
     textAlign: 'left',
-    paddingTop: 10,
+    paddingTop: S(10, { min: 7 }),
     marginBottom: 0,
     borderTopWidth: 1,
     borderTopColor: 'rgba(148,163,184,0.28)',
@@ -1124,27 +1144,27 @@ function createShareStyles(p: ThemePalette, themeId: string) {
     borderTopColor: 'rgba(255,255,255,0.1)',
   },
   shareProfileMeta: {
-    fontSize: 10,
+    fontSize: S(10, { min: 8 }),
     fontWeight: '700',
     color: p.onCreamMuted,
     textAlign: 'left',
-    marginTop: 10,
-    lineHeight: 14,
+    marginTop: S(10, { min: 7 }),
+    lineHeight: S(14, { min: 12 }),
   },
   shareProfileMetaLight: {
     color: 'rgba(226,232,240,0.88)',
   },
   hook: {
-    fontSize: 12,
+    fontSize: S(12, { min: 10 }),
     fontStyle: 'italic',
     color: p.onCreamMuted,
-    marginTop: 12,
-    marginBottom: 12,
-    lineHeight: 18,
+    marginTop: S(12, { min: 8 }),
+    marginBottom: S(12, { min: 8 }),
+    lineHeight: S(18, { min: 15 }),
     textAlign: 'left',
   },
   hookLight: { color: 'rgba(226,232,240,0.9)' },
-  footerName: { fontSize: 12, fontWeight: '900', color: p.linkOnBg, textAlign: 'center' },
+  footerName: { fontSize: S(12, { min: 10 }), fontWeight: '900', color: p.linkOnBg, textAlign: 'center' },
   footerNameLight: { color: p.cyan },
   shareBtnOuter: {
     borderRadius: 18,

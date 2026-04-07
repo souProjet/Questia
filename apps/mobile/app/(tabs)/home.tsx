@@ -22,6 +22,8 @@ import {
   formatQuestDateForLocale,
   REPORT_DEFER_MAX_DAYS,
   QUEST_LOADER_DAY_STORAGE_KEY,
+  AnalyticsEvent,
+  questAnalyticsId,
 } from '@questia/shared';
 import {
   colorWithAlpha,
@@ -41,6 +43,7 @@ import { QuestDetailDrawer } from '../../components/QuestDetailDrawer';
 import { LinearGradient } from 'expo-linear-gradient';
 import { hapticError, hapticMedium, hapticSuccess, hapticWarning } from '../../lib/haptics';
 import { getQuestReportStrings } from '../../lib/questReportStrings';
+import { trackMobileEvent } from '../../lib/analytics/track';
 
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
 const PRIVACY_URL = `${SITE_PUBLIC}/legal/confidentialite`;
@@ -188,6 +191,7 @@ export default function DashboardScreen() {
 
   /** Clerk recrée souvent getToken → évite de recréer loadQuest à chaque rendu (boucle infinie d’effets). */
   const getTokenRef = useRef(getToken);
+  const lastQuestViewKey = useRef<string | null>(null);
   useEffect(() => {
     getTokenRef.current = getToken;
   }, [getToken]);
@@ -291,6 +295,14 @@ export default function DashboardScreen() {
         if (!res.ok) throw new Error(homeUi.errServer);
         const data = await res.json() as DailyQuest;
         setQuest(data);
+        const qk = `${data.questDate}_${data.archetypeId}`;
+        if (lastQuestViewKey.current !== qk) {
+          lastQuestViewKey.current = qk;
+          trackMobileEvent(AnalyticsEvent.questViewed, {
+            quest_id: questAnalyticsId(data),
+            quest_status: data.status,
+          });
+        }
         setRerollsRemaining(data.rerollsRemaining ?? 1);
         if (data.refinement?.due && data.refinement.questions?.length) {
           setShowRefinement(true);
@@ -388,6 +400,11 @@ export default function DashboardScreen() {
       if (res.ok) {
         hapticMedium();
         const data = await res.json() as Partial<DailyQuest>;
+        trackMobileEvent(AnalyticsEvent.questAccepted, {
+          quest_id: questAnalyticsId(quest),
+          quest_phase: quest.phase,
+          is_outdoor: quest.isOutdoor,
+        });
         setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? prev.status) as DailyQuest['status'] } : null));
         setShowSafety(false);
         acceptFlashOp.setValue(0);
@@ -431,6 +448,11 @@ export default function DashboardScreen() {
               }
             : null,
         );
+        trackMobileEvent(AnalyticsEvent.questCompleted, {
+          quest_id: questAnalyticsId(quest),
+          quest_phase: quest.phase,
+          ...(data.xpGain?.gained != null ? { xp_gained: data.xpGain.gained } : {}),
+        });
         if (data.xpGain) {
           hapticSuccess();
           setReward({
@@ -440,6 +462,7 @@ export default function DashboardScreen() {
           setShowReward(true);
         } else {
           hapticSuccess();
+          trackMobileEvent(AnalyticsEvent.shareOpened, { share_channel: 'quest_card' });
           router.push({ pathname: '/share-card', params: { questDate: qd } });
         }
       } else {
@@ -455,8 +478,17 @@ export default function DashboardScreen() {
     const qd = quest?.questDate;
     setShowReward(false);
     setReward(null);
-    if (qd) router.push({ pathname: '/share-card', params: { questDate: qd } });
+    if (qd) {
+      trackMobileEvent(AnalyticsEvent.shareOpened, { share_channel: 'quest_card' });
+      router.push({ pathname: '/share-card', params: { questDate: qd } });
+    }
   }, [quest?.questDate, router]);
+
+  const openQuestShare = useCallback(() => {
+    if (!quest) return;
+    trackMobileEvent(AnalyticsEvent.shareOpened, { share_channel: 'quest_card' });
+    router.push({ pathname: '/share-card', params: { questDate: quest.questDate } });
+  }, [quest, router]);
 
   const qs = quest?.status;
   const isPending = qs === 'pending';
@@ -504,6 +536,7 @@ export default function DashboardScreen() {
       }
       const ok = await loadQuest(undefined, undefined, { questDate: quest.questDate, silent: true });
       if (ok) {
+        trackMobileEvent(AnalyticsEvent.questRerolled, { quest_id: questAnalyticsId(quest) });
         setQuestCardSwapKey((k) => k + 1);
         hapticSuccess();
         await enrichQuestWithLocation();
@@ -566,6 +599,7 @@ export default function DashboardScreen() {
         hapticError();
         return;
       }
+      trackMobileEvent(AnalyticsEvent.questAbandoned, { quest_id: questAnalyticsId(quest) });
       hapticWarning();
       const data = (await res.json()) as Partial<DailyQuest>;
       setQuest((prev) =>
@@ -744,7 +778,7 @@ export default function DashboardScreen() {
               onReroll={confirmReroll}
               onOpenDetails={() => setShowDetails(true)}
               onValidate={doComplete}
-              onShare={() => router.push({ pathname: '/share-card', params: { questDate: quest.questDate } })}
+              onShare={openQuestShare}
               strings={swipeStrings}
               rerolling={rerolling}
               rerollLoadingLabel={homeUi.rerollLoading}

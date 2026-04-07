@@ -1,10 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated, ScrollView, useWindowDimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ExplorerAxis, RiskAxis } from '@questia/shared';
+import { AnalyticsEvent } from '@questia/shared';
 import { DA } from '@questia/ui';
+import { trackMobileEvent } from '../lib/analytics/track';
 
 type Step = 'welcome' | 'q1' | 'q2' | 'done';
 
@@ -28,6 +30,10 @@ export default function OnboardingPage() {
   const [risk, setRisk] = useState<RiskAxis | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
+  useEffect(() => {
+    trackMobileEvent(AnalyticsEvent.onboardingStarted);
+  }, []);
+
   const goTo = (next: Step) => {
     Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {
       setStep(next);
@@ -50,6 +56,7 @@ export default function OnboardingPage() {
 
   const finish = async () => {
     if (!explorer || !risk) return;
+    trackMobileEvent(AnalyticsEvent.onboardingCompleted);
     try {
       await AsyncStorage.setItem('questia_explorer', explorer);
       await AsyncStorage.setItem('questia_risk', risk);
@@ -116,7 +123,7 @@ export default function OnboardingPage() {
             <Text style={[s.title, compact && s.titleCompact]}>Questia</Text>
             <Text style={[s.subtitle, compact && s.subtitleCompact]}>Une aventure quotidienne,{'\n'}rien que pour toi.</Text>
             <Text style={s.body}>
-              En 30 secondes, on apprend à te connaître pour générer des quêtes adaptées à ta ville, ta météo et ta personnalité.
+              Deux questions rapides : pas de bonne réponse, choisis ce qui te ressemble. Ça sert à calibrer tes quêtes (rythme, nouveauté, surprise) — pas à te juger.
             </Text>
             <Pressable style={s.btn} onPress={() => goTo('q1')}>
               <Text style={s.btnText}>Commencer →</Text>
@@ -128,8 +135,11 @@ export default function OnboardingPage() {
         {/* ── Q1 ── */}
         {step === 'q1' && (
           <>
-            <Text style={s.stepLabel}>Question 1 / 2</Text>
+            <Text style={s.stepLabel}>Question 1 / 2 — ton rythme</Text>
             <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Un dimanche libre,{'\n'}tu fais quoi ?</Text>
+            <Text style={s.questionHint}>
+              On voit si tu préfères tes repères ou bouger — pour des quêtes à ton niveau. Touche l'option qui te parle.
+            </Text>
             {[
               { id: 'homebody' as ExplorerAxis, icon: '🏠', title: 'Je reste au chaud.', desc: 'Canapé, film, routine.' },
               { id: 'explorer' as ExplorerAxis, icon: '🌍', title: 'Je pars explorer.',  desc: 'Nouvelles adresses, imprévus.' },
@@ -140,6 +150,10 @@ export default function OnboardingPage() {
                 onPress={() => {
                   setExplorer(o.id);
                   void persistExplorer(o.id);
+                  trackMobileEvent(AnalyticsEvent.onboardingStepCompleted, {
+                    step_name: 'explorer_axis',
+                    step_index: 0,
+                  });
                   goTo('q2');
                 }}
               >
@@ -157,8 +171,11 @@ export default function OnboardingPage() {
         {/* ── Q2 ── */}
         {step === 'q2' && (
           <>
-            <Text style={s.stepLabel}>Question 2 / 2</Text>
+            <Text style={s.stepLabel}>Question 2 / 2 — l'imprévu</Text>
             <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Un plan tombe à l'eau,{'\n'}c'est comment ?</Text>
+            <Text style={s.questionHint}>
+              Dernière question : tu préfères anticiper ou improviser ? Ça règle le niveau de surprise dans tes défis.
+            </Text>
             {[
               { id: 'cautious' as RiskAxis, icon: '📋', title: 'Je prépare, je planifie.', desc: 'Quand tout se passe comme prévu, parfait.' },
               { id: 'risktaker' as RiskAxis, icon: '🎲', title: "J'improvise, je fonce.",   desc: 'Les imprévus mènent aux meilleures histoires.' },
@@ -169,6 +186,10 @@ export default function OnboardingPage() {
                 onPress={() => {
                   setRisk(o.id);
                   void persistRisk(o.id);
+                  trackMobileEvent(AnalyticsEvent.onboardingStepCompleted, {
+                    step_name: 'risk_axis',
+                    step_index: 1,
+                  });
                   goTo('done');
                 }}
               >
@@ -189,11 +210,17 @@ export default function OnboardingPage() {
         {/* ── DONE ── */}
         {step === 'done' && profile && (
           <>
+            <Text style={s.doneBadge}>Plus de questions ✓</Text>
+            <Text style={s.doneTitle}>Récap avant inscription</Text>
+            <Text style={s.doneExplain}>
+              Ce qui suit résume tes réponses — ce n'est plus une question. Prochaine étape : créer ton compte pour enregistrer ton profil.
+            </Text>
             <Text style={s.profileIcon}>{profile.icon}</Text>
-            <Text style={s.profileLabel}>Ton profil</Text>
+            <Text style={s.profileLabel}>Profil suggéré</Text>
             <Text style={s.profileName}>{profile.label}</Text>
             <Text style={s.profileDesc}>{profile.desc}</Text>
-            <View style={s.recapCard}>
+            <Text style={s.recapHeading}>Résumé de tes choix</Text>
+            <View style={s.recapCard} accessibilityLabel="Résumé de tes réponses, non interactif">
               <Text style={s.recapItem}>
                 {explorer === 'explorer' ? '🌍  Tu aimes explorer' : '🏠  Tu aimes ta routine'}
               </Text>
@@ -202,7 +229,8 @@ export default function OnboardingPage() {
                 {risk === 'risktaker' ? '🎲  Tu fonces dans l\'inconnu' : '📋  Tu préfères planifier'}
               </Text>
             </View>
-            <Pressable style={s.btn} onPress={finish}>
+            <Text style={s.ctaLead}>Enregistrer tout ça :</Text>
+            <Pressable style={s.btn} onPress={finish} accessibilityLabel="Créer mon compte pour sauvegarder mon profil">
               <Text style={s.btnText}>Créer mon compte →</Text>
             </Pressable>
             <Pressable onPress={() => goTo('q2')} style={s.backBtn}>
@@ -247,8 +275,9 @@ const s = StyleSheet.create({
   body: { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 24, marginBottom: 36 },
 
   stepLabel: { fontSize: 11, fontWeight: '700', color: C.accent, letterSpacing: 2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 16 },
-  questionTitle: { fontSize: 26, fontWeight: '900', color: C.text, textAlign: 'center', lineHeight: 34, marginBottom: 28 },
-  questionTitleCompact: { fontSize: 22, lineHeight: 30, marginBottom: 22 },
+  questionTitle: { fontSize: 26, fontWeight: '900', color: C.text, textAlign: 'center', lineHeight: 34, marginBottom: 12 },
+  questionTitleCompact: { fontSize: 22, lineHeight: 30, marginBottom: 10 },
+  questionHint: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 21, marginBottom: 22, paddingHorizontal: 4 },
 
   optionCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: C.card, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: C.border, marginBottom: 12 },
   optionIcon: { fontSize: 30, flexShrink: 0 },
@@ -256,11 +285,24 @@ const s = StyleSheet.create({
   optionTitle: { fontSize: 16, fontWeight: '800', color: C.text, marginBottom: 4 },
   optionDesc: { fontSize: 13, color: C.muted },
 
+  doneBadge: { fontSize: 12, fontWeight: '800', color: C.accent, letterSpacing: 1.5, textTransform: 'uppercase', textAlign: 'center', marginBottom: 10 },
+  doneTitle: { fontSize: 24, fontWeight: '900', color: C.text, textAlign: 'center', lineHeight: 30, marginBottom: 12 },
+  doneExplain: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 22, marginBottom: 20, paddingHorizontal: 4 },
   profileIcon: { fontSize: 64, textAlign: 'center', marginBottom: 12 },
   profileLabel: { fontSize: 11, fontWeight: '700', color: C.accentWarm, letterSpacing: 2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 8 },
+  recapHeading: { fontSize: 12, fontWeight: '700', color: C.muted, textAlign: 'left', alignSelf: 'stretch', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
+  ctaLead: { fontSize: 15, fontWeight: '700', color: C.text, textAlign: 'center', marginBottom: 10 },
   profileName: { fontSize: 28, fontWeight: '900', color: C.text, textAlign: 'center', marginBottom: 10 },
   profileDesc: { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 24, marginBottom: 24 },
-  recapCard: { backgroundColor: C.card, borderRadius: 16, padding: 18, width: '100%', borderWidth: 1, borderColor: C.border, marginBottom: 28 },
+  recapCard: {
+    backgroundColor: 'rgba(224,242,254,0.28)',
+    borderRadius: 16,
+    padding: 18,
+    width: '100%',
+    borderWidth: 2,
+    borderColor: 'rgba(14,116,144,0.35)',
+    marginBottom: 20,
+  },
   recapItem: { fontSize: 14, color: C.text, fontWeight: '600', paddingVertical: 8 },
   recapDivider: { height: 1, backgroundColor: C.border },
 

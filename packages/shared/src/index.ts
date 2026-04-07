@@ -20,3 +20,5 @@ export * from './profileRefinement';
 export * from './deepLinks';
 export * from './calendarDate';
 export * from './questLoadingMessages';
+export * from './analytics/events';
+export * from './analytics/questId';

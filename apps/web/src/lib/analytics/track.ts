@@ -1,10 +1,12 @@
 /**
- * Envoi d’événements vers GTM (dataLayer) ou GA4 direct (gtag).
- * N’envoie rien sans consentement analytics (RGPD).
+ * Envoi d’événements vers GTM (dataLayer), GA4 direct (gtag), et PostHog.
+ * N’envoie rien sans consentement analytics (RGPD), sauf PostHog côté config (désactivé sans clé).
  */
+import { questAnalyticsId as questAnalyticsIdFromShared } from '@questia/shared';
 import { analyticsConfig } from '@/config/analytics';
 import { hasAnalyticsConsent } from '@/lib/analytics/consent';
 import { AnalyticsEvent } from '@/lib/analytics/events';
+import { capturePostHogEvent } from '@/lib/analytics/posthog-web';
 
 declare global {
   interface Window {
@@ -21,6 +23,8 @@ export function trackAnalyticsEvent(
 ): void {
   if (typeof window === 'undefined') return;
   if (!hasAnalyticsConsent()) return;
+
+  capturePostHogEvent(eventName, params);
 
   if (analyticsConfig.gtmId) {
     window.dataLayer = window.dataLayer || [];
@@ -52,6 +56,4 @@ export function trackPageViewSpa(payload: {
 }
 
 /** Identifiant de quête stable sans PII : date + archetype. */
-export function questAnalyticsId(quest: { questDate: string; archetypeId: number }): string {
-  return `${quest.questDate}_${quest.archetypeId}`;
-}
+export const questAnalyticsId = questAnalyticsIdFromShared;

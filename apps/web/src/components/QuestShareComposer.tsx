@@ -576,10 +576,18 @@ export function QuestShareComposer({
     };
 
     updateScale();
+    /** Après ouverture du sheet (animation) ou changement de safe-area, le viewport change de taille. */
+    const raf = requestAnimationFrame(() => {
+      updateScale();
+      requestAnimationFrame(updateScale);
+    });
     const observer = new ResizeObserver(updateScale);
     observer.observe(el);
-    return () => observer.disconnect();
-  }, [layerMounted]);
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+    };
+  }, [layerMounted, open, sheetActive]);
 
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -755,7 +763,7 @@ export function QuestShareComposer({
         />
       </div>
 
-      <div className="relative min-w-0 px-5 pt-3 pb-8 md:px-7 md:pt-7 md:pb-9">
+        <div className="relative min-w-0 px-4 pb-7 pt-3 sm:px-5 sm:pb-8 md:px-7 md:pt-7 md:pb-9">
         {/* Halo décoratif DA */}
         <div
           className="pointer-events-none absolute -top-24 left-1/2 h-48 w-[120%] -translate-x-1/2 rounded-[100%] bg-gradient-to-b from-cyan-300/25 via-orange-200/15 to-transparent blur-3xl motion-safe:animate-share-shimmer motion-reduce:animate-none"
@@ -763,10 +771,13 @@ export function QuestShareComposer({
         />
 
         <div className="relative text-center mb-6">
-          <h2 id="share-card-title" className="font-display text-[1.35rem] font-black text-slate-900 sm:text-2xl tracking-tight">
+          <h2
+            id="share-card-title"
+            className="font-display text-[clamp(1.1rem,4.5vw,1.5rem)] sm:text-2xl font-black text-slate-900 tracking-tight px-1"
+          >
             Ta carte à partager
           </h2>
-          <p className="mt-2 text-sm text-slate-600 max-w-[20rem] mx-auto leading-relaxed">
+          <p className="mt-2 text-sm text-slate-600 max-w-[min(20rem,100%)] mx-auto leading-relaxed px-0.5">
             Fond ou photo, puis export — prêt pour Insta, Stories ou la galerie.
           </p>
         </div>
@@ -857,13 +868,13 @@ export function QuestShareComposer({
           </div>
         </div>
 
-        <div className="mb-6 flex min-w-0 w-full justify-center">
+        <div className="mb-6 flex min-w-0 w-full justify-center overflow-x-hidden">
           <div
             ref={previewViewportRef}
-            className="w-full min-w-0 h-[min(56dvh,34rem)] md:h-[min(52dvh,34rem)] flex items-center justify-center"
+            className="flex w-full min-w-0 max-w-full items-center justify-center px-0.5 min-h-[220px] h-[min(62dvh,40rem)] sm:h-[min(58dvh,38rem)] md:h-[min(54dvh,36rem)]"
           >
             <div
-              className="mx-auto"
+              className="mx-auto max-w-full"
               style={{
                 width: CARD_W * previewScale,
                 height: CARD_H * previewScale,

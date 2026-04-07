@@ -18,10 +18,19 @@ export const analyticsConfig = {
   gaMeasurementId: trimEnv(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID),
   /** Meta (Facebook) Pixel — identifiant numérique */
   metaPixelId: trimEnv(process.env.NEXT_PUBLIC_META_PIXEL_ID),
+  /** PostHog — clé projet (phc_…). EU : utiliser NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com */
+  posthogKey: trimEnv(process.env.NEXT_PUBLIC_POSTHOG_KEY),
+  /** Hôte API PostHog (défaut EU cloud) */
+  posthogHost: trimEnv(process.env.NEXT_PUBLIC_POSTHOG_HOST) ?? 'https://eu.i.posthog.com',
+  /** UI PostHog (toolbar) — optionnel, ex. https://eu.posthog.com */
+  posthogUiHost: trimEnv(process.env.NEXT_PUBLIC_POSTHOG_UI_HOST),
 } as const;
 
 export function isAnalyticsConfigured(): boolean {
   return Boolean(
-    analyticsConfig.gtmId || analyticsConfig.gaMeasurementId || analyticsConfig.metaPixelId,
+    analyticsConfig.gtmId ||
+      analyticsConfig.gaMeasurementId ||
+      analyticsConfig.metaPixelId ||
+      analyticsConfig.posthogKey,
   );
 }

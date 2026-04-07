@@ -2,7 +2,7 @@
 
 Ce document décrit **GTM**, **GA4** et **Meta Pixel** sur **`apps/web`** (Questia), avec le bandeau cookies, puis la mesure jeu web + app. **Commence par [Guide concret Questia](#guide-concret-questia--à-faire-dans-lordre)** : checklist alignée sur le repo, Vercel et les URLs réelles. Le [plan de mesure détaillé](#plan-de-mesure-complet--jeu-web--app-détail) vient après (événements, GTM avancé, mobile).
 
-**Pourquoi pas PostHog en plus ?** GA4 (souvent via GTM) couvre déjà audience, funnels et campagnes marketing. Ajouter PostHog en parallèle dupliquait la mesure (double comptage, double maintenance). Si un jour tu as besoin d’analytics produit avancé (feature flags, session replay), tu pourras réintroduire un outil dédié — idéalement avec un périmètre clair (ex. app mobile seulement).
+**PostHog** est intégré **en plus** de GTM/GA4/Meta : mêmes noms d’événements (`AnalyticsEvent` dans `@questia/shared`) envoyés au **web** (après opt-in analytics du bandeau) et à l’**app mobile** (clé `EXPO_PUBLIC_POSTHOG_KEY`). Session replay **désactivée** côté SDK ; pas d’email dans `identify` (distinct_id = `user.id` Clerk). Variables : `NEXT_PUBLIC_POSTHOG_*` (web), `EXPO_PUBLIC_POSTHOG_*` (mobile), voir les `.env.example`.
 
 ---
 
@@ -54,6 +54,9 @@ Les scripts s’appliquent à **toutes** les locales.
 | `NEXT_PUBLIC_GTM_ID` | Ex. `GTM-XXXXXXX` — obligatoire pour charger `gtm.js` après consentement |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `G-…` **seulement** si tu n’utilises **pas** GTM pour GA4 (sinon laisser vide pour éviter le double comptage) |
 | `NEXT_PUBLIC_META_PIXEL_ID` | ID numérique Pixel — optionnel (consentement **pub**) |
+| `NEXT_PUBLIC_POSTHOG_KEY` | Clé projet PostHog (`phc_…`) — optionnel |
+| `NEXT_PUBLIC_POSTHOG_HOST` | API PostHog (souvent `https://eu.i.posthog.com`) |
+| `NEXT_PUBLIC_POSTHOG_UI_HOST` | Optionnel — toolbar PostHog EU (`https://eu.posthog.com`) |
 
 Local : copier **`apps/web/.env.example`** vers **`apps/web/.env.local`** et remplir. Vercel : **Settings → Environment Variables** pour **Production** ; chaque changement de `NEXT_PUBLIC_*` ⇒ **redéployer**.
 
@@ -154,6 +157,10 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 | `apps/web/src/lib/analytics/trackMeta.ts` | `trackMetaPixelEvent` (pub) |
 | `apps/web/src/components/analytics/AnalyticsPageViewTracker.tsx` | `page_view` sur navigation SPA |
 | `apps/web/src/components/analytics/AnalyticsClerkTracker.tsx` | `login` / `sign_up` |
+| `apps/web/src/components/analytics/QuestiaPostHogProvider.tsx` | Initialisation PostHog (opt-out par défaut, `PostHogProvider`) |
+| `apps/web/src/lib/analytics/posthog-web.ts` | `initPostHogBrowser`, `syncPostHogConsent`, `capturePostHogEvent`, identify / reset |
+| `packages/shared/src/analytics/events.ts` | `AnalyticsEvent` (web + mobile + PostHog) |
+| `apps/mobile/lib/analytics/*` | `PostHogRoot`, `trackMobileEvent`, identify Clerk |
 
 **Comportement actuel (à connaître pour la mesure)**
 

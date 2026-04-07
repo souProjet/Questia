@@ -12,6 +12,7 @@ import { CookieNotice } from '@/components/CookieNotice';
 import { AnalyticsClerkTracker } from '@/components/analytics/AnalyticsClerkTracker';
 import { AnalyticsPageViewTracker } from '@/components/analytics/AnalyticsPageViewTracker';
 import { MarketingScripts } from '@/components/analytics/MarketingScripts';
+import { QuestiaPostHogProvider } from '@/components/analytics/QuestiaPostHogProvider';
 import { SkipLink } from '@/components/SkipLink';
 import { HtmlLang } from '@/components/HtmlLang';
 
@@ -92,15 +93,17 @@ export default async function LocaleLayout({
   return (
     <ClerkProvider localization={clerkLocale} {...clerkPaths}>
       <NextIntlClientProvider messages={messages}>
-        <HtmlLang />
-        <SkipLink />
-        {children}
-        <CookieNotice />
-        <MarketingScripts />
-        <Suspense fallback={null}>
-          <AnalyticsPageViewTracker />
-        </Suspense>
-        <AnalyticsClerkTracker />
+        <QuestiaPostHogProvider>
+          <HtmlLang />
+          <SkipLink />
+          {children}
+          <CookieNotice />
+          <MarketingScripts />
+          <Suspense fallback={null}>
+            <AnalyticsPageViewTracker />
+          </Suspense>
+          <AnalyticsClerkTracker />
+        </QuestiaPostHogProvider>
       </NextIntlClientProvider>
     </ClerkProvider>
   );
