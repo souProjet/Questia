@@ -128,18 +128,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                       {t('hero.webOnly')}
                     </p>
                   </div>
-                  <Link
-                    href="/onboarding"
-                    className="btn btn-cta btn-lg text-base w-full sm:w-auto text-center font-black"
-                  >
-                    {t('hero.ctaFree')}
-                  </Link>
-                  <a
-                    href="#hero-examples"
-                    className="btn btn-ghost btn-lg w-full sm:w-auto text-center font-black"
-                  >
-                    {t('hero.seeExamples')}
-                  </a>
+                  <div className="flex flex-col gap-3 sm:gap-3.5 items-stretch sm:items-start">
+                    <Link
+                      href="/onboarding"
+                      className="btn btn-cta btn-lg text-base w-full sm:w-auto text-center font-black"
+                    >
+                      {t('hero.ctaFree')}
+                    </Link>
+                    <a
+                      href="#how"
+                      className="text-sm font-semibold text-cyan-900/90 underline-offset-2 hover:underline decoration-orange-300/70 text-center sm:text-left w-full sm:w-auto"
+                    >
+                      {t('hero.discoverHow')}
+                    </a>
+                  </div>
                 </>
               )}
             </div>
@@ -398,12 +400,25 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-row md:flex-wrap gap-x-4 gap-y-2.5 md:gap-x-6 md:gap-y-3 text-sm font-semibold text-slate-600 min-w-0"
               aria-label={t('footer.navLabel')}
             >
-              <a href="#hero-examples" className="hover:text-slate-900 transition-colors">
-                {t('footer.examples')}
-              </a>
-              <a href="#how" className="hover:text-slate-900 transition-colors">
-                {t('footer.how')}
-              </a>
+              {storesReady ? (
+                <>
+                  <a href="#hero-examples" className="hover:text-slate-900 transition-colors">
+                    {t('footer.examples')}
+                  </a>
+                  <a href="#how" className="hover:text-slate-900 transition-colors">
+                    {t('footer.how')}
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a href="#how" className="hover:text-slate-900 transition-colors">
+                    {t('footer.how')}
+                  </a>
+                  <a href="#hero-examples" className="hover:text-slate-900 transition-colors">
+                    {t('footer.examples')}
+                  </a>
+                </>
+              )}
               <a href="#telecharger" className="hover:text-slate-900 transition-colors">
                 {storesReady ? t('footer.download') : t('footer.downloadWeb')}
               </a>

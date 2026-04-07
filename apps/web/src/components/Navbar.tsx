@@ -42,20 +42,22 @@ export function Navbar() {
   const { isSignedIn } = useAuth();
   const storesReady = hasAnyStoreLink();
 
-  const marketingMenu = useMemo(
-    (): { href: string; label: string; Icon: LucideIcon }[] => [
-      { href: '#hero-examples', label: t('navExamples'), Icon: Map },
-      { href: '#how', label: t('navHow'), Icon: Zap },
-      {
-        href: '#telecharger',
-        label: storesReady ? t('navDownload') : t('navDownloadWeb'),
-        Icon: Smartphone,
-      },
+  const marketingMenu = useMemo((): { href: string; label: string; Icon: LucideIcon }[] => {
+    const examples = { href: '#hero-examples', label: t('navExamples'), Icon: Map };
+    const how = { href: '#how', label: t('navHow'), Icon: Zap };
+    const download = {
+      href: '#telecharger',
+      label: storesReady ? t('navDownload') : t('navDownloadWeb'),
+      Icon: Smartphone,
+    };
+    const tail = [
       { href: '#testimonials', label: t('navTestimonials'), Icon: MessageCircle },
       { href: '#faq', label: t('navFaq'), Icon: HelpCircle },
-    ],
-    [t, storesReady],
-  );
+    ];
+    // Web-only landing: examples are already beside the hero CTA on large screens — lead with "How it works".
+    if (storesReady) return [examples, how, download, ...tail];
+    return [how, examples, download, ...tail];
+  }, [t, storesReady]);
   const panelId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [drawerMounted, setDrawerMounted] = useState(false);

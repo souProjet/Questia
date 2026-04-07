@@ -4,6 +4,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
+    "eas-build-pre-install": "node ../../scripts/eas-assert-expo-public-clerk.mjs",
     "dev": "expo start",
     "dev:tunnel": "expo start --tunnel",
     "build:ios": "eas build --platform ios",
