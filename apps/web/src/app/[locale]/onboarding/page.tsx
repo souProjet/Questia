@@ -83,12 +83,18 @@ export default function OnboardingPage() {
   const handleFinish = () => {
     if (!explorer || !risk) return;
     setSaving(true);
-    trackAnalyticsEvent(AnalyticsEvent.onboardingCompleted);
+    trackAnalyticsEvent(AnalyticsEvent.onboardingCompleted, {
+      explorer_axis: explorer,
+      risk_axis: risk,
+    });
     if (typeof window !== 'undefined') {
       localStorage.setItem('questia_explorer', explorer);
       localStorage.setItem('questia_risk', risk);
     }
-    router.push('/sign-up');
+    // Court délai pour laisser PostHog / dataLayer envoyer avant la navigation client.
+    window.setTimeout(() => {
+      router.push('/sign-up');
+    }, 50);
   };
 
   return (

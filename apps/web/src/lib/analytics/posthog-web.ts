@@ -55,6 +55,8 @@ export function syncPostHogConsent(): void {
 export function capturePostHogEvent(eventName: string, params?: Record<string, unknown>): void {
   if (typeof window === 'undefined' || !analyticsConfig.posthogKey) return;
   if (!hasAnalyticsConsent()) return;
+  // Aligne opt-in PostHog avec le bandeau avant capture (ordre des listeners / init async).
+  syncPostHogConsent();
   posthog.capture(eventName, params);
 }
 

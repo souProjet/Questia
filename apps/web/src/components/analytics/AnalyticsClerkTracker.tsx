@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { analyticsConfig } from '@/config/analytics';
 import { hasAnalyticsConsent } from '@/lib/analytics/consent';
 import { AnalyticsEvent } from '@/lib/analytics/events';
@@ -17,6 +17,8 @@ const LOGIN_SESSION = 'questia_analytics_login_session';
  */
 export function AnalyticsClerkTracker() {
   const { user, isLoaded } = useUser();
+  /** Dernier user Clerk vu — pour ne reset PostHog qu’après déconnexion réelle, pas sur chaque vue anonyme. */
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -25,13 +27,16 @@ export function AnalyticsClerkTracker() {
       if (typeof window === 'undefined') return;
 
       if (!user) {
-        if (analyticsConfig.posthogKey) {
+        const wasLoggedIn = typeof prevUserIdRef.current === 'string';
+        prevUserIdRef.current = null;
+        if (wasLoggedIn && analyticsConfig.posthogKey) {
           resetPostHogUser();
         }
         return;
       }
 
       const id = user.id;
+      prevUserIdRef.current = id;
 
       if (analyticsConfig.posthogKey && hasAnalyticsConsent()) {
         identifyPostHogUser(id, { app: 'questia_web' });
