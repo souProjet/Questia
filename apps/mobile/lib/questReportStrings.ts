@@ -17,7 +17,7 @@ export function getQuestReportStrings(locale: AppLocale) {
   }
   return {
     reportHint:
-      'Comme « Changer de quête », une relance est utilisée si tu reportes — tu reçois une mission courte pour aujourd'hui.',
+      "Comme « Changer de quête », une relance est utilisée si tu reportes — tu reçois une mission courte pour aujourd'hui.",
     reportModalTitle: 'Reporter avec une relance',
     reportModalBody: (maxDays: number) =>
       `Comme « Changer de quête », cela consomme une relance du jour ou un crédit bonus. Tu recevras une mission courte, faisable aujourd'hui. Choisis une date repère (dans les ${maxDays} prochains jours) pour un défi plus ambitieux ou social — sans obligation.`,

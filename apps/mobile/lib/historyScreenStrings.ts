@@ -109,9 +109,9 @@ function fr(): HistoryScreenStrings {
   return {
     numLocale: 'fr-FR',
     title: 'Historique',
-    tabListA11y: 'Type d'historique',
+    tabListA11y: "Type d'historique",
     tabQuests: 'Quêtes',
-    tabQuestsHint: 'Affiche l'historique des quêtes',
+    tabQuestsHint: "Affiche l'historique des quêtes",
     tabWallet: 'Portefeuille',
     tabWalletHint: 'Affiche les mouvements Quest Coins',
     retry: 'Réessayer',
@@ -158,7 +158,7 @@ function fr(): HistoryScreenStrings {
     reuse: 'Réutiliser',
     reuseHint: 'Copie le texte de la quête dans le presse-papiers',
     copyTitle: 'Copié',
-    copyMsg: 'Tu peux coller le texte où tu veux pour t'inspirer.',
+    copyMsg: "Tu peux coller le texte où tu veux pour t'inspirer.",
     emptyQuestNone: 'Aucune quête dans ton historique.',
     emptyQuestFiltered: 'Aucune quête ne correspond à ces filtres.',
     emptyWalletNone: 'Aucun mouvement dans ton portefeuille.',
@@ -166,7 +166,7 @@ function fr(): HistoryScreenStrings {
     balanceAfterTx: (n) => `Solde après : ${n} QC`,
     txLoadMoreA11y: 'Charger plus de mouvements',
     walletShopHint: 'Recharge et achats depuis la boutique (onglet Shop).',
-    loadMore: 'Charger plus d'entrées',
+    loadMore: "Charger plus d'entrées",
     loading: 'Chargement…',
     loadMoreA11y: 'Charger plus de quêtes',
     loadingA11y: 'Chargement',
@@ -177,7 +177,7 @@ function fr(): HistoryScreenStrings {
           ? 'aucune entrée chargée'
           : `${total} entrée${total > 1 ? 's' : ''} chargée${total > 1 ? 's' : ''}`;
       return `${filtered} résultat(s) sur ${loaded}${
-        hasMore ? ' · d'autres entrées peuvent exister' : ' · historique entièrement chargé'
+        hasMore ? " · d'autres entrées peuvent exister" : ' · historique entièrement chargé'
       }`;
     },
     txCountLine(filtered, total, hasMore) {
@@ -186,7 +186,7 @@ function fr(): HistoryScreenStrings {
           ? 'aucune entrée chargée'
           : `${total} entrée${total > 1 ? 's' : ''} chargée${total > 1 ? 's' : ''}`;
       return `${filtered} mouvement(s) sur ${loaded}${
-        hasMore ? ' · d'autres entrées peuvent exister' : ' · historique entièrement chargé'
+        hasMore ? " · d'autres entrées peuvent exister" : ' · historique entièrement chargé'
       }`;
     },
     txRowA11y(tx) {

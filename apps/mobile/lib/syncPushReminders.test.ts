@@ -47,7 +47,7 @@ describe('syncPushRemindersWithServer', () => {
     );
   });
 
-  it('n'écrit pas en AsyncStorage si l'enregistrement push-token échoue', async () => {
+  it("n'écrit pas en AsyncStorage si l'enregistrement push-token échoue", async () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 500 } as Response);
 
     await syncPushRemindersWithServer(async () => 'clerk-jwt');

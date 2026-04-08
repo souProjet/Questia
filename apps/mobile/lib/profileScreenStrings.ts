@@ -26,7 +26,7 @@ export function getProfileScreenStrings(locale: AppLocale) {
       a11yLevelHint: 'Open the shop for XP boosts and cosmetics',
       a11yHistory: 'Quest history',
       a11yHistoryHint: 'Open the quest journal',
-      a11yHome: 'Home and today's quest',
+      a11yHome: "Home and today's quest",
       a11yHomeHint: 'Back to home',
       badgesTitle: 'Badges',
       badgesHint:
