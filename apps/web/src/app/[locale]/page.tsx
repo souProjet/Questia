@@ -9,6 +9,7 @@ import { AppStoreButtons } from '@/components/AppStoreButtons';
 import { LandingJsonLd } from '@/components/LandingJsonLd';
 import { LandingReveal } from '@/components/LandingReveal';
 import { hasAnyStoreLink } from '@/config/marketing';
+import { canonicalUrlFor } from '@/lib/seo/alternates';
 
 export async function generateMetadata({
   params,
@@ -31,6 +32,7 @@ export async function generateMetadata({
       title: t('ogTitle'),
       description: desc,
       type: 'website',
+      url: canonicalUrlFor(locale, '/'),
       locale: locale === 'en' ? 'en_US' : 'fr_FR',
       alternateLocale: locale === 'en' ? ['fr_FR'] : ['en_US'],
       siteName: 'Questia',

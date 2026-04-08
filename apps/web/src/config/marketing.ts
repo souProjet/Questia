@@ -33,3 +33,6 @@ export function hasPlayStoreLink(): boolean {
 export function hasAnyStoreLink(): boolean {
   return hasAppStoreLink() || hasPlayStoreLink();
 }
+
+/** ID d’app Meta (`fb:app_id` dans le `<head>`) — optionnel ; https://developers.facebook.com/apps */
+export const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim() ?? '';

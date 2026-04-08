@@ -8,7 +8,7 @@ import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server
 import { hasLocale } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
-import { siteUrl } from '@/config/marketing';
+import { facebookAppId, siteUrl } from '@/config/marketing';
 import { alternatesForLocalePath, canonicalUrlFor, stripLocalePrefix } from '@/lib/seo/alternates';
 import { CookieNotice } from '@/components/CookieNotice';
 import { AnalyticsClerkTracker } from '@/components/analytics/AnalyticsClerkTracker';
@@ -57,6 +57,7 @@ export async function generateMetadata({
     description: t('description'),
     alternates,
     ...(googleVerification ? { verification: { google: googleVerification } } : {}),
+    ...(facebookAppId ? { facebook: { appId: facebookAppId } } : {}),
     openGraph: {
       title: t('ogTitle'),
       description: t('ogDescription'),
