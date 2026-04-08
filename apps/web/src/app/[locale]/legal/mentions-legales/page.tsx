@@ -21,7 +21,7 @@ export default function MentionsLegalesPage() {
       {needsCompletion ? <IncompleteNotice /> : null}
 
       <section>
-        <h2 className="text-xl font-black text-slate-900">1. Éditeur du site et de l’application</h2>
+        <h2 className="text-xl font-black text-slate-900">1. Éditeur du site et de l'application</h2>
         <ul className="mt-3 list-none space-y-2 pl-0">
           <li>
             <strong>Raison sociale ou dénomination :</strong>{' '}
@@ -83,7 +83,7 @@ export default function MentionsLegalesPage() {
       <section>
         <h2 className="text-xl font-black text-slate-900">2. Hébergement</h2>
         <p>
-          Le site et l’API sont hébergés par <strong>{hostingProvider.name}</strong>, {hostingProvider.address}. Site web
+          Le site et l'API sont hébergés par <strong>{hostingProvider.name}</strong>, {hostingProvider.address}. Site web
           du prestataire :{' '}
           <a href={hostingProvider.website} className="font-semibold text-orange-600 hover:underline" target="_blank" rel="noopener noreferrer">
             {hostingProvider.website}
@@ -94,8 +94,8 @@ export default function MentionsLegalesPage() {
       <section>
         <h2 className="text-xl font-black text-slate-900">3. Propriété intellectuelle</h2>
         <p>
-          L’ensemble des éléments du site et de l’application Questia (textes, graphismes, logo, structure, base de données
-          produite par l’éditeur, etc.) sont protégés par le droit de la propriété intellectuelle. Toute reproduction ou
+          L'ensemble des éléments du site et de l'application Questia (textes, graphismes, logo, structure, base de données
+          produite par l'éditeur, etc.) sont protégés par le droit de la propriété intellectuelle. Toute reproduction ou
           représentation non autorisée est interdite sous réserve des exceptions légales.
         </p>
       </section>
@@ -110,7 +110,7 @@ export default function MentionsLegalesPage() {
           </li>
           <li>
             <Link href="/legal/cgu" className="font-semibold text-orange-600 hover:underline">
-              Conditions générales d’utilisation
+              Conditions générales d'utilisation
             </Link>
           </li>
           <li>
@@ -120,7 +120,7 @@ export default function MentionsLegalesPage() {
           </li>
           <li>
             <Link href="/legal/bien-etre" className="font-semibold text-orange-600 hover:underline">
-              Bien-être et limites d’usage
+              Bien-être et limites d'usage
             </Link>
           </li>
         </ul>

@@ -11,7 +11,7 @@ function mergeUnique(a: string[], b: string[]): string[] {
 }
 
 /**
- * Applique les droits d’un ou plusieurs articles au profil (idempotent par SKU côté webhook).
+ * Applique les droits d'un ou plusieurs articles au profil (idempotent par SKU côté webhook).
  */
 export async function applyGrantsToProfile(
   profileId: string,

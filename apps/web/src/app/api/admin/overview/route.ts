@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     });
     if (!targetProfile) {
       return NextResponse.json(
-        { error: 'Aucun profil Questia pour ce compte — le joueur doit au moins une fois ouvrir l’app.' },
+        { error: "Aucun profil Questia pour ce compte — le joueur doit au moins une fois ouvrir l'app." },
         { status: 404 },
       );
     }

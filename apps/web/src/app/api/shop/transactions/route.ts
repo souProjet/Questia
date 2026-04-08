@@ -10,7 +10,7 @@ function parseOffset(sp: URLSearchParams): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-/** Historique : recharges Stripe et achats en QC. Sans `limit` : jusqu’à 80 entrées (boutique). Avec pagination : `limit` + `offset` + `hasMore`. */
+/** Historique : recharges Stripe et achats en QC. Sans `limit` : jusqu'à 80 entrées (boutique). Avec pagination : `limit` + `offset` + `hasMore`. */
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });

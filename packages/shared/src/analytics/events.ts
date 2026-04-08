@@ -1,5 +1,5 @@
 /**
- * Noms d’événements analytics (PostHog, GA4 / dataLayer) — snake_case stables.
+ * Noms d'événements analytics (PostHog, GA4 / dataLayer) — snake_case stables.
  */
 export const AnalyticsEvent = {
   pageView: 'page_view',

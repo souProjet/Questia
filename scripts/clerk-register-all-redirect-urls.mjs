@@ -3,7 +3,7 @@
  * Enregistre en une fois les URLs de redirection Clerk utiles pour Questia (mobile Expo + schéma questia).
  *
  * Prérequis : CLERK_SECRET_KEY (même instance que tes clés publishable).
- * Pour la prod Play Store / site : utilise la clé secrète **live** (`sk_live_...`) sur l’instance **production** Clerk.
+ * Pour la prod Play Store / site : utilise la clé secrète **live** (`sk_live_...`) sur l'instance **production** Clerk.
  *
  * Usage :
  *   CLERK_SECRET_KEY=sk_test_... node scripts/clerk-register-all-redirect-urls.mjs
@@ -11,7 +11,7 @@
  * Optionnel — URL supplémentaires (ex. exp://IP_LAN:8081/--/(auth) qui change selon le Wi‑Fi) :
  *   CLERK_EXTRA_REDIRECT_URLS="exp://192.168.1.10:8081/--/(auth),exp://10.193.26.85:8081/--/(auth)" node scripts/...
  *
- * Les URLs déjà présentes sur l’instance sont ignorées (erreur « already exists » / duplicate).
+ * Les URLs déjà présentes sur l'instance sont ignorées (erreur « already exists » / duplicate).
  *
  * @see https://clerk.com/docs/reference/backend/redirect-urls/create-redirect-url
  */
@@ -83,7 +83,7 @@ async function registerOne(url) {
   return { ok: false, url, status: res.status, detail: text };
 }
 
-console.log(`Enregistrement de ${allUrls.length} URL(s) sur l’instance Clerk…\n`);
+console.log(`Enregistrement de ${allUrls.length} URL(s) sur l'instance Clerk…\n`);
 
 let ok = 0;
 let skipped = 0;

@@ -1,5 +1,5 @@
 /**
- * Palettes d’app mobile alignées sur apps/web globals.css (data-theme).
+ * Palettes d'app mobile alignées sur apps/web globals.css (data-theme).
  */
 export type ThemePalette = {
   bg: string;
@@ -137,7 +137,7 @@ export function themeUsesLightStatusBar(themeId: string): boolean {
   return themeId === 'midnight';
 }
 
-/** rgba() à partir d’un hex #RRGGBB (pour teinter l’accent du thème sans couleurs figées). */
+/** rgba() à partir d'un hex #RRGGBB (pour teinter l'accent du thème sans couleurs figées). */
 export function colorWithAlpha(hex: string, alpha: number): string {
   const raw = hex.replace('#', '');
   if (raw.length !== 6) return hex;
@@ -179,7 +179,7 @@ export function questSliderEmbeddedGradient(themeId: string | null | undefined, 
 
 /**
  * Bloc « Ajouter une photo » (écran carte à partager) — sur minuit, dégradé discret
- * (cyan / surface) pour limiter le banding Android et l’or trop fort sur fond sombre.
+ * (cyan / surface) pour limiter le banding Android et l'or trop fort sur fond sombre.
  */
 export function shareScreenPhotoAddGradient(
   themeId: string | null | undefined,
@@ -208,7 +208,7 @@ export function questDayStripGradient(themeId: string | null | undefined, p: The
   return [colorWithAlpha(p.orange, 0.12), p.card, colorWithAlpha(p.gold, 0.1)];
 }
 
-/** Fond sous les boutons d’action (valider, relancer, etc.) */
+/** Fond sous les boutons d'action (valider, relancer, etc.) */
 export function questActionsFooterGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
   if (!themeId || themeId === 'default') {
     return ['rgba(255,255,255,0.88)', 'rgba(255,251,235,0.55)', 'rgba(236,254,255,0.45)'];

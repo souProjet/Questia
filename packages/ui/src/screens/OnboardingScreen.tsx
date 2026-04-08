@@ -94,8 +94,8 @@ export function OnboardingScreen() {
             <Text style={styles.questionText}>Dernier clic, même règle : fun &gt; perfection.</Text>
             <PersonalityQuadrantPicker
               options={[
-                { value: 'cautious', label: '🛡️  Prudent', description: 'Quand c’est prévu, c’est parfait.' },
-                { value: 'risktaker', label: '🎲  Téméraire', description: 'L’imprévu, j’adore.' },
+                { value: 'cautious', label: '🛡️  Prudent', description: 'Quand c'est prévu, c'est parfait.' },
+                { value: 'risktaker', label: '🎲  Téméraire', description: 'L'imprévu, j'adore.' },
               ]}
               selected={riskAxis}
               onSelect={(val) => {

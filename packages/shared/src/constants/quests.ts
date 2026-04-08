@@ -5,7 +5,7 @@ import { QUEST_TAXONOMY_EN } from './questTaxonomyEn';
 export const REPORT_DEFER_MAX_DAYS = 14;
 
 /**
- * Rythme d’archétype : social ou durée ≥ 6 h → planifiée ; sinon instantanée (faisable dans la journée).
+ * Rythme d'archétype : social ou durée ≥ 6 h → planifiée ; sinon instantanée (faisable dans la journée).
  */
 export function archetypeQuestPace(q: {
   requiresSocial: boolean;
@@ -849,7 +849,7 @@ export const QUEST_TAXONOMY: QuestModel[] = _QUEST_TAXONOMY_RAW.map((q) => {
   };
 });
 
-/** Titre + concept d’archétype selon la locale (taxonomie). */
+/** Titre + concept d'archétype selon la locale (taxonomie). */
 export function questLocalizedText(
   q: QuestModel,
   locale: AppLocale,
@@ -866,7 +866,7 @@ export const INDOOR_QUEST_IDS = QUEST_TAXONOMY
 
 export const FALLBACK_QUEST_ID = 9;
 
-/** Famille de quête (moteur) — libellé court, distinct du titre généré par l’IA */
+/** Famille de quête (moteur) — libellé court, distinct du titre généré par l'IA */
 export const QUEST_CATEGORY_LABEL_FR: Record<PsychologicalCategory, string> = {
   spatial_adventure: 'Déplacement & exploration',
   public_introspection: 'Présence en public',

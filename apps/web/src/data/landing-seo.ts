@@ -4,24 +4,24 @@ export type FaqItem = { question: string; answer: string };
 
 export const LANDING_FAQ: FaqItem[] = [
   {
-    question: 'En quoi une quête Questia diffère-t-elle d’une simple liste de tâches ?',
+    question: "En quoi une quête Questia diffère-t-elle d'une simple liste de tâches ?",
     answer:
-      'Chaque matin tu reçois une mission courte, calibrée sur ton profil, ton style de jeu et le niveau de défi que tu t’es choisi. L’objectif : une petite action réalisable dans la vraie vie, avec une fin claire — pas une todo qui s’allonge sans fin.',
+      "Chaque matin tu reçois une mission courte, calibrée sur ton profil, ton style de jeu et le niveau de défi que tu t'es choisi. L'objectif : une petite action réalisable dans la vraie vie, avec une fin claire — pas une todo qui s'allonge sans fin.",
   },
   {
-    question: 'Puis-je commencer sur le web et continuer sur l’app ?',
+    question: "Puis-je commencer sur le web et continuer sur l'app ?",
     answer:
-      'Oui. Un seul compte : tu peux créer ton profil sur le web, installer l’app plus tard et te reconnecter, ou l’inverse. Tes quêtes et ta progression restent cohérentes.',
+      "Oui. Un seul compte : tu peux créer ton profil sur le web, installer l'app plus tard et te reconnecter, ou l'inverse. Tes quêtes et ta progression restent cohérentes.",
   },
   {
-    question: 'L’app est-elle gratuite ?',
+    question: "L'app est-elle gratuite ?",
     answer:
-      'Tu peux commencer gratuitement pour calibrer ton profil et découvrir le fonctionnement. Si des options payantes arrivent plus tard, elles seront indiquées clairement dans l’app.',
+      "Tu peux commencer gratuitement pour calibrer ton profil et découvrir le fonctionnement. Si des options payantes arrivent plus tard, elles seront indiquées clairement dans l'app.",
   },
   {
     question: 'Comment Questia personnalise-t-il mes quêtes ?',
     answer:
-      'À partir de ton profil et des réglages que tu acceptes dans l’app, les missions sont ajustées pour rester réalistes pour toi — ni trop molles, ni injouables. Tu gardes la main sur ce que tu tentes vraiment.',
+      "À partir de ton profil et des réglages que tu acceptes dans l'app, les missions sont ajustées pour rester réalistes pour toi — ni trop molles, ni injouables. Tu gardes la main sur ce que tu tentes vraiment.",
   },
   {
     question: 'Questia remplace-t-il un professionnel de santé ou un coach ?',

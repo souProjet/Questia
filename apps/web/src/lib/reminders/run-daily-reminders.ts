@@ -7,13 +7,13 @@ import { sendReminderEmail } from '@/lib/reminders/send-email';
 const WINDOW_MINUTES = 15;
 
 const TITLE = 'Quête du jour';
-const PUSH_BODY = 'Ta quête t’attend sur Questia — ouvre l’app pour la découvrir.';
+const PUSH_BODY = "Ta quête t'attend sur Questia — ouvre l'app pour la découvrir.";
 
 function buildEmailHtml(siteUrl: string): string {
   const base = siteUrl.replace(/\/$/, '');
   return `
   <p>Bonjour,</p>
-  <p>C’est le moment de découvrir ta <strong>quête du jour</strong> sur Questia.</p>
+  <p>C'est le moment de découvrir ta <strong>quête du jour</strong> sur Questia.</p>
   <p><a href="${base}/app">Ouvrir Questia</a></p>
   <p style="color:#64748b;font-size:12px;margin-top:24px">Tu reçois ce message car les rappels par e-mail sont activés dans ton profil. Tu peux les désactiver dans les paramètres.</p>
 `;

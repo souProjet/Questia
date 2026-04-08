@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { siteUrl } from '@/config/marketing';
 
-/** PWA / ajout écran d’accueil — renforce la présence marque dans les résultats enrichis. */
+/** PWA / ajout écran d'accueil — renforce la présence marque dans les résultats enrichis. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Questia',

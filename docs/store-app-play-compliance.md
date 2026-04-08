@@ -1,6 +1,6 @@
 # Fiches App Store & Google Play — conformité Questia
 
-Document interne pour préparer les soumissions, les captures d’écran et les questionnaires légaux / confidentialité. Domaine public de référence : **https://questia.fr** (configurer `NEXT_PUBLIC_SITE_URL` / `EXPO_PUBLIC_SITE_URL`).
+Document interne pour préparer les soumissions, les captures d'écran et les questionnaires légaux / confidentialité. Domaine public de référence : **https://questia.fr** (configurer `NEXT_PUBLIC_SITE_URL` / `EXPO_PUBLIC_SITE_URL`).
 
 ---
 
@@ -10,7 +10,7 @@ Document interne pour préparer les soumissions, les captures d’écran et les 
 - App Store : **Style de vie** (ou **Divertissement** selon le ton de la fiche).  
 - Play Store : **Style de vie** ou **Divertissement**.
 
-**Ce que Questia n’est pas** (à respecter dans les textes, captures et réponses aux questionnaires) :
+**Ce que Questia n'est pas** (à respecter dans les textes, captures et réponses aux questionnaires) :
 
 - Pas une **application médicale**, de **télémédecine**, de **thérapie** ou de **diagnostic** psychologique.
 - Pas un **substitut** à un suivi professionnel (médecin, psychologue, etc.).
@@ -20,7 +20,7 @@ Document interne pour préparer les soumissions, les captures d’écran et les 
 
 **Formulations à éviter** sur la fiche et les visuels** : « guérir », « traiter », « thérapie », « anxiété / dépression » comme promesse de résultat, « certifié », « approuvé médicalement », comparaisons avec des dispositifs de santé.
 
-**Référence web** (à indiquer si la plateforme demande une URL de politique ou d’avertissement) :
+**Référence web** (à indiquer si la plateforme demande une URL de politique ou d'avertissement) :
 
 - Politique de confidentialité : `https://questia.fr/legal/confidentialite`
 - Mentions légales : `https://questia.fr/legal/mentions-legales`
@@ -38,17 +38,17 @@ Document interne pour préparer les soumissions, les captures d’écran et les 
 | Apps « bien-être » / pas de diagnostic | [1.4.1–1.4.3](https://developer.apple.com/app-store/review/guidelines/#health) — rester dans le divertissement / style de vie si pas de fonctionnalités médicales |
 | Confidentialité, données | [5.1](https://developer.apple.com/app-store/review/guidelines/#privacy) |
 | Métadonnées honnêtes (screenshots, description) | [2.3](https://developer.apple.com/app-store/review/guidelines/#accurate-metadata) |
-| Contenu généré par l’utilisateur / IA | [1.1.6, 1.2](https://developer.apple.com/app-store/review/guidelines/#user-generated-content) selon le cas |
+| Contenu généré par l'utilisateur / IA | [1.1.6, 1.2](https://developer.apple.com/app-store/review/guidelines/#user-generated-content) selon le cas |
 | Achats intégrés | [3.1](https://developer.apple.com/app-store/review/guidelines/#business) |
 
 **App Privacy (nutrition labels)** — à aligner sur la réalité du binaire :
 
-- Compte (e-mail, identifiant) : **Clerk** — collecte liée à l’identité du compte.
-- Localisation : **approximative** si tu n’exposes que ville / météo / carte ; **précise** si tu stockes ou affiches des coordonnées précises de façon durable (vérifier le code / les libellés App Store).
-- Contenu généré par l’utilisateur : historique de quêtes, profil de jeu.
+- Compte (e-mail, identifiant) : **Clerk** — collecte liée à l'identité du compte.
+- Localisation : **approximative** si tu n'exposes que ville / météo / carte ; **précise** si tu stockes ou affiches des coordonnées précises de façon durable (vérifier le code / les libellés App Store).
+- Contenu généré par l'utilisateur : historique de quêtes, profil de jeu.
 - **OpenAI** : traitement côté serveur pour génération de textes ; déclarer selon le questionnaire (données utilisées pour améliorer le service / contenu, etc.).
 - **Stripe** : paiements ; pas de numéro de carte complet côté Questia.
-- Notifications push : jeton d’appareil.
+- Notifications push : jeton d'appareil.
 
 **Déclaration des fonctionnalités récentes** (API obligatoires) : renseigner les motifs (ex. localisation pour contexte météo / carte) cohérents avec les textes des permissions dans `app.json`.
 
@@ -91,10 +91,10 @@ Exemples :
 ### Description longue (extrait — compléter avec fonctionnalités exactes)
 
 > Questia te propose **une quête par jour** dans ton quotidien : sorties, défis légers, petites actions pour casser la routine.  
-> Ton profil et ton historique adaptent le niveau d’exposition et le style des missions.  
-> **Important** : Questia est une application de **divertissement et de motivation**. Ce n’est pas un dispositif médical ni psychologique ; les textes générés par IA sont des suggestions. En cas de difficulté de santé physique ou mentale, consulte un professionnel.
+> Ton profil et ton historique adaptent le niveau d'exposition et le style des missions.  
+> **Important** : Questia est une application de **divertissement et de motivation**. Ce n'est pas un dispositif médical ni psychologique ; les textes générés par IA sont des suggestions. En cas de difficulté de santé physique ou mentale, consulte un professionnel.
 
-### Mots-clés App Store (100 caractères max, virgules, sans nom de l’app)
+### Mots-clés App Store (100 caractères max, virgules, sans nom de l'app)
 
 Exemple : `motivation,quête,défi,habitude,sortie,routine,gamification,IRL`
 
@@ -104,11 +104,11 @@ Exemple : `motivation,quête,défi,habitude,sortie,routine,gamification,IRL`
 
 ---
 
-## 5. Captures d’écran — checklist
+## 5. Captures d'écran — checklist
 
 ### Cohérence avec les guidelines
 
-- **Exactitude** : ce qui est visible doit exister dans l’app (pas de fausse fonction, pas de note « 4,9 » inventée).
+- **Exactitude** : ce qui est visible doit exister dans l'app (pas de fausse fonction, pas de note « 4,9 » inventée).
 - **Pas de promesse de résultat santé** sur les visuels (avant/après humain, courbes de « guérison », etc.).
 - **Marques** : ne pas impliquer un partenariat Apple/Google sans accord.
 - **Contenu sensible** : éviter captures de quêtes pouvant être mal interprétées hors contexte ; préférer écrans génériques (accueil, profil, historique, validation).
@@ -120,33 +120,33 @@ Exemple : `motivation,quête,défi,habitude,sortie,routine,gamification,IRL`
 
 ### Série recommandée (ordre logique)
 
-1. **Écran d’accueil / quête du jour** — titre + mission + CTA clair.  
+1. **Écran d'accueil / quête du jour** — titre + mission + CTA clair.  
 2. **Carte ou contexte** (si applicable) — sans données personnelles réelles sur la capture (ville fictive ou floutée).  
 3. **Profil ou progression** — niveau, série, badges.  
 4. **Historique** (optionnel).  
-5. **Boutique** (si monétisation) — prix visibles comme dans l’app.
+5. **Boutique** (si monétisation) — prix visibles comme dans l'app.
 
 ### Accessibilité des captures
 
 - Contraste lisible, pas de texte illisible en miniature.  
-- Éviter le mode sombre seul si la fiche store est claire (ou l’inverse) — cohérence avec la marque.
+- Éviter le mode sombre seul si la fiche store est claire (ou l'inverse) — cohérence avec la marque.
 
 ---
 
-## 6. Permissions (textes affichés à l’utilisateur)
+## 6. Permissions (textes affichés à l'utilisateur)
 
-Vérifier l’alignement avec les écrans réels et `app.json` (Expo) :
+Vérifier l'alignement avec les écrans réels et `app.json` (Expo) :
 
 - **Localisation** : formulation actuelle — contexte météo / sécurité des quêtes extérieures.  
-- **Photos / caméra** : partage de carte — uniquement si l’écran existe dans le build soumis.  
+- **Photos / caméra** : partage de carte — uniquement si l'écran existe dans le build soumis.  
 - **Notifications** : rappel quête du jour — opt-in clair.
 
 ---
 
 ## 7. IA générative (transparence)
 
-- **Dans l’app** : mention « contenu généré par IA » / lien vers `bien-etre` ou politique (déjà prévu côté web et mobile).  
-- **Fiche store** : une phrase dans la description longue suffit souvent ; ajuster si Apple ou Google demandent plus de détail sur le fournisseur de modèle (OpenAI) et l’absence de conseil médical.
+- **Dans l'app** : mention « contenu généré par IA » / lien vers `bien-etre` ou politique (déjà prévu côté web et mobile).  
+- **Fiche store** : une phrase dans la description longue suffit souvent ; ajuster si Apple ou Google demandent plus de détail sur le fournisseur de modèle (OpenAI) et l'absence de conseil médical.
 
 ---
 

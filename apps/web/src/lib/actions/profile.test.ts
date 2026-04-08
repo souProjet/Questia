@@ -74,7 +74,7 @@ describe('profile actions', () => {
     expect(prismaMock.profile.create).toHaveBeenCalled();
   });
 
-  it('getOrCreateCurrentProfile retourne l’existant sans créer', async () => {
+  it("getOrCreateCurrentProfile retourne l'existant sans créer", async () => {
     const { auth } = await import('@clerk/nextjs/server');
     vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as never);
     prismaMock.profile.findUnique.mockResolvedValue({ id: 'existing' });

@@ -5,7 +5,7 @@ import { siteUrl } from '@/config/marketing';
 export const metadata: Metadata = {
   title: 'Bien-être et limites',
   description:
-    'Questia est une application ludique : pas de conseil médical ni psychologique. Utilisation responsable et transparence sur la motivation et l’IA.',
+    "Questia est une application ludique : pas de conseil médical ni psychologique. Utilisation responsable et transparence sur la motivation et l'IA.",
   robots: { index: true, follow: true },
 };
 
@@ -19,10 +19,10 @@ export default function BienEtrePage() {
           </Link>
         </p>
         <h1 className="font-display text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-2">
-          Bien-être et limites d’usage
+          Bien-être et limites d'usage
         </h1>
         <p className="text-sm text-slate-600 mb-10">
-          Page d’information —{' '}
+          Page d'information —{' '}
           <a href={siteUrl} className="text-orange-600 hover:underline">
             {siteUrl}
           </a>
@@ -42,9 +42,9 @@ export default function BienEtrePage() {
             <h2 className="text-xl font-black text-slate-900">Pas de conseil médical ou psychologique</h2>
             <p>
               Rien dans Questia ne remplace un avis de <strong>médecin</strong>, de{' '}
-              <strong>psychologue</strong>, de psychiatre ou d’un autre professionnel de santé qualifié. En cas de douleur,
-              de symptômes, de détresse psychologique ou de situation d’urgence, contacte les services de secours ou un
-              professionnel de santé. En France, le numéro d’urgence est le <strong>15</strong> (SAMU) ou le{' '}
+              <strong>psychologue</strong>, de psychiatre ou d'un autre professionnel de santé qualifié. En cas de douleur,
+              de symptômes, de détresse psychologique ou de situation d'urgence, contacte les services de secours ou un
+              professionnel de santé. En France, le numéro d'urgence est le <strong>15</strong> (SAMU) ou le{' '}
               <strong>112</strong> (Europe).
             </p>
           </section>
@@ -54,7 +54,7 @@ export default function BienEtrePage() {
             <p>
               Des textes (missions, accroches) peuvent être <strong>générés automatiquement</strong>. Ils peuvent être
               imprécis, mal adaptés à ta situation ou à un moment donné. Tu restes responsable de tes choix dans la vie
-              réelle (lieux, interactions, effort physique). Interromps toute activité qui te met mal à l’aise ou en
+              réelle (lieux, interactions, effort physique). Interromps toute activité qui te met mal à l'aise ou en
               danger.
             </p>
           </section>
@@ -62,9 +62,9 @@ export default function BienEtrePage() {
           <section>
             <h2 className="text-xl font-black text-slate-900">Utilisation responsable</h2>
             <p>
-              Respecte la loi, le droit d’autrui et les règles des lieux publics. Les quêtes extérieures supposent une
+              Respecte la loi, le droit d'autrui et les règles des lieux publics. Les quêtes extérieures supposent une
               appréciation de ta forme et des conditions (météo, visibilité, sécurité). Ne te mets pas en situation
-              d’intrusion, de conduite dangereuse ou de mise en danger.
+              d'intrusion, de conduite dangereuse ou de mise en danger.
             </p>
           </section>
 
@@ -77,7 +77,7 @@ export default function BienEtrePage() {
                 </Link>
               </li>
               <li>
-                Contact / support : utilise les coordonnées indiquées sur le site ou dans l’application pour signaler un
+                Contact / support : utilise les coordonnées indiquées sur le site ou dans l'application pour signaler un
                 contenu inapproprié ou poser une question.
               </li>
             </ul>

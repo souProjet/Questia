@@ -96,7 +96,7 @@ function minimalLog(): QuestLog {
 }
 
 describe('getEffectivePhase', () => {
-  it('retourne la phase naturelle en l’absence de downgrade', () => {
+  it("retourne la phase naturelle en l'absence de downgrade", () => {
     expect(getEffectivePhase(5, [])).toBe('expansion');
   });
   it('passe en expansion si downgrade en rupture', () => {

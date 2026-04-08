@@ -302,7 +302,7 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
                   <Text style={styles.levelKicker}>Niveau atteint</Text>
                   <Text style={styles.levelNum}>{levelInfo.afterLevel}</Text>
                   {levelInfo.levelsGained > 1 ? (
-                    <Text style={styles.levelSub}>+{levelInfo.levelsGained} niveaux d’un coup !</Text>
+                    <Text style={styles.levelSub}>+{levelInfo.levelsGained} niveaux d'un coup !</Text>
                   ) : (
                     <Text style={styles.levelSubMuted}>Palier de progression débloqué</Text>
                   )}

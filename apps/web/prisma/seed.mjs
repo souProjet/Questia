@@ -6,7 +6,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-/** Tous les ids d’insignes (voir packages/shared/src/engine/badges.ts). */
+/** Tous les ids d'insignes (voir packages/shared/src/engine/badges.ts). */
 const ALL_BADGE_IDS = [
   'phase_calibration_fin',
   'phase_expansion',
@@ -132,7 +132,7 @@ async function main() {
     `OK — ${PAST_DAYS} quêtes complétées (historique), jour ${currentDay}, série ${streakCount}, ${totalXp} XP, ${ALL_BADGE_IDS.length} insignes.`,
   );
   console.log(
-    `last_quest_date = ${lastQuestDate} → la prochaine ouverture d’app peut générer la quête d’aujourd’hui.`,
+    `last_quest_date = ${lastQuestDate} → la prochaine ouverture d'app peut générer la quête d'aujourd'hui.`,
   );
 }
 

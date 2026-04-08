@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/admin/users/search?q= — recherche Clerk (prénom, nom, @pseudo, email, id…).
- * Enrichi avec la présence d’un profil Questia.
+ * Enrichi avec la présence d'un profil Questia.
  */
 export async function GET(request: NextRequest) {
   const gate = await requireAdminRequest();

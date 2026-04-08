@@ -95,7 +95,7 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
     min-height: 100dvh;
-    /* iOS / encoches : évite le contenu sous l’indicateur d’accueil ou les bords arrondis */
+    /* iOS / encoches : évite le contenu sous l'indicateur d'accueil ou les bords arrondis */
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -125,7 +125,7 @@
   ::-webkit-scrollbar-thumb { background: var(--subtle); border-radius: 3px; }
 
   /**
-   * Lien « Aller au contenu » : hors écran jusqu’au focus clavier.
+   * Lien « Aller au contenu » : hors écran jusqu'au focus clavier.
    */
   .skip-link {
     position: absolute;
@@ -252,7 +252,7 @@
     );
   }
 
-  /* Alias : tout l’app utilise la même DA claire que la landing (doc direction-artistique) */
+  /* Alias : tout l'app utilise la même DA claire que la landing (doc direction-artistique) */
   .bg-app {
     @apply bg-adventure;
   }
@@ -364,7 +364,7 @@
   /* ── Cards ── */
   /**
    * Surfaces boutique (cartes produit, listes) : fond bien visible sur tout fond de page.
-   * Évite bg-[var(--card)]/95 en Tailwind : l’opacité sur variable hex ne produit souvent aucun fond.
+   * Évite bg-[var(--card)]/95 en Tailwind : l'opacité sur variable hex ne produit souvent aucun fond.
    */
   .shop-elevated-surface {
     background-color: var(--card);
@@ -1485,7 +1485,7 @@
   }
 
   /**
-   * Citation du jour (hook) — alignée sur le plateau : crème, orange, cyan, pas d’italique global.
+   * Citation du jour (hook) — alignée sur le plateau : crème, orange, cyan, pas d'italique global.
    */
   .quest-hook-card {
     border-radius: 1rem;

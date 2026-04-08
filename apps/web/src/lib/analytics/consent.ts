@@ -1,11 +1,11 @@
 /**
- * Consentement cookies « marketing / mesure d’audience » (RGPD).
- * Les scripts tiers (GTM, GA en direct, Meta Pixel) ne sont chargés qu’après opt-in explicite.
+ * Consentement cookies « marketing / mesure d'audience » (RGPD).
+ * Les scripts tiers (GTM, GA en direct, Meta Pixel) ne sont chargés qu'après opt-in explicite.
  */
 export const CONSENT_STORAGE_KEY = 'questia_cookie_consent_v2';
 
 export type MarketingConsent = {
-  /** Mesure d’audience (GA4 via GTM ou gtag, etc.) */
+  /** Mesure d'audience (GA4 via GTM ou gtag, etc.) */
   analytics: boolean;
   /** Publicité & remarketing (Meta Pixel, tags pub dans GTM) */
   ads: boolean;

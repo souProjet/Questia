@@ -1,7 +1,7 @@
 /**
- * Identité de l’éditeur et contacts légaux — renseigner via les variables
+ * Identité de l'éditeur et contacts légaux — renseigner via les variables
  * NEXT_PUBLIC_LEGAL_* en production (voir `.env.example`).
- * Tant qu’une valeur est absente, les pages légales affichent une mention explicite à compléter.
+ * Tant qu'une valeur est absente, les pages légales affichent une mention explicite à compléter.
  */
 function env(k: string): string | null {
   const v = process.env[k]?.trim();

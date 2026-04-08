@@ -96,7 +96,7 @@ function QuestShareCardFrame({
         boxShadow: '0 24px 48px rgba(15,23,42,0.2)',
       }}
     >
-      {/* Fond pleine carte (dégradé / photo continue sous l’overlay) */}
+      {/* Fond pleine carte (dégradé / photo continue sous l'overlay) */}
       {photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -462,7 +462,7 @@ export function QuestShareComposer({
   onOpenChange: (open: boolean) => void;
   payload: QuestSharePayload;
   userFirstName: string;
-  /** Aligné sur la locale de l’app (libellés Nv./Lv. et format des nombres). */
+  /** Aligné sur la locale de l'app (libellés Nv./Lv. et format des nombres). */
   shareLocale?: 'fr' | 'en';
 }) {
   const [bgId, setBgId] = useState(QUEST_SHARE_BACKGROUNDS[0].id);
@@ -918,7 +918,7 @@ export function QuestShareComposer({
               ) : (
                 <>
                   <Icon name="Share2" size="sm" className="opacity-95" />
-                  Partager ou enregistrer l’image
+                  Partager ou enregistrer l'image
                 </>
               )}
             </span>

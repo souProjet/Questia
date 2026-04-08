@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
   if (getCoinPack(sku)) {
     return NextResponse.json(
-      { error: 'Les packs de coins s’achètent avec Stripe (section Recharge), pas en Quest Coins.' },
+      { error: "Les packs de coins s'achètent avec Stripe (section Recharge), pas en Quest Coins." },
       { status: 400 },
     );
   }
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
             return {
               ok: false,
               message:
-                'Tu as déjà acheté ce bundle. Les bonus qu’il contient (dont les charges XP) ne sont appliqués qu’une fois.',
+                "Tu as déjà acheté ce bundle. Les bonus qu'il contient (dont les charges XP) ne sont appliqués qu'une fois.",
             };
           }
         }

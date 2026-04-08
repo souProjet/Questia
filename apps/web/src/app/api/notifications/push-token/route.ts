@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-/** POST — enregistre un jeton Expo Push pour l’utilisateur courant */
+/** POST — enregistre un jeton Expo Push pour l'utilisateur courant */
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });

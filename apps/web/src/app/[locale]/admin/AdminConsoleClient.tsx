@@ -321,8 +321,8 @@ export default function AdminConsoleClient() {
       <section className="overflow-hidden rounded-[1.75rem] border-2 border-violet-300/50 bg-gradient-to-br from-violet-50/70 via-white to-fuchsia-50/30 p-6 shadow-[0_12px_40px_-16px_rgba(139,92,246,0.25)] sm:p-7">
         <h2 className="font-display text-lg font-black text-[var(--on-cream)]">② · Changer de joueur</h2>
         <p className="mt-1 text-xs font-semibold leading-relaxed text-[var(--on-cream-muted)]">
-          Saisis un prénom, un nom, un pseudo ou une partie d’e-mail : la recherche interroge le service qui héberge les
-          comptes joueurs. Dès qu’un joueur est choisi, les blocs « État du jeu » et « Mode intervention » affichent{' '}
+          Saisis un prénom, un nom, un pseudo ou une partie d'e-mail : la recherche interroge le service qui héberge les
+          comptes joueurs. Dès qu'un joueur est choisi, les blocs « État du jeu » et « Mode intervention » affichent{' '}
           <strong className="text-[var(--on-cream)]">ses</strong> données.
         </p>
 
@@ -385,7 +385,7 @@ export default function AdminConsoleClient() {
                     onClick={() => {
                       if (!h.hasQuestiaProfile) {
                         setSearchErr(
-                          'Aucun profil Questia pour ce compte — le joueur doit ouvrir l’application au moins une fois.',
+                          "Aucun profil Questia pour ce compte — le joueur doit ouvrir l'application au moins une fois.",
                         );
                         return;
                       }
@@ -463,7 +463,7 @@ export default function AdminConsoleClient() {
               </>
             ) : (
               <span className="italic">
-                aucune ligne — ouvrir l’application sur ce compte pour générer la quête du jour
+                aucune ligne — ouvrir l'application sur ce compte pour générer la quête du jour
               </span>
             )}
           </p>
@@ -473,8 +473,8 @@ export default function AdminConsoleClient() {
       <section className="overflow-hidden rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-white via-amber-50/40 to-cyan-50/40 p-6 shadow-[0_8px_28px_-6px_rgba(249,115,22,0.12)] sm:p-7">
         <h2 className="font-display text-lg font-black text-gradient-pop">④ · Mode intervention</h2>
         <p className="mt-2 text-sm font-semibold text-[var(--on-cream-muted)]">
-          Actions sur le compte « {focusTitle} » (même que le bandeau et l’état du jeu). Pour les cas limites, utilise
-          l’interface graphique Prisma.
+          Actions sur le compte « {focusTitle} » (même que le bandeau et l'état du jeu). Pour les cas limites, utilise
+          l'interface graphique Prisma.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
@@ -699,12 +699,12 @@ export default function AdminConsoleClient() {
             onClick={() => void god({ action: 'grant_badge', badgeId: badgeGrantId })}
             className="btn btn-primary btn-md font-black"
           >
-            Attribuer l’insigne
+            Attribuer l'insigne
           </button>
         </div>
         <div className="mt-4">
           <label className="text-[11px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">
-            Tableau d’insignes (saisie avancée, format structuré)
+            Tableau d'insignes (saisie avancée, format structuré)
           </label>
           <textarea
             className="mt-2 min-h-[88px] w-full rounded-2xl border border-orange-200/80 bg-white p-3 font-mono text-xs font-semibold text-[var(--text)]"
@@ -861,7 +861,7 @@ export default function AdminConsoleClient() {
 
         <p className="mt-6 text-xs font-medium text-[var(--on-cream-subtle)]">
           Accès réservé aux comptes avec le rôle administrateur en base de données (interface graphique Prisma ou
-          requête directe) — aucune variable d’environnement pour ce rôle.
+          requête directe) — aucune variable d'environnement pour ce rôle.
         </p>
       </section>
 

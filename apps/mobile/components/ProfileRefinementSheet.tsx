@@ -432,14 +432,14 @@ function RefinementSheet({
                       );
                     })}
                   </View>
-                  <Text style={styles.hint}>Un choix fait avancer à l’étape suivante</Text>
+                  <Text style={styles.hint}>Un choix fait avancer à l'étape suivante</Text>
                 </View>
               ) : (
                 <View style={styles.consentBlock}>
                   <Text style={styles.consentEmoji}>🔒</Text>
                   <Text style={styles.consentTitle}>Presque fini</Text>
                   <Text style={styles.consentSub}>
-                    Confirme ton accord pour qu’on adapte tes quêtes à ces préférences.
+                    Confirme ton accord pour qu'on adapte tes quêtes à ces préférences.
                   </Text>
                   <View style={styles.consentBox}>
                     <View style={styles.consentRow}>

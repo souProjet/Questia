@@ -34,7 +34,7 @@ describe('xpBreakdownRowsFr', () => {
     expect(rows[0].value).toBe('10 XP');
   });
 
-  it('couvre les trois phases d’escalade', () => {
+  it("couvre les trois phases d'escalade", () => {
     expect(xpBreakdownRowsFr(base({ basePhase: 'expansion' }))[0].detail).toContain('Exploration');
     expect(xpBreakdownRowsFr(base({ basePhase: 'rupture' }))[0].detail).toContain('Intensité');
   });
@@ -98,7 +98,7 @@ describe('xpBreakdownRowsFr', () => {
     expect(shop?.value).toBe('+15 XP');
   });
 
-  it('n’ajoute pas de ligne boutique si bonus absent ou nul', () => {
+  it("n'ajoute pas de ligne boutique si bonus absent ou nul", () => {
     expect(xpBreakdownRowsFr(base({ shopBonusXp: 0 })).some((r) => r.key === 'shop')).toBe(false);
     expect(xpBreakdownRowsFr(base({})).some((r) => r.key === 'shop')).toBe(false);
   });

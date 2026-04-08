@@ -30,7 +30,7 @@ export function AdminNavLink({ variant = 'toolbar' }: { variant?: 'toolbar' | 'd
     <Link
       href="/admin"
       className={`admin-console-link ${toolbarClass}`}
-      title="Console d’administration"
+      title="Console d'administration"
     >
       <span>Console</span>
       <span className="admin-console-link__icon inline-flex" aria-hidden>

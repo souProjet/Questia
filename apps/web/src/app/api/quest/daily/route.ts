@@ -84,7 +84,7 @@ function isPlaceholderDestinationLabel(s: string): boolean {
   return false;
 }
 
-/** Évite d’afficher « null » / « undefined » (JSON ou bugs modèle). */
+/** Évite d'afficher « null » / « undefined » (JSON ou bugs modèle). */
 function sanitizeDestinationLabelForStorage(s: string | null | undefined): string | null {
   if (s == null) return null;
   const t = s.trim();
@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
 
   const today = getQuestCalendarDateNow();
 
-  // ── Quête d’un autre jour (ex. carte partage / deeplink) ────────────────────
+  // ── Quête d'un autre jour (ex. carte partage / deeplink) ────────────────────
   if (requestedQuestDate && requestedQuestDate !== today) {
     const historical = await prisma.questLog.findUnique({
       where: { profileId_questDate: { profileId: profile.id, questDate: requestedQuestDate } },
@@ -231,7 +231,7 @@ export async function GET(request: NextRequest) {
 
   // Get weather + location context
   const context = await getQuestContext(lat, lon);
-  /** Sans GPS : pas d’archétype extérieur ni de lieu nommé / carte */
+  /** Sans GPS : pas d'archétype extérieur ni de lieu nommé / carte */
   const allowOutdoorQuests = context.isOutdoorFriendly && context.hasUserLocation;
 
   // Get recent logs for Delta de congruence
@@ -260,10 +260,10 @@ export async function GET(request: NextRequest) {
   const congruenceDelta = computeCongruenceDelta(declaredPersonality, exhibited);
   const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs);
   const recentIds = recentLogs.slice(0, 7).map((r) => r.archetypeId);
-  /** Après relance/report, les archétypes déjà proposés aujourd’hui ne sont plus dans l’historique BDD — on les cumule ici. */
+  /** Après relance/report, les archétypes déjà proposés aujourd'hui ne sont plus dans l'historique BDD — on les cumule ici. */
   const lastQuestDateStr =
     profile.lastQuestDate == null ? null : String(profile.lastQuestDate).slice(0, 10);
-  /** Hors « même jour calendaire », ignorer la liste (sinon exclusions d’hier fausseraient le tirage du matin). */
+  /** Hors « même jour calendaire », ignorer la liste (sinon exclusions d'hier fausseraient le tirage du matin). */
   const extraExclude =
     lastQuestDateStr === today ? parseRerollExcludedArchetypeIds(profile) : [];
   const recentIdsForSelect = Array.from(new Set([...recentIds, ...extraExclude]));
@@ -277,7 +277,7 @@ export async function GET(request: NextRequest) {
   const refinementContext = buildRefinementContextForPrompt(storedRefinementAnswers);
 
   const instantOnly = profile.flagNextQuestInstantOnly === true;
-  /** Chaque relance a une graine distincte (liste d’archétypes exclus cumulés). */
+  /** Chaque relance a une graine distincte (liste d'archétypes exclus cumulés). */
   const regenTier =
     profile.flagNextQuestAfterReroll === true
       ? `reroll:${extraExclude.slice().sort((a, b) => a - b).join(',')}`
@@ -324,7 +324,7 @@ export async function GET(request: NextRequest) {
     archetype = QUEST_TAXONOMY.find((q) => q.id === FALLBACK_QUEST_ID) ?? QUEST_TAXONOMY[0];
   }
 
-  // Generate the quest via OpenAI (phase effective + delta calculés = alignés avec le choix d’archétype)
+  // Generate the quest via OpenAI (phase effective + delta calculés = alignés avec le choix d'archétype)
   const generated = await generateDailyQuest(
     {
       phase: effectivePhase,
@@ -398,7 +398,7 @@ export async function GET(request: NextRequest) {
 
   const assignAfterReroll = profile.flagNextQuestAfterReroll;
 
-  // Après relance/report, le POST a déjà décrémenté les relances — ne pas remettre 1 ici (sinon l’UI reste bloquée à 1/2).
+  // Après relance/report, le POST a déjà décrémenté les relances — ne pas remettre 1 ici (sinon l'UI reste bloquée à 1/2).
   const rerollsAfterQuestCreate = assignAfterReroll ? profile.rerollsRemaining : 1;
 
   // Save quest log + update profile atomically
@@ -439,7 +439,7 @@ export async function GET(request: NextRequest) {
         flagNextQuestAfterReroll: false,
         flagNextQuestInstantOnly: false,
         rerollExcludeArchetypeId: null,
-        /** Tous les archétypes déjà tirés aujourd’hui (relances) — évite de retomber en boucle sur les mêmes quêtes. */
+        /** Tous les archétypes déjà tirés aujourd'hui (relances) — évite de retomber en boucle sur les mêmes quêtes. */
         rerollExcludeArchetypeIds: Array.from(new Set([...extraExclude, archetype.id])),
       },
     }),
@@ -495,7 +495,7 @@ export async function POST(request: NextRequest) {
     if (!isValidReportDeferredDate(deferredUntil, today)) {
       return NextResponse.json(
         {
-          error: `Choisis une date entre aujourd’hui et ${today} + 14 jours (format AAAA-MM-JJ).`,
+          error: `Choisis une date entre aujourd'hui et ${today} + 14 jours (format AAAA-MM-JJ).`,
         },
         { status: 400 },
       );
@@ -506,7 +506,7 @@ export async function POST(request: NextRequest) {
     });
     if (!existing || existing.status !== 'pending') {
       return NextResponse.json(
-        { error: 'Reporter n’est possible que tant que la quête n’est pas acceptée.' },
+        { error: "Reporter n'est possible que tant que la quête n'est pas acceptée." },
         { status: 400 },
       );
     }
@@ -803,7 +803,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Quête déjà validée.' }, { status: 400 });
   }
   if (logForAccept.status === 'abandoned') {
-    return NextResponse.json({ error: 'Cette quête a été passée. Demain une nouvelle carte t’attend.' }, { status: 400 });
+    return NextResponse.json(
+      { error: "Cette quête a été passée. Demain une nouvelle carte t'attend." },
+      { status: 400 },
+    );
   }
   if (logForAccept.status === 'accepted') {
     return NextResponse.json({

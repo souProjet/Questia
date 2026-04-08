@@ -46,7 +46,7 @@ export function IncompleteNotice() {
   return (
     <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
       Les champs encore indiqués comme « à compléter » doivent être renseignés avant une mise en production
-      (variables <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_LEGAL_*</code> dans l’hébergeur — voir{' '}
+      (variables <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_LEGAL_*</code> dans l'hébergeur — voir{' '}
       <code className="rounded bg-amber-100 px-1">.env.example</code>).
     </p>
   );

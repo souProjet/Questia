@@ -16,7 +16,7 @@ export type XpBreakdownRowFr = {
 };
 
 /**
- * Lignes lisibles pour l’écran de récompense (détail du calcul d’XP).
+ * Lignes lisibles pour l'écran de récompense (détail du calcul d'XP).
  */
 export function xpBreakdownRowsFr(b: XpBreakdown): XpBreakdownRowFr[] {
   const phase = PHASE_FR[b.basePhase];
@@ -34,7 +34,7 @@ export function xpBreakdownRowsFr(b: XpBreakdown): XpBreakdownRowFr[] {
       key: 'base',
       label: 'XP de base',
       value: `${b.baseAfterArchetype} XP`,
-      detail: `Ta phase au moment de la quête : « ${phase} ». Brut de phase : ${b.baseRaw} XP, puis ajustement selon ton ${profil} (multiplicateurs d’archétype).`,
+      detail: `Ta phase au moment de la quête : « ${phase} ». Brut de phase : ${b.baseRaw} XP, puis ajustement selon ton ${profil} (multiplicateurs d'archétype).`,
     },
     {
       key: 'streak',

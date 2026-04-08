@@ -1,5 +1,5 @@
 /**
- * Envoi d’événements vers GTM (dataLayer), GA4 direct (gtag), et PostHog.
+ * Envoi d'événements vers GTM (dataLayer), GA4 direct (gtag), et PostHog.
  * Sans consentement analytics, les événements sont mis en file puis envoyés dès « Accepter »
  * (évite de perdre onboarding_started, etc. si le bandeau est encore affiché).
  */

@@ -3,16 +3,16 @@ import { Link } from '@/i18n/navigation';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 
 export const metadata: Metadata = {
-  title: 'Conditions générales d’utilisation',
-  description: 'Modalités d’accès et d’usage du service Questia (site web et applications).',
+  title: "Conditions générales d'utilisation",
+  description: "Modalités d'accès et d'usage du service Questia (site web et applications).",
   robots: { index: true, follow: true },
 };
 
 export default function CguPage() {
   return (
     <LegalLayout
-      title="Conditions générales d’utilisation (CGU)"
-      description="Les présentes conditions régissent l’accès au service Questia. En créant un compte ou en utilisant l’application, tu les acceptes."
+      title="Conditions générales d'utilisation (CGU)"
+      description="Les présentes conditions régissent l'accès au service Questia. En créant un compte ou en utilisant l'application, tu les acceptes."
     >
       <section>
         <h2 className="text-xl font-black text-slate-900">1. Objet</h2>
@@ -30,7 +30,7 @@ export default function CguPage() {
       <section>
         <h2 className="text-xl font-black text-slate-900">2. Compte et authentification</h2>
         <p>
-          L’accès au compte est fourni par un prestataire d’authentification tiers (Clerk). Tu t’engages à fournir des
+          L'accès au compte est fourni par un prestataire d'authentification tiers (Clerk). Tu t'engages à fournir des
           informations exactes et à préserver la confidentialité de tes identifiants. Toute activité réalisée depuis ton
           compte est réputée effectuée par toi.
         </p>
@@ -66,23 +66,23 @@ export default function CguPage() {
         <h2 className="text-xl font-black text-slate-900">5. Propriété intellectuelle</h2>
         <p>
           Le service, ses marques et ses contenus édités par Questia sont protégés. Tu obtiens un droit personnel,
-          non exclusif et révocable d’utiliser le service conformément aux CGU. Tu ne dois pas extraire massivement les
-          données, faire de l’ingénierie inverse nuisible, ou contourner les mesures de sécurité.
+          non exclusif et révocable d'utiliser le service conformément aux CGU. Tu ne dois pas extraire massivement les
+          données, faire de l'ingénierie inverse nuisible, ou contourner les mesures de sécurité.
         </p>
       </section>
 
       <section>
         <h2 className="text-xl font-black text-slate-900">6. Disponibilité et évolution</h2>
         <p>
-          Le service est fourni « en l’état ». Nous pouvons modifier des fonctionnalités, suspendre temporairement l’accès
-          pour maintenance ou mettre fin au service avec un préavis raisonnable lorsque c’est possible.
+          Le service est fourni « en l'état ». Nous pouvons modifier des fonctionnalités, suspendre temporairement l'accès
+          pour maintenance ou mettre fin au service avec un préavis raisonnable lorsque c'est possible.
         </p>
       </section>
 
       <section>
         <h2 className="text-xl font-black text-slate-900">7. Responsabilité</h2>
         <p>
-          Dans les limites autorisées par la loi, la responsabilité de l’éditeur ne saurait être engagée pour des dommages
+          Dans les limites autorisées par la loi, la responsabilité de l'éditeur ne saurait être engagée pour des dommages
           indirects ou pour des imprécisions du contenu généré. Rien dans les CGU ne limite les droits impératifs du
           consommateur.
         </p>
@@ -92,7 +92,7 @@ export default function CguPage() {
         <h2 className="text-xl font-black text-slate-900">8. Résiliation</h2>
         <p>
           Tu peux supprimer ton compte depuis les paramètres du profil sur le web. Nous pouvons suspendre ou clôturer un
-          compte en cas de manquement grave aux présentes conditions ou d’usage abusif.
+          compte en cas de manquement grave aux présentes conditions ou d'usage abusif.
         </p>
       </section>
 

@@ -14,7 +14,7 @@ const base = (): PersonalityVector => ({
 });
 
 describe('questGenerationPrompt', () => {
-  it('buildPersonalityPromptBlock inclut déclaré, delta et mention peu d’historique', () => {
+  it("buildPersonalityPromptBlock inclut déclaré, delta et mention peu d'historique", () => {
     const declared = base();
     const exhibited = base();
     for (const k of Object.keys(exhibited) as (keyof PersonalityVector)[]) {

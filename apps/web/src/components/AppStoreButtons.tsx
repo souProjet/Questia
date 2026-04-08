@@ -21,11 +21,11 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
   const ios = hasAppStoreLink();
   const android = hasPlayStoreLink();
 
-  /** Hauteur d’affichage : le PNG Google inclut beaucoup de marge autour du logo — un peu plus haut pour équilibrer avec Apple. */
+  /** Hauteur d'affichage : le PNG Google inclut beaucoup de marge autour du logo — un peu plus haut pour équilibrer avec Apple. */
   const hApple = variant === 'compact' ? 'h-9 sm:h-10' : 'h-12';
   const hGoogle = variant === 'compact' ? 'h-10 sm:h-11' : 'h-16';
 
-  /** Lien serré autour de l’image (pas de cadre fixe → plus de « trou » transparent). Ombre portée sur l’image uniquement. */
+  /** Lien serré autour de l'image (pas de cadre fixe → plus de « trou » transparent). Ombre portée sur l'image uniquement. */
   const linkClass =
     'group inline-flex shrink-0 items-center justify-center p-0 leading-none outline-none ' +
     'transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-md';
@@ -49,7 +49,7 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
           {/* eslint-disable-next-line @next/next/no-img-element -- badges officiels Apple */}
           <img
             src={APP_STORE_BADGE_FR}
-            alt="Télécharger dans l’App Store"
+            alt="Télécharger dans l'App Store"
             width={250}
             height={83}
             className={`block w-auto max-w-[min(100%,calc(100vw-1.5rem))] sm:max-w-[min(100vw-2rem,280px)] ${hApple} ${imgShadow}`}

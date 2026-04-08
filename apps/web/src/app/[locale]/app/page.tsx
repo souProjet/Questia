@@ -37,11 +37,11 @@ const QuestDestinationMap = dynamic(
   },
 );
 
-/** Seuils de glissé sur la carte quête (web), alignés sur l’app mobile à ~100px / ~72px */
+/** Seuils de glissé sur la carte quête (web), alignés sur l'app mobile à ~100px / ~72px */
 const QUEST_CARD_SWIPE_X = 100;
 const QUEST_CARD_SWIPE_UP = 72;
 const QUEST_CARD_ROT_MAX = 12;
-/** Rotation au « mur » (même logique que mobile : la carte ne quitte pas l’écran) */
+/** Rotation au « mur » (même logique que mobile : la carte ne quitte pas l'écran) */
 const QUEST_CARD_BUMP_ROT = 14;
 /** Phase 1 : vers le mur ; phase 2 : retour au centre */
 const QUEST_CARD_BUMP_MS = 200;
@@ -224,7 +224,7 @@ function AppPageContent() {
     if (!raw) return null;
     return isValidQuestDateIso(raw) ? raw : null;
   }, [searchParams]);
-  /** Jour calendaire courant (mis à jour au passage de minuit / retour sur l’onglet) — évite l’état « figé » si l’onglet reste ouvert. */
+  /** Jour calendaire courant (mis à jour au passage de minuit / retour sur l'onglet) — évite l'état « figé » si l'onglet reste ouvert. */
   const [calendarDay, setCalendarDay] = useState(() => getQuestCalendarDateNow());
   const reportDateMax = useMemo(() => {
     const d = new Date(`${calendarDay}T12:00:00.000Z`);
@@ -451,7 +451,7 @@ function AppPageContent() {
     userPosition?.lon,
   ]);
 
-  /** Aligne la barre d’adresse avec la quête affichée (partage / deep link). */
+  /** Aligne la barre d'adresse avec la quête affichée (partage / deep link). */
   const questDateLoaded = quest?.questDate;
   useEffect(() => {
     if (!questDateLoaded) return;
@@ -591,7 +591,7 @@ function AppPageContent() {
         setBannerError(data.error ?? t('bannerRerollFailed'));
         return;
       }
-      // Rechargement immédiat (pas d’attente géoloc : évite plusieurs secondes sans retour visible).
+      // Rechargement immédiat (pas d'attente géoloc : évite plusieurs secondes sans retour visible).
       const ok = await loadQuest(userPosition?.lat, userPosition?.lon, {
         silent: true,
         questDate: quest.questDate,
@@ -703,9 +703,9 @@ function AppPageContent() {
   const [questSwipeOffset, setQuestSwipeOffset] = useState({ x: 0, y: 0 });
   const [questSwipeDragging, setQuestSwipeDragging] = useState(false);
   const [swipeFlying, setSwipeFlying] = useState(false);
-  /** null = pas d’anim bump ; out = vers le mur ; back = retour au centre puis complétion */
+  /** null = pas d'anim bump ; out = vers le mur ; back = retour au centre puis complétion */
   const [swipeBumpPhase, setSwipeBumpPhase] = useState<null | 'out' | 'back'>(null);
-  /** Après le bump + complétion : la carte peut rester masquée tant qu’une modale / le panneau détail est ouvert. */
+  /** Après le bump + complétion : la carte peut rester masquée tant qu'une modale / le panneau détail est ouvert. */
   const [swipeParkedAfterFlight, setSwipeParkedAfterFlight] = useState(false);
   const questSwipeRef = useRef({
     active: false,
@@ -960,7 +960,7 @@ function AppPageContent() {
   /** Transform / overlays : en attente ou acceptée (swipe pour valider), hors chargements */
   const questCardTransformsActive =
     (isPending || isAccepted) && !(rerolling || reporting || accepting) && !completing;
-  /** Gestes : pas pendant l’animation de sortie */
+  /** Gestes : pas pendant l'animation de sortie */
   const questCardSwipeInteractive =
     (isPending || isAccepted) &&
     !(rerolling || reporting || accepting) &&
@@ -1128,7 +1128,7 @@ function AppPageContent() {
         <div className="flex w-full flex-1 flex-col items-center justify-center gap-4 py-4 sm:min-h-[min(560px,calc(100dvh-11rem))]">
         {quest ? (
           <div className="relative w-full max-w-[480px]">
-            {/* Halo doux sous la carte (pas de « 2e carte » vide façon Tinder : il n’y a pas de profil suivant ici) */}
+            {/* Halo doux sous la carte (pas de « 2e carte » vide façon Tinder : il n'y a pas de profil suivant ici) */}
             {questCardTransformsActive && !isAbandoned ? (
               <div
                 aria-hidden

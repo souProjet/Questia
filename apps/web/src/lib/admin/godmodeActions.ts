@@ -162,7 +162,7 @@ export async function runGodmodeAction(profile: Profile, body: GodmodeBody, toda
         });
         return NextResponse.json({
           ok: true,
-          message: 'lastQuestDate effacé (simule « pas encore de quête aujourd’hui » côté série).',
+          message: "lastQuestDate effacé (simule « pas encore de quête aujourd'hui » côté série).",
         });
       }
       case 'set_phase_day': {
@@ -366,7 +366,7 @@ export async function runGodmodeAction(profile: Profile, body: GodmodeBody, toda
         });
         if (!row) {
           return NextResponse.json(
-            { error: 'Aucune quête pour aujourd’hui — génère-en une (app) ou crée la ligne en BDD.' },
+            { error: "Aucune quête pour aujourd'hui — génère-en une (app) ou crée la ligne en BDD." },
             { status: 404 },
           );
         }

@@ -4,7 +4,7 @@
 
 import { getTitleDefinition } from './shop/titles';
 
-/** Clés de query reconnues par l’API `/api/quest/daily` et les pages app. */
+/** Clés de query reconnues par l'API `/api/quest/daily` et les pages app. */
 export const QUEST_DATE_QUERY_KEYS = ['questDate', 'date'] as const;
 
 export function isValidQuestDateIso(s: string): boolean {
@@ -19,7 +19,7 @@ export function isValidQuestDateIso(s: string): boolean {
 }
 
 /**
- * URL web canonique pour ouvrir l’app sur une quête (jour donné ou aujourd’hui sans query).
+ * URL web canonique pour ouvrir l'app sur une quête (jour donné ou aujourd'hui sans query).
  * @param baseUrl Origine sans slash final (ex. https://questia.fr)
  */
 export function buildWebAppQuestUrl(baseUrl: string, questDate?: string | null): string {
@@ -39,7 +39,7 @@ export function buildWebSharedQuestUrl(baseUrl: string, shareId: string): string
 }
 
 /**
- * Lien custom scheme (Expo) vers la route `app` avec paramètres — ouvert par l’app native.
+ * Lien custom scheme (Expo) vers la route `app` avec paramètres — ouvert par l'app native.
  * @param scheme Sans « :// » (ex. questia)
  */
 export function buildNativeAppQuestUrl(scheme: string, questDate?: string | null): string {

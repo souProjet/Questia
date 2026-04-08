@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 
 /**
- * Bascule FR / EN (préfixe `/en` pour l’anglais, FR sans préfixe).
+ * Bascule FR / EN (préfixe `/en` pour l'anglais, FR sans préfixe).
  * Cibles tactiles ≥ 40px, adapté header + tiroir mobile.
  */
 export function LocaleSwitcher() {

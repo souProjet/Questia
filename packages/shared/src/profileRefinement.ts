@@ -3,7 +3,7 @@ import type { PsychologicalCategory } from './types';
 /** Incrémenter pour reproposer le questionnaire (nouvelles questions / recalibrage). */
 export const REFINEMENT_SCHEMA_VERSION = 1;
 
-/** Jour d’aventure minimum avant éligibilité (sauf si assez de complétions). */
+/** Jour d'aventure minimum avant éligibilité (sauf si assez de complétions). */
 export const REFINEMENT_MIN_DAY = 8;
 
 /** Complétions minimum si jour encore bas. */
@@ -37,27 +37,27 @@ export const REFINEMENT_QUESTIONS: readonly RefinementQuestion[] = [
   },
   {
     id: 'romance_topics',
-    prompt: 'Les quêtes centrées sur le couple ou l’engagement romantique te semblent…',
+    prompt: "Les quêtes centrées sur le couple ou l'engagement romantique te semblent…",
     helpText:
       'Ça calibre surtout les missions « vie à deux » ou engagement — pas les défis de rencontre ou de séduction légère si tu es plutôt aventureux·se socialement.',
     options: [
-      { id: 'avoid', label: 'Plutôt à éviter pour l’instant' },
+      { id: 'avoid', label: "Plutôt à éviter pour l'instant" },
       { id: 'neutral', label: 'Ça dépend du jour' },
-      { id: 'ok', label: 'OK si c’est proposé avec tact' },
+      { id: 'ok', label: "OK si c'est proposé avec tact" },
     ],
   },
   {
     id: 'food_missions',
-    prompt: 'Les missions autour d’un café, d’un marché ou d’un repas partagé…',
+    prompt: "Les missions autour d'un café, d'un marché ou d'un repas partagé…",
     options: [
       { id: 'love', label: "J'aime bien, ça me motive" },
       { id: 'neutral', label: 'Parfois oui, parfois non' },
-      { id: 'avoid', label: 'Je préfère d’autres types de défis' },
+      { id: 'avoid', label: "Je préfère d'autres types de défis" },
     ],
   },
   {
     id: 'energy_peak',
-    prompt: 'Tu as plutôt de l’énergie pour un défi un peu costaud…',
+    prompt: "Tu as plutôt de l'énergie pour un défi un peu costaud…",
     options: [
       { id: 'morning', label: 'Le matin' },
       { id: 'afternoon', label: "L'après-midi" },
@@ -289,7 +289,7 @@ export function buildRefinementContextForPrompt(answers: Record<string, string> 
 
   const sm = answers.social_mode;
   if (sm === 'solo') parts.push('privilégie des missions plutôt en solo ou calmes');
-  else if (sm === 'social') parts.push('à l’aise avec des missions impliquant du lien ou des échanges');
+  else if (sm === 'social') parts.push("à l'aise avec des missions impliquant du lien ou des échanges");
   else parts.push('mix solo / social acceptable');
 
   const ro = answers.romance_topics;
@@ -298,27 +298,27 @@ export function buildRefinementContextForPrompt(answers: Record<string, string> 
   if (ro === 'avoid') {
     if (adventurousSocial) {
       parts.push(
-        'préfère éviter les missions centrées sur le couple ou l’engagement romantique ; peut encore apprécier des défis de rencontre, flirt ou mise en situation sociale légère',
+        "préfère éviter les missions centrées sur le couple ou l'engagement romantique ; peut encore apprécier des défis de rencontre, flirt ou mise en situation sociale légère",
       );
     } else {
-      parts.push('préfère éviter les thèmes de couple ou d’engagement romantique dans les missions');
+      parts.push("préfère éviter les thèmes de couple ou d'engagement romantique dans les missions");
     }
   } else if (ro === 'ok') {
     parts.push('OK pour des missions touchant aux relations de couple avec tact');
   }
 
   const fd = answers.food_missions;
-  if (fd === 'love') parts.push('apprécie les défis autour d’un repas, café ou marché');
+  if (fd === 'love') parts.push("apprécie les défis autour d'un repas, café ou marché");
   else if (fd === 'avoid') parts.push('préfère éviter les missions centrées sur la nourriture ou les lieux de restauration');
 
   const en = answers.energy_peak;
   if (en === 'morning') parts.push('énergie plutôt le matin pour les défis un peu costauds');
   else if (en === 'evening') parts.push('énergie plutôt le soir');
-  else if (en === 'afternoon') parts.push('énergie plutôt l’après-midi');
+  else if (en === 'afternoon') parts.push("énergie plutôt l'après-midi");
 
   const cr = answers.crowds;
   if (cr === 'draining') parts.push('lieux très bondés plutôt fatigants — privilégier calme ou espaces modérés');
-  else if (cr === 'energizing') parts.push('à l’aise dans les lieux animés');
+  else if (cr === 'energizing') parts.push("à l'aise dans les lieux animés");
 
   if (parts.length === 0) return null;
   return `Préférences utilisateur (questionnaire optionnel, ne pas citer comme tel) : ${parts.join(' ; ')}.`;

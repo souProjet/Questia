@@ -64,7 +64,7 @@ export interface GeneratedDailyQuest {
 
 /** Entrées pour personnaliser au maximum la génération (aligné moteur + profil). */
 export interface DailyQuestProfileInput {
-  /** Phase utilisée pour le choix d’archétype (peut différer du champ profil BDD). */
+  /** Phase utilisée pour le choix d'archétype (peut différer du champ profil BDD). */
   phase: EscalationPhase;
   day: number;
   /** Delta de congruence calculé (déclaré vs comportement observé). */
@@ -73,9 +73,9 @@ export interface DailyQuestProfileInput {
   riskAxis: RiskAxis;
   /** YYYY-MM-DD — varie le hook */
   questDateIso: string;
-  /** Big Five (+ autres clés) déclaré à l’onboarding */
+  /** Big Five (+ autres clés) déclaré à l'onboarding */
   declaredPersonality: PersonalityVector;
-  /** Personnalité inférée depuis l’historique de quêtes */
+  /** Personnalité inférée depuis l'historique de quêtes */
   exhibitedPersonality: PersonalityVector;
   /** Relance du jour : exiger une formulation nettement différente */
   isRerollGeneration?: boolean;
@@ -147,47 +147,47 @@ const VAGUE_MISSION_SNIPPETS_EN = [
   'think about your past',
 ];
 
-/** Phrases de secours : une par jour (et variante selon archétype) si l’API échoue — pas une seule phrase figée. */
+/** Phrases de secours : une par jour (et variante selon archétype) si l'API échoue — pas une seule phrase figée. */
 const FALLBACK_HOOKS: string[] = [
-  'Aujourd’hui, un petit pas suffit à ouvrir une porte.',
-  'Ce que tu évites hier peut devenir ton jeu aujourd’hui.',
+  "Aujourd'hui, un petit pas suffit à ouvrir une porte.",
+  "Ce que tu évites hier peut devenir ton jeu aujourd'hui.",
   'La curiosité est un muscle : fais une série.',
   'Personne ne voit ton courage intérieur — montre-le par un geste.',
-  'Le brouillard se lève quand tu avances d’un mètre.',
-  'Ta zone de confort t’attend… de l’autre côté de la porte.',
-  'Un sourire à un inconnu, c’est déjà une victoire.',
+  "Le brouillard se lève quand tu avances d'un mètre.",
+  "Ta zone de confort t'attend… de l'autre côté de la porte.",
+  "Un sourire à un inconnu, c'est déjà une victoire.",
   'Le monde est un terrain de jeu — choisis un coin et explore.',
-  'Pas besoin d’être prêt·e : commence, puis ajuste.',
-  'L’ennui est un signal : réponds avec une action minuscule.',
+  "Pas besoin d'être prêt·e : commence, puis ajuste.",
+  "L'ennui est un signal : réponds avec une action minuscule.",
   'Chaque sortie est un vote pour la version de toi qui ose.',
-  'Les grandes histoires commencent par un « et si j’essayais ? »',
+  "Les grandes histoires commencent par un « et si j'essayais ? »",
   'Ton corps sait marcher — laisse ton esprit suivre.',
-  'Aujourd’hui, privilégie le monde réel au fil d’écran.',
-  'La météo dans ta tête n’est pas une fatalité.',
+  "Aujourd'hui, privilégie le monde réel au fil d'écran.",
+  "La météo dans ta tête n'est pas une fatalité.",
   'Un rituel nouveau suffit à casser le pilote automatique.',
-  'Tu n’as pas à impressionner — seulement à te sentir vivant·e.',
+  "Tu n'as pas à impressionner — seulement à te sentir vivant·e.",
   'Le hasard aime ceux qui bougent les pieds.',
   'Remplace « plus tard » par « dix minutes ».',
-  'Ce que tu remarques en chemin compte autant que l’arrivée.',
-  'L’aventure, c’est parfois juste sortir du cadre habituel.',
-  'Ton futur toi remercie le geste d’aujourd’hui.',
+  "Ce que tu remarques en chemin compte autant que l'arrivée.",
+  "L'aventure, c'est parfois juste sortir du cadre habituel.",
+  "Ton futur toi remercie le geste d'aujourd'hui.",
   'Pas de spectacle : une intention honnête suffit.',
   'La ville te tend des mains invisibles — tends la tienne.',
   'Le silence du doute se coupe avec une action.',
-  'Tu mérites une journée qui ne soit pas une copie d’hier.',
+  "Tu mérites une journée qui ne soit pas une copie d'hier.",
   'Un détail changé, et toute la journée penche différemment.',
-  'Le confort, c’est bien ; l’élan, c’est mieux.',
-  'Aujourd’hui, sois l’auteur d’une scène, pas le spectateur.',
-  'L’énergie vient souvent après le premier pas, pas avant.',
+  "Le confort, c'est bien ; l'élan, c'est mieux.",
+  "Aujourd'hui, sois l'auteur d'une scène, pas le spectateur.",
+  "L'énergie vient souvent après le premier pas, pas avant.",
   'Ton intuition a parfois raison avant ton cerveau.',
   'Fais une chose que ton « par défaut » éviterait.',
   'Le monde extérieur est un miroir — approche-toi.',
   'Petit effort, grand signal à toi-même.',
-  'La lumière change quand tu changes d’angle.',
-  'Tu n’es pas en retard : tu es au bon jour pour commencer.',
-  'Choisis l’inconfort léger plutôt que la rumination.',
-  'Une rencontre, un lieu, un geste — choisis l’un des trois.',
-  'Aujourd’hui, écris une ligne nouvelle dans ton histoire.',
+  "La lumière change quand tu changes d'angle.",
+  "Tu n'es pas en retard : tu es au bon jour pour commencer.",
+  "Choisis l'inconfort léger plutôt que la rumination.",
+  "Une rencontre, un lieu, un geste — choisis l'un des trois.",
+  "Aujourd'hui, écris une ligne nouvelle dans ton histoire.",
 ];
 
 const FALLBACK_HOOKS_EN: string[] = [
@@ -199,24 +199,24 @@ const FALLBACK_HOOKS_EN: string[] = [
   'Your comfort zone waits… on the other side of the door.',
   'A smile at a stranger is already a win.',
   'The world is a playground — pick a corner and explore.',
-  'You don’t need to be ready: start, then adjust.',
+  "You don't need to be ready: start, then adjust.",
   'Boredom is a signal — answer with a tiny action.',
   'Every outing is a vote for the version of you who dares.',
   'Big stories start with “what if I tried?”',
   'Your body knows how to walk — let your mind follow.',
   'Today, choose the real world over the scroll.',
-  'The weather in your head isn’t fate.',
+  "The weather in your head isn't fate.",
   'One new ritual is enough to break autopilot.',
-  'You don’t have to impress — only feel alive.',
+  "You don't have to impress — only feel alive.",
   'Luck likes people who move their feet.',
   'Swap “later” for “ten minutes.”',
   'What you notice along the way matters as much as the finish.',
   'Adventure is sometimes just stepping outside the usual frame.',
-  'Your future self thanks today’s gesture.',
+  "Your future self thanks today's gesture.",
   'No performance: honest intent is enough.',
   'The city offers invisible hands — offer yours.',
-  'Doubt’s silence is cut with one action.',
-  'You deserve a day that isn’t a copy of yesterday.',
+  "Doubt's silence is cut with one action.",
+  "You deserve a day that isn't a copy of yesterday.",
   'Change one detail, and the whole day tilts.',
   'Comfort is fine; momentum is better.',
   'Today, be the author of a scene, not the audience.',
@@ -226,7 +226,7 @@ const FALLBACK_HOOKS_EN: string[] = [
   'The outside world is a mirror — step closer.',
   'Small effort, big signal to yourself.',
   'Light shifts when you change the angle.',
-  'You’re not late — you’re on the right day to start.',
+  "You're not late — you're on the right day to start.",
   'Choose light discomfort over rumination.',
   'A meetup, a place, a gesture — pick one.',
   'Today, write a new line in your story.',
@@ -250,33 +250,33 @@ function pickFallbackHook(
 }
 
 const CREATIVE_ANGLES_FR: readonly string[] = [
-  'Angle du jour : partir d’un objet physique concret (papier, photo, plante, clef…) — pas seulement d’une intention abstraite.',
+  "Angle du jour : partir d'un objet physique concret (papier, photo, plante, clef…) — pas seulement d'une intention abstraite.",
   'Angle du jour : ancrer la mission dans un moment précis (réveil, trajet, pause, soir) avec une durée max claire.',
   'Angle du jour : une contrainte ludique courte (3 min, 3 photos, 3 lignes écrites, 1 détail nouveau).',
-  'Angle du jour : explorer un sens (ouïe, odorat, toucher) plutôt qu’une longue introspection.',
+  "Angle du jour : explorer un sens (ouïe, odorat, toucher) plutôt qu'une longue introspection.",
   'Angle du jour : bousculer un ordre habituel (itinéraire, ordre des tâches, fenêtre) — geste léger.',
-  'Angle du jour : mini-récit (2 phrases) comme prétexte à l’action, sans théâtre.',
+  "Angle du jour : mini-récit (2 phrases) comme prétexte à l'action, sans théâtre.",
   'Angle du jour : interaction humaine minimale et réaliste — pas de « grand défi social ».',
   'Angle du jour : calme — une seule action, posée, bien sentie.',
   'Angle du jour : schéma ou liste au stylo (30 secondes) puis action.',
   'Angle du jour : lieux génériques ou quartier sans enseigne (si pas de GPS) — éviter le cliché.',
-  'Angle du jour : privilégier un fait, un déplacement, un message précis plutôt qu’un ton « motivation ».',
-  'Angle du jour : varier vocabulaire et type d’action par rapport au scénario habituel de cette famille.',
+  "Angle du jour : privilégier un fait, un déplacement, un message précis plutôt qu'un ton « motivation ».",
+  "Angle du jour : varier vocabulaire et type d'action par rapport au scénario habituel de cette famille.",
 ];
 
 const CREATIVE_ANGLES_EN: readonly string[] = [
-  'Today’s angle: start from a physical object (paper, photo, plant, key…) — not only abstract intent.',
-  'Today’s angle: anchor the mission in a specific moment (wake, commute, break, evening) with a clear max duration.',
-  'Today’s angle: a short playful constraint (3 min, 3 photos, 3 written lines, 1 new detail).',
-  'Today’s angle: explore a sense (hearing, smell, touch) instead of long introspection.',
-  'Today’s angle: gently break a usual order (route, task order, seat, window) — light disruption.',
-  'Today’s angle: a 2-sentence micro-story as a pretext to act, no drama.',
-  'Today’s angle: minimal realistic human interaction — not a “big social challenge”.',
-  'Today’s angle: calm — one action, done with attention.',
-  'Today’s angle: scribble a tiny map or list (30s) then act.',
-  'Today’s angle: generic places or neighborhood without brand names (if no GPS) — avoid clichés.',
-  'Today’s angle: prefer a fact, a move, a precise message over generic “motivation”.',
-  'Today’s angle: vary wording and action type vs. the usual template for this family.',
+  "Today's angle: start from a physical object (paper, photo, plant, key…) — not only abstract intent.",
+  "Today's angle: anchor the mission in a specific moment (wake, commute, break, evening) with a clear max duration.",
+  "Today's angle: a short playful constraint (3 min, 3 photos, 3 written lines, 1 new detail).",
+  "Today's angle: explore a sense (hearing, smell, touch) instead of long introspection.",
+  "Today's angle: gently break a usual order (route, task order, seat, window) — light disruption.",
+  "Today's angle: a 2-sentence micro-story as a pretext to act, no drama.",
+  "Today's angle: minimal realistic human interaction — not a “big social challenge”.",
+  "Today's angle: calm — one action, done with attention.",
+  "Today's angle: scribble a tiny map or list (30s) then act.",
+  "Today's angle: generic places or neighborhood without brand names (if no GPS) — avoid clichés.",
+  "Today's angle: prefer a fact, a move, a precise message over generic “motivation”.",
+  "Today's angle: vary wording and action type vs. the usual template for this family.",
 ];
 
 function pickCreativeAngle(locale: AppLocale, seed: string): string {
@@ -307,7 +307,7 @@ function cityMustAppearInMission(city: string): boolean {
   return c.length > 2 && c !== 'ta ville' && c !== 'your city';
 }
 
-/** Si la ville doit être présente mais que le modèle l’a omise, on complète sans rejeter toute la réponse. */
+/** Si la ville doit être présente mais que le modèle l'a omise, on complète sans rejeter toute la réponse. */
 function ensureCityInMission(mission: string, city: string): string {
   const c = city.trim();
   if (!cityMustAppearInMission(city)) return mission.trim();
@@ -318,7 +318,7 @@ function ensureCityInMission(mission: string, city: string): string {
   return `${base} — à ${c}.`;
 }
 
-/** Réponse de secours : texte canon de l’archétype (taxonomie), pas une variante IA. */
+/** Réponse de secours : texte canon de l'archétype (taxonomie), pas une variante IA. */
 function buildFallbackDailyQuest(
   archetype: QuestModel,
   profile: DailyQuestProfileInput,
@@ -356,7 +356,7 @@ function missionWordCount(mission: string): number {
   return mission.trim().split(/\s+/).filter(Boolean).length;
 }
 
-/** Phrases séparées par [.!?] puis espace — le modèle doit n’en produire qu’une. */
+/** Phrases séparées par [.!?] puis espace — le modèle doit n'en produire qu'une. */
 function missionSentenceCount(mission: string): number {
   const t = mission.trim();
   if (!t) return 0;
@@ -564,11 +564,11 @@ function buildUserPrompt(
       : '';
     const variationSalt = `${profile.questDateIso}|${archetype.id}|${profile.explorerAxis}|${profile.riskAxis}|${profile.congruenceDelta.toFixed(3)}|${profile.day}|${profile.generationSeed ?? 'nos'}|${repairHint ? 'r1' : 'r0'}`;
     const locationBlock = context.hasUserLocation
-      ? `TODAY’S CONTEXT:
+      ? `TODAY'S CONTEXT:
 - City: ${context.city}, ${context.country}
 - Weather: ${context.weatherIcon} ${context.weatherDescription}, ${Math.round(context.temp)}°C
 - Outdoor OK: ${context.isOutdoorFriendly ? 'Yes, weather is fine' : 'Not ideal (bad weather)'}`
-      : `TODAY’S CONTEXT (no precise location shared):
+      : `TODAY'S CONTEXT (no precise location shared):
 - Do not name a city or address.
 - Weather (indicative): ${context.weatherIcon} ${context.weatherDescription}, ${Math.round(context.temp)}°C
 - No mapped outdoor spot: keep missions at home, indoors, or generic (no named café, park, or shop).`;
@@ -576,7 +576,7 @@ function buildUserPrompt(
       ? `
 NO NAMED PLACES (required):
 - Do not invent venue names (restaurant, park, museum, square, brand, address).
-- Use generics: “a café you haven’t tried”, “a park near you”, “at home”, “somewhere quiet near you”.
+- Use generics: “a café you haven't tried”, “a park near you”, “at home”, “somewhere quiet near you”.
 `
       : '';
     return `Generate one unique daily quest for today.
@@ -608,7 +608,7 @@ QUEST FAMILY (intent only; do not name the category as a label):
 - ${categoryLabel}
 - Archetype emphasis (light touch): ${targetTraitsLine}
 
-${profile.refinementContext ? `USER PREFERENCES (adapt; don’t cite the source):\n${profile.refinementContext}\n` : ''}
+${profile.refinementContext ? `USER PREFERENCES (adapt; don't cite the source):\n${profile.refinementContext}\n` : ''}
 
 ARCHETYPE HINT (do not repeat the canonical title verbatim): “${arch.title}”
 Summary (paraphrase freely; do not copy-paste): ${archetypeSummary}
@@ -644,18 +644,18 @@ Reply with strict JSON. Pick ONE icon name from: ${[...ICON_ALLOWLIST].join(', '
   }
 
   const rerollBlock = profile.isRerollGeneration
-    ? `\nIMPORTANT : c’est une RELANCE — la formulation (titre, mission, hook) doit être NETTEMENT différente d’une première proposition, tout en restant dans le même archétype.\n`
+    ? `\nIMPORTANT : c'est une RELANCE — la formulation (titre, mission, hook) doit être NETTEMENT différente d'une première proposition, tout en restant dans le même archétype.\n`
     : '';
 
   const deferInstantBlock = profile.substitutedInstantAfterDefer
-    ? `\nCONTEXTE : l’utilisateur a utilisé une relance pour « reporter » une quête trop lourde ou mal calée. Cette mission doit être 100 % réalisable aujourd’hui, sans multi-jours ni grosse synchro sociale — une victoire rapide et honnête.\n`
+    ? `\nCONTEXTE : l'utilisateur a utilisé une relance pour « reporter » une quête trop lourde ou mal calée. Cette mission doit être 100 % réalisable aujourd'hui, sans multi-jours ni grosse synchro sociale — une victoire rapide et honnête.\n`
     : '';
 
   const paceBlock =
     profile.substitutedInstantAfterDefer
       ? ''
       : archetype.questPace === 'planned'
-        ? `\nRythme « planifié » : une première étape CONCRÈTE pour aujourd’hui (15–45 min), formulée en **une seule phrase courte** — pas de 2e phrase après un point, pas de paragraphe.\n`
+        ? `\nRythme « planifié » : une première étape CONCRÈTE pour aujourd'hui (15–45 min), formulée en **une seule phrase courte** — pas de 2e phrase après un point, pas de paragraphe.\n`
         : `\nRythme « instantané » : mission tenable dans la journée, sans calendrier lourd.\n`;
 
   const repairBlock = repairHint
@@ -670,14 +670,14 @@ Reply with strict JSON. Pick ONE icon name from: ${[...ICON_ALLOWLIST].join(', '
 - Météo : ${context.weatherIcon} ${context.weatherDescription}, ${Math.round(context.temp)}°C
 - Sortie en extérieur : ${context.isOutdoorFriendly ? 'Oui, météo favorable' : 'Déconseillé (mauvais temps)'}`
     : `CONTEXTE DU JOUR (position non partagée ou indisponible) :
-- Tu ne connais pas la zone précise de l’utilisateur — ne cite pas de ville ni d’adresse.
+- Tu ne connais pas la zone précise de l'utilisateur — ne cite pas de ville ni d'adresse.
 - Météo (indicative) : ${context.weatherIcon} ${context.weatherDescription}, ${Math.round(context.temp)}°C
 - Pas de sortie avec lieu cartographié : les missions restent chez soi, en intérieur ou formulées sans nom propre de lieu (pas de café, parc, place ou enseigne nommés).`;
 
   const noNamedPlaceBlock = !context.hasUserLocation
     ? `
 PAS DE LIEU NOMMÉ (obligatoire) :
-- N’invente aucun nom de lieu (restaurant, parc, musée, place, boutique, adresse).
+- N'invente aucun nom de lieu (restaurant, parc, musée, place, boutique, adresse).
 - Utilise des tournures génériques : « un café que tu ne connais pas encore », « un parc de ton quartier », « chez toi », « dans un lieu calme près de chez toi ».
 `
     : '';
@@ -705,7 +705,7 @@ ${missionHintsBlock}
 ${creativeAngleLine}
 
 PRIORITÉ : la mission doit sembler écrite pour **cette** personne et **ce** jour — la famille ci-dessous est une boussole, pas un modèle à recopier.
-ANTI-RÉPÉTITION : n’invente pas une « quête catalogue » pour cette catégorie ; varie objet, créneau, contrainte ludique et formulation — deux utilisateurs de la même famille ne doivent pas recevoir la même mission.
+ANTI-RÉPÉTITION : n'invente pas une « quête catalogue » pour cette catégorie ; varie objet, créneau, contrainte ludique et formulation — deux utilisateurs de la même famille ne doivent pas recevoir la même mission.
 
 FAMILLE DE QUÊTE (intention seulement ; ne cite pas la catégorie comme étiquette) :
 - ${categoryLabel}
@@ -713,25 +713,25 @@ FAMILLE DE QUÊTE (intention seulement ; ne cite pas la catégorie comme étique
 
 ${profile.refinementContext ? `PRÉFÉRENCES UTILISATEUR (adapter la mission, sans citer la source) :\n${profile.refinementContext}\n` : ''}
 
-INDICATION D’ARCHÉTYPE (ne répète pas le titre canon mot pour mot) : « ${arch.title} »
+INDICATION D'ARCHÉTYPE (ne répète pas le titre canon mot pour mot) : « ${arch.title} »
 Résumé (paraphrase libre ; ne pas copier-coller) : ${archetypeSummary}
 Durée minimale : ${archetype.minimumDurationMinutes} minutes
 
 RÈGLES ABSOLUES :
-1. La mission doit être CONCRÈTE (actions précises, objets, lieux, durée) — pas seulement « réfléchir ». CONCISION : le champ "mission" est **une seule phrase courte**, **moins de 300 caractères** au total (espaces compris). Pas de 2e phrase après un point d’exclamation ou d’interrogation ; **pas de point-virgule** entre deux ordres (un seul fil avec des virgules si besoin) ; pas de récit, pas de listes numérotées, pas d’introduction.
+1. La mission doit être CONCRÈTE (actions précises, objets, lieux, durée) — pas seulement « réfléchir ». CONCISION : le champ "mission" est **une seule phrase courte**, **moins de 300 caractères** au total (espaces compris). Pas de 2e phrase après un point d'exclamation ou d'interrogation ; **pas de point-virgule** entre deux ordres (un seul fil avec des virgules si besoin) ; pas de récit, pas de listes numérotées, pas d'introduction.
 2. Elle doit être faisable AUJOURD'HUI${context.hasUserLocation && cityMustAppearInMission(context.city) ? ` à ${context.city}` : ''}.
 3. ${!context.hasUserLocation ? 'Sans position GPS partagée : pas de sortie extérieure avec lieu sur carte — isOutdoor reste false.' : context.isOutdoorFriendly ? 'Peut se passer en extérieur si isOutdoor est true.' : 'Doit se passer en intérieur ou sous abri.'}
 4. Adapte la durée à la météo.
 5. Zéro jargon psychologique ou clinique (pas de Big Five, pas de « traits »).
-6. Commence la mission par un verbe d’action à l’impératif ou « Va », « Prends », « Écris », etc.
+6. Commence la mission par un verbe d'action à l'impératif ou « Va », « Prends », « Écris », etc.
 7. isOutdoor doit être EXACTEMENT : ${computedIsOutdoor}
 8. ${computedIsOutdoor ? `Si isOutdoor true :
    - Lieu public réel et identifiable. destinationLabel = nom court (ex. « Marché couvert », « Place de la Mairie ») — JAMAIS « lieu de la quête », « null », « nom du lieu » ni placeholder.
    - destinationQuery : texte pour géocoder le lieu (ex. « Nom du lieu, ${context.city}, ${context.country} »).
-   - COHÉRENCE GÉO : le lieu doit coller à la mission (même type de lieu : parc si la mission parle d’un parc). Si la mission est locale (quartier, village, rencontre du jour, café du coin), reste dans l’aire de ${context.city}. Si la mission décrit explicitement un autre lieu, une autre commune ou un déplacement plus large, destinationQuery doit nommer clairement cette zone pour que le point sur la carte soit pertinent.` : 'Si isOutdoor false : destinationLabel et destinationQuery à null.'}
+   - COHÉRENCE GÉO : le lieu doit coller à la mission (même type de lieu : parc si la mission parle d'un parc). Si la mission est locale (quartier, village, rencontre du jour, café du coin), reste dans l'aire de ${context.city}. Si la mission décrit explicitement un autre lieu, une autre commune ou un déplacement plus large, destinationQuery doit nommer clairement cette zone pour que le point sur la carte soit pertinent.` : 'Si isOutdoor false : destinationLabel et destinationQuery à null.'}
 ${archetype.requiresSocial ? '9. Cette famille implique une interaction sociale réelle (inconnu, proche, message, appel…) — intègre-la dans la mission.\n' : ''}
-10. Respecte les garde-fous de sécurité : pas de danger physique, pas de conseils médicaux ou thérapeutiques, pas d’incitation à l’illégalité ou à la haine.
-11. LANGUE : tous les champs texte (title, mission, hook, duration, safetyNote, destinationLabel) en **français naturel** — pas d’anglicismes ni de mots anglais dans la phrase, pas de tournure calquée sur l’anglais ; phrases courtes et idiomatiques.
+10. Respecte les garde-fous de sécurité : pas de danger physique, pas de conseils médicaux ou thérapeutiques, pas d'incitation à l'illégalité ou à la haine.
+11. LANGUE : tous les champs texte (title, mission, hook, duration, safetyNote, destinationLabel) en **français naturel** — pas d'anglicismes ni de mots anglais dans la phrase, pas de tournure calquée sur l'anglais ; phrases courtes et idiomatiques.
 
 Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[...ICON_ALLOWLIST].join(', ')}.
 {
@@ -820,10 +820,10 @@ export async function generateDailyQuest(
 
   const system =
     locale === 'en'
-      ? `You are Questia's quest creator. You generate unique, concrete, doable daily adventures. Use a warm, direct "you". Never use clinical psychology jargon or mention "traits" or the Big Five. Each quest needs no prerequisites. Match tone and social exposure to the user profile in the message—without naming scores. Prioritize the person’s operational profile and mission hints over repeating archetype wording; the family label is a hint, not a script.
+      ? `You are Questia's quest creator. You generate unique, concrete, doable daily adventures. Use a warm, direct "you". Never use clinical psychology jargon or mention "traits" or the Big Five. Each quest needs no prerequisites. Match tone and social exposure to the user profile in the message—without naming scores. Prioritize the person's operational profile and mission hints over repeating archetype wording; the family label is a hint, not a script.
 
 ${QUEST_SYSTEM_GUARDRAILS_EN}`
-      : `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d’exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores. Priorise le profil opérationnel et les pistes « accroche mission » plutôt que de recopier l’archétype ; la famille de quête est un fil conducteur, pas un texte à répéter.
+      : `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d'exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores. Priorise le profil opérationnel et les pistes « accroche mission » plutôt que de recopier l'archétype ; la famille de quête est un fil conducteur, pas un texte à répéter.
 
 ${QUEST_SYSTEM_GUARDRAILS}
 

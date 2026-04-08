@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 const LOGO_SRC = '/brand/questia-logo.png';
 
-/** Dimensions intrinsèques du PNG (carré) — utilisées pour next/image sans `fill` (évite le rognage avec padding sur l’img). */
+/** Dimensions intrinsèques du PNG (carré) — utilisées pour next/image sans `fill` (évite le rognage avec padding sur l'img). */
 const LOGO_PX = 512;
 
 export type QuestiaLogoVariant = 'navbar' | 'auth' | 'footer' | 'onboarding' | 'card' | 'shareHero';

@@ -241,7 +241,7 @@ export function QuestSwipeCard({
       axisLock.value = 0;
     });
 
-  /** runOnJS() depuis un handler déjà sur le thread JS fait planter l’app — le Tap doit tourner sur le JS. */
+  /** runOnJS() depuis un handler déjà sur le thread JS fait planter l'app — le Tap doit tourner sur le JS. */
   const tap = Gesture.Tap()
     .runOnJS(true)
     .onEnd(() => {
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: 'left',
   },
-  /** Pas d’elevation ici : sur Android ça crée une couche ombrée / dégradés bizarres au-dessus du contenu. */
+  /** Pas d'elevation ici : sur Android ça crée une couche ombrée / dégradés bizarres au-dessus du contenu. */
   rerollLoadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',

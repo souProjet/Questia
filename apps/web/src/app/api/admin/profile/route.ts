@@ -9,8 +9,8 @@ function todayIsoUtc() {
 }
 
 /**
- * GET /api/admin/profile?clerkId= — lecture seule d’un profil (debug / support).
- * Sans `clerkId` : profil de l’admin connecté.
+ * GET /api/admin/profile?clerkId= — lecture seule d'un profil (debug / support).
+ * Sans `clerkId` : profil de l'admin connecté.
  */
 export async function GET(request: NextRequest) {
   const gate = await requireAdminRequest();

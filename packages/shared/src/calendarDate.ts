@@ -10,7 +10,7 @@ export function calendarDateInTimeZone(date: Date, timeZone: string): string {
   }).format(date);
 }
 
-/** Fuseau utilisé pour « aujourd’hui » côté API et affichage (questia.fr). */
+/** Fuseau utilisé pour « aujourd'hui » côté API et affichage (questia.fr). */
 export const QUEST_CALENDAR_TIMEZONE = 'Europe/Paris';
 
 export function getQuestCalendarDateNow(): string {

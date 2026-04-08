@@ -1,5 +1,5 @@
 /**
- * Ordre d’exécution : CommonJS uniquement pour que enableScreens s’exécute
+ * Ordre d'exécution : CommonJS uniquement pour que enableScreens s'exécute
  * avant tout le graphe expo-router (les `import` seraient hoistés au-dessus).
  *
  * Contournement : crash au démarrage après chargement de librnscreens sur certains

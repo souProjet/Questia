@@ -244,7 +244,7 @@ export function QuestExamplesSlider({ quests, variant = 'default', nestedInPanel
 
       {!embedded && (
         <p className="mt-6 px-2 text-center text-sm font-medium text-slate-600">
-          Trois missions d’exemple — utilise les contrôles pour défiler.
+          Trois missions d'exemple — utilise les contrôles pour défiler.
         </p>
       )}
     </div>

@@ -61,7 +61,7 @@ export const QUEST_TAXONOMY_EN: Record<
     descriptionEn: 'Cook a meal for someone without expecting anything in return.',
   },
   14: {
-    titleEn: 'The Elders’ Regret',
+    titleEn: "The Elders' Regret",
     descriptionEn: 'Ask an older person their biggest regret. Listen without judging.',
   },
   15: {
@@ -78,7 +78,7 @@ export const QUEST_TAXONOMY_EN: Record<
   },
   18: {
     titleEn: 'The Naked Eye',
-    descriptionEn: 'Take 30 photos in one hour with no filters or edits. Learn to see what’s real.',
+    descriptionEn: "Take 30 photos in one hour with no filters or edits. Learn to see what's real.",
   },
   19: {
     titleEn: 'The Big Tidy',
@@ -90,7 +90,7 @@ export const QUEST_TAXONOMY_EN: Record<
   },
   21: {
     titleEn: 'The Future Soundtrack',
-    descriptionEn: 'Make a playlist for the version of you you’re becoming.',
+    descriptionEn: "Make a playlist for the version of you you're becoming.",
   },
   22: {
     titleEn: 'The Day Without Lies',
@@ -119,7 +119,7 @@ export const QUEST_TAXONOMY_EN: Record<
     descriptionEn: 'Walk at least 20 minutes in total silence—no music or podcast.',
   },
   28: {
-    titleEn: 'The Merchant’s Pick',
+    titleEn: "The Merchant's Pick",
     descriptionEn: 'Ask a local shopkeeper their favorite spot nearby and go there once.',
   },
   29: {
@@ -140,7 +140,7 @@ export const QUEST_TAXONOMY_EN: Record<
   32: {
     titleEn: 'The Letter of No',
     descriptionEn:
-      'Write a page to a version of you who always says no out of fear: what you’d still refuse.',
+      "Write a page to a version of you who always says no out of fear: what you'd still refuse.",
   },
   33: {
     titleEn: 'The Other World',
@@ -155,7 +155,7 @@ export const QUEST_TAXONOMY_EN: Record<
   35: {
     titleEn: 'The Late Thank-You',
     descriptionEn:
-      'Tell someone close something specific you appreciate about them that you’ve long left unsaid.',
+      "Tell someone close something specific you appreciate about them that you've long left unsaid.",
   },
   36: {
     titleEn: 'The Gift Without Occasion',
@@ -209,14 +209,14 @@ export const QUEST_TAXONOMY_EN: Record<
       'In a group (meeting, class, drinks), speak up once even if your voice shakes.',
   },
   47: {
-    titleEn: 'Today’s Tip',
+    titleEn: "Today's Tip",
     descriptionEn:
       'Give an unusually generous tip or thank-you to someone who served you (café, care, delivery).',
   },
   48: {
     titleEn: 'The Truth Voice Note',
     descriptionEn:
-      'Send a ~1-minute voice message to someone you’ve been avoiding, honest on what matters.',
+      "Send a ~1-minute voice message to someone you've been avoiding, honest on what matters.",
   },
   49: {
     titleEn: 'The Dedicated Dish',
@@ -290,7 +290,7 @@ export const QUEST_TAXONOMY_EN: Record<
   63: {
     titleEn: 'The Virgin Terminus',
     descriptionEn:
-      'Take a bus or tram to a terminus you’ve never visited, then walk 20 minutes there.',
+      "Take a bus or tram to a terminus you've never visited, then walk 20 minutes there.",
   },
   64: {
     titleEn: 'The No-Feed Evening',

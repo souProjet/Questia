@@ -1,9 +1,9 @@
 {
   "RootLayout": {
     "titleDefault": "Questia — App de quêtes quotidiennes dans la vraie vie",
-    "description": "Questia est l’app qui te donne une quête IRL par jour : motivation, sorties et défis adaptés à ton profil et à ton rythme. Gratuit pour commencer.",
+    "description": "Questia est l'app qui te donne une quête IRL par jour : motivation, sorties et défis adaptés à ton profil et à ton rythme. Gratuit pour commencer.",
     "ogTitle": "Questia — App de quêtes quotidiennes dans la vraie vie",
-    "ogDescription": "Transforme ton quotidien en jeu d’aventure : missions courtes, concrètes, sans culpabiliser.",
+    "ogDescription": "Transforme ton quotidien en jeu d'aventure : missions courtes, concrètes, sans culpabiliser.",
     "twitterTitle": "Questia — App de quêtes quotidiennes IRL",
     "twitterDescription": "Une quête par jour dans ta vraie vie. iOS, Android et web."
   },
@@ -34,7 +34,7 @@
     "close": "Fermer",
     "navSections": "Sections du site",
     "navApp": "Navigation app",
-    "adminConsole": "Console d’administration",
+    "adminConsole": "Console d'administration",
     "adminLabel": "Console"
   },
   "HomeMetadata": {
@@ -84,15 +84,15 @@
     "how": {
       "label": "Fonctionnement",
       "title": "Trois étapes, puis ta quête du matin",
-      "subtitle": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur l’app mobile, tout dans la poche ; sur le web, même expérience depuis un navigateur.",
+      "subtitle": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur l'app mobile, tout dans la poche ; sur le web, même expérience depuis un navigateur.",
       "subtitleWeb": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission — tout depuis ton navigateur, sans installation.",
       "stepLabel": "Étape"
     },
     "steps": [
       {
         "emoji": "🎯",
-        "title": "Toi, d’abord",
-        "desc": "Tu indiques ton style et ce que tu es prêt à tenter — les missions s’alignent sur ton profil et ton énergie du moment."
+        "title": "Toi, d'abord",
+        "desc": "Tu indiques ton style et ce que tu es prêt à tenter — les missions s'alignent sur ton profil et ton énergie du moment."
       },
       {
         "emoji": "🧠",
@@ -110,7 +110,7 @@
         "emoji": "📸",
         "title": "L'Explorateur Urbain",
         "contextLabel": "Curiosité · après-midi",
-        "mission": "Passe 1h dans un quartier que tu traverses sans jamais t’y arrêter. Photographie 5 choses qui t’étonnent.",
+        "mission": "Passe 1h dans un quartier que tu traverses sans jamais t'y arrêter. Photographie 5 choses qui t'étonnent.",
         "duration": "1h30",
         "outdoor": true
       },
@@ -126,7 +126,7 @@
         "emoji": "📞",
         "title": "Ta Voix, une Fois",
         "contextLabel": "Reconnexion · court",
-        "mission": "Appelle quelqu’un à qui tu penses depuis longtemps. Dis-lui que tu pensais à lui. Quête bonus : écoute vraiment.",
+        "mission": "Appelle quelqu'un à qui tu penses depuis longtemps. Dis-lui que tu pensais à lui. Quête bonus : écoute vraiment.",
         "duration": "30 min",
         "outdoor": false
       }
@@ -166,20 +166,20 @@
     "faq": {
       "label": "FAQ",
       "title": "Questions fréquentes",
-      "subtitle": "Tout ce qu’il faut savoir avant de te lancer — web ou mobile.",
-      "subtitleWeb": "Tout ce qu’il faut savoir avant de te lancer sur le site."
+      "subtitle": "Tout ce qu'il faut savoir avant de te lancer — web ou mobile.",
+      "subtitleWeb": "Tout ce qu'il faut savoir avant de te lancer sur le site."
     },
     "faqItems": [
       {
-        "question": "En quoi une quête Questia diffère-t-elle d’une simple liste de tâches ?",
-        "answer": "Chaque matin tu reçois une mission courte, calibrée sur ton profil, ton style de jeu et le niveau de défi que tu t’es choisi. L’objectif : une petite action réalisable dans la vraie vie, avec une fin claire — pas une todo qui s’allonge sans fin."
+        "question": "En quoi une quête Questia diffère-t-elle d'une simple liste de tâches ?",
+        "answer": "Chaque matin tu reçois une mission courte, calibrée sur ton profil, ton style de jeu et le niveau de défi que tu t'es choisi. L'objectif : une petite action réalisable dans la vraie vie, avec une fin claire — pas une todo qui s'allonge sans fin."
       },
       {
         "question": "Un seul compte pour tout ?",
         "answer": "Oui. Profil, quêtes et progression : tout se passe sur le site, dans ton navigateur, avec un seul compte."
       },
       {
-        "question": "L’app est-elle gratuite ?",
+        "question": "L'app est-elle gratuite ?",
         "answer": "Tu peux commencer gratuitement pour calibrer ton profil et découvrir le fonctionnement sur le site. Si des options payantes arrivent plus tard, elles seront indiquées clairement."
       },
       {
@@ -196,17 +196,17 @@
       }
     ],
     "cta": {
-      "label": "C’est parti",
+      "label": "C'est parti",
       "titleBefore": "Prêt pour ta prochaine",
       "titleGradient": "quête IRL",
       "titleAfter": "?",
       "storesReady": "Gratuit pour commencer — sur les stores ou dans ton navigateur, avec le même compte.",
-      "storesPending": "Crée ton profil sur le web ; quand l’app sera dispo, tu reprends avec le même compte.",
+      "storesPending": "Crée ton profil sur le web ; quand l'app sera dispo, tu reprends avec le même compte.",
       "storesPendingWeb": "Crée ton profil et lance ta première quête — tout sur le web, gratuit pour commencer.",
       "or": "ou",
       "continueWeb": "Continuer sur le web",
       "ctaFree": "Commencer gratuitement",
-      "appStoresLink": "L’app sur iPhone et Android",
+      "appStoresLink": "L'app sur iPhone et Android",
       "appStoresLinkWeb": "Découvrir Questia sur le web"
     },
     "footer": {
@@ -305,7 +305,7 @@
     "confirming": "Confirmation…",
     "validateQuest": "✅ J'ai fait la quête — valider",
     "validateHint": "Quand c'est fait dans la vraie vie, valide ici pour cocher ta mission.",
-    "abandonLink": "Je ne peux plus la faire — passer cette carte",
+    "abandonLink": "Je ne peux pas la faire — passer cette carte",
     "acceptChallenge": "⚔️ Je relève le défi !",
     "changeQuest": "Changer de quête ({label})",
     "rerollConfirmTitle": "Changer de quête ?",
@@ -531,10 +531,10 @@
   },
   "AuthSignUp": {
     "metadataTitle": "Inscription",
-    "metadataDescription": "Crée ton compte Questia — ta première quête personnalisée t’attend.",
+    "metadataDescription": "Crée ton compte Questia — ta première quête personnalisée t'attend.",
     "badge": "Débloquer ta première quête",
-    "title": "Lance l’aventure 🎮",
-    "subtitle": "Inscris-toi — ta première quête personnalisée t’attend de l’autre côté.",
+    "title": "Lance l'aventure 🎮",
+    "subtitle": "Inscris-toi — ta première quête personnalisée t'attend de l'autre côté.",
     "footerPrompt": "Déjà un compte ?",
     "footerLink": "Se connecter"
   }

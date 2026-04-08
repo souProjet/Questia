@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Pages auth (shell Questia, HTML SSR)', () => {
-  test('connexion : texte d’accueil et lien vers inscription', async ({ request }) => {
+  test('connexion : texte d'accueil et lien vers inscription', async ({ request }) => {
     const res = await request.get('/sign-in');
     expect(res.ok()).toBeTruthy();
     const html = await res.text();

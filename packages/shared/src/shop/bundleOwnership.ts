@@ -38,7 +38,7 @@ export function buildCoinPurchasedSkuSet(
 }
 
 /**
- * Indique si l’article ne peut plus être acheté (bouton « Déjà à toi », etc.).
+ * Indique si l'article ne peut plus être acheté (bouton « Déjà à toi », etc.).
  * Pour un **bundle** : bloqué seulement si tout le contenu permanent est possédé **et**
  * un achat en QC pour ce SKU existe déjà (sinon le joueur peut acheter une fois pour les bonus XP).
  */

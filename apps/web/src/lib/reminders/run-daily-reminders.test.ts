@@ -166,7 +166,7 @@ describe('runDailyReminders', () => {
     expect(prismaMock.profile.update).toHaveBeenCalled();
   });
 
-  it('push déjà envoyé aujourd’hui → pas de nouvel envoi', async () => {
+  it("push déjà envoyé aujourd'hui → pas de nouvel envoi", async () => {
     prismaMock.profile.findMany.mockResolvedValue([
       {
         id: 'p1',

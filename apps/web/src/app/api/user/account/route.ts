@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 const CONFIRM_PHRASE = 'SUPPRIMER';
 
 /**
- * DELETE /api/user/account — suppression du compte et des données associées (droit à l’effacement, art. 17 RGPD).
+ * DELETE /api/user/account — suppression du compte et des données associées (droit à l'effacement, art. 17 RGPD).
  * Le corps doit contenir { "confirmation": "SUPPRIMER" }.
  */
 export async function DELETE(request: NextRequest) {
@@ -34,7 +34,7 @@ export async function DELETE(request: NextRequest) {
     const msg = e instanceof Error ? e.message : 'Erreur inconnue';
     return NextResponse.json(
       {
-        error: 'Les données applicatives ont été effacées, mais la suppression du compte d’authentification a échoué.',
+        error: "Les données applicatives ont été effacées, mais la suppression du compte d'authentification a échoué.",
         detail: msg,
       },
       { status: 502 },

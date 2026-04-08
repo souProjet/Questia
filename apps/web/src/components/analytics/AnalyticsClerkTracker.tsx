@@ -13,11 +13,11 @@ const LOGIN_SESSION = 'questia_analytics_login_session';
 
 /**
  * login : une fois par onglet et par utilisateur (sessionStorage) après connexion Clerk.
- * sign_up : une fois par compte (localStorage) si le compte vient d’être créé (fenêtre 10 min).
+ * sign_up : une fois par compte (localStorage) si le compte vient d'être créé (fenêtre 10 min).
  */
 export function AnalyticsClerkTracker() {
   const { user, isLoaded } = useUser();
-  /** Dernier user Clerk vu — pour ne reset PostHog qu’après déconnexion réelle, pas sur chaque vue anonyme. */
+  /** Dernier user Clerk vu — pour ne reset PostHog qu'après déconnexion réelle, pas sur chaque vue anonyme. */
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {

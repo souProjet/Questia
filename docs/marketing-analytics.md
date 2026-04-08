@@ -1,20 +1,20 @@
-# Marketing, mesure d’audience et tracking (Questia)
+# Marketing, mesure d'audience et tracking (Questia)
 
 Ce document décrit **GTM**, **GA4** et **Meta Pixel** sur **`apps/web`** (Questia), avec le bandeau cookies, puis la mesure jeu web + app. **Commence par [Guide concret Questia](#guide-concret-questia--à-faire-dans-lordre)** : checklist alignée sur le repo, Vercel et les URLs réelles. Le [plan de mesure détaillé](#plan-de-mesure-complet--jeu-web--app-détail) vient après (événements, GTM avancé, mobile).
 
-**PostHog** est intégré **en plus** de GTM/GA4/Meta : mêmes noms d’événements (`AnalyticsEvent` dans `@questia/shared`) envoyés au **web** (après opt-in analytics du bandeau) et à l’**app mobile** (clé `EXPO_PUBLIC_POSTHOG_KEY`). Session replay **désactivée** côté SDK ; pas d’email dans `identify` (distinct_id = `user.id` Clerk). Variables : `NEXT_PUBLIC_POSTHOG_*` (web), `EXPO_PUBLIC_POSTHOG_*` (mobile), voir les `.env.example`.
+**PostHog** est intégré **en plus** de GTM/GA4/Meta : mêmes noms d'événements (`AnalyticsEvent` dans `@questia/shared`) envoyés au **web** (après opt-in analytics du bandeau) et à l'**app mobile** (clé `EXPO_PUBLIC_POSTHOG_KEY`). Session replay **désactivée** côté SDK ; pas d'email dans `identify` (distinct_id = `user.id` Clerk). Variables : `NEXT_PUBLIC_POSTHOG_*` (web), `EXPO_PUBLIC_POSTHOG_*` (mobile), voir les `.env.example`.
 
 ---
 
 ## Sommaire
 
-1. [Guide concret Questia — à faire dans l’ordre](#guide-concret-questia--à-faire-dans-lordre)
+1. [Guide concret Questia — à faire dans l'ordre](#guide-concret-questia--à-faire-dans-lordre)
 2. [Principes et ordre des opérations](#principes-et-ordre-des-opérations)
 3. [Fichiers concernés dans le code](#fichiers-concernés-dans-le-code)
 4. [Étapes précises — Google Tag Manager (GTM)](#étapes-précises--google-tag-manager-gtm)
 5. [Étapes précises — Google Analytics 4 (GA4)](#étapes-précises--google-analytics-4-ga4)
 6. [Étapes précises — Meta (Facebook) Pixel](#étapes-précises--meta-facebook-pixel)
-7. [Étapes précises — variables d’environnement et déploiement](#étapes-précises--variables-denvironnement-et-déploiement)
+7. [Étapes précises — variables d'environnement et déploiement](#étapes-précises--variables-denvironnement-et-déploiement)
 8. [Étapes précises — validation avant mise en prod](#étapes-précises--validation-avant-mise-en-prod)
 9. [Plan de mesure complet — jeu web + app (détail)](#plan-de-mesure-complet--jeu-web--app-détail)
 10. [Limites actuelles & évolutions possibles](#limites-actuelles--évolutions-possibles)
@@ -22,37 +22,37 @@ Ce document décrit **GTM**, **GA4** et **Meta Pixel** sur **`apps/web`** (Quest
 
 ---
 
-## Guide concret Questia — à faire dans l’ordre
+## Guide concret Questia — à faire dans l'ordre
 
 Objectif : **GTM + GA4** sur la prod (ex. **https://questia.fr**), avec les **événements produit** déjà branchés dans le code (§7) ; la **liaison GTM** est décrite au §8.
 
-### 1. Ce que l’application fait déjà (fichiers réels)
+### 1. Ce que l'application fait déjà (fichiers réels)
 
-| Élément | Où c’est dans le repo |
+| Élément | Où c'est dans le repo |
 |--------|------------------------|
 | Bandeau « Refuser » / « Accepter » | `apps/web/src/components/CookieNotice.tsx` |
 | Chargement GTM, gtag (GA direct) ou Meta Pixel | `apps/web/src/components/analytics/MarketingScripts.tsx` |
 | Consentement | `apps/web/src/lib/analytics/consent.ts` — clé **`localStorage`** : `questia_cookie_consent_v2` |
-| IDs marketing injectés au **build** | `apps/web/src/config/analytics.ts` — lecture **explicite** de `process.env.NEXT_PUBLIC_GTM_ID` (et autres) ; pas d’accès dynamique `process.env[clé]` (Next.js n’injecte pas les valeurs sinon) |
+| IDs marketing injectés au **build** | `apps/web/src/config/analytics.ts` — lecture **explicite** de `process.env.NEXT_PUBLIC_GTM_ID` (et autres) ; pas d'accès dynamique `process.env[clé]` (Next.js n'injecte pas les valeurs sinon) |
 | Où le bandeau et les scripts sont montés | **`apps/web/src/app/[locale]/layout.tsx`** (avec Clerk, i18n). Le `apps/web/src/app/layout.tsx` racine ne contient que la coquille HTML : **pas** le bandeau ni GTM |
 
-**Comportement** : GTM ne part que si l’utilisateur a accepté **au moins** analytics **ou** pub **et** que `NEXT_PUBLIC_GTM_ID` est bien présent dans le **bundle** déployé.
+**Comportement** : GTM ne part que si l'utilisateur a accepté **au moins** analytics **ou** pub **et** que `NEXT_PUBLIC_GTM_ID` est bien présent dans le **bundle** déployé.
 
 ### 2. URLs Questia (next-intl)
 
 Config : `apps/web/src/i18n/routing.ts` (`localePrefix: 'as-needed'`).
 
-- **FR (défaut)** : pas de `/fr` dans l’URL — ex. `https://questia.fr/`, `https://questia.fr/app`, `https://questia.fr/onboarding`.
+- **FR (défaut)** : pas de `/fr` dans l'URL — ex. `https://questia.fr/`, `https://questia.fr/app`, `https://questia.fr/onboarding`.
 - **EN** : préfixe `/en` — ex. `https://questia.fr/en/app`.
 
-Les scripts s’appliquent à **toutes** les locales.
+Les scripts s'appliquent à **toutes** les locales.
 
-### 3. Variables d’environnement (noms exacts)
+### 3. Variables d'environnement (noms exacts)
 
 | Variable | Rôle |
 |----------|------|
 | `NEXT_PUBLIC_GTM_ID` | Ex. `GTM-XXXXXXX` — obligatoire pour charger `gtm.js` après consentement |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `G-…` **seulement** si tu n’utilises **pas** GTM pour GA4 (sinon laisser vide pour éviter le double comptage) |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `G-…` **seulement** si tu n'utilises **pas** GTM pour GA4 (sinon laisser vide pour éviter le double comptage) |
 | `NEXT_PUBLIC_META_PIXEL_ID` | ID numérique Pixel — optionnel (consentement **pub**) |
 | `NEXT_PUBLIC_POSTHOG_KEY` | Clé projet PostHog (`phc_…`) — optionnel |
 | `NEXT_PUBLIC_POSTHOG_HOST` | API PostHog (souvent `https://eu.i.posthog.com`) |
@@ -69,9 +69,9 @@ Local : copier **`apps/web/.env.example`** vers **`apps/web/.env.local`** et rem
 ### 5. Test rapide sur la prod (checklist)
 
 1. Ouvre **https://questia.fr** (ou ton domaine Vercel).
-2. Bandeau : **Accepter** s’il est visible ; sinon consentement déjà enregistré (normal).
+2. Bandeau : **Accepter** s'il est visible ; sinon consentement déjà enregistré (normal).
 3. **F12 → Réseau** → filtre **`gtm`** → recharge → tu dois voir **`gtm.js?id=GTM-…`** en **200**.
-4. **Console** : si message **`[Questia] Consentement accepté mais aucun identifiant marketing…`**, le build n’a pas embarqué les variables (env au build ou pas de redeploy).
+4. **Console** : si message **`[Questia] Consentement accepté mais aucun identifiant marketing…`**, le build n'a pas embarqué les variables (env au build ou pas de redeploy).
 5. **GA4** → **Temps réel** : activité en naviguant (avec balise GA4 publiée dans GTM).
 
 ### 6. GTM (interface) — balise de base
@@ -83,7 +83,7 @@ Local : copier **`apps/web/.env.example`** vers **`apps/web/.env.local`** et rem
 
 Le site pousse des événements **après consentement analytics** via `trackAnalyticsEvent` (`apps/web/src/lib/analytics/track.ts`). Les noms sont dans `apps/web/src/lib/analytics/events.ts` (`AnalyticsEvent`).
 
-| Événement | Où c’est déclenché | Paramètres utiles (extraits) |
+| Événement | Où c'est déclenché | Paramètres utiles (extraits) |
 |-----------|--------------------|------------------------------|
 | `page_view` | `AnalyticsPageViewTracker` — chaque **navigation client** (pas le premier chargement) | `page_path`, `page_location`, `page_title` |
 | `login` | `AnalyticsClerkTracker` — 1× par onglet après connexion Clerk | `method`: `clerk` |
@@ -91,7 +91,7 @@ Le site pousse des événements **après consentement analytics** via `trackAnal
 | `onboarding_started` | `onboarding/page.tsx` — entrée sur le flux | — |
 | `onboarding_step_completed` | Après chaque réponse | `step_name`, `step_index` |
 | `onboarding_completed` | Avant redirection vers `/sign-up` | — |
-| `quest_viewed` | Chargement réussi d’une quête (1× par quête/date + archetype) | `quest_id`, `quest_status` |
+| `quest_viewed` | Chargement réussi d'une quête (1× par quête/date + archetype) | `quest_id`, `quest_status` |
 | `quest_accepted` | Acceptation de la quête | `quest_id`, `quest_phase`, `is_outdoor` |
 | `quest_completed` | Validation « terminé » | `quest_id`, `quest_phase`, `xp_gained` |
 | `quest_rerolled` | Relance réussie | `quest_id` |
@@ -105,10 +105,10 @@ Le site pousse des événements **après consentement analytics** via `trackAnal
 ### 8. Relier tout ça dans GTM (après la balise Google)
 
 1. **Aperçu** sur ton domaine avec cookies acceptés — dans la **couche de données**, tu dois voir des objets du type `{ event: "quest_completed", quest_id: "…", … }`.
-2. **Variable** : *Variable intégrée* → **Couche de données**, nom de la variable : `event` (ou **Version 2** du dataLayer selon l’UI).
-3. **Déclencheur** : **Événement personnalisé**, nom d’événement = `quest_completed` (idem pour chaque nom listé au §7, ou un déclencheur par regroupement métier).
-4. **Tag** : **Google Analytics : événement GA4** — nom d’événement = `{{event}}` (variable) **ou** nom fixe identique à celui du code ; pour les **paramètres**, ajoute des variables DL (`quest_id`, `quest_phase`, …) mappées vers les **paramètres d’événement** GA4.
-5. **GA4** → **Admin** → **Définitions personnalisées** : enregistre les paramètres que tu utilises en **dimensions personnalisées** (ex. `quest_id`, `payment_type`) pour qu’ils apparaissent dans les rapports.
+2. **Variable** : *Variable intégrée* → **Couche de données**, nom de la variable : `event` (ou **Version 2** du dataLayer selon l'UI).
+3. **Déclencheur** : **Événement personnalisé**, nom d'événement = `quest_completed` (idem pour chaque nom listé au §7, ou un déclencheur par regroupement métier).
+4. **Tag** : **Google Analytics : événement GA4** — nom d'événement = `{{event}}` (variable) **ou** nom fixe identique à celui du code ; pour les **paramètres**, ajoute des variables DL (`quest_id`, `quest_phase`, …) mappées vers les **paramètres d'événement** GA4.
+5. **GA4** → **Admin** → **Définitions personnalisées** : enregistre les paramètres que tu utilises en **dimensions personnalisées** (ex. `quest_id`, `payment_type`) pour qu'ils apparaissent dans les rapports.
 6. **Conversions** : marque comme conversion les événements importants (`sign_up`, `purchase`, `quest_completed`, etc.).
 
 Sans ces tags **Événement GA4** dans GTM, les hits partent dans le **dataLayer** mais **GA4 ne les reçoit pas** automatiquement (la seule balise Google ne suffit pas pour les noms custom).
@@ -121,20 +121,20 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 
 ## Principes et ordre des opérations
 
-1. **Opt-in** : les scripts tiers (GTM, GA en direct, Meta Pixel) ne sont injectés qu’après un choix explicite dans le bandeau (`CookieNotice`). Le refus enregistre `analytics: false` et `ads: false` dans `localStorage` sous la clé `questia_cookie_consent_v2`.
+1. **Opt-in** : les scripts tiers (GTM, GA en direct, Meta Pixel) ne sont injectés qu'après un choix explicite dans le bandeau (`CookieNotice`). Le refus enregistre `analytics: false` et `ads: false` dans `localStorage` sous la clé `questia_cookie_consent_v2`.
 2. **Séparation analytics / pub** :
-   - **Analytics** : mesure d’audience (GA4, tags « analytics » dans GTM).
+   - **Analytics** : mesure d'audience (GA4, tags « analytics » dans GTM).
    - **Publicité** : remarketing et campagnes (Meta Pixel, tags pub dans GTM).
-3. **Variables d’environnement** : toutes les clés côté client sont préfixées `NEXT_PUBLIC_*` (voir `apps/web/.env.example` et `src/config/analytics.ts`).
+3. **Variables d'environnement** : toutes les clés côté client sont préfixées `NEXT_PUBLIC_*` (voir `apps/web/.env.example` et `src/config/analytics.ts`).
 
 **Ordre recommandé une première fois**
 
 | Étape | Action |
 |-------|--------|
 | 1 | Créer (ou réutiliser) un compte **Google** pour Analytics / Tag Manager. |
-| 2 | Créer la **propriété GA4** et noter l’ID `G-XXXXXXXXXX`. |
+| 2 | Créer la **propriété GA4** et noter l'ID `G-XXXXXXXXXX`. |
 | 3 | Créer le **conteneur GTM Web** et noter `GTM-XXXXXXX` **ou** décider de ne pas utiliser GTM (GA direct uniquement). |
-| 4 | Créer le **Pixel Meta** et noter l’ID numérique. |
+| 4 | Créer le **Pixel Meta** et noter l'ID numérique. |
 | 5 | Renseigner les variables `NEXT_PUBLIC_*` en **préproduction** ou **local**, déployer, tester le bandeau + réseau. |
 | 6 | Configurer les **tags** dans GTM (si GTM) et **publier** la version du conteneur. |
 | 7 | Valider avec Temps réel GA4, Aperçu GTM, Pixel Helper. |
@@ -147,12 +147,12 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 | Fichier | Rôle |
 |--------|------|
 | `apps/web/src/lib/analytics/consent.ts` | Lecture/écriture du consentement, événement `questia-consent-change` |
-| `apps/web/src/config/analytics.ts` | Lecture des IDs depuis l’environnement |
+| `apps/web/src/config/analytics.ts` | Lecture des IDs depuis l'environnement |
 | `apps/web/src/components/analytics/MarketingScripts.tsx` | Chargement conditionnel des scripts (GTM, gtag, Meta) |
 | `apps/web/src/components/CookieNotice.tsx` | Bandeau « Refuser » / « Accepter » |
 | `apps/web/src/app/[locale]/layout.tsx` | Montage de `CookieNotice`, `MarketingScripts`, `AnalyticsPageViewTracker`, `AnalyticsClerkTracker` |
 | `apps/web/src/app/layout.tsx` | Layout racine HTML uniquement (pas de bandeau / pas de scripts marketing) |
-| `apps/web/src/lib/analytics/events.ts` | Noms d’événements (`AnalyticsEvent`) |
+| `apps/web/src/lib/analytics/events.ts` | Noms d'événements (`AnalyticsEvent`) |
 | `apps/web/src/lib/analytics/track.ts` | `trackAnalyticsEvent`, `trackPageViewSpa`, `questAnalyticsId` |
 | `apps/web/src/lib/analytics/trackMeta.ts` | `trackMetaPixelEvent` (pub) |
 | `apps/web/src/components/analytics/AnalyticsPageViewTracker.tsx` | `page_view` sur navigation SPA |
@@ -164,8 +164,8 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 
 **Comportement actuel (à connaître pour la mesure)**
 
-- **GTM** se charge si l’utilisateur a accepté **au moins** analytics **ou** pub (`consent.analytics \|\| consent.ads`) **et** que `NEXT_PUBLIC_GTM_ID` est défini.
-- **GA4 en direct** (`gtag`) ne se charge que si `consent.analytics === true`, que `NEXT_PUBLIC_GA_MEASUREMENT_ID` est défini **et** qu’il **n’y a pas** de `NEXT_PUBLIC_GTM_ID`.
+- **GTM** se charge si l'utilisateur a accepté **au moins** analytics **ou** pub (`consent.analytics \|\| consent.ads`) **et** que `NEXT_PUBLIC_GTM_ID` est défini.
+- **GA4 en direct** (`gtag`) ne se charge que si `consent.analytics === true`, que `NEXT_PUBLIC_GA_MEASUREMENT_ID` est défini **et** qu'il **n'y a pas** de `NEXT_PUBLIC_GTM_ID`.
 - **Meta Pixel** se charge si `consent.ads === true` et `NEXT_PUBLIC_META_PIXEL_ID` est défini. Les changements de route déclenchent un `PageView` Meta via `MetaPageViewTracker`.
 
 ---
@@ -176,20 +176,20 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 2. **Créer un compte** (si besoin) puis **Créer un conteneur** :
    - Nom du conteneur : ex. `Questia Web`.
    - Cible : **Web**.
-3. Accepte les CGU : tu obtiens l’ID **GTM-XXXXXXX** (affiche en haut ou dans Admin → Installer Google Tag Manager).
+3. Accepte les CGU : tu obtiens l'ID **GTM-XXXXXXX** (affiche en haut ou dans Admin → Installer Google Tag Manager).
 4. Dans ton dépôt / hébergeur, définis :
    - `NEXT_PUBLIC_GTM_ID=GTM-XXXXXXX`
 5. **Dans GTM** (espace de travail) :
    - Ajoute au minimum un tag **Google Analytics : configuration GA4** ou **balise Google** liée à ton flux GA4, avec ton ID `G-XXXXXXXXXX`.
    - Configure les **déclencheurs** (souvent « All Pages » ou « Consent Initialization » si tu utilises le mode consentement avancé).
 6. Utilise **Aperçu** (Preview) pour tester sur ton domaine de préprod ou `localhost` (selon ce que GTM autorise).
-7. Quand c’est bon : **Soumettre** → publier une **version** du conteneur.
+7. Quand c'est bon : **Soumettre** → publier une **version** du conteneur.
 
-**Recommandation** : brancher **GA4 via GTM** plutôt qu’en parallèle avec `NEXT_PUBLIC_GA_MEASUREMENT_ID`, pour éviter le double comptage. Le code n’injecte GA « en direct » que si `NEXT_PUBLIC_GA_MEASUREMENT_ID` est défini **et** `NEXT_PUBLIC_GTM_ID` est absent.
+**Recommandation** : brancher **GA4 via GTM** plutôt qu'en parallèle avec `NEXT_PUBLIC_GA_MEASUREMENT_ID`, pour éviter le double comptage. Le code n'injecte GA « en direct » que si `NEXT_PUBLIC_GA_MEASUREMENT_ID` est défini **et** `NEXT_PUBLIC_GTM_ID` est absent.
 
-**Affiner analytics vs pub dans GTM** : aujourd’hui le site charge GTM dès qu’**un** des deux consentements est vrai. Pour n’envoyer à GA que si `analytics` est accepté, utilise des **variables** et **déclencheurs** conditionnels, ou pousse `analytics` / `ads` dans le `dataLayer` **avant** le snippet GTM (évolution code — voir section Limites).
+**Affiner analytics vs pub dans GTM** : aujourd'hui le site charge GTM dès qu'**un** des deux consentements est vrai. Pour n'envoyer à GA que si `analytics` est accepté, utilise des **variables** et **déclencheurs** conditionnels, ou pousse `analytics` / `ads` dans le `dataLayer` **avant** le snippet GTM (évolution code — voir section Limites).
 
-**Balise `noscript`** : pour les utilisateurs sans JavaScript, tu peux ajouter manuellement l’iframe GTM recommandée par Google juste après l’ouverture de `<body>` dans `layout.tsx`. Ce n’est pas obligatoire pour la majorité des parcours.
+**Balise `noscript`** : pour les utilisateurs sans JavaScript, tu peux ajouter manuellement l'iframe GTM recommandée par Google juste après l'ouverture de `<body>` dans `layout.tsx`. Ce n'est pas obligatoire pour la majorité des parcours.
 
 **Détail GTM** (noms de balises, variables, déclencheurs, événements) : voir [§ Plan de mesure complet — GTM](#3-google-tag-manager--ce-que-tu-configures-concrètement).
 
@@ -200,8 +200,8 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 ### Option A — GA4 via GTM (recommandé)
 
 1. Va sur [analytics.google.com](https://analytics.google.com) → **Admin** → **Créer une propriété** (type GA4).
-2. Crée un **flux de données** « Web » : indique l’URL du site (ex. `https://questia.fr`). Note l’**ID de mesure** `G-XXXXXXXXXX`.
-3. Dans **GTM**, ajoute un tag de type **Configuration Google Analytics : GA4** (ou équivalent selon l’interface) avec cet ID, sur le déclencheur adapté.
+2. Crée un **flux de données** « Web » : indique l'URL du site (ex. `https://questia.fr`). Note l'**ID de mesure** `G-XXXXXXXXXX`.
+3. Dans **GTM**, ajoute un tag de type **Configuration Google Analytics : GA4** (ou équivalent selon l'interface) avec cet ID, sur le déclencheur adapté.
 4. Dans `.env` / Vercel : définis **`NEXT_PUBLIC_GTM_ID`** et **ne mets pas** `NEXT_PUBLIC_GA_MEASUREMENT_ID` (ou laisse vide), pour que seul GTM charge GA côté site.
 
 ### Option B — GA4 sans GTM (gtag direct)
@@ -213,9 +213,9 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 
 **UTM & campagnes** : utilise des URLs avec `utm_source`, `utm_medium`, `utm_campaign`, etc. GA4 les associe aux sessions si le tag est actif.
 
-**Consent Mode (Google Ads / GA)** : pour l’UE et les usages publicitaires Google, configure le **Mode consentement** dans GTM et aligne les états avec ton bandeau (variables `dataLayer` ou CMP). Le bandeau Questia est un opt-in global ; une évolution est d’exposer `analytics` / `ads` au `dataLayer` avant le chargement de GTM.
+**Consent Mode (Google Ads / GA)** : pour l'UE et les usages publicitaires Google, configure le **Mode consentement** dans GTM et aligne les états avec ton bandeau (variables `dataLayer` ou CMP). Le bandeau Questia est un opt-in global ; une évolution est d'exposer `analytics` / `ads` au `dataLayer` avant le chargement de GTM.
 
-**Dimensions, conversions, catalogue d’événements** : voir [Plan de mesure complet](#plan-de-mesure-complet--jeu-web--app-détail).
+**Dimensions, conversions, catalogue d'événements** : voir [Plan de mesure complet](#plan-de-mesure-complet--jeu-web--app-détail).
 
 ---
 
@@ -223,23 +223,23 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 
 1. Va sur [Meta Events Manager](https://business.facebook.com/events_manager) (compte Business Meta).
 2. **Créer une source de données** → **Pixel** (ou sélectionne un Pixel existant).
-3. Copie l’**ID du Pixel** (numérique, souvent 15–16 chiffres).
-4. Définis `NEXT_PUBLIC_META_PIXEL_ID=<cet ID>` dans l’environnement de build Next.js.
+3. Copie l'**ID du Pixel** (numérique, souvent 15–16 chiffres).
+4. Définis `NEXT_PUBLIC_META_PIXEL_ID=<cet ID>` dans l'environnement de build Next.js.
 5. Le script `fbevents.js` et le premier `PageView` ne se chargent que si `consent.ads === true` dans le stockage local.
 6. Les **changements de route** (App Router) déclenchent un `PageView` supplémentaire via `MetaPageViewTracker`.
 
-**Campagnes** : associe le Pixel aux ensembles publicitaires dans Meta Ads ; utilise des UTM sur les liens d’annonces pour corréler trafic et conversions dans GA4 / rapports Meta.
+**Campagnes** : associe le Pixel aux ensembles publicitaires dans Meta Ads ; utilise des UTM sur les liens d'annonces pour corréler trafic et conversions dans GA4 / rapports Meta.
 
 **Événements Meta complémentaires** : voir [§ Meta dans le plan complet](#6-meta-pixel--complément-au-web).
 
 ---
 
-## Étapes précises — variables d’environnement et déploiement
+## Étapes précises — variables d'environnement et déploiement
 
 1. Ouvre `apps/web/.env.example` : repère `NEXT_PUBLIC_GTM_ID`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_META_PIXEL_ID`.
 2. En **local** : copie vers `.env.local` (non versionné) et renseigne les clés nécessaires.
 3. Sur **Vercel** (ou autre) : **Settings → Environment Variables** → ajoute les mêmes clés pour **Production** (et éventuellement Preview).
-4. **Redéploie** l’application : les `NEXT_PUBLIC_*` sont injectées au **build** ; un simple changement d’env exige souvent un nouveau déploiement.
+4. **Redéploie** l'application : les `NEXT_PUBLIC_*` sont injectées au **build** ; un simple changement d'env exige souvent un nouveau déploiement.
 5. **Monorepo** : sur Vercel, le **Root Directory** du projet doit être **`apps/web`** (pas la racine du repo). Sinon le build Next.js ne voit pas les variables prévues pour `@questia/web` et le bundle ne contient **aucun** `NEXT_PUBLIC_*` — même si le tableau des variables Vercel est rempli.
 6. Vérifie que le **domaine de production** est bien déclaré dans GA4 (flux de données) et, pour Meta, que le domaine est autorisé si demandé.
 
@@ -247,7 +247,7 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 
 ## Étapes précises — validation avant mise en prod
 
-1. **Variables** : toutes les `NEXT_PUBLIC_*` nécessaires sont présentes sur l’environnement cible.
+1. **Variables** : toutes les `NEXT_PUBLIC_*` nécessaires sont présentes sur l'environnement cible.
 2. **Navigation privée** : ouvre le site → **Refuser** le bandeau → onglet **Réseau** du navigateur : aucune requête vers `googletagmanager.com`, `google-analytics.com`, `facebook.net` (sauf assets du site).
 3. **Accepter** le bandeau → les requêtes attendues apparaissent selon ta config (GTM, gtag, Meta).
 4. **GTM** : mode **Aperçu** + [Tag Assistant](https://tagassistant.google.com/).
@@ -255,26 +255,26 @@ Mobile Expo, entonnoirs, catalogue étendu : **[Plan de mesure complet](#plan-de
 6. **Meta** : extension **Meta Pixel Helper** sur les pages où le Pixel est chargé.
 7. **Parcours critique** : landing `/`, `/sign-in`, `/app` (après auth) — vérifier que les vues ou événements apparaissent là où tu les attends ; suivre la [checklist](#10-checklist-tracking-pertinent-rappel) du plan complet.
 
-### Dépannage — l’Aperçu GTM / Tag Assistant « ne se connecte pas » sur la prod
+### Dépannage — l'Aperçu GTM / Tag Assistant « ne se connecte pas » sur la prod
 
-Sur Questia, **`gtm.js` n’est chargé que si le bandeau a été accepté** (au moins analytics **ou** pub) — voir `MarketingScripts.tsx`. Tant que le consentement n’est pas enregistré dans `localStorage` (`questia_cookie_consent_v2`), **il n’y a pas de conteneur GTM sur la page** : le mode **Aperçu** (Tag Assistant) ne peut pas s’y rattacher, même sur l’URL de production.
+Sur Questia, **`gtm.js` n'est chargé que si le bandeau a été accepté** (au moins analytics **ou** pub) — voir `MarketingScripts.tsx`. Tant que le consentement n'est pas enregistré dans `localStorage` (`questia_cookie_consent_v2`), **il n'y a pas de conteneur GTM sur la page** : le mode **Aperçu** (Tag Assistant) ne peut pas s'y rattacher, même sur l'URL de production.
 
 **Procédure qui fonctionne en général**
 
 1. Ouvre ton site **prod** dans un onglet (Chrome ou Edge, de préférence).
 2. Clique **Accepter** sur le bandeau cookies (ou vérifie que le consentement est déjà enregistré).
-3. Vérifie dans l’onglet **Réseau** qu’une requête vers `googletagmanager.com/gtm.js?id=GTM-…` part bien.
+3. Vérifie dans l'onglet **Réseau** qu'une requête vers `googletagmanager.com/gtm.js?id=GTM-…` part bien.
 4. **Ensuite seulement** lance **Aperçu** depuis GTM et indique la même URL (même domaine, avec ou sans `www` comme en prod).
 
-Si tu ouvres l’URL depuis Tag Assistant **avant** d’avoir accepté, ou en **navigation privée** sans avoir cliqué sur Accepter, la connexion échoue.
+Si tu ouvres l'URL depuis Tag Assistant **avant** d'avoir accepté, ou en **navigation privée** sans avoir cliqué sur Accepter, la connexion échoue.
 
 **Autres causes fréquentes**
 
 - **Bloqueurs de pub / confidentialité** (uBlock, Brave strict, etc.) : désactive-les sur le domaine de prod pour le test.
 - **Safari** : restrictions renforcées sur les scripts tiers ; tester avec Chrome.
-- **URL** : l’URL saisie dans l’Aperçu doit être exactement celle où le site est servi (ex. `https://questia.fr` vs `www`).
+- **URL** : l'URL saisie dans l'Aperçu doit être exactement celle où le site est servi (ex. `https://questia.fr` vs `www`).
 
-**Alternative** : ne pas dépendre de l’Aperçu pour valider GA4 — utilise le rapport **Temps réel** dans GA4 pendant que tu navigues (après consentement), et l’onglet Réseau pour `gtm.js` / collectes.
+**Alternative** : ne pas dépendre de l'Aperçu pour valider GA4 — utilise le rapport **Temps réel** dans GA4 pendant que tu navigues (après consentement), et l'onglet Réseau pour `gtm.js` / collectes.
 
 ---
 
@@ -286,11 +286,11 @@ Ce plan relie **acquisition**, **parcours web** (Next.js, locales `[locale]`), *
 
 | Règle | Détail |
 |--------|--------|
-| **Consentement** | N’envoyer des hits GA4 / événements `dataLayer` qu’après `hasAnalyticsConsent()` (`consent.ts`). Même logique côté app avec l’écran / paramètres de confidentialité prévus pour les stores. |
-| **Pas de PII dans les tags** | N’envoyer **ni email, ni nom complet, ni identifiant Clerk brut** dans GA4 / Meta comme paramètres d’événement. Préférer des **hashes** ou des **segments** si besoin d’AB test ; la vérité identité reste côté **base + Clerk**. |
+| **Consentement** | N'envoyer des hits GA4 / événements `dataLayer` qu'après `hasAnalyticsConsent()` (`consent.ts`). Même logique côté app avec l'écran / paramètres de confidentialité prévus pour les stores. |
+| **Pas de PII dans les tags** | N'envoyer **ni email, ni nom complet, ni identifiant Clerk brut** dans GA4 / Meta comme paramètres d'événement. Préférer des **hashes** ou des **segments** si besoin d'AB test ; la vérité identité reste côté **base + Clerk**. |
 | **Une convention de noms** | Événements et paramètres en **snake_case**, stables dans le temps (éviter de renommer tous les 15 jours). |
 | **Double source de vérité** | **Revenus / abonnements / achats** : comptabiliser au minimum côté **Stripe + base** ; le navigateur peut rater un hit (réseau, bloqueur). |
-| **Parité web / mobile** | Même **nom d’événement** et mêmes **paramètres** (quand applicable) entre `dataLayer` / GA4 web et **Firebase Analytics** (ou SDK choisi) pour comparer les entonnoirs. |
+| **Parité web / mobile** | Même **nom d'événement** et mêmes **paramètres** (quand applicable) entre `dataLayer` / GA4 web et **Firebase Analytics** (ou SDK choisi) pour comparer les entonnoirs. |
 
 ### 2. Cartographie des zones produit (web)
 
@@ -303,7 +303,7 @@ Préfixe de locale : `fr`, `en`, etc. Les chemins ci-dessous sont **sans** préf
 | **Auth** | `/sign-in`, `/sign-up` | Connexion, inscription (sans PII dans le tag) |
 | **Jeu** | `/app` | Génération / acceptation / complétion de quête, engagement |
 | **Historique** | `/app/history` | Rétention, consultation |
-| **Boutique** | `/app/shop` | Vues offres, intention d’achat |
+| **Boutique** | `/app/shop` | Vues offres, intention d'achat |
 | **Profil** | `/app/profile` | Modifications profil (événements agrégés) |
 | **Légal** | `/legal/*` | Rarement des conversions ; utile pour audits de trafic |
 
@@ -311,13 +311,13 @@ Préfixe de locale : `fr`, `en`, etc. Les chemins ci-dessous sont **sans** préf
 
 #### 3.1 Nommage des balises (libellés dans GTM)
 
-Les **noms affichés** dans GTM sont libres ; garde une **préfixe** pour t’y retrouver :
+Les **noms affichés** dans GTM sont libres ; garde une **préfixe** pour t'y retrouver :
 
 | Libellé suggéré | Type de balise | Rôle |
 |-----------------|-----------------|------|
 | `Questia — GA4 — Configuration` | Google / **Configuration GA4** | ID `G-XXXXXXXXXX`, mesure de base |
 | `Questia — GA4 — Event — page_view (SPA)` | **Google Analytics : événement GA4** | Si tu relies les changements de route manuellement ou via History Change |
-| `Questia — GA4 — Event — <nom_evt>` | **Événement GA4** | Un tag par **famille** d’événements ou un tag générique avec **variables** (voir ci-dessous) |
+| `Questia — GA4 — Event — <nom_evt>` | **Événement GA4** | Un tag par **famille** d'événements ou un tag générique avec **variables** (voir ci-dessous) |
 
 Tu peux aussi utiliser **un seul tag « Événement GA4 »** piloté par des **variables de couche de données** (`Event Name`, paramètres) pour éviter la multiplication des tags.
 
@@ -334,7 +334,7 @@ Adapte les clés aux **objets** que tu pousses réellement dans `dataLayer` depu
 
 #### 3.3 Déclencheurs
 
-| Déclencheur | Quand l’utiliser |
+| Déclencheur | Quand l'utiliser |
 |-------------|------------------|
 | **Initialisation du consentement** | Si tu branches **Consent Mode** / CMP avancé. |
 | **All Pages** (ou **DOM Ready**) | Souvent pour le tag **Configuration GA4** sur site multi-pages « classique ». |
@@ -354,18 +354,18 @@ Adapte les clés aux **objets** que tu pousses réellement dans `dataLayer` depu
 
 - **Une propriété GA4** « Questia Web » (ou **Web + App** si tu relies le SDK mobile au même rapport — option avancée).
 - **Flux Web** : URL canonique du site (ex. `https://questia.fr`).
-- **Flux App** (optionnel) : si tu relies Firebase / GA4 App ; sinon l’app peut rester sur **Firebase** seul et tu compares dans BigQuery / outil externe plus tard.
+- **Flux App** (optionnel) : si tu relies Firebase / GA4 App ; sinon l'app peut rester sur **Firebase** seul et tu compares dans BigQuery / outil externe plus tard.
 
 #### 4.2 Événements automatiques utiles
 
 GA4 enregistre déjà `session_start`, `first_visit`, `page_view` (selon config), `user_engagement`, etc. Ne les duplique pas manuellement sans raison.
 
-#### 4.3 Paramètres d’événement et dimensions personnalisées
+#### 4.3 Paramètres d'événement et dimensions personnalisées
 
 Pour chaque paramètre métier que tu envoies souvent (`quest_theme`, `shop_item_id`, …) :
 
 1. **Admin** → **Définitions personnalisées** → **Dimensions personnalisées** (portée « Événement ») → associer le **nom du paramètre** envoyé dans le tag.
-2. Attendre 24–48 h pour l’historique ; le **Temps réel** montre avant la finalisation.
+2. Attendre 24–48 h pour l'historique ; le **Temps réel** montre avant la finalisation.
 
 Évite de créer **des centaines** de dimensions : priorise celles des **entonnoirs** et **campagnes** (ex. `campaign_group` interne, pas le texte utilisateur libre).
 
@@ -377,7 +377,7 @@ Marquer comme **conversion** (Admin → Événements) uniquement ce qui sert à 
 
 Les **micro-conversions** (ex. `quest_viewed`) peuvent rester des événements **non** marqués conversion pour ne pas polluer les rapports Ads.
 
-### 5. Catalogue d’événements + paramètres recommandés (web)
+### 5. Catalogue d'événements + paramètres recommandés (web)
 
 Les noms ci-dessous sont des **recommandations** ; une fois en prod, **ne les change pas** sans migration.
 
@@ -385,13 +385,13 @@ Les noms ci-dessous sont des **recommandations** ; une fois en prod, **ne les ch
 
 | Événement `dataLayer` / GA4 | Paramètres suggérés | Notes |
 |-----------------------------|---------------------|--------|
-| `page_view` | `page_location`, `page_path`, `page_title` | Aligné sur [événements recommandés GA4](https://support.google.com/analytics/answer/9267735) ; pour SPA, s’assurer que **chaque route** déclenche un hit. |
+| `page_view` | `page_location`, `page_path`, `page_title` | Aligné sur [événements recommandés GA4](https://support.google.com/analytics/answer/9267735) ; pour SPA, s'assurer que **chaque route** déclenche un hit. |
 
 #### 5.2 Acquisition et compte
 
 | Événement | Paramètres | Notes |
 |-----------|--------------|--------|
-| `sign_up` | `method` (ex. `clerk`) | À déclencher **après** succès d’inscription ; pas d’email dans les params. |
+| `sign_up` | `method` (ex. `clerk`) | À déclencher **après** succès d'inscription ; pas d'email dans les params. |
 | `login` | `method` | Idem après connexion réussie. |
 
 #### 5.3 Onboarding
@@ -407,7 +407,7 @@ Les noms ci-dessous sont des **recommandations** ; une fois en prod, **ne les ch
 | Événement | Paramètres | Notes |
 |-----------|------------|--------|
 | `quest_generated` ou `quest_viewed` | `quest_id` (opaque ou hash), `quest_theme` ou catégorie | Selon ton modèle de données. |
-| `quest_accepted` | `quest_id` | L’utilisateur valide la quête du jour. |
+| `quest_accepted` | `quest_id` | L'utilisateur valide la quête du jour. |
 | `quest_completed` | `quest_id`, `duration_seconds` (optionnel) | Signal fort de valeur ; candidat **conversion**. |
 | `quest_skipped` | `quest_id` | Comprendre la friction. |
 | `share_opened` | `share_channel` (ex. `native`, `copy_link`) | Si partage présent. |
@@ -435,26 +435,26 @@ Pour **Meta Ads**, les conversions « achat » sont souvent basées sur le **Pix
 | **Déjà en place** | `PageView` au chargement et sur **changement de route** (`MetaPageViewTracker`) si `consent.ads`. |
 | **Événements standard utiles** | `CompleteRegistration` (après inscription), `InitiateCheckout`, `Purchase` — à envoyer via `fbq('track', …)` **uniquement** avec consentement pub et en cohérence avec les règles Meta. |
 | **Paramètres** | `value`, `currency`, `content_ids` pour les achats ; pas de données sensibles. |
-| **Attribution** | Garde des **UTM** sur les liens d’annonces ; croise avec GA4 pour éviter les doubles interprétations. |
+| **Attribution** | Garde des **UTM** sur les liens d'annonces ; croise avec GA4 pour éviter les doubles interprétations. |
 
 ### 7. Application mobile (Expo)
 
 | Sujet | Action concrète |
 |-------|-----------------|
-| **SDK** | **Firebase Analytics** (souvent déjà présent avec Expo) ou équivalent ; **Sentry** pour les crashs (ce n’est pas du marketing). |
+| **SDK** | **Firebase Analytics** (souvent déjà présent avec Expo) ou équivalent ; **Sentry** pour les crashs (ce n'est pas du marketing). |
 | **Consentement** | Écran / réglages « Analyse / Publicité » alignés sur `docs/store-app-play-compliance.md` et les fiches stores. |
-| **Parité d’événements** | Réutiliser les **mêmes noms** que le [§5](#5-catalogue-dévénements--paramètres-recommandés-web) (`quest_completed`, `purchase`, …) avec les mêmes paramètres quand c’est pertinent. |
-| **Écrans** | Logger les **vues d’écran** (équivalent `page_view`) avec un nom stable : `onboarding`, `app_home`, `shop`, etc. |
-| **Liaison utilisateur** | Si tu utilises `setUserId` / propriétés utilisateur, privilégier un **ID interne** anonymisé compatible avec ta politique de confidentialité, pas l’email. |
-| **Installations** | Campagnes : **liens avec UTM** vers le store + **paramètres d’attribution** (Play Install Referrer, SKAdNetwork côté iOS selon setup). |
+| **Parité d'événements** | Réutiliser les **mêmes noms** que le [§5](#5-catalogue-dévénements--paramètres-recommandés-web) (`quest_completed`, `purchase`, …) avec les mêmes paramètres quand c'est pertinent. |
+| **Écrans** | Logger les **vues d'écran** (équivalent `page_view`) avec un nom stable : `onboarding`, `app_home`, `shop`, etc. |
+| **Liaison utilisateur** | Si tu utilises `setUserId` / propriétés utilisateur, privilégier un **ID interne** anonymisé compatible avec ta politique de confidentialité, pas l'email. |
+| **Installations** | Campagnes : **liens avec UTM** vers le store + **paramètres d'attribution** (Play Install Referrer, SKAdNetwork côté iOS selon setup). |
 
 ### 8. Serveur, API et Stripe (vérité métier)
 
 | Besoin | Où le couvrir |
 |--------|----------------|
 | Paiement réussi / échec | Webhooks **Stripe**, logs structurés, table métier `orders` ou équivalent. |
-| Taux d’erreur API | Monitoring des routes `/api/*`, alertes 5xx. |
-| Conversion Ads sans navigateur | **Measurement Protocol** GA4 ou **Conversions API** Meta, avec **respect du consentement** et des conditions d’utilisation. |
+| Taux d'erreur API | Monitoring des routes `/api/*`, alertes 5xx. |
+| Conversion Ads sans navigateur | **Measurement Protocol** GA4 ou **Conversions API** Meta, avec **respect du consentement** et des conditions d'utilisation. |
 | Cohérence avec GA4 | Si tu envoies `purchase` côté client, le **même** `transaction_id` que Stripe facilite la déduplication dans les analyses. |
 
 ### 9. UTM et campagnes (standard)
@@ -476,7 +476,7 @@ Documente dans une **feuille interne** les valeurs autorisées pour éviter le c
 | 3 | Événements §5 implémentés dans le code + GTM + dimensions GA4 pour les params clés. |
 | 4 | Conversions GA4 définies pour les objectifs business réels. |
 | 5 | Meta : Pixel + événements de conversion alignés sur les mêmes règles que la pub. |
-| 6 | Mobile : SDK + parité des noms d’événements + écran confidentialité. |
+| 6 | Mobile : SDK + parité des noms d'événements + écran confidentialité. |
 | 7 | Revenus : traçabilité Stripe + logs, pas uniquement le navigateur. |
 
 ### 11. Tableau « où regarder quoi »
@@ -493,16 +493,16 @@ Documente dans une **feuille interne** les valeurs autorisées pour éviter le c
 
 1. Utiliser **`trackAnalyticsEvent`** dans `apps/web/src/lib/analytics/track.ts` (déjà en place) pour tout nouvel événement ; ajouter le nom dans `AnalyticsEvent` (`events.ts`).
 2. Dans **GTM**, relier les déclencheurs aux tags GA4 **Événement** comme en [§3](#3-google-tag-manager--ce-que-tu-configures-concrètement).
-3. Ne pas envoyer d’événements sans consentement analytics (RGPD).
+3. Ne pas envoyer d'événements sans consentement analytics (RGPD).
 
 ---
 
 ## Limites actuelles & évolutions possibles
 
-- Pas d’intégration automatique du consentement dans **Google Consent Mode v2** (à ajouter via GTM + `dataLayer` si besoin Ads/UE).
+- Pas d'intégration automatique du consentement dans **Google Consent Mode v2** (à ajouter via GTM + `dataLayer` si besoin Ads/UE).
 - Pas de page « Préférences cookies » pour modifier le choix sans vider le stockage (à prévoir : lien « Gérer mes cookies » qui rouvre le bandeau ou un panneau).
-- D’autres événements du **catalogue** ([§5](#5-catalogue-dévénements--paramètres-recommandés-web)) peuvent encore être ajoutés (ex. `profile_updated`, pages `/app/history` dédiées) via `trackAnalyticsEvent` + GTM ; **l’app mobile** reste hors du bandeau web.
-- L’app mobile (Expo) n’est pas couverte par le **bandeau web** ; le plan [§7](#7-application-mobile-expo) décrit le SDK et la parité d’événements.
+- D'autres événements du **catalogue** ([§5](#5-catalogue-dévénements--paramètres-recommandés-web)) peuvent encore être ajoutés (ex. `profile_updated`, pages `/app/history` dédiées) via `trackAnalyticsEvent` + GTM ; **l'app mobile** reste hors du bandeau web.
+- L'app mobile (Expo) n'est pas couverte par le **bandeau web** ; le plan [§7](#7-application-mobile-expo) décrit le SDK et la parité d'événements.
 
 ---
 

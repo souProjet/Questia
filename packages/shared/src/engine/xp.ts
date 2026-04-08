@@ -1,10 +1,10 @@
 import type { EscalationPhase, ExplorerAxis, RiskAxis } from '../types';
 
 /**
- * Règles d’XP (référence unique pour l’API et l’UI).
+ * Règles d'XP (référence unique pour l'API et l'UI).
  *
- * - **Base** : dépend de la phase **au moment de l’assignation** (alignée calibration → expansion → rupture).
- * - **Série** : bonus par jour de série actuel, plafonné (évite l’explosion si série très longue).
+ * - **Base** : dépend de la phase **au moment de l'assignation** (alignée calibration → expansion → rupture).
+ * - **Série** : bonus par jour de série actuel, plafonné (évite l'explosion si série très longue).
  * - **Extérieur** : bonus fixe si la quête complétée est marquée extérieure.
  * - **Archétype (quadrant)** : léger multiplicateur sur la base seulement — explorer / casanier, prudent / audacieux.
  * - **Relance (skip)** : si la quête du jour a été obtenue après une relance, malus multiplicatif sur le sous-total (avant plafond).
@@ -135,12 +135,12 @@ export function levelFromTotalXp(totalXp: number): {
   return { level, xpIntoLevel, xpToNext, xpPerLevel };
 }
 
-/** Un segment d’animation : barre du niveau `level`, remplissage de `fromPct` à `toPct` (0–1). */
+/** Un segment d'animation : barre du niveau `level`, remplissage de `fromPct` à `toPct` (0–1). */
 export type XpBarSegment = { level: number; fromPct: number; toPct: number };
 
 /**
- * Segments pour animer la barre « XP dans ce niveau » (comme l’accueil), entre deux totaux XP.
- * Gère les montées de niveau (y compris plusieurs paliers d’un coup).
+ * Segments pour animer la barre « XP dans ce niveau » (comme l'accueil), entre deux totaux XP.
+ * Gère les montées de niveau (y compris plusieurs paliers d'un coup).
  */
 export function xpBarSegmentsFromTotals(previousTotal: number, newTotal: number): XpBarSegment[] {
   const before = levelFromTotalXp(previousTotal);

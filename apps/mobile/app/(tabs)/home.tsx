@@ -101,7 +101,7 @@ interface DailyQuest {
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
-/** Interprète les séquences littérales \uXXXX (ex. chaîne API mal sérialisée) pour l’affichage. */
+/** Interprète les séquences littérales \uXXXX (ex. chaîne API mal sérialisée) pour l'affichage. */
 function normalizeDisplayText(text: string): string {
   if (!text.includes('\\u')) return text;
   return text.replace(/\\u([0-9a-fA-F]{4})/gi, (_, hex) =>
@@ -189,7 +189,7 @@ export default function DashboardScreen() {
 
   const reportUi = useMemo(() => getQuestReportStrings(appLocale), [appLocale]);
 
-  /** Clerk recrée souvent getToken → évite de recréer loadQuest à chaque rendu (boucle infinie d’effets). */
+  /** Clerk recrée souvent getToken → évite de recréer loadQuest à chaque rendu (boucle infinie d'effets). */
   const getTokenRef = useRef(getToken);
   const lastQuestViewKey = useRef<string | null>(null);
   useEffect(() => {
@@ -707,7 +707,7 @@ export default function DashboardScreen() {
 
   return (
     <HomeBackdropShell palette={palette} themeId={themeId} styles={styles}>
-        {/* Flash d’acceptation */}
+        {/* Flash d'acceptation */}
         <Animated.View
           pointerEvents="none"
           style={[
@@ -922,7 +922,7 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
 
   return StyleSheet.create({
     rootShell: { flex: 1 },
-    /** Remplit l’écran ; le SafeAreaView est à l’intérieur pour éviter les bandes / clipping. */
+    /** Remplit l'écran ; le SafeAreaView est à l'intérieur pour éviter les bandes / clipping. */
     homeGradient: { flex: 1 },
     safe: { flex: 1, backgroundColor: 'transparent' },
     homeBackdropBlob: {

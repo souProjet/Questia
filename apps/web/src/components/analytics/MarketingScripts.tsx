@@ -50,9 +50,9 @@ export function MarketingScripts() {
       Boolean(analyticsConfig.metaPixelId);
     if (hasAny) return;
     console.warn(
-      '[Questia] Consentement accepté mais aucun identifiant marketing n’est dans le bundle JS ' +
+      '[Questia] Consentement accepté mais aucun identifiant marketing n\'est dans le bundle JS ' +
         '(NEXT_PUBLIC_GTM_ID, NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_META_PIXEL_ID). ' +
-        'Vérifie Vercel → variables pour l’environnement Production, répertoire racine du projet = apps/web, puis redéploie.',
+        'Vérifie Vercel → variables pour l\'environnement Production, répertoire racine du projet = apps/web, puis redéploie.',
     );
   }, [consent]);
 

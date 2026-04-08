@@ -21,7 +21,7 @@ describe('sendReminderEmail', () => {
     expect(r.error).toMatch(/RESEND/);
   });
 
-  it('réussit quand Resend ne renvoie pas d’erreur', async () => {
+  it("réussit quand Resend ne renvoie pas d'erreur", async () => {
     vi.stubEnv('RESEND_API_KEY', 're_test');
     sendMock.mockResolvedValue({ error: null });
     const { sendReminderEmail } = await import('./send-email');
@@ -30,7 +30,7 @@ describe('sendReminderEmail', () => {
     expect(sendMock).toHaveBeenCalled();
   });
 
-  it('propage l’erreur Resend', async () => {
+  it("propage l'erreur Resend", async () => {
     vi.stubEnv('RESEND_API_KEY', 're_test');
     sendMock.mockResolvedValue({ error: { message: 'boom' } });
     const { sendReminderEmail } = await import('./send-email');

@@ -6,8 +6,8 @@ Liste des éléments restants typiques pour une mise en production (web + iOS + 
 
 ## Infra & domaine
 
-- [x] Pointer **questia.fr** vers l’hébergement (Vercel, autre) avec **HTTPS** valide.
-- [x] Configurer les **variables d’environnement de prod** sur l’hôte : `DATABASE_URL`, `DIRECT_DATABASE_URL`, `NEXT_PUBLIC_SITE_URL=https://questia.fr`, clés **Clerk** (prod), **OpenAI**, **OpenWeather**, **Stripe**, **Resend** (si mails), secrets **cron** / **webhooks**, etc. (référence : `apps/web/.env.example`).
+- [x] Pointer **questia.fr** vers l'hébergement (Vercel, autre) avec **HTTPS** valide.
+- [x] Configurer les **variables d'environnement de prod** sur l'hôte : `DATABASE_URL`, `DIRECT_DATABASE_URL`, `NEXT_PUBLIC_SITE_URL=https://questia.fr`, clés **Clerk** (prod), **OpenAI**, **OpenWeather**, **Stripe**, **Resend** (si mails), secrets **cron** / **webhooks**, etc. (référence : `apps/web/.env.example`).
 - [x] **Analytics & pub (opt-in)** : si tu actives GTM, GA4 ou Meta Pixel, renseigner les `NEXT_PUBLIC_*` documentées dans `.env.example`, vérifier le bandeau cookies et la section cookies de `/legal/confidentialite`, puis tester en prod (voir [`marketing-analytics.md`](marketing-analytics.md)).
 - [x] **Mobile** : `EXPO_PUBLIC_API_BASE_URL` = URL HTTPS du backend en prod ; `EXPO_PUBLIC_SITE_URL` = `https://questia.fr` ; même **Clerk publishable** que le web en prod.
 
@@ -30,7 +30,7 @@ Liste des éléments restants typiques pour une mise en production (web + iOS + 
 ## Paiements (Stripe)
 
 - [x] **Compte Stripe live**, produits / prix alignés avec le code (webhooks, `STRIPE_WEBHOOK_SECRET` prod).
-- [ ] Tester un **parcours d’achat réel** (petit montant) + remboursement si besoin.
+- [ ] Tester un **parcours d'achat réel** (petit montant) + remboursement si besoin.
 - [x] Relire les **CGV** publiées (`/legal/cgv`) avec un conseil si besoin (monnaie virtuelle, Stripe, rétractation).
 
 ---
@@ -72,8 +72,8 @@ Liste des éléments restants typiques pour une mise en production (web + iOS + 
 | Bien-être & limites | `/legal/bien-etre` | OK structurellement ; vérifier cohérence avec les stores. |
 | Bandeau cookies | (bas de page, toutes routes) | Informatif « nécessaires » ; si tu ajoutes **analytics** tiers, prévoir consentement renforcé + mise à jour de la § cookies. |
 
-- [ ] Variables **`NEXT_PUBLIC_LEGAL_COMPANY_NAME`**, **`NEXT_PUBLIC_LEGAL_ADDRESS`**, **`NEXT_PUBLIC_LEGAL_CONTACT_EMAIL`** (minimum) sur l’hébergeur.
-- [ ] **`NEXT_PUBLIC_LEGAL_DPO_EMAIL`** uniquement si un DPO est désigné (sinon la politique indique l’absence de DPO).
+- [ ] Variables **`NEXT_PUBLIC_LEGAL_COMPANY_NAME`**, **`NEXT_PUBLIC_LEGAL_ADDRESS`**, **`NEXT_PUBLIC_LEGAL_CONTACT_EMAIL`** (minimum) sur l'hébergeur.
+- [ ] **`NEXT_PUBLIC_LEGAL_DPO_EMAIL`** uniquement si un DPO est désigné (sinon la politique indique l'absence de DPO).
 - [ ] **Clerk** : dans le dashboard, lien vers la politique — `https://questia.fr/legal/confidentialite` (et éventuellement CGU si la plateforme le permet).
 - [ ] Cohérence **âge minimum** (13 ans, §9 de la confidentialité) avec la cible et les questionnaires **App Store / Play** (familles, etc.).
 - [ ] **Liens** : pied de page landing + page Profil web pointent vers confidentialité, mentions, CGU, CGV, bien-être.
@@ -86,9 +86,9 @@ Liste des éléments restants typiques pour une mise en production (web + iOS + 
 
 ## Ops & sécurité
 
-- [ ] **Cron** (rappels quotidiens) : secret d’URL en prod, monitoring des échecs.
+- [ ] **Cron** (rappels quotidiens) : secret d'URL en prod, monitoring des échecs.
 - [ ] **Abus / charge** : surveillance des logs ; renforcer si besoin (rate limiting, etc.).
-- [ ] **Outil d’erreurs** (Sentry ou équivalent) en prod si ce n’est pas déjà branché partout.
+- [ ] **Outil d'erreurs** (Sentry ou équivalent) en prod si ce n'est pas déjà branché partout.
 
 ---
 
@@ -110,4 +110,4 @@ Liste des éléments restants typiques pour une mise en production (web + iOS + 
 
 ## État fonctionnel (référence interne)
 
-Les blocs produit suivants sont déjà couverts dans le dépôt (voir `note.txt`) : règles XP, badges, boutique, historique, rappels, accessibilité, tests/CI, observabilité, pages légales (confidentialité, mentions, CGU, CGV, bien-être), bandeau cookies informatif, RGPD dans l’UI, transparence IA, fiches stores, deep links / partage.
+Les blocs produit suivants sont déjà couverts dans le dépôt (voir `note.txt`) : règles XP, badges, boutique, historique, rappels, accessibilité, tests/CI, observabilité, pages légales (confidentialité, mentions, CGU, CGV, bien-être), bandeau cookies informatif, RGPD dans l'UI, transparence IA, fiches stores, deep links / partage.

@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 import { getStripe } from '@/lib/stripe';
 
 /**
- * Crée une session Stripe **uniquement** pour l’achat de packs de Quest Coins (recharge en euros).
+ * Crée une session Stripe **uniquement** pour l'achat de packs de Quest Coins (recharge en euros).
  * Les articles boutique se paient via POST /api/shop/purchase (coins).
  */
 export async function POST(request: Request) {
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     stripe = getStripe();
   } catch {
     return NextResponse.json(
-      { error: 'Paiement indisponible : configure STRIPE_SECRET_KEY dans l’environnement.' },
+      { error: "Paiement indisponible : configure STRIPE_SECRET_KEY dans l'environnement." },
       { status: 503 },
     );
   }

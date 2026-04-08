@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-/** Tunnel d’inscription : pas d’indexation pour éviter le contenu dupliqué / fin de funnel. */
+/** Tunnel d'inscription : pas d'indexation pour éviter le contenu dupliqué / fin de funnel. */
 export async function generateMetadata({
   params,
 }: {

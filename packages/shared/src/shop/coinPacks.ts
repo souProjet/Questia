@@ -1,20 +1,20 @@
 import type { ShopMarketingBadge } from './marketing';
 
 /**
- * Packs de **Quest Coins** achetables avec de l’argent réel (Stripe Checkout uniquement).
+ * Packs de **Quest Coins** achetables avec de l'argent réel (Stripe Checkout uniquement).
  * Les achats boutique utilisent exclusivement les coins.
  */
 export interface CoinPackEntry {
   sku: string;
   name: string;
   description: string;
-  /** Montant en centimes d’euro (Stripe) */
+  /** Montant en centimes d'euro (Stripe) */
   priceCents: number;
   currency: 'eur';
   /** Coins crédités sur le compte après paiement confirmé */
   coinsGranted: number;
   emoji: string;
-  /** Ordre d’affichage (plus petit = à gauche) */
+  /** Ordre d'affichage (plus petit = à gauche) */
   sortOrder?: number;
   marketing?: {
     badge?: ShopMarketingBadge;
@@ -38,7 +38,7 @@ export const COIN_PACKS: CoinPackEntry[] = [
     sortOrder: 0,
     includedItems: ['500 QC ajoutés à ton solde après paiement', 'Utilisables sur tous les articles en QC'],
     contentsDetail:
-      'Les Quest Coins sont une monnaie virtuelle : tu les dépenses uniquement dans l’app. Aucun renouvellement automatique — tu recharges quand tu veux.',
+      "Les Quest Coins sont une monnaie virtuelle : tu les dépenses uniquement dans l'app. Aucun renouvellement automatique — tu recharges quand tu veux.",
     marketing: { badge: 'starter', hook: 'Le plus petit pack pour tester.' },
   },
   {
@@ -64,7 +64,7 @@ export const COIN_PACKS: CoinPackEntry[] = [
     coinsGranted: 3000,
     emoji: '✨',
     sortOrder: 2,
-    includedItems: ['3 000 QC crédités d’un coup', 'Meilleur rapport QC / € du catalogue'],
+    includedItems: ["3 000 QC crédités d'un coup", 'Meilleur rapport QC / € du catalogue'],
     contentsDetail:
       'Paiement unique par carte. Après validation, le solde est mis à jour et tu peux tout dépenser en boutique.',
     marketing: { badge: 'best_value', hook: 'Maximum de QC pour ton argent.' },

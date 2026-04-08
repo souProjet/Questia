@@ -69,7 +69,7 @@ export interface BadgeDefinition {
 }
 
 /**
- * Ordre d’affichage : phases & jalons parcours → séries → volume → extérieur → style (quadrants).
+ * Ordre d'affichage : phases & jalons parcours → séries → volume → extérieur → style (quadrants).
  */
 export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   // ── Phases & parcours (temps) ─────────────────────────────────────────────
@@ -132,7 +132,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   },
   {
     id: 'serie_14',
-    title: 'Deux semaines d’affilée',
+    title: "Deux semaines d'affilée",
     criteria: 'Atteindre une série de 14 jours.',
     placeholderEmoji: '💫',
     category: 'serie',
@@ -146,7 +146,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   },
   {
     id: 'serie_60',
-    title: 'Rythme d’acier',
+    title: "Rythme d'acier",
     criteria: 'Atteindre une série de 60 jours.',
     placeholderEmoji: '🔩',
     category: 'serie',
@@ -408,7 +408,7 @@ export interface DisplayBadge {
   category: BadgeCategory;
 }
 
-/** Normalise le JSON stocké en base et enrichit les titres / critères pour l’UI. */
+/** Normalise le JSON stocké en base et enrichit les titres / critères pour l'UI. */
 export function displayEarnedBadges(raw: unknown, locale: AppLocale = 'fr'): DisplayBadge[] {
   if (!Array.isArray(raw)) return [];
   const rows = raw.filter(

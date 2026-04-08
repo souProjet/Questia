@@ -84,7 +84,7 @@ describe('xpBarSegmentsFromTotals', () => {
     expect(s[0]!.toPct).toBeCloseTo(0.45, 5);
   });
 
-  it('montée d’un niveau : fin de barre puis début du suivant', () => {
+  it("montée d'un niveau : fin de barre puis début du suivant", () => {
     const s = xpBarSegmentsFromTotals(90, 115);
     expect(s.length).toBeGreaterThanOrEqual(2);
     expect(s[0]!.toPct).toBe(1);

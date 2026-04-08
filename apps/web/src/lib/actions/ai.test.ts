@@ -39,7 +39,7 @@ describe('ai actions', () => {
               icon: 'Target',
               title: 'Test quête intérieure',
               mission:
-                'À Paris, ouvre ton carnet et écris trois phrases sur ce qui t’attire aujourd’hui. Ferme les yeux une minute puis relis. Ne sors pas : reste chez toi ou dans un lieu couvert.',
+                "À Paris, ouvre ton carnet et écris trois phrases sur ce qui t'attire aujourd'hui. Ferme les yeux une minute puis relis. Ne sors pas : reste chez toi ou dans un lieu couvert.",
               hook: 'Paris commence dans ta tête, un mot à la fois.',
               duration: '1h',
               isOutdoor: false,

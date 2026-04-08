@@ -18,7 +18,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 /**
- * Erreur au niveau racine (échec du layout ou d’une erreur non interceptée plus haut).
+ * Erreur au niveau racine (échec du layout ou d'une erreur non interceptée plus haut).
  * Doit redéfinir `<html>` et `<body>` — sans `ClerkProvider` ni scripts marketing.
  */
 export default function GlobalError({
@@ -37,8 +37,8 @@ export default function GlobalError({
       <body className="font-sans antialiased">
         <AppErrorView
           reset={reset}
-          title="L’application a rencontré une erreur"
-          description="Une erreur critique s’est produite. Réessaie ou reviens à l’accueil."
+          title="L'application a rencontré une erreur"
+          description="Une erreur critique s'est produite. Réessaie ou reviens à l'accueil."
         />
       </body>
     </html>

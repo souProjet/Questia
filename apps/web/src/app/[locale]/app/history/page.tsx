@@ -444,7 +444,7 @@ function HistoryPageInner() {
               {filteredQuests.length} résultat{filteredQuests.length > 1 ? 's' : ''} sur {(quests?.length ?? 0) === 0
                 ? 'aucune entrée chargée'
                 : `${quests?.length} entrée${(quests?.length ?? 0) > 1 ? 's' : ''} chargée${(quests?.length ?? 0) > 1 ? 's' : ''}`}
-              {questHasMore ? ' · d’autres entrées peuvent exister' : ' · historique entièrement chargé'}
+              {questHasMore ? " · d'autres entrées peuvent exister" : ' · historique entièrement chargé'}
             </p>
 
             {filteredQuests.length === 0 ? (

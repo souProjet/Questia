@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   if (!quest) return NextResponse.json({ error: 'Aucune quête pour cette date.' }, { status: 404 });
   if (quest.status !== 'completed') {
     return NextResponse.json(
-      { error: 'Le partage public n’est disponible que pour une quête validée.' },
+      { error: "Le partage public n'est disponible que pour une quête validée." },
       { status: 400 },
     );
   }

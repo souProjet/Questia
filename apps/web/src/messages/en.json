@@ -30,7 +30,7 @@
     "closeMenu": "Close menu",
     "openMenu": "Open menu",
     "menuTitle": "Menu",
-    "menuSubtitle": "Today’s quest",
+    "menuSubtitle": "Today's quest",
     "close": "Close",
     "navSections": "Site sections",
     "navApp": "App navigation",
@@ -90,7 +90,7 @@
       {
         "emoji": "🎯",
         "title": "You first",
-        "desc": "You share your style and what you’re willing to try — missions align with your profile and your energy."
+        "desc": "You share your style and what you're willing to try — missions align with your profile and your energy."
       },
       {
         "emoji": "🧠",
@@ -114,9 +114,9 @@
       },
       {
         "emoji": "☕",
-        "title": "The Strangers’ Café",
+        "title": "The Strangers' Café",
         "contextLabel": "Social break · 45 min",
-        "mission": "Go to a café you’ve never tried. Order something you never pick. 45 minutes phone-free — boss fight mode.",
+        "mission": "Go to a café you've never tried. Order something you never pick. 45 minutes phone-free — boss fight mode.",
         "duration": "1h",
         "outdoor": false
       },
@@ -124,7 +124,7 @@
         "emoji": "📞",
         "title": "Your Voice, Once",
         "contextLabel": "Reconnection · short",
-        "mission": "Call someone you’ve been meaning to reach. Tell them you were thinking of them. Bonus: really listen.",
+        "mission": "Call someone you've been meaning to reach. Tell them you were thinking of them. Bonus: really listen.",
         "duration": "30 min",
         "outdoor": false
       }
@@ -146,7 +146,7 @@
     },
     "testimonialQuotes": [
       {
-        "quote": "Day 23. I thought I was outgoing. I wasn’t. Now I actually am.",
+        "quote": "Day 23. I thought I was outgoing. I wasn't. Now I actually am.",
         "name": "Sarah",
         "age": 29
       },
@@ -178,7 +178,7 @@
       },
       {
         "question": "Is the app free?",
-        "answer": "You can start for free to tune your profile and learn how it works on the site. If paid options appear later, they’ll be clearly labelled."
+        "answer": "You can start for free to tune your profile and learn how it works on the site. If paid options appear later, they'll be clearly labelled."
       },
       {
         "question": "How does Questia personalize my quests?",
@@ -186,7 +186,7 @@
       },
       {
         "question": "Does Questia replace a health professional or coach?",
-        "answer": "No. Questia is a motivation and structure tool, not medical or psychological care. If you’re going through something serious, talk to a qualified professional."
+        "answer": "No. Questia is a motivation and structure tool, not medical or psychological care. If you're going through something serious, talk to a qualified professional."
       },
       {
         "question": "Who is it for?",
@@ -194,7 +194,7 @@
       }
     ],
     "cta": {
-      "label": "Let’s go",
+      "label": "Let's go",
       "titleBefore": "Ready for your next",
       "titleGradient": "IRL quest",
       "titleAfter": "?",
@@ -257,7 +257,7 @@
     "refinementConsentDefault": "These answers are only used to tailor your quests. See the privacy policy (link in Profile or site footer).",
     "greeting": "Hi {name}",
     "defaultName": "adventurer",
-    "heroTitle": "Here’s today’s quest",
+    "heroTitle": "Here's today's quest",
     "heroSubtitle": "🎯 Goal: get off autopilot — adventure mode.",
     "streakTitle": "Streak: consecutive days with a generated quest. Abandoning resets it; deferring or rerolling does not.",
     "streakDay": "day",
@@ -271,7 +271,7 @@
     "levelLine": "⭐ Level {level} · {xp} XP",
     "xpToLevel": "+{xp} XP to level up",
     "xpInLevel": "{into}/{per} in this level",
-    "questOfDay": "Today’s quest",
+    "questOfDay": "Today's quest",
     "detailCloseLabel": "Close",
     "detailEyebrow": "Details",
     "missionHeading": "Your mission — what to do",
@@ -302,24 +302,24 @@
     "saving": "Saving…",
     "confirming": "Confirming…",
     "validateQuest": "✅ I did it — complete quest",
-    "validateHint": "When it’s done in real life, complete here to check it off.",
-    "abandonLink": "I can’t do it — skip this card",
+    "validateHint": "When it's done in real life, complete here to check it off.",
+    "abandonLink": "I can't do it — skip this card",
     "acceptChallenge": "⚔️ I take the challenge!",
     "changeQuest": "Change quest ({label})",
     "rerollConfirmTitle": "Change quest?",
-    "rerollConfirmBody": "You\u2019ll use a reroll and the new quest\u2019s XP will be reduced by 25%. This cannot be undone.",
+    "rerollConfirmBody": "You'll use a reroll and the new quest's XP will be reduced by 25%. This cannot be undone.",
     "rerollLoading": "Drawing your new quest…",
     "rerollConfirmAction": "Change",
     "notForMe": "Not for me",
     "reportShortQuest": "Defer — short quest",
     "reportHint": "Like “Change quest,” deferring uses a reroll — you get a short quest for today.",
     "reportModalTitle": "Defer with a reroll",
-    "reportModalBody": "Like “Change quest,” this uses a today reroll or a bonus credit. You’ll get a short quest you can do today. Pick a target date (within the next {maxDays} days) for a bolder or social challenge — no obligation.",
+    "reportModalBody": "Like “Change quest,” this uses a today reroll or a bonus credit. You'll get a short quest you can do today. Pick a target date (within the next {maxDays} days) for a bolder or social challenge — no obligation.",
     "reportDateLabel": "Target date",
     "cancel": "Cancel",
     "confirm": "Confirm",
     "abandonModalTitle": "Skip this card?",
-    "abandonModalBody": "That’s fine: your streak goes back to zero, with no penalty. A new quest awaits tomorrow.",
+    "abandonModalBody": "That's fine: your streak goes back to zero, with no penalty. A new quest awaits tomorrow.",
     "back": "Back",
     "bannerDismiss": "OK",
     "safetyTitle": "🛡️ Before you head out…",
@@ -328,13 +328,13 @@
     "safetyRule2": "I will not enter private property.",
     "safetyRule3": "I will check weather conditions before leaving.",
     "safetyRule4": "I trust my instinct — if it feels risky, I skip.",
-    "safetyRule5": "I’ve told someone my route (optional but recommended).",
+    "safetyRule5": "I've told someone my route (optional but recommended).",
     "safetyNotToday": "Not today",
-    "safetyLetsGo": "Let’s go!",
+    "safetyLetsGo": "Let's go!",
     "shareDefaultName": "Adventurer"
   },
   "AppProfile": {
-    "backToQuest": "← Back to today’s quest",
+    "backToQuest": "← Back to today's quest",
     "linkShop": "Shop",
     "title": "Profile",
     "levelLabel": "Level",
@@ -446,7 +446,7 @@
     "walletFooterAfter": "."
   },
   "AppShop": {
-    "back": "← Back to today’s quest",
+    "back": "← Back to today's quest",
     "title": "Shop",
     "err401": "Sign in to open the shop.",
     "errProfile": "Profile not found.",
@@ -520,10 +520,10 @@
   },
   "AuthSignIn": {
     "metadataTitle": "Sign in",
-    "metadataDescription": "Sign in to Questia to open today’s quest and keep your streak.",
+    "metadataDescription": "Sign in to Questia to open today's quest and keep your streak.",
     "badge": "Pick up where you left off",
     "title": "Welcome back, adventurer ⚔️",
-    "subtitle": "Sign in to see today’s quest and your streak.",
+    "subtitle": "Sign in to see today's quest and your streak.",
     "footerPrompt": "No account yet?",
     "footerLink": "Create a free account"
   },

@@ -15,7 +15,7 @@ export type GeocodeOptions = {
   viewboxDeltaDeg?: number;
 };
 
-/** Réduit un display_name Nominatim pour l’UI (évite les chaînes interminables). */
+/** Réduit un display_name Nominatim pour l'UI (évite les chaînes interminables). */
 export function shortenDisplayName(displayName: string, maxLen = 64): string {
   const parts = displayName.split(',').map((p) => p.trim());
   const short = parts.slice(0, 2).join(', ');
@@ -67,7 +67,7 @@ async function nominatimSearch(
 
 /**
  * Géocodage via Nominatim (OSM). Usage raisonné côté serveur uniquement.
- * Si `nearLat` / `nearLon` sont fournis, la recherche est d’abord restreinte à une zone autour de l’utilisateur.
+ * Si `nearLat` / `nearLon` sont fournis, la recherche est d'abord restreinte à une zone autour de l'utilisateur.
  * @see https://operations.osmfoundation.org/policies/nominatim/
  */
 export async function geocodeNominatim(

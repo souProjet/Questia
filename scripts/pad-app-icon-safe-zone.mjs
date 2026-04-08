@@ -1,5 +1,5 @@
 /**
- * Recadre l’icône app sur un canvas 1024×1024 avec marge « safe zone »
+ * Recadre l'icône app sur un canvas 1024×1024 avec marge « safe zone »
  * (évite le rognage par les masques circulaires / coins arrondis iOS & Android adaptive).
  *
  * Usage :

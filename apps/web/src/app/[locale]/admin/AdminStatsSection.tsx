@@ -637,7 +637,7 @@ export default function AdminStatsSection() {
             subtitle={
               stats.shopMode === 'eur'
                 ? 'Somme des paiements en euros (centimes > 0), hors achats entièrement en QC.'
-                : 'Somme des QC débités sur les achats payés en monnaie virtuelle (pas d’argent réel).'
+                : "Somme des QC débités sur les achats payés en monnaie virtuelle (pas d'argent réel)."
             }
           >
             <div className="mb-4 flex flex-wrap items-baseline gap-3">

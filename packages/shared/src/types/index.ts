@@ -44,10 +44,10 @@ export type PsychologicalCategory =
 // Comfort zone exit level
 export type ComfortLevel = 'low' | 'moderate' | 'high' | 'extreme';
 
-/** Rythme d’archétype : faisable dans la journée vs à planifier (social, longue durée, etc.) */
+/** Rythme d'archétype : faisable dans la journée vs à planifier (social, longue durée, etc.) */
 export type QuestPace = 'instant' | 'planned';
 
-/** Langue d’affichage / génération côté app (taxonomie + IA). */
+/** Langue d'affichage / génération côté app (taxonomie + IA). */
 export type AppLocale = 'fr' | 'en';
 
 // Quest model (entrée de la taxonomie des quêtes)

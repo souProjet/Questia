@@ -65,7 +65,7 @@ describe('questShareBackgrounds', () => {
 });
 
 describe('isValidReportDeferredDate', () => {
-  it('accepte aujourd’hui et la borne +14 jours', () => {
+  it("accepte aujourd'hui et la borne +14 jours", () => {
     expect(isValidReportDeferredDate('2026-03-24', '2026-03-24')).toBe(true);
     expect(isValidReportDeferredDate('2026-04-07', '2026-03-24')).toBe(true);
   });

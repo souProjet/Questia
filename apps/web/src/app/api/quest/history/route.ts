@@ -14,7 +14,7 @@ function parseOffset(sp: URLSearchParams): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-/** Sans `limit` : une seule requête jusqu’à 200 entrées (comportement historique). Avec `limit` + `offset` : pagination. */
+/** Sans `limit` : une seule requête jusqu'à 200 entrées (comportement historique). Avec `limit` + `offset` : pagination. */
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });

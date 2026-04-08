@@ -2,7 +2,7 @@
  * Catalogue boutique (Quest Coins).
  *
  * **Ajouter un produit sans toucher au CSS :**
- * 1. Titres : ajouter l’id dans `shop/titles.ts` (TITLES_REGISTRY), puis une entrée `kind: 'title'` avec `grants: { titles: ['id'] }`.
+ * 1. Titres : ajouter l'id dans `shop/titles.ts` (TITLES_REGISTRY), puis une entrée `kind: 'title'` avec `grants: { titles: ['id'] }`.
  * 2. Bonus XP : `kind: 'xp_booster'` et `grants: { xpBonusCharges: N }` (consommé à chaque quête validée).
  * 3. Relances : `grants.bonusRerolls`.
  * 4. Thèmes : préférer **un** `theme_pack` qui liste plusieurs `themes: [...]` — les styles sont dans `globals.css` (`data-theme`), pas un fichier par SKU.
@@ -29,7 +29,7 @@ export interface ShopCatalogEntry {
     bonusRerolls?: number;
     /** ids présents dans TITLES_REGISTRY */
     titles?: string[];
-    /** +XP_SHOP_BONUS_PER_CHARGE XP par quête validée, jusqu’à épuisement */
+    /** +XP_SHOP_BONUS_PER_CHARGE XP par quête validée, jusqu'à épuisement */
     xpBonusCharges?: number;
   };
   /** Mise en avant, économies bundle, etc. */
@@ -40,7 +40,7 @@ export interface ShopCatalogEntry {
   contentsDetail?: string;
 }
 
-/** Ré-export utile pour l’UI (info bulle) */
+/** Ré-export utile pour l'UI (info bulle) */
 export { XP_SHOP_BONUS_PER_CHARGE };
 
 export const SHOP_CATALOG: ShopCatalogEntry[] = [
@@ -49,13 +49,13 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     kind: 'theme_pack',
     name: 'Pack thèmes premium',
     description:
-      'Débloque les trois thèmes d’app payants d’un coup : couleurs et ambiance des écrans changent (profil, boutique, quête du jour).',
+      "Débloque les trois thèmes d'app payants d'un coup : couleurs et ambiance des écrans changent (profil, boutique, quête du jour).",
     priceCoins: 750,
     emoji: '🎨',
     grants: { themes: ['midnight', 'aurora', 'parchment'] },
     includedItems: [
       '3 thèmes visuels : Nuit boréale, Aurore, Parchemin',
-      'S’applique à l’interface (boutons, fonds) — pas au texte des quêtes',
+      "S'applique à l'interface (boutons, fonds) — pas au texte des quêtes",
       'Tu les actives dans les réglages une fois achetés',
     ],
     contentsDetail:
@@ -97,7 +97,7 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     grants: { titles: ['anchor', 'comet', 'heart'] },
     includedItems: [
       '3 titres : Ancre, Comète, Cœur',
-      'Tu n’en affiches qu’un à la fois dans les réglages',
+      "Tu n'en affiches qu'un à la fois dans les réglages",
     ],
     contentsDetail:
       'Chaque titre est un couple icône + mot. Idéal si tu veux plusieurs looks sans racheter un par un.',
@@ -112,7 +112,7 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     sku: 'xp_booster_5',
     kind: 'xp_booster',
     name: 'Surcharge XP ×5',
-    description: `À chaque quête que tu coches « terminée », tu reçois +${XP_SHOP_BONUS_PER_CHARGE} XP en plus du calcul habituel — 5 fois, puis c’est fini.`,
+    description: `À chaque quête que tu coches « terminée », tu reçois +${XP_SHOP_BONUS_PER_CHARGE} XP en plus du calcul habituel — 5 fois, puis c'est fini.`,
     priceCoins: 350,
     emoji: '⚡',
     grants: { xpBonusCharges: 5 },
@@ -121,7 +121,7 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
       '5 utilisations : une charge consommée à chaque validation',
     ],
     contentsDetail:
-      'Le bonus se déclenche uniquement quand tu marques une quête comme faite. Si tu abandonnes ou ignores, la charge n’est pas utilisée.',
+      "Le bonus se déclenche uniquement quand tu marques une quête comme faite. Si tu abandonnes ou ignores, la charge n'est pas utilisée.",
     marketing: { badge: 'starter', hook: 'Bon pour tester le bonus sans gros engagement.' },
   },
   {
@@ -157,18 +157,18 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     includedItems: [
       '3 relances stockées sur ton compte',
       'N\'expirent pas : tu les utilises quand tu veux',
-      'S’ajoutent à ta relance quotidienne incluse',
+      "S'ajoutent à ta relance quotidienne incluse",
     ],
     contentsDetail:
-      'Utile si la quête du jour ne te convient pas : une relance consomme un crédit et en génère une nouvelle. Les crédits restent jusqu’à utilisation.',
+      "Utile si la quête du jour ne te convient pas : une relance consomme un crédit et en génère une nouvelle. Les crédits restent jusqu'à utilisation.",
   },
   {
-    /** Un seul achat en QC par compte une fois tout le contenu « permanent » obtenu ; avant le 1er achat du SKU, achetable même si thèmes / titre déjà pris à l’unité (pour les bonus XP du lot). */
+    /** Un seul achat en QC par compte une fois tout le contenu « permanent » obtenu ; avant le 1er achat du SKU, achetable même si thèmes / titre déjà pris à l'unité (pour les bonus XP du lot). */
     sku: 'bundle_explorer',
     kind: 'bundle',
     name: 'Bundle Explorateur',
     description:
-      'Un lot : les trois thèmes d’interface, 5 charges de bonus XP et le titre Étincelle.',
+      "Un lot : les trois thèmes d'interface, 5 charges de bonus XP et le titre Étincelle.",
     priceCoins: 1390,
     emoji: '🧭',
     grants: {
@@ -185,7 +185,7 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
       'Tu débloques tout le visuel, un peu de XP en rabais sur les prochaines validations, et un titre à afficher. Les thèmes et le titre se règlent dans les préférences.',
     marketing: {
       badge: 'featured',
-      hook: 'Plus avantageux que d’acheter chaque pièce séparément.',
+      hook: "Plus avantageux que d'acheter chaque pièce séparément.",
       savingsCoins: 190,
       compareAtCoins: 1580,
     },

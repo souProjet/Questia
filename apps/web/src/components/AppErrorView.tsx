@@ -10,12 +10,12 @@ type AppErrorViewProps = {
 };
 
 /**
- * UI d’erreur partagée entre `error.tsx` et `global-error.tsx` (même charte que le reste du site).
+ * UI d'erreur partagée entre `error.tsx` et `global-error.tsx` (même charte que le reste du site).
  */
 export function AppErrorView({
   reset,
   title = 'Un problème est survenu',
-  description = 'Quelque chose s’est mal passé. Tu peux réessayer ou retourner à l’accueil.',
+  description = "Quelque chose s'est mal passé. Tu peux réessayer ou retourner à l'accueil.",
 }: AppErrorViewProps) {
   return (
     <main className="flex min-h-[100dvh] flex-col items-center justify-center px-4 py-12">

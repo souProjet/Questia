@@ -16,7 +16,7 @@ const TAB_ICONS: Record<
 > = {
   home: { inactive: 'home-outline', active: 'home' },
   shop: { inactive: 'cart-outline', active: 'cart' },
-  /** Liste / fil d’historique — plus homogène avec home · cart · person que journal-outline */
+  /** Liste / fil d'historique — plus homogène avec home · cart · person que journal-outline */
   history: { inactive: 'list-outline', active: 'list' },
   profile: { inactive: 'person-outline', active: 'person' },
 };
@@ -27,7 +27,7 @@ const FALLBACK_ICONS: { inactive: IonName; active: IonName } = {
 };
 
 /**
- * Barre d’onglets maison : libellés toujours visibles (sous l’icône),
+ * Barre d'onglets maison : libellés toujours visibles (sous l'icône),
  * sans dépendre du calcul de hauteur interne de React Navigation.
  */
 export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarProps) {

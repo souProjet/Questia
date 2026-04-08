@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Hook EAS : sans EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY dans l’environnement du build,
- * l’APK embarque une clé vide → écrans Clerk instables ou crash en prod.
+ * Hook EAS : sans EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY dans l'environnement du build,
+ * l'APK embarque une clé vide → écrans Clerk instables ou crash en prod.
  *
  * Définis la variable sur expo.dev (Environment variables) ou `eas env:create`,
  * même valeur que NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (web).

@@ -21,7 +21,7 @@ const Q1_OPTIONS = [
     id: 'explorer' as ExplorerAxis,
     icon: 'Globe' as const,
     title: 'Je pars explorer.',
-    desc: 'Nouveaux spots, imprévus, j’adore.',
+    desc: "Nouveaux spots, imprévus, j'adore.",
   },
 ];
 
@@ -35,7 +35,7 @@ const Q2_OPTIONS = [
   {
     id: 'risktaker' as RiskAxis,
     icon: 'Dices' as const,
-    title: 'J’improvise, je fonce.',
+    title: "J'improvise, je fonce.",
     desc: 'Plan foiré = souvent le meilleur moment.',
   },
 ];

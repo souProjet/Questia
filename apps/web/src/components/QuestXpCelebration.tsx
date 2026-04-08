@@ -157,7 +157,7 @@ export function QuestXpCelebration({
           aria-modal="true"
           aria-labelledby="xp-celebration-title"
         >
-        {/* Anneaux d’impact */}
+        {/* Anneaux d'impact */}
         {!reducedMotion ? (
           <div className="pointer-events-none absolute left-1/2 top-[36%] z-0 h-48 w-48 -translate-x-1/2 -translate-y-1/2 motion-reduce:hidden" aria-hidden>
             <div className="absolute inset-0 rounded-full border-4 border-amber-400/50 motion-safe:animate-quest-ring-pulse motion-reduce:hidden [animation-delay:0ms]" />
@@ -224,7 +224,7 @@ export function QuestXpCelebration({
               </p>
               {levelInfo.levelsGained > 1 ? (
                 <p className="mt-1 text-xs font-bold text-amber-900/90">
-                  +{levelInfo.levelsGained} niveaux d’un coup !
+                  +{levelInfo.levelsGained} niveaux d'un coup !
                 </p>
               ) : (
                 <p className="mt-1 text-xs font-bold text-[var(--on-cream-muted)]">Palier de progression débloqué</p>
@@ -272,7 +272,7 @@ export function QuestXpCelebration({
               />
             </div>
             <p className="mt-2 text-[10px] font-semibold leading-snug text-[var(--on-cream-subtle)]">
-              Même barre que sur l’accueil : elle se remplit dans ton niveau actuel, puis repart à zéro si tu passes au
+              Même barre que sur l'accueil : elle se remplit dans ton niveau actuel, puis repart à zéro si tu passes au
               niveau suivant.
             </p>
           </div>

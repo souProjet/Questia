@@ -9,7 +9,7 @@ function isAppOrAdminPath(path: string | null) {
 
 /**
  * Transition légère entre les routes (landing, onboarding, auth…).
- * Pas d’animation sur chaque navigation dans /app ou /admin pour éviter la fatigue visuelle.
+ * Pas d'animation sur chaque navigation dans /app ou /admin pour éviter la fatigue visuelle.
  */
 export default function RootTemplate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

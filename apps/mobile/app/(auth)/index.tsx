@@ -204,7 +204,7 @@ export default function AuthScreen() {
           <View style={s.onboardingHint}>
             <Text style={s.onboardingHintTitle}>2 petites questions ?</Text>
             <Text style={s.onboardingHintBody}>
-              Sur l’accueil — pour des quêtes à ton goût. Rapide et optionnel si tu préfères zapper.
+              Sur l'accueil — pour des quêtes à ton goût. Rapide et optionnel si tu préfères zapper.
             </Text>
             <Pressable
               style={({ pressed }) => [s.onboardingHintBtn, pressed && s.buttonPressed]}

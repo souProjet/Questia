@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
 
-/** Ordre : master HD d’abord, puis export courant. */
+/** Ordre : master HD d'abord, puis export courant. */
 const CANDIDATE_SOURCES = [
   join(root, 'apps/web/public/brand/questia-logo-source.png'),
   join(root, 'apps/web/src/app/Questia.png'),

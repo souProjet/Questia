@@ -7,7 +7,7 @@ import { trackMobileEvent } from './track';
 const SIGNUP_FLAG = 'questia_analytics_signup_done';
 
 /**
- * Aligné sur le web : login une fois par « session » app (tant que l’écran reste monté),
+ * Aligné sur le web : login une fois par « session » app (tant que l'écran reste monté),
  * sign_up si le compte a moins de 10 min et pas déjà signalé pour cet id.
  */
 export function ClerkSessionAnalytics() {

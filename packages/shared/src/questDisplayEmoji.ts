@@ -1,5 +1,5 @@
 /**
- * L’IA renvoie un nom d’icône Lucide (`icon`), stocké côté API dans `generatedEmoji`.
+ * L'IA renvoie un nom d'icône Lucide (`icon`), stocké côté API dans `generatedEmoji`.
  * Pour les cartes type « landing », on affiche un vrai emoji Unicode.
  */
 export const QUEST_LUCIDE_ICON_TO_EMOJI: Record<string, string> = {
@@ -22,7 +22,7 @@ export const QUEST_LUCIDE_ICON_TO_EMOJI: Record<string, string> = {
 
 const DEFAULT_QUEST_EMOJI = '⚔️';
 
-/** Nom d’icône PascalCase ou chaîne déjà emoji */
+/** Nom d'icône PascalCase ou chaîne déjà emoji */
 export function questDisplayEmoji(raw: string | null | undefined): string {
   if (raw == null || raw === '') return DEFAULT_QUEST_EMOJI;
   const t = raw.trim();

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * Enregistre une URL de redirection autorisée sur l’instance Clerk (nécessaire pour OAuth
- * Expo : exp://… ou schéma perso questia://…). L’UI du dashboard ne l’expose pas toujours ;
- * l’API Backend est la méthode fiable.
+ * Enregistre une URL de redirection autorisée sur l'instance Clerk (nécessaire pour OAuth
+ * Expo : exp://… ou schéma perso questia://…). L'UI du dashboard ne l'expose pas toujours ;
+ * l'API Backend est la méthode fiable.
  *
  * Prérequis : CLERK_SECRET_KEY (Dashboard Clerk → Configure → API Keys → Secret keys).
- * Ne jamais committer cette clé ni la mettre dans l’app mobile.
+ * Ne jamais committer cette clé ni la mettre dans l'app mobile.
  *
  * Usage (PowerShell) :
  *   $env:CLERK_SECRET_KEY="sk_test_..."; node scripts/clerk-add-redirect-url.mjs "exp://10.193.26.85:8081/--/(auth)"
@@ -46,7 +46,7 @@ if (!res.ok) {
   process.exit(1);
 }
 
-console.log('URL enregistrée sur l’instance Clerk :');
+console.log('URL enregistrée sur l'instance Clerk :');
 console.log(url);
 try {
   console.log(JSON.stringify(JSON.parse(text), null, 2));

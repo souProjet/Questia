@@ -110,7 +110,7 @@ describe('withTiming', () => {
     expect(logSpy).not.toHaveBeenCalled();
   });
 
-  it('relance l’erreur après log', async () => {
+  it("relance l'erreur après log", async () => {
     await expect(
       withTiming('geo', 'op', async () => {
         throw new Error('fail');

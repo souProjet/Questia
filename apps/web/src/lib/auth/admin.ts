@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 
 /**
  * Accès admin : uniquement `profiles.role === 'admin'` (Prisma Studio, SQL, migration, etc.).
- * Aucune variable d’environnement : une seule source de vérité en base.
+ * Aucune variable d'environnement : une seule source de vérité en base.
  */
 
 export async function isAdminClerkId(clerkId: string): Promise<boolean> {

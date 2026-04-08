@@ -59,7 +59,7 @@ model Profile {
   flagNextQuestAfterReroll Boolean      @default(false) @map("flag_next_quest_after_reroll")
   /** Archétype à exclure à la prochaine génération (après relance / report — évite de retomber sur la même quête). */
   rerollExcludeArchetypeId Int?          @map("reroll_exclude_archetype_id")
-  /** Archétypes déjà proposés dans la journée (relances successives) — cumul jusqu’à la prochaine quête enregistrée. JSON number[]. */
+  /** Archétypes déjà proposés dans la journée (relances successives) — cumul jusqu'à la prochaine quête enregistrée. JSON number[]. */
   rerollExcludeArchetypeIds Json         @default("[]") @map("reroll_exclude_archetype_ids")
   /** Après « Reporter » : la prochaine génération impose un archétype instantané */
   flagNextQuestInstantOnly Boolean      @default(false) @map("flag_next_quest_instant_only")

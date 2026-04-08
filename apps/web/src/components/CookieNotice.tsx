@@ -31,7 +31,7 @@ export function CookieNotice() {
     >
       <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <p id="cookie-notice-title" className="min-w-0 text-sm leading-relaxed text-[var(--muted)]">
-          Ce site utilise des cookies pour le fonctionnement et, si tu l’acceptes, pour la mesure d’audience et la
+          Ce site utilise des cookies pour le fonctionnement et, si tu l'acceptes, pour la mesure d'audience et la
           publicité.{' '}
           <Link href="/legal/confidentialite#cookies" className="font-semibold text-[var(--orange)] hover:underline">
             En savoir plus

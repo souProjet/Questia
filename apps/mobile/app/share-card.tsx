@@ -177,13 +177,13 @@ export default function ShareCardScreen() {
       }
       const data = await res.json() as DailyQuest;
       if (data.status !== 'completed') {
-        setError('Valide d’abord la quête — la carte sera disponible ensuite.');
+        setError('Valide d'abord la quête — la carte sera disponible ensuite.');
         setQuest(null);
         return;
       }
       setQuest(data);
     } catch {
-      setError('Impossible de joindre l’API.');
+      setError('Impossible de joindre l'API.');
       setQuest(null);
     } finally {
       setLoading(false);
@@ -205,7 +205,7 @@ export default function ShareCardScreen() {
   const pickFromLibrary = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Accès refusé', 'Autorise l’accès à la photothèque pour choisir une image.');
+      Alert.alert('Accès refusé', 'Autorise l'accès à la photothèque pour choisir une image.');
       return;
     }
     const res = await ImagePicker.launchImageLibraryAsync(pickerOptions);
@@ -220,7 +220,7 @@ export default function ShareCardScreen() {
   const takePhoto = useCallback(async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Accès refusé', 'Autorise l’accès à l’appareil photo pour prendre une image.');
+      Alert.alert('Accès refusé', 'Autorise l'accès à l'appareil photo pour prendre une image.');
       return;
     }
     try {
@@ -234,7 +234,7 @@ export default function ShareCardScreen() {
     } catch (e) {
       Alert.alert(
         'Appareil photo',
-        e instanceof Error ? e.message : 'Impossible d’ouvrir l’appareil photo sur cet appareil.',
+        e instanceof Error ? e.message : 'Impossible d'ouvrir l'appareil photo sur cet appareil.',
       );
     }
   }, []);
@@ -355,7 +355,7 @@ export default function ShareCardScreen() {
           });
           hapticMedium();
         } else {
-          Alert.alert('Partage indisponible', 'Le partage n’est pas disponible sur cet appareil.');
+          Alert.alert('Partage indisponible', 'Le partage n'est pas disponible sur cet appareil.');
         }
       }
     } catch (e) {
@@ -390,7 +390,7 @@ export default function ShareCardScreen() {
       if (e instanceof Error) {
         Alert.alert('Partage du lien', e.message);
       } else {
-        Alert.alert('Partage indisponible', 'Le partage n’est pas disponible sur cet appareil.');
+        Alert.alert('Partage indisponible', 'Le partage n'est pas disponible sur cet appareil.');
       }
     } finally {
       setSharingLink(false);
@@ -537,7 +537,7 @@ export default function ShareCardScreen() {
             pressed && styles.photoAddWrapPressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Ajouter une photo depuis la galerie ou l’appareil photo"
+          accessibilityLabel="Ajouter une photo depuis la galerie ou l'appareil photo"
         >
           <LinearGradient
             colors={photoAddGrad}
@@ -849,7 +849,7 @@ export default function ShareCardScreen() {
   );
 }
 
-/** Met à l’échelle les mesures de la carte (référence 360 px de large) pour petits écrans. */
+/** Met à l'échelle les mesures de la carte (référence 360 px de large) pour petits écrans. */
 function sc(cardScale: number, n: number, opts?: { min?: number; max?: number }) {
   const v = Math.round(n * cardScale);
   if (opts?.min != null) return Math.max(opts.min, v);
@@ -924,7 +924,7 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
     shadowRadius: 12,
     elevation: 6,
   },
-  /** Sur minuit : pas d’élévation sur le même nœud que le LinearGradient (artefacts Android) — bordure à la place. */
+  /** Sur minuit : pas d'élévation sur le même nœud que le LinearGradient (artefacts Android) — bordure à la place. */
   photoAddWrapMidnight: {
     elevation: 0,
     shadowOpacity: 0,

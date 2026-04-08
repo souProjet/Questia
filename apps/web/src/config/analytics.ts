@@ -3,7 +3,7 @@
  * Voir `docs/marketing-analytics.md` pour la configuration GTM, GA4, Meta.
  *
  * Chaque variable doit être lue avec `process.env.NEXT_PUBLIC_*` en **nom explicite**.
- * Un accès du type `process.env[key]` n’est pas « inliné » au build par Next.js : les valeurs
+ * Un accès du type `process.env[key]` n'est pas « inliné » au build par Next.js : les valeurs
  * restent vides dans le bundle client même si Vercel les fournit.
  */
 function trimEnv(v: string | undefined): string | undefined {

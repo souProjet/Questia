@@ -211,7 +211,7 @@ export function ProfileRefinementModal({
                   })}
                 </div>
                 <p className="text-[11px] text-center text-[var(--on-cream-subtle)] mt-4">
-                  Un choix t’emmène à l’étape suivante automatiquement
+                  Un choix t'emmène à l'étape suivante automatiquement
                 </p>
               </div>
             ) : (
@@ -227,7 +227,7 @@ export function ProfileRefinementModal({
                     Presque fini
                   </p>
                   <p className="text-sm text-[var(--on-cream-muted)] mt-1 leading-relaxed">
-                    Confirme que tu es d’accord pour qu’on utilise ces préférences pour tes quêtes.
+                    Confirme que tu es d'accord pour qu'on utilise ces préférences pour tes quêtes.
                   </p>
                 </div>
                 <label className="flex items-start gap-3 p-4 rounded-2xl cursor-pointer border border-[var(--border-ui)] bg-white/55 backdrop-blur-sm">

@@ -23,7 +23,7 @@ export type GlobalStatsPayload = {
   /** Mode demandé pour la boutique (voir séries ci-dessous). */
   shopMode: ShopMetricsMode;
   /**
-   * EUR : centimes d’argent réel par jour (Stripe uniquement : `amount_cents > 0`).
+   * EUR : centimes d'argent réel par jour (Stripe uniquement : `amount_cents > 0`).
    * QC : Quest Coins dépensés par jour (achats `coin_purchase` payés).
    */
   shopPrimaryPerDay: number[];

@@ -11,7 +11,7 @@ type LandingRevealProps = {
 
 /**
  * Fait apparaître le contenu au scroll (léger fade + translate).
- * Désactivé si l’utilisateur préfère moins de mouvement.
+ * Désactivé si l'utilisateur préfère moins de mouvement.
  */
 export function LandingReveal({ children, className = '', delayMs = 0 }: LandingRevealProps) {
   const ref = useRef<HTMLDivElement>(null);

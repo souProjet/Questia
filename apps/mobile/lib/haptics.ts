@@ -23,7 +23,7 @@ export function hapticHeavy() {
   run(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy));
 }
 
-/** Changement d’onglet, sélecteur, puce */
+/** Changement d'onglet, sélecteur, puce */
 export function hapticSelection() {
   run(() => Haptics.selectionAsync());
 }

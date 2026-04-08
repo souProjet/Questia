@@ -91,7 +91,7 @@ export function QuestDetailDrawer({
       }
     });
 
-  /** [SNAP_TOP, SNAP_BOTTOM] → [0, 800] : à l’ouverture translateY = 0 (avant [0,1] laissait ~144px de décalage). */
+  /** [SNAP_TOP, SNAP_BOTTOM] → [0, 800] : à l'ouverture translateY = 0 (avant [0,1] laissait ~144px de décalage). */
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [
       {

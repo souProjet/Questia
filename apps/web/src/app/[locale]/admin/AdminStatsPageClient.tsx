@@ -116,13 +116,13 @@ export default function AdminStatsPageClient() {
           <AdminStat label="Comptes admin" value={d.adminProfilesCount} hint="rôle administrateur" accent="violet" icon="✦" />
           <AdminStat label="Inscriptions 7 j." value={d.profilesLast7Days} hint="nouveaux profils" accent="orange" icon="📈" />
           <AdminStat
-            label="Quêtes générées aujourd’hui"
+            label="Quêtes générées aujourd'hui"
             value={d.questLogsForToday}
             hint={`jour ${d.todayUtc} (UTC)`}
             accent="violet"
             icon="📜"
           />
-          <AdminStat label="Complétions aujourd’hui" value={d.completedToday} hint="tous utilisateurs" accent="cyan" icon="✓" />
+          <AdminStat label="Complétions aujourd'hui" value={d.completedToday} hint="tous utilisateurs" accent="cyan" icon="✓" />
           <AdminStat label="Complétions (total)" value={d.totalCompletedQuests} hint="historique" accent="orange" icon="🏆" />
           <AdminStat label="QC en circulation" value={d.totalCoinsInEconomy} hint="somme des soldes" accent="emerald" icon="🪙" />
           <AdminStat label="Transactions boutique" value={d.shopTransactionsCount} hint="paiements / portefeuille" accent="cyan" icon="🛒" />

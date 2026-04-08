@@ -15,8 +15,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 /**
- * Layout racine minimal : pas d’appels `getLocale()` / `getMessages()` ici — la locale
- * n’est connue qu’après le segment `[locale]` (sinon erreur 500 avec next-intl).
+ * Layout racine minimal : pas d'appels `getLocale()` / `getMessages()` ici — la locale
+ * n'est connue qu'après le segment `[locale]` (sinon erreur 500 avec next-intl).
  * `lang` côté serveur via middleware (`x-questia-locale`) ; `<HtmlLang />` aligne les navigations client.
  */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

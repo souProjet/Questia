@@ -43,7 +43,7 @@ async function fetchFootRoute(
 export default function QuestDestinationMap({
   destination,
   userPosition,
-  /** Carte plus basse (ex. panneau détail mobile) pour ne pas saturer l’écran */
+  /** Carte plus basse (ex. panneau détail mobile) pour ne pas saturer l'écran */
   compact = false,
 }: {
   destination: QuestDestinationPayload;
@@ -122,7 +122,7 @@ export default function QuestDestinationMap({
             : destination.label}
         </p>
         <p className="mt-2 text-xs leading-relaxed text-[var(--on-cream-muted)]">
-          Le lieu n’a pas pu être placé sur la carte. Ouvre Google Maps pour t’orienter.
+          Le lieu n'a pas pu être placé sur la carte. Ouvre Google Maps pour t'orienter.
         </p>
         <a
           href={googleMapsHref}
@@ -168,7 +168,7 @@ export default function QuestDestinationMap({
 
       {routeError ? (
         <p className="text-center text-xs text-amber-800/90">
-          L’itinéraire à pied n’a pas pu être calculé. Utilise le lien ci-dessus.
+          L'itinéraire à pied n'a pas pu être calculé. Utilise le lien ci-dessus.
         </p>
       ) : null}
     </div>

@@ -1,5 +1,5 @@
 /**
- * Fuseau IANA : vérifie qu’Intl accepte la valeur (sinon date invalide).
+ * Fuseau IANA : vérifie qu'Intl accepte la valeur (sinon date invalide).
  */
 export function isValidIanaTimeZone(tz: string): boolean {
   const s = tz.trim();
@@ -34,7 +34,7 @@ export function utcCalendarDateString(date: Date): string {
 }
 
 /**
- * True si l’instant `date` tombe dans la fenêtre [start, start+window) en fuseau `timeZone`
+ * True si l'instant `date` tombe dans la fenêtre [start, start+window) en fuseau `timeZone`
  * (prise en charge si la fenêtre dépasse minuit).
  */
 export function isInReminderWindow(
