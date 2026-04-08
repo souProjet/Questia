@@ -34,13 +34,20 @@ export async function generateMetadata({
       locale: locale === 'en' ? 'en_US' : 'fr_FR',
       alternateLocale: locale === 'en' ? ['fr_FR'] : ['en_US'],
       siteName: 'Questia',
-      images: [{ url: '/brand/questia-logo.png', width: 512, height: 512, alt: 'Questia' }],
+      images: [
+        {
+          url: '/og/questia-open-graph.png',
+          width: 1200,
+          height: 630,
+          alt: 'Questia — Quêtes du quotidien dans la vraie vie',
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title: t('twitterTitle'),
       description: twitterDesc,
-      images: ['/brand/questia-logo.png'],
+      images: ['/og/questia-open-graph.png'],
     },
   };
 }

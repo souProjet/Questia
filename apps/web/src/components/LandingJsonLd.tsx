@@ -47,7 +47,7 @@ export async function LandingJsonLd({ locale }: { locale: string }) {
       url: siteUrl,
       description: t('jsonLd.webDescription'),
       inLanguage: locale === 'en' ? 'en-US' : 'fr-FR',
-      image: `${siteUrl}/brand/questia-logo.png`,
+      image: `${siteUrl}/og/questia-open-graph.png`,
     },
     {
       '@type': 'Organization',
