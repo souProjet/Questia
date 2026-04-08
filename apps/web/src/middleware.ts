@@ -42,6 +42,11 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
   }
 
+  /** Sitemap / robots : routes Next.js (`app/sitemap.ts`, `app/robots.ts`) — hors intl + sans Clerk sinon accès cassé (404 / redirect). */
+  if (pathname === '/sitemap.xml' || pathname === '/robots.txt' || /^\/sitemap.*\.xml$/.test(pathname)) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith('/api')) {
     if (!isPublicApiRoute(req)) {
       await auth.protect();
