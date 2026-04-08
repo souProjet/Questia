@@ -6,6 +6,11 @@ const { getDefaultConfig } = require('expo/metro-config');
 const projectRoot = __dirname;
 const monorepoRoot = path.resolve(projectRoot, '../..');
 
+// Sans ceci, getMetroServerRoot() remonte à la racine npm workspaces : Metro résout alors
+// ./index.js depuis la racine du repo (ex. Q:\ ou Questia/) → createBundleReleaseJsAndAssets échoue.
+// On garde la racine serveur = apps/mobile ; watchFolders ci-dessous inclut déjà monorepoRoot.
+process.env.EXPO_NO_METRO_WORKSPACE_ROOT = '1';
+
 // SDK 52+ : ne pas réactiver disableHierarchicalLookup ni nodeModulesPaths manuels :
 // ça casse la résolution des deps hoistées (ex. react-native-screens).
 const config = getDefaultConfig(projectRoot);

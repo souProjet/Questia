@@ -13,6 +13,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "android": "expo run:android",
+    "android:assemble:win": "powershell -ExecutionPolicy Bypass -NoProfile -File ../../scripts/win-android-assemble.ps1",
     "ios": "expo run:ios"
   },
   "dependencies": {
