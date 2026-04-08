@@ -11,7 +11,6 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import * as ClerkExpo from '@clerk/expo';
 import { useRouter } from 'expo-router';
@@ -20,24 +19,34 @@ import { hasOnboardingAnswers } from '../../lib/onboardingGate';
 
 const { useSignIn, useSignUp, useSSO } = ClerkExpo as any;
 
-WebBrowser.maybeCompleteAuthSession();
-
 type AuthMode = 'sign-in' | 'sign-up';
 
 function useWarmUpBrowser() {
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      void WebBrowser.warmUpAsync().catch(() => {});
-      return () => {
-        void WebBrowser.coolDownAsync().catch(() => {});
-      };
-    }
+    if (Platform.OS !== 'android') return;
+    let cancelled = false;
+    let wb: typeof import('expo-web-browser') | null = null;
+    void import('expo-web-browser').then((m) => {
+      if (cancelled) return;
+      wb = m;
+      void m.warmUpAsync().catch(() => {});
+    });
+    return () => {
+      cancelled = true;
+      if (wb) void wb.coolDownAsync().catch(() => {});
+    };
   }, []);
 }
 
 export default function AuthScreen() {
   useWarmUpBrowser();
   const router = useRouter();
+
+  useEffect(() => {
+    void import('expo-web-browser')
+      .then((m) => m.maybeCompleteAuthSession())
+      .catch(() => {});
+  }, []);
 
   const { signIn, isLoaded: signInLoaded, setActive } = useSignIn();
   const { signUp, isLoaded: signUpLoaded } = useSignUp();

@@ -81,10 +81,15 @@
           "photosPermission": "Questia accède à tes photos pour composer ta carte à partager.",
           "cameraPermission": "Questia utilise l'appareil photo pour ta carte à partager."
         }
-      ]
+      ],
+      "./plugins/withAdaptiveIconForegroundInset.js"
     ],
+    "autolinking": {
+      "searchPaths": ["../../node_modules", "./node_modules"]
+    },
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "autolinkingModuleResolution": true
     },
     "jsEngine": "hermes",
     "owner": "souprojet"
