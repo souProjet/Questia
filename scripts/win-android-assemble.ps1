@@ -117,6 +117,11 @@ try {
   if ($gradleArgs -contains 'clean') {
     Write-Host "gradlew.bat --stop (ferme les daemons Gradle, évite IOException sur lint-cache au clean)" -ForegroundColor Yellow
     & .\gradlew.bat --stop
+    $rnScreensBuild = Join-Path $repoRoot 'node_modules\react-native-screens\android\build'
+    if (Test-Path -LiteralPath $rnScreensBuild) {
+      Write-Host "Suppression de $rnScreensBuild (lint-cache Windows souvent verrouillé)..." -ForegroundColor Yellow
+      Remove-Item -LiteralPath $rnScreensBuild -Recurse -Force -ErrorAction SilentlyContinue
+    }
   }
 
   $gradleLine = $gradleArgs -join ' '
