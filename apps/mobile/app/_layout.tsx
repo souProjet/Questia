@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClerkProvider, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Slot, useRouter, useSegments, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { DA } from '@questia/ui';
 import { AppLocaleProvider } from '../contexts/AppLocaleContext';
@@ -38,6 +38,7 @@ function InitialLayout() {
   const { isSignedIn, isLoaded } = useAuth();
   const { statusBarStyle } = useAppTheme();
   const segments = useSegments();
+  const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
@@ -45,13 +46,15 @@ function InitialLayout() {
     const segs = segments as string[];
     const first = segs[0];
     const inAuthGroup = first === '(auth)';
-    const atOnboarding = segs.length === 0 || first === 'index';
+    const path = pathname || '/';
+    const atIndexGate = path === '/' || path === '';
+    const atOnboarding = atIndexGate || path === '/onboarding' || path.startsWith('/onboarding/');
     if (isSignedIn && (inAuthGroup || atOnboarding)) {
       router.replace('/home');
     } else if (!isSignedIn && !inAuthGroup && !atOnboarding) {
       router.replace('/(auth)' as never);
     }
-  }, [isSignedIn, isLoaded, segments, router]);
+  }, [isSignedIn, isLoaded, segments, pathname, router]);
 
   return (
     <>

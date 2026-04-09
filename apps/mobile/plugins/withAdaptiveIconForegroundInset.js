@@ -4,8 +4,8 @@ const { withDangerousMod } = require('expo/config-plugins');
 
 /** Marge horizontale (dp) — un peu moins pour ne pas trop rétrécir le logo. */
 const INSET_HORIZONTAL_DP = 14;
-/** Marge verticale (dp) — plus forte pour laisser voir le fond en haut / bas du masque. */
-const INSET_VERTICAL_DP = 32;
+/** Marge verticale (dp) — icône lanceur Android (écran d’accueil). Canvas adaptatif ≈ 108 dp ; au-delà de ~40 dp le logo devient trop petit. */
+const INSET_VERTICAL_DP = 40;
 
 /**
  * Réduit visuellement le foreground de l’icône adaptative pour laisser respirer le fond

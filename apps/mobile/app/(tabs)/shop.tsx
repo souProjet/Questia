@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  AppState,
   RefreshControl,
   Platform,
   Modal,
@@ -39,7 +38,8 @@ import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { getShopScreenStrings } from '../../lib/shopScreenStrings';
 import { hapticError, hapticLight, hapticSuccess } from '../../lib/haptics';
-import { isExpoWebBrowserNativeAvailable } from '../../lib/webBrowser';
+import { isExpoWebBrowserNativeAvailable, maybeCompleteAuthSession } from '../../lib/webBrowser';
+import * as Linking from 'expo-linking';
 import { trackMobileEvent } from '../../lib/analytics/track';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
@@ -236,7 +236,6 @@ export default function ShopScreen() {
   const [flash, setFlash] = useState<ShopFlash | null>(null);
   const [selectKind, setSelectKind] = useState<null | 'theme' | 'title'>(null);
   const [rechargeModalVisible, setRechargeModalVisible] = useState(false);
-  const stripeOpenedAt = useRef<number | null>(null);
   const stripeCheckoutSku = useRef<string | null>(null);
   const [purchaseHighlightSku, setPurchaseHighlightSku] = useState<string | null>(null);
 
@@ -362,35 +361,6 @@ export default function ShopScreen() {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state !== 'active') return;
-      const t = stripeOpenedAt.current;
-      if (t != null && Date.now() - t < 180_000) {
-        stripeOpenedAt.current = null;
-        const sku = stripeCheckoutSku.current;
-        stripeCheckoutSku.current = null;
-        if (sku) {
-          const pack = getCoinPack(sku);
-          const valueEur = pack ? pack.priceCents / 100 : 0;
-          trackMobileEvent(AnalyticsEvent.purchase, {
-            currency: 'EUR',
-            value: valueEur,
-            transaction_id: `stripe_coin_${sku}_${Date.now()}`,
-            items: [{ item_id: sku, item_name: pack?.name ?? sku }],
-            payment_type: 'stripe',
-          });
-        }
-        void load({ silent: true }).then(() => runPurchaseCelebration());
-        setFlash({
-          message: s.flashPaymentOk,
-          kind: 'info',
-        });
-      }
-    });
-    return () => sub.remove();
-  }, [load, runPurchaseCelebration, s.flashPaymentOk]);
-
   const onRefresh = useCallback(() => {
     hapticLight();
     setRefreshing(true);
@@ -409,9 +379,11 @@ export default function ShopScreen() {
         items: [{ item_id: sku, item_name: pack?.name ?? sku }],
       });
       const token = await getTokenRef.current();
+      await maybeCompleteAuthSession();
+      const returnUrl = Linking.createURL('/shop');
       const res = await apiFetch(`${API_BASE_URL}/api/shop/checkout`, token, {
         method: 'POST',
-        body: JSON.stringify({ sku }),
+        body: JSON.stringify({ sku, stripeReturnUrl: returnUrl }),
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
@@ -420,7 +392,6 @@ export default function ShopScreen() {
         return;
       }
       hapticLight();
-      stripeOpenedAt.current = Date.now();
       stripeCheckoutSku.current = sku;
       if (!isExpoWebBrowserNativeAvailable()) {
         stripeCheckoutSku.current = null;
@@ -430,7 +401,46 @@ export default function ShopScreen() {
       }
       try {
         const WebBrowser = await import('expo-web-browser');
-        await WebBrowser.openBrowserAsync(data.url);
+        const result = await WebBrowser.openAuthSessionAsync(data.url, returnUrl);
+        const skuDone = stripeCheckoutSku.current;
+        stripeCheckoutSku.current = null;
+
+        if (result.type === 'success' && result.url) {
+          let sp: URLSearchParams;
+          try {
+            sp = new URL(result.url).searchParams;
+          } catch {
+            hapticError();
+            setFlash({ message: s.errCheckout, kind: 'error' });
+            return;
+          }
+          if (sp.get('stripe_canceled') === '1') {
+            hapticLight();
+            setFlash({ message: s.flashStripeCanceled, kind: 'info' });
+            return;
+          }
+          if (sp.get('stripe_success') === '1' && skuDone) {
+            const packDone = getCoinPack(skuDone);
+            const valueEur = packDone ? packDone.priceCents / 100 : 0;
+            trackMobileEvent(AnalyticsEvent.purchase, {
+              currency: 'EUR',
+              value: valueEur,
+              transaction_id: `stripe_coin_${skuDone}_${Date.now()}`,
+              items: [{ item_id: skuDone, item_name: packDone?.name ?? skuDone }],
+              payment_type: 'stripe',
+            });
+            await load({ silent: true });
+            await new Promise((r) => setTimeout(r, 2000));
+            await load({ silent: true });
+            runPurchaseCelebration();
+            hapticSuccess();
+            setFlash({ message: s.flashPaymentOk, kind: 'success' });
+            return;
+          }
+        }
+        if (result.type === 'cancel' || result.type === 'dismiss') {
+          hapticLight();
+        }
       } catch {
         stripeCheckoutSku.current = null;
         hapticError();

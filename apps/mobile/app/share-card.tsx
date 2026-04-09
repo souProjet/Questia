@@ -28,7 +28,6 @@ import {
   formatQuestShareEquippedTitleLine,
   formatQuestShareProgressionLine,
   getQuestShareBackgroundById,
-  questDisplayEmoji,
 } from '@questia/shared';
 import {
   colorWithAlpha,
@@ -96,10 +95,9 @@ async function apiFetch(
   return fetch(url, { ...options, headers });
 }
 
-function truncate(s: string, max: number): string {
-  const t = s.trim();
-  if (t.length <= max) return t;
-  return `${t.slice(0, max - 1)}…`;
+/** Thèmes où l’ombre Android + `overflow: hidden` sur un `LinearGradient` crée des artefacts (carrés). */
+function useFlatShareChrome(themeId: string): boolean {
+  return themeId === 'midnight' || themeId === 'aurora';
 }
 
 export default function ShareCardScreen() {
@@ -142,19 +140,20 @@ export default function ShareCardScreen() {
     () => shareScreenPhotoAddGradient(themeId, palette),
     [themeId, palette],
   );
-  /** Voile sur la prévisualisation carte — teintes plus neutres en minuit (moins de décalage avec le fond app). */
+  const flatChrome = useFlatShareChrome(themeId);
+  /** Voile sur la prévisualisation carte — lisibilité sur fonds sombres (export). */
   const cardPreviewOverlayPhoto = useMemo(
     () =>
       themeId === 'midnight'
-        ? (['transparent', 'rgba(2,10,28,0.9)'] as const)
-        : (['transparent', 'rgba(15,23,42,0.85)'] as const),
+        ? (['transparent', 'rgba(4,12,32,0.82)'] as const)
+        : (['transparent', 'rgba(15,23,42,0.78)'] as const),
     [themeId],
   );
   const cardPreviewOverlayNoPhoto = useMemo(
     () =>
       themeId === 'midnight'
-        ? (['rgba(0,0,0,0.22)', 'transparent', 'rgba(0,0,0,0.38)'] as const)
-        : (['rgba(15,23,42,0.08)', 'transparent', 'rgba(15,23,42,0.22)'] as const),
+        ? (['rgba(0,0,0,0.28)', 'transparent', 'rgba(0,0,0,0.45)'] as const)
+        : (['rgba(15,23,42,0.1)', 'transparent', 'rgba(15,23,42,0.26)'] as const),
     [themeId],
   );
   const fallbackWebUrl = useMemo(() => buildWebAppQuestUrl(SITE_PUBLIC), []);
@@ -400,13 +399,35 @@ export default function ShareCardScreen() {
   const first = user?.firstName ?? 'Aventurier·e';
   const bg = getQuestShareBackgroundById(bgId);
   const panelDark = bg.darkForeground && !photoUri;
+  const panelMidnightBoost = panelDark && themeId === 'midnight';
   const panelBg = panelDark
-    ? colorWithAlpha('#0f172a', 0.76)
-    : colorWithAlpha(palette.card, 0.82);
+    ? panelMidnightBoost
+      ? 'rgba(15, 23, 42, 0.94)'
+      : colorWithAlpha('#0f172a', 0.8)
+    : colorWithAlpha(palette.card, 0.9);
   const panelBorder = panelDark
-    ? colorWithAlpha('#ffffff', 0.16)
+    ? panelMidnightBoost
+      ? 'rgba(255, 255, 255, 0.24)'
+      : colorWithAlpha('#ffffff', 0.18)
     : colorWithAlpha('#ffffff', 0.65);
   const scrollBottomPad = 28;
+
+  const shareCardMetaLine = useMemo(() => {
+    if (!quest) return '';
+    const day = shareLocale === 'en' ? `Day ${quest.day}` : `Jour ${quest.day}`;
+    const streak =
+      quest.streak > 0
+        ? shareLocale === 'en'
+          ? ` · Streak ${quest.streak} day${quest.streak !== 1 ? 's' : ''}`
+          : ` · Série ${quest.streak} jour${quest.streak !== 1 ? 's' : ''}`
+        : '';
+    const dur = quest.duration?.trim() ? ` · ${quest.duration.trim()}` : '';
+    return `${day}${streak}${dur}`;
+  }, [quest, shareLocale]);
+
+  const shareCardKicker = shareLocale === 'en' ? 'QUEST' : 'QUÊTE';
+  const shareFooterLine =
+    shareLocale === 'en' ? `${first} · Quest complete` : `${first} · Quête accomplie`;
 
   const photoSheetInner = (
     <>
@@ -533,7 +554,7 @@ export default function ShareCardScreen() {
           onPress={choosePhotoSource}
           style={({ pressed }) => [
             styles.photoAddWrap,
-            themeId === 'midnight' && styles.photoAddWrapMidnight,
+            flatChrome && styles.photoAddWrapFlatChrome,
             pressed && styles.photoAddWrapPressed,
           ]}
           accessibilityRole="button"
@@ -545,9 +566,9 @@ export default function ShareCardScreen() {
             end={{ x: 1, y: 1 }}
             style={styles.photoAddGradient}
           >
-            <Text style={styles.photoAddEmoji} accessibilityElementsHidden>
-              📷
-            </Text>
+            <View style={[styles.photoAddIconWrap, { borderColor: colorWithAlpha(palette.cyan, 0.45) }]}>
+              <Ionicons name="camera-outline" size={26} color={palette.cyan} accessibilityElementsHidden />
+            </View>
             <View style={styles.photoAddTextCol}>
               <Text style={styles.photoAddTitle}>Ajouter une photo</Text>
               <Text style={styles.photoAddSub}>Galerie ou appareil — un coup de pouce pour briller</Text>
@@ -708,20 +729,24 @@ export default function ShareCardScreen() {
               </View>
 
               {!photoUri ? (
-                <View style={styles.cardHero}>
-                  <View style={styles.heroLogoOuter}>
+                <View style={styles.cardBrandStrip}>
+                  <View style={styles.cardBrandStripLogoWrap}>
                     <Image
                       source={require('../assets/icon.png')}
-                      style={styles.heroLogoImg}
+                      style={styles.cardBrandStripLogo}
                       resizeMode="contain"
                       accessibilityIgnoresInvertColors
                     />
                   </View>
-                  <Text style={[styles.heroBrand, panelDark && styles.heroBrandLight]}>QUESTIA</Text>
-                  <Text style={[styles.heroHost, panelDark && styles.heroHostLight]}>{siteHostDisplay(SITE_PUBLIC)}</Text>
+                  <View style={styles.cardBrandStripTextCol}>
+                    <Text style={[styles.cardBrandStripName, panelDark && styles.heroBrandLight]}>QUESTIA</Text>
+                    <Text style={[styles.cardBrandStripHost, panelDark && styles.heroHostLight]} numberOfLines={1}>
+                      {siteHostDisplay(SITE_PUBLIC)}
+                    </Text>
+                  </View>
                 </View>
               ) : (
-                <View style={styles.cardHeroSpacer} />
+                <View style={styles.cardPhotoUpperSpacer} />
               )}
 
               <View
@@ -733,44 +758,96 @@ export default function ShareCardScreen() {
                   },
                 ]}
               >
-                <View style={styles.panelTop}>
-                  <Text style={styles.bigEmoji}>{questDisplayEmoji(quest.emoji)}</Text>
-                  <View style={styles.panelText}>
-                    <Text style={[styles.titleEyebrow, panelDark && styles.titleEyebrowLight]}>
-                      {truncate(quest.title, Math.max(28, Math.floor(56 * cardScale)))}
-                    </Text>
-                    <Text style={[styles.missionHero, panelDark && styles.missionHeroLight]}>
-                      {truncate(quest.mission, Math.max(48, Math.floor(118 * cardScale)))}
-                    </Text>
-                  </View>
+                <Text
+                  style={[
+                    styles.shareCardKicker,
+                    panelDark && styles.shareCardKickerOnDark,
+                    panelMidnightBoost && styles.shareCardKickerNightStrong,
+                  ]}
+                >
+                  {shareCardKicker}
+                </Text>
+                <Text
+                  style={[
+                    styles.shareCardTitle,
+                    panelDark && styles.shareCardTitleOnDark,
+                    panelMidnightBoost && styles.shareCardTitleNightStrong,
+                  ]}
+                  numberOfLines={5}
+                >
+                  {quest.title.trim()}
+                </Text>
+                <Text
+                  style={[
+                    styles.shareCardMissionLabel,
+                    panelDark && styles.shareCardMissionLabelOnDark,
+                    panelMidnightBoost && styles.shareCardMissionLabelNightStrong,
+                  ]}
+                >
+                  Mission
+                </Text>
+                <View style={[styles.shareCardMissionBox, { maxHeight: Math.round(cardH * 0.38) }]}>
+                  <Text
+                    style={[
+                      styles.shareCardMission,
+                      panelDark && styles.shareCardMissionOnDark,
+                      panelMidnightBoost && styles.shareCardMissionNightStrong,
+                    ]}
+                  >
+                    {quest.mission.trim()}
+                  </Text>
                 </View>
-                <Text style={[styles.metaCompact, panelDark && styles.metaCompactLight]}>
-                  Jour {quest.day}
-                  {quest.streak > 0
-                    ? ` · 🔥 ${quest.streak} jour${quest.streak !== 1 ? 's' : ''} de suite`
-                    : ''}
-                </Text>
-                {(() => {
-                  const eq = formatQuestShareEquippedTitleLine(quest.equippedTitleId);
-                  const prog = quest.progression
-                    ? formatQuestShareProgressionLine(
-                        { level: quest.progression.level, totalXp: quest.progression.totalXp },
-                        shareLocale,
-                      )
-                    : null;
-                  if (!eq && !prog) return null;
-                  return (
-                    <Text style={[styles.shareProfileMeta, panelDark && styles.shareProfileMetaLight]}>
-                      {[eq, prog].filter(Boolean).join('\n')}
-                    </Text>
-                  );
-                })()}
-                <Text style={[styles.hook, panelDark && styles.hookLight]}>
-                  « {truncate(quest.hook, Math.max(40, Math.floor(100 * cardScale)))} »
-                </Text>
-                <Text style={[styles.footerName, panelDark && styles.footerNameLight]}>
-                  {shareLocale === 'en' ? `${first} · Quest complete` : `${first} · Quête accomplie`}
-                </Text>
+
+                <View style={styles.panelGrow} />
+
+                <View style={styles.shareCardBottom}>
+                  <View
+                    style={[
+                      styles.shareCardDivider,
+                      panelDark && styles.shareCardDividerOnDark,
+                      panelMidnightBoost && styles.shareCardDividerNightStrong,
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.shareCardMeta,
+                      panelDark && styles.shareCardMetaOnDark,
+                      panelMidnightBoost && styles.shareCardMetaNightStrong,
+                    ]}
+                  >
+                    {shareCardMetaLine}
+                  </Text>
+                  {(() => {
+                    const eq = formatQuestShareEquippedTitleLine(quest.equippedTitleId);
+                    const prog = quest.progression
+                      ? formatQuestShareProgressionLine(
+                          { level: quest.progression.level, totalXp: quest.progression.totalXp },
+                          shareLocale,
+                        )
+                      : null;
+                    if (!eq && !prog) return null;
+                    return (
+                      <Text
+                        style={[
+                          styles.shareCardProgress,
+                          panelDark && styles.shareCardProgressOnDark,
+                          panelMidnightBoost && styles.shareCardProgressNightStrong,
+                        ]}
+                      >
+                        {[eq, prog].filter(Boolean).join('\n')}
+                      </Text>
+                    );
+                  })()}
+                  <Text
+                    style={[
+                      styles.shareCardFooter,
+                      panelDark && styles.shareCardFooterOnDark,
+                      panelMidnightBoost && styles.shareCardFooterNightStrong,
+                    ]}
+                  >
+                    {shareFooterLine}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -781,7 +858,7 @@ export default function ShareCardScreen() {
           disabled={exporting}
           style={({ pressed }) => [
             styles.shareBtnOuter,
-            themeId === 'midnight' && styles.shareBtnOuterMidnight,
+            flatChrome && styles.shareBtnOuterFlatChrome,
             pressed && !exporting && styles.shareBtnOuterPressed,
             exporting && styles.shareBtnOuterBusy,
           ]}
@@ -830,7 +907,7 @@ export default function ShareCardScreen() {
           accessibilityLabel="Fermer"
         />
         <SafeAreaView edges={['bottom']} style={styles.photoSheetSafe}>
-          {themeId === 'midnight' ? (
+          {flatChrome ? (
             <View style={[styles.photoSheetCard, styles.photoSheetCardSolid]}>{photoSheetInner}</View>
           ) : (
             <LinearGradient
@@ -924,13 +1001,13 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
     shadowRadius: 12,
     elevation: 6,
   },
-  /** Sur minuit : pas d'élévation sur le même nœud que le LinearGradient (artefacts Android) — bordure à la place. */
-  photoAddWrapMidnight: {
+  /** Minuit / Aurore : pas d'élévation sur le même nœud que le LinearGradient (artefacts Android). */
+  photoAddWrapFlatChrome: {
     elevation: 0,
     shadowOpacity: 0,
     shadowRadius: 0,
     borderWidth: 1,
-    borderColor: colorWithAlpha(p.cyan, 0.32),
+    borderColor: colorWithAlpha(p.cyan, 0.35),
   },
   photoAddWrapPressed: { opacity: 0.94, transform: [{ scale: 0.99 }] },
   photoAddGradient: {
@@ -943,7 +1020,15 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
     alignItems: 'center',
     gap: 14,
   },
-  photoAddEmoji: { fontSize: 30, lineHeight: 34 },
+  photoAddIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    backgroundColor: colorWithAlpha(p.card, 0.65),
+  },
   photoAddTextCol: { flex: 1, minWidth: 0 },
   photoAddTitle: { fontSize: 17, fontWeight: '900', color: p.linkOnBg, letterSpacing: -0.3 },
   photoAddSub: { fontSize: 12, fontWeight: '600', color: screenMuted, marginTop: 4, lineHeight: 16 },
@@ -1003,6 +1088,7 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
     flex: 1,
     zIndex: 1,
     flexDirection: 'column',
+    minHeight: 0,
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -1020,48 +1106,45 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
     flex: 1,
     textAlign: 'right',
   },
-  cardHero: {
-    flex: 1,
-    minHeight: S(48, { min: 36 }),
-    justifyContent: 'center',
+  /** Bandeau compact (sans photo) : libère de la place pour le texte de mission. */
+  cardBrandStrip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: S(12, { min: 8 }),
-    gap: S(10, { min: 6 }),
+    gap: S(10, { min: 8 }),
+    paddingHorizontal: S(16, { min: 10 }),
+    paddingTop: S(4, { min: 2 }),
+    paddingBottom: S(10, { min: 6 }),
   },
-  cardHeroSpacer: {
-    flex: 1,
-    minHeight: 0,
-  },
-  heroLogoOuter: {
-    width: S(112, { min: 72, max: 112 }),
-    height: S(112, { min: 72, max: 112 }),
-    borderRadius: S(26, { min: 18 }),
-    backgroundColor: p.card,
-    padding: S(10, { min: 6 }),
-    borderWidth: 1,
-    borderColor: colorWithAlpha(p.text, 0.1),
-    justifyContent: 'center',
-    alignItems: 'center',
+  cardBrandStripLogoWrap: {
+    width: S(40, { min: 32 }),
+    height: S(40, { min: 32 }),
+    borderRadius: S(10, { min: 8 }),
     overflow: 'hidden',
+    padding: S(4, { min: 3 }),
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: 'rgba(15,23,42,0.12)',
   },
-  heroLogoImg: {
-    width: '100%',
-    height: '100%',
-  },
-  heroBrand: {
-    fontSize: S(12, { min: 10 }),
+  cardBrandStripLogo: { width: '100%', height: '100%' },
+  cardBrandStripTextCol: { flex: 1, minWidth: 0 },
+  cardBrandStripName: {
+    fontSize: S(11, { min: 9 }),
     fontWeight: '900',
-    letterSpacing: S(3.6, { min: 2.4 }),
+    letterSpacing: S(2.8, { min: 2 }),
     color: p.onCream,
   },
-  heroBrandLight: { color: 'rgba(248,250,252,0.96)' },
-  heroHost: {
-    fontSize: S(13, { min: 11 }),
-    fontWeight: '800',
+  cardBrandStripHost: {
+    fontSize: S(12, { min: 10 }),
+    fontWeight: '700',
     color: p.onCreamMuted,
-    letterSpacing: 0.3,
+    marginTop: S(2),
+    letterSpacing: 0.25,
   },
-  heroHostLight: { color: 'rgba(226,232,240,0.9)' },
+  cardPhotoUpperSpacer: {
+    height: S(8, { min: 4 }),
+  },
+  heroBrandLight: { color: 'rgba(248,250,252,0.98)' },
+  heroHostLight: { color: 'rgba(241,245,249,0.94)' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1, minWidth: 0 },
   brandTextCol: { flex: 1, minWidth: 0, justifyContent: 'center' },
   brandHostOnPhoto: {
@@ -1098,74 +1181,100 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
   },
   dateLight: { color: 'rgba(248,250,252,0.92)' },
   panel: {
+    flex: 1,
+    minHeight: 0,
     marginHorizontal: S(14, { min: 8 }),
-    marginBottom: S(16, { min: 10 }),
+    marginBottom: S(14, { min: 10 }),
     borderRadius: S(20, { min: 14 }),
-    padding: S(15, { min: 10 }),
+    padding: S(14, { min: 10 }),
+    paddingBottom: S(12, { min: 8 }),
     borderWidth: 1,
   },
-  panelTop: {
-    flexDirection: 'row',
-    gap: S(12, { min: 8 }),
-    alignItems: 'flex-start',
-    marginBottom: S(12, { min: 8 }),
-  },
-  bigEmoji: { fontSize: S(40, { min: 28 }), lineHeight: S(44, { min: 32 }), marginTop: S(2) },
-  panelText: { flex: 1 },
-  titleEyebrow: {
-    fontSize: S(10, { min: 8 }),
-    fontWeight: '800',
-    letterSpacing: S(2.2, { min: 1.4 }),
+  shareCardKicker: {
+    fontSize: S(9, { min: 8 }),
+    fontWeight: '900',
+    letterSpacing: S(2, { min: 1.4 }),
     color: p.onCreamMuted,
-    marginBottom: S(8, { min: 5 }),
     textTransform: 'uppercase',
+    marginBottom: S(6, { min: 4 }),
   },
-  titleEyebrowLight: { color: 'rgba(148,163,184,0.95)' },
-  missionHero: {
-    fontSize: S(19, { min: 14, max: 21 }),
+  shareCardKickerOnDark: { color: 'rgba(226,232,240,0.92)' },
+  shareCardKickerNightStrong: { color: '#f8fafc' },
+  shareCardTitle: {
+    fontSize: S(16, { min: 13, max: 18 }),
     fontWeight: '900',
     color: p.onCream,
-    lineHeight: S(25, { min: 19, max: 27 }),
-    letterSpacing: -0.3,
+    lineHeight: S(21, { min: 17, max: 23 }),
+    letterSpacing: -0.35,
+    marginBottom: S(10, { min: 7 }),
   },
-  missionHeroLight: { color: '#f8fafc' },
-  metaCompact: {
-    fontSize: S(11, { min: 9 }),
-    fontWeight: '600',
+  shareCardTitleOnDark: { color: '#f1f5f9' },
+  shareCardTitleNightStrong: { color: '#ffffff' },
+  shareCardMissionLabel: {
+    fontSize: S(9, { min: 8 }),
+    fontWeight: '800',
+    letterSpacing: S(1.8, { min: 1.2 }),
     color: p.onCreamMuted,
+    textTransform: 'uppercase',
+    marginBottom: S(5, { min: 4 }),
+  },
+  shareCardMissionLabelOnDark: { color: 'rgba(203,213,225,0.95)' },
+  shareCardMissionLabelNightStrong: { color: '#e2e8f0' },
+  shareCardMissionBox: {
+    width: '100%',
+    overflow: 'hidden',
+    marginBottom: S(8, { min: 6 }),
+  },
+  shareCardMission: {
+    fontSize: S(13, { min: 11, max: 15 }),
+    fontWeight: '600',
+    color: p.onCream,
+    lineHeight: S(19, { min: 16, max: 21 }),
     textAlign: 'left',
-    paddingTop: S(10, { min: 7 }),
-    marginBottom: 0,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(148,163,184,0.28)',
   },
-  metaCompactLight: {
-    color: 'rgba(226,232,240,0.88)',
-    borderTopColor: 'rgba(255,255,255,0.1)',
+  shareCardMissionOnDark: { color: '#f8fafc' },
+  shareCardMissionNightStrong: { color: '#ffffff' },
+  panelGrow: { flex: 1, minHeight: 0 },
+  shareCardBottom: {
+    width: '100%',
+    flexShrink: 0,
+    paddingTop: S(2),
   },
-  shareProfileMeta: {
-    fontSize: S(10, { min: 8 }),
+  shareCardDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(148,163,184,0.35)',
+    marginBottom: S(8, { min: 6 }),
+  },
+  shareCardDividerOnDark: { backgroundColor: 'rgba(255,255,255,0.14)' },
+  shareCardDividerNightStrong: { backgroundColor: 'rgba(255,255,255,0.22)' },
+  shareCardMeta: {
+    fontSize: S(11, { min: 9 }),
+    fontWeight: '700',
+    color: p.onCreamMuted,
+    lineHeight: S(16, { min: 13 }),
+    textAlign: 'left',
+  },
+  shareCardMetaOnDark: { color: 'rgba(226,232,240,0.94)' },
+  shareCardMetaNightStrong: { color: '#f1f5f9' },
+  shareCardProgress: {
+    fontSize: S(10, { min: 9 }),
     fontWeight: '700',
     color: p.onCreamMuted,
     textAlign: 'left',
-    marginTop: S(10, { min: 7 }),
+    marginTop: S(6, { min: 4 }),
     lineHeight: S(14, { min: 12 }),
   },
-  shareProfileMetaLight: {
-    color: 'rgba(226,232,240,0.88)',
-  },
-  hook: {
+  shareCardProgressOnDark: { color: 'rgba(226,232,240,0.9)' },
+  shareCardProgressNightStrong: { color: '#e2e8f0' },
+  shareCardFooter: {
     fontSize: S(12, { min: 10 }),
-    fontStyle: 'italic',
-    color: p.onCreamMuted,
-    marginTop: S(12, { min: 8 }),
-    marginBottom: S(12, { min: 8 }),
-    lineHeight: S(18, { min: 15 }),
-    textAlign: 'left',
+    fontWeight: '900',
+    color: p.linkOnBg,
+    textAlign: 'center',
+    marginTop: S(10, { min: 8 }),
   },
-  hookLight: { color: 'rgba(226,232,240,0.9)' },
-  footerName: { fontSize: S(12, { min: 10 }), fontWeight: '900', color: p.linkOnBg, textAlign: 'center' },
-  footerNameLight: { color: p.cyan },
+  shareCardFooterOnDark: { color: '#7dd3fc' },
+  shareCardFooterNightStrong: { color: '#bae6fd' },
   shareBtnOuter: {
     borderRadius: 18,
     overflow: 'hidden',
@@ -1177,7 +1286,7 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
     shadowRadius: 18,
     elevation: 10,
   },
-  shareBtnOuterMidnight: {
+  shareBtnOuterFlatChrome: {
     elevation: 0,
     shadowOpacity: 0,
     shadowRadius: 0,

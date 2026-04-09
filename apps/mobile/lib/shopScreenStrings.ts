@@ -14,6 +14,7 @@ export type ShopScreenStrings = {
   errPurchase: string;
   errSavePrefs: string;
   flashPaymentOk: string;
+  flashStripeCanceled: string;
   kindLabel(kind: ShopCatalogEntry['kind']): string;
   themeLabel(id: string): string;
   noTitle: string;
@@ -109,7 +110,8 @@ function frStrings(): ShopScreenStrings {
     errCheckout: 'Impossible de lancer le paiement.',
     errPurchase: 'Achat impossible.',
     errSavePrefs: "Impossible d'enregistrer.",
-    flashPaymentOk: 'Si le paiement est passé, ton solde est à jour ci-dessous.',
+    flashPaymentOk: 'Paiement enregistré — ton solde Quest Coins est à jour ci-dessous.',
+    flashStripeCanceled: 'Paiement annulé. Tu peux réessayer quand tu veux.',
     kindLabel(kind: ShopCatalogEntry['kind']): string {
       switch (kind) {
         case 'theme_pack':
@@ -206,7 +208,8 @@ function enStrings(): ShopScreenStrings {
     errCheckout: 'Could not start checkout.',
     errPurchase: 'Purchase failed.',
     errSavePrefs: 'Could not save settings.',
-    flashPaymentOk: 'If payment went through, your balance below is up to date.',
+    flashPaymentOk: 'Payment recorded — your Quest Coin balance below is up to date.',
+    flashStripeCanceled: 'Payment canceled. You can try again anytime.',
     kindLabel(kind: ShopCatalogEntry['kind']): string {
       switch (kind) {
         case 'theme_pack':

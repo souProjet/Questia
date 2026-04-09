@@ -93,6 +93,41 @@ describe('POST /api/shop/checkout', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.url).toBe('https://checkout.test/s');
+    expect(createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success_url: 'http://localhost:3000/app/shop?success=1',
+        cancel_url: 'http://localhost:3000/app/shop?canceled=1',
+      }),
+    );
+  });
+
+  it('200 deep link boutique si stripeReturnUrl natif (questia://shop)', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({ id: 'p1' });
+    const res = await POST(
+      new Request('http://localhost/api/shop/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ sku: 'coin_pack_500', stripeReturnUrl: 'questia://shop' }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success_url: 'questia://shop?stripe_success=1&session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: 'questia://shop?stripe_canceled=1',
+      }),
+    );
+  });
+
+  it('400 si stripeReturnUrl non autorisée', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    const res = await POST(
+      new Request('http://localhost/api/shop/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ sku: 'coin_pack_500', stripeReturnUrl: 'https://evil.example/phish' }),
+      }),
+    );
+    expect(res.status).toBe(400);
   });
 
   it('503 si getStripe lance', async () => {

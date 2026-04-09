@@ -63,6 +63,7 @@ interface Props {
     swipeChange: string;
     tapDetails: string;
     validateCta: string;
+    swipeValidateOverlay: string;
     shareCta: string;
     completedTitle: string;
     completedSub: string;
@@ -174,7 +175,7 @@ export function QuestSwipeCard({
           axisLock.value = ax > ay ? 1 : 2;
         }
         if (axisLock.value === 1) {
-          translateX.value = tx;
+          translateX.value = Math.max(0, tx);
           translateY.value = 0;
         } else {
           translateX.value = 0;
@@ -472,11 +473,6 @@ export function QuestSwipeCard({
               </>
             )}
 
-            {isAccepted && (
-              <Animated.View pointerEvents="none" style={[styles.overlayAccept, acceptOverlayStyle]}>
-                <Text style={styles.overlayAcceptText}>{s.validateCta}</Text>
-              </Animated.View>
-            )}
         </View>
         )}
 
@@ -488,6 +484,12 @@ export function QuestSwipeCard({
             <Text style={styles.validateText}>{s.validateCta}</Text>
           </Pressable>
         )}
+
+        {isAccepted ? (
+          <Animated.View pointerEvents="none" style={[styles.overlayAcceptFullCard, acceptOverlayStyle]}>
+            <Text style={styles.overlayAcceptText}>{s.swipeValidateOverlay}</Text>
+          </Animated.View>
+        ) : null}
 
         {isCompleted && (
           <View style={styles.completedFooter}>
@@ -570,6 +572,7 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 0,
     zIndex: 1,
+    position: 'relative',
   },
   gestureArea: {
     flex: 1,
@@ -706,6 +709,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 30,
+  },
+  /** Quête acceptée : couvre toute la carte y compris le bouton vert (overlay était limité au gestureArea). */
+  overlayAcceptFullCard: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(16,185,129,0.22)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 45,
   },
   overlayAcceptText: {
     fontSize: 28,

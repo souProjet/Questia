@@ -648,6 +648,7 @@ export default function DashboardScreen() {
     swipeChange: homeUi.swipeChange,
     tapDetails: homeUi.tapDetails,
     validateCta: homeUi.validateCta,
+    swipeValidateOverlay: homeUi.swipeValidateOverlay,
     shareCta: homeUi.shareVictoryCta,
     completedTitle: homeUi.completedTitle,
     completedSub: homeUi.completedSubtitle,

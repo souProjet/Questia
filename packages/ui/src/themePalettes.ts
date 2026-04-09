@@ -178,8 +178,8 @@ export function questSliderEmbeddedGradient(themeId: string | null | undefined, 
 }
 
 /**
- * Bloc « Ajouter une photo » (écran carte à partager) — sur minuit, dégradé discret
- * (cyan / surface) pour limiter le banding Android et l'or trop fort sur fond sombre.
+ * Bloc « Ajouter une photo » (écran carte à partager) — sur minuit / aurore, dégradé plus doux
+ * pour limiter le banding Android ; sur l’app, éviter elevation+overflow sur le même nœud que le gradient.
  */
 export function shareScreenPhotoAddGradient(
   themeId: string | null | undefined,
@@ -190,6 +190,13 @@ export function shareScreenPhotoAddGradient(
   }
   if (themeId === 'midnight') {
     return [colorWithAlpha(p.cyan, 0.12), p.surface, colorWithAlpha(p.card, 1)];
+  }
+  if (themeId === 'aurora') {
+    return [
+      colorWithAlpha(p.card, 1),
+      colorWithAlpha(p.cyan, 0.08),
+      colorWithAlpha(p.surface, 1),
+    ];
   }
   return questSliderEmbeddedGradient(themeId, p);
 }

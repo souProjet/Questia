@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import * as Linking from 'expo-linking';
 import * as ClerkExpo from '@clerk/expo';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { DA } from '@questia/ui';
 import { hasOnboardingAnswers } from '../../lib/onboardingGate';
 
@@ -41,6 +41,7 @@ function useWarmUpBrowser() {
 export default function AuthScreen() {
   useWarmUpBrowser();
   const router = useRouter();
+  const { flow: flowParam } = useLocalSearchParams<{ flow?: string | string[] }>();
 
   useEffect(() => {
     void import('expo-web-browser')
@@ -65,6 +66,12 @@ export default function AuthScreen() {
   useEffect(() => {
     void hasOnboardingAnswers().then(setOnboardingReady);
   }, []);
+
+  useEffect(() => {
+    const f = Array.isArray(flowParam) ? flowParam[0] : flowParam;
+    if (f === 'signup') setMode('sign-up');
+    else if (f === 'signin') setMode('sign-in');
+  }, [flowParam]);
 
   const handleGoogleSignIn = useCallback(async () => {
     setLoadingGoogle(true);
@@ -217,7 +224,7 @@ export default function AuthScreen() {
             </Text>
             <Pressable
               style={({ pressed }) => [s.onboardingHintBtn, pressed && s.buttonPressed]}
-              onPress={() => router.replace('/')}
+              onPress={() => router.replace('/onboarding' as never)}
               accessibilityRole="button"
               accessibilityLabel="Retour au questionnaire d'accueil"
             >

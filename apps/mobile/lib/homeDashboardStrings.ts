@@ -40,6 +40,8 @@ export type HomeDashboardStrings = {
   swipeChange: string;
   tapDetails: string;
   validateCta: string;
+  /** Texte court sur l’overlay vert au swipe (quête acceptée) — pas le long libellé du bouton. */
+  swipeValidateOverlay: string;
   abandonedTitle: string;
   abandonedSub: string;
   paceToday: string;
@@ -102,6 +104,7 @@ function fr(): HomeDashboardStrings {
     swipeChange: 'CHANGER',
     tapDetails: 'Appuie pour voir les détails',
     validateCta: "J'ai fait la quête — valider",
+    swipeValidateOverlay: 'VALIDER',
     abandonedTitle: 'À demain',
     abandonedSub: "Ta série repart à zéro. Une nouvelle quête t'attend demain.",
     paceToday: "Aujourd'hui",
@@ -165,6 +168,7 @@ function en(): HomeDashboardStrings {
     swipeChange: 'CHANGE',
     tapDetails: 'Tap to see details',
     validateCta: 'I did the quest — complete',
+    swipeValidateOverlay: 'COMPLETE',
     abandonedTitle: 'See you tomorrow',
     abandonedSub: 'Your streak resets. A new quest awaits tomorrow.',
     paceToday: 'Today',
