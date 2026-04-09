@@ -1,7 +1,7 @@
 'use client';
 
 import { Link, usePathname } from '@/i18n/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useAuth, UserButton } from '@clerk/nextjs';
 import { ChevronRight, HelpCircle, Map, MessageCircle, Smartphone, X, Zap } from 'lucide-react';
@@ -38,9 +38,7 @@ function BurgerIcon({ open }: { open: boolean }) {
 
 export function Navbar() {
   const pathname = usePathname();
-  const locale = useLocale();
   const t = useTranslations('Navbar');
-  const afterSignOutUrl = locale === 'en' ? '/en' : '/';
   const { isSignedIn } = useAuth();
   const storesReady = hasAnyStoreLink();
 
@@ -200,7 +198,6 @@ export function Navbar() {
                 </>
               )}
               <UserButton
-                afterSignOutUrl={afterSignOutUrl}
                 appearance={{
                   variables: { colorPrimary: '#f97316' },
                   elements: { avatarBox: 'w-8 h-8' },
