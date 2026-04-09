@@ -14,6 +14,7 @@
     "packages/*"
   ],
   "scripts": {
+    "postinstall": "node scripts/patch-expo-web-browser-config.mjs",
     "dev": "turbo dev",
     "dev:web": "turbo dev --filter=@questia/web",
     "dev:mobile": "turbo dev --filter=@questia/mobile",
@@ -39,11 +40,15 @@
     "square-icon:512": "node scripts/square-icon-512.mjs",
     "icon:safe-zone": "node scripts/pad-app-icon-safe-zone.mjs",
     "clerk:redirect-urls": "node scripts/clerk-register-all-redirect-urls.mjs",
-    "clerk:add-redirect-url": "node scripts/clerk-add-redirect-url.mjs"
+    "clerk:add-redirect-url": "node scripts/clerk-add-redirect-url.mjs",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "expo": "~54.0.33",
+    "react-native": "0.81.5"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.0.5",
@@ -60,5 +65,6 @@
   "packageManager": "npm@11.6.2",
   "engines": {
     "node": ">=20"
-  }
+  },
+  "version": "1.0.0"
 }

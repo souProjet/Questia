@@ -115,8 +115,11 @@ export default async function LocaleLayout({
           signUpForceRedirectUrl: '/app',
         };
 
+  /** Après déconnexion : accueil public — pas `/app` (réservé aux connectés, sinon 404 / boucle selon la config Clerk). */
+  const afterSignOutUrl = locale === 'en' ? '/en' : '/';
+
   return (
-    <ClerkProvider localization={clerkLocale} {...clerkPaths}>
+    <ClerkProvider localization={clerkLocale} afterSignOutUrl={afterSignOutUrl} {...clerkPaths}>
       <NextIntlClientProvider messages={messages}>
         <QuestiaPostHogProvider>
           <HtmlLang />

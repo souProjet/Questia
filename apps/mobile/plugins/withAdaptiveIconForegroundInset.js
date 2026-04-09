@@ -2,8 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const { withDangerousMod } = require('expo/config-plugins');
 
-/** Marge sur chaque côté du premier plan (dp), ~17 % d’un canevas 108 dp — zone sûre Material. */
-const INSET_DP = 18;
+/** Marge horizontale (dp) — un peu moins pour ne pas trop rétrécir le logo. */
+const INSET_HORIZONTAL_DP = 14;
+/** Marge verticale (dp) — plus forte pour laisser voir le fond en haut / bas du masque. */
+const INSET_VERTICAL_DP = 32;
 
 /**
  * Réduit visuellement le foreground de l’icône adaptative pour laisser respirer le fond
@@ -27,10 +29,10 @@ function withAdaptiveIconForegroundInset(config) {
       const insetXml = `<?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
   <item
-    android:top="${INSET_DP}dp"
-    android:bottom="${INSET_DP}dp"
-    android:left="${INSET_DP}dp"
-    android:right="${INSET_DP}dp">
+    android:top="${INSET_VERTICAL_DP}dp"
+    android:bottom="${INSET_VERTICAL_DP}dp"
+    android:left="${INSET_HORIZONTAL_DP}dp"
+    android:right="${INSET_HORIZONTAL_DP}dp">
     <bitmap
       android:src="@mipmap/ic_launcher_foreground"
       android:gravity="center" />

@@ -3,6 +3,11 @@
   "version": "0.0.1",
   "private": true,
   "main": "index.js",
+  "expo": {
+    "autolinking": {
+      "searchPaths": ["../../node_modules", "./node_modules"]
+    }
+  },
   "scripts": {
     "eas-build-pre-install": "node ../../scripts/eas-assert-expo-public-clerk.mjs",
     "dev": "expo start",

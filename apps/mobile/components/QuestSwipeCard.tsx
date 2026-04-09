@@ -405,9 +405,17 @@ export function QuestSwipeCard({
             </RNPressable>
           </View>
         ) : (
-        <GestureDetector gesture={composed}>
-          <View style={styles.gestureArea} collapsable={false}>
-            {questBody}
+        <View style={styles.gestureArea} collapsable={false}>
+          {/*
+            Pan + tap « détails » uniquement sur le corps de la carte : si le GestureDetector
+            englobe aussi les boutons, le Tap RNGH gagne souvent en même temps que le Pressable
+            → ouverture du tiroir + action du bouton.
+          */}
+          <GestureDetector gesture={composed}>
+            <View style={styles.gestureSwipeBody} collapsable={false}>
+              {questBody}
+            </View>
+          </GestureDetector>
 
             {isPending && (
               <View style={styles.fallbackActions}>
@@ -469,8 +477,7 @@ export function QuestSwipeCard({
                 <Text style={styles.overlayAcceptText}>{s.validateCta}</Text>
               </Animated.View>
             )}
-          </View>
-        </GestureDetector>
+        </View>
         )}
 
         {isAccepted && (
@@ -565,6 +572,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   gestureArea: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  /** Zone swipe / tap détails uniquement (pas les CTA du bas — évite double déclenchement). */
+  gestureSwipeBody: {
     flex: 1,
     minHeight: 0,
     width: '100%',

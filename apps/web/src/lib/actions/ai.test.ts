@@ -181,10 +181,12 @@ describe('ai actions', () => {
       temperature: number;
       messages: Array<{ role: string; content: string }>;
     };
-    expect(callArg.temperature).toBe(0.84);
+    expect(callArg.temperature).toBe(0.9);
     const userPrompt = callArg.messages.find((m) => m.role === 'user')?.content ?? '';
 
     expect(userPrompt).toContain('VARIATION (évite la copie)');
+    expect(userPrompt).toContain('Registre à favoriser');
+    expect(userPrompt).toContain('INTÉRÊT');
     expect(userPrompt).toContain('Jour n°17');
     expect(userPrompt).toContain('Niveau (phase effective pour cette quête) : en rupture');
     expect(userPrompt).toContain('Ville : Lyon, France');
@@ -264,8 +266,8 @@ describe('ai actions', () => {
     expect(createMock).toHaveBeenCalledTimes(2);
     const firstTemp = (createMock.mock.calls[0]?.[0] as { temperature: number }).temperature;
     const secondTemp = (createMock.mock.calls[1]?.[0] as { temperature: number }).temperature;
-    expect(firstTemp).toBe(0.9);
-    expect(secondTemp).toBe(0.72);
+    expect(firstTemp).toBe(0.92);
+    expect(secondTemp).toBe(0.76);
     expect(out.title).toBe('Ancrage de fin de journée');
   });
 });

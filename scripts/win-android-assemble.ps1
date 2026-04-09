@@ -8,6 +8,10 @@
 
   Contournement chemins longs (Ninja / CMake) :
   - préférer « chemins longs » Windows (voir scripts/win-enable-long-paths.ps1) ou un clone court (ex. C:\dev\Questia) ;
+  - par défaut ce script force -PreactNativeArchitectures=arm64-v8a (évite souvent l’échec sur armeabi-v7a).
+    Pour toutes les ABI (APK « complet ») : $env:QUESTIA_ANDROID_ALL_ABIS = '1'
+    ou passe explicitement -PreactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64
+    (nécessite chemins longs ou clone court).
   - ou forcer SUBST : $env:QUESTIA_ANDROID_USE_SUBST = '1' puis npm run android:assemble:win
     (peut refaire échouer le codegen Clerk — à éviter si possible).
 
@@ -15,6 +19,10 @@
     npm run android:assemble:win
     npm run android:assemble:win -- assembleDebug
     npm run android:assemble:win -- clean assembleRelease
+
+  Si clean échoue encore sur un .jar lint-cache : fermer Android Studio / Cursor si le dossier
+  node_modules est ouvert, antivirus en pause, ou supprimer à la main le dossier .../android/build
+  du module cité puis relancer sans clean.
 #>
 $ErrorActionPreference = "Stop"
 
@@ -33,6 +41,19 @@ foreach ($a in $args) {
 }
 if ($gradleArgs.Count -eq 0) {
   [void]$gradleArgs.Add("assembleRelease")
+}
+
+# Réduit les chemins CMake/Ninja (souvent armeabi-v7a dépasse MAX_PATH avec Desktop\...\node_modules).
+$hasArchProp = $false
+foreach ($a in $gradleArgs) {
+  if ($a -like '-PreactNativeArchitectures=*') {
+    $hasArchProp = $true
+    break
+  }
+}
+if (-not $hasArchProp -and $env:QUESTIA_ANDROID_ALL_ABIS -ne '1') {
+  [void]$gradleArgs.Insert(0, '-PreactNativeArchitectures=arm64-v8a')
+  Write-Host "ABI par défaut Windows : arm64-v8a (évite chemins > 260 car.). Pour toutes les ABI : `$env:QUESTIA_ANDROID_ALL_ABIS='1' ou -PreactNativeArchitectures=..." -ForegroundColor DarkGray
 }
 
 function Test-DriveLetterFree {
@@ -90,6 +111,13 @@ try {
 
   $env:NODE_ENV = "production"
   Set-Location -LiteralPath $workDir
+
+  # Sous Windows, `clean` échoue souvent sur `react-native-screens` (lint-cache *.jar) : un daemon
+  # Gradle garde des fichiers ouverts dans node_modules/.../android/build. --stop libère les verrous.
+  if ($gradleArgs -contains 'clean') {
+    Write-Host "gradlew.bat --stop (ferme les daemons Gradle, évite IOException sur lint-cache au clean)" -ForegroundColor Yellow
+    & .\gradlew.bat --stop
+  }
 
   $gradleLine = $gradleArgs -join ' '
   Write-Host "gradlew.bat $gradleLine" -ForegroundColor Cyan

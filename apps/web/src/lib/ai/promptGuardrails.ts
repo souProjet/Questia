@@ -9,7 +9,17 @@ export const QUEST_SYSTEM_LANG_FR = `Style linguistique (français) :
 - Pas de calques sur l'anglais : syntaxe et ordre des mots doivent sonner comme du français parlé, pas comme une traduction mot à mot.
 - Accords et formulations corrects ; phrases complètes, comme une consigne claire à un ami.
 - Pas de mots rares, techniques ou « marketing » mal placés pour paraître original.
-- Les champs titre, mission et hook : même registre, fluide et direct, sans mélange franglais.`;
+- Les champs titre, mission et hook : même registre, fluide et direct, sans mélange franglais.
+
+Clarté + intérêt (mission) :
+- Compréhensible **tout de suite** — ce n’est pas une énigme. Mais **clair ≠ fade** : vise une idée qui donne envie, un angle un peu malin ou surprenant, du réel (social léger, sensoriel, rue, cuisine, curiosité, geste du corps, message à quelqu’un…). Évite le ton « consigne d’école » répété et le même schéma trois jours de suite.
+- **Une** action principale nette dans la phrase — pas un empilement absurde (ex. alter ego + liste + renommage + nouvelle condition de fin dans la même phrase).
+- Interdit surtout : doubles « toi » métaphysiques (« ton toi de demain », « le toi des prochains mois ») et scénarios pour un « autre toi » imaginaire.`;
+
+export const QUEST_CLARITY_EN = `Mission clarity + interest:
+- Understandable at a glance — not a riddle. But **clear ≠ boring**: aim for something inviting, a slightly clever or fresh angle, grounded in real life (light social, senses, street, food, curiosity, body, a message to someone…). Avoid the same “homework tone” and the same template day after day.
+- **One** clear main action in the sentence — not absurd stacking (alter ego + list + rename + extra completion rule in one breath).
+- Especially forbid: meta future-selves (“your self six months from now”) and quests framed for an imaginary “other you”.`;
 
 export const QUEST_SYSTEM_GUARDRAILS = `Garde-fous obligatoires :
 - Aucun contenu visant à nuire, harceler, discriminer, inciter à la violence, au crime, à l'automutilation ou à toute activité illégale.

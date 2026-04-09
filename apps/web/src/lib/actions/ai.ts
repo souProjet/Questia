@@ -20,6 +20,7 @@ import {
 } from './questGenerationPrompt';
 import { logStructured, logStructuredError } from '../observability';
 import {
+  QUEST_CLARITY_EN,
   QUEST_SYSTEM_GUARDRAILS,
   QUEST_SYSTEM_GUARDRAILS_EN,
   QUEST_SYSTEM_LANG_FR,
@@ -147,6 +148,23 @@ const VAGUE_MISSION_SNIPPETS_EN = [
   'think about your past',
 ];
 
+/** Uniquement les tournures « autre toi » / listes absurdes — pas les critères de temps légitimes. */
+const ABSTRACT_META_MISSION_SNIPPETS_FR = [
+  'ton toi ',
+  'toi des prochains',
+  'toi de demain',
+  'toi du futur',
+  "toi d'après",
+  'le toi des',
+  'jamais réunis dans une',
+];
+
+const ABSTRACT_META_MISSION_SNIPPETS_EN = [
+  'future self',
+  'future you',
+  'never combined in a',
+];
+
 /** Phrases de secours : une par jour (et variante selon archétype) si l'API échoue — pas une seule phrase figée. */
 const FALLBACK_HOOKS: string[] = [
   "Aujourd'hui, un petit pas suffit à ouvrir une porte.",
@@ -258,10 +276,19 @@ const CREATIVE_ANGLES_FR: readonly string[] = [
   "Angle du jour : mini-récit (2 phrases) comme prétexte à l'action, sans théâtre.",
   'Angle du jour : interaction humaine minimale et réaliste — pas de « grand défi social ».',
   'Angle du jour : calme — une seule action, posée, bien sentie.',
-  'Angle du jour : schéma ou liste au stylo (30 secondes) puis action.',
+  "Angle du jour : au besoin une seule ligne notée à la main, puis une action simple dans le monde réel (pas de personnage ou « autre toi »).",
   'Angle du jour : lieux génériques ou quartier sans enseigne (si pas de GPS) — éviter le cliché.',
   "Angle du jour : privilégier un fait, un déplacement, un message précis plutôt qu'un ton « motivation ».",
   "Angle du jour : varier vocabulaire et type d'action par rapport au scénario habituel de cette famille.",
+  'Angle du jour : cuisine ou goût — un geste simple (ingrédient, odeur, plat imparfait accepté).',
+  'Angle du jour : rue ou architecture — un détail à repérer, compter ou photographier (sans danger).',
+  'Angle du jour : son, musique ou silence — une écoute ou un partage audio court.',
+  'Angle du jour : message écrit bref à un proche ou collègue réel (merci, blague, nouvelle).',
+  'Angle du jour : corps — escaliers, étirements, rythme cardiaque léger, avec un objectif minuscule et mesurable.',
+  'Angle du jour : fenêtre sur le monde — ciel, oiseau, météo, plante ; un constat précis.',
+  'Angle du jour : petite générosité ou entraide (café offert, porte tenue, truc rendu) — réaliste.',
+  'Angle du jour : curiosité « pourquoi pas » — ton complice, pas moqueur ; un mini-défi qui fait sourire.',
+  'Angle du jour : rangement, bricolage ou « une chose visible de réglée » — satisfaction immédiate.',
 ];
 
 const CREATIVE_ANGLES_EN: readonly string[] = [
@@ -273,16 +300,59 @@ const CREATIVE_ANGLES_EN: readonly string[] = [
   "Today's angle: a 2-sentence micro-story as a pretext to act, no drama.",
   "Today's angle: minimal realistic human interaction — not a “big social challenge”.",
   "Today's angle: calm — one action, done with attention.",
-  "Today's angle: scribble a tiny map or list (30s) then act.",
+  "Today's angle: if needed one line on paper, then one simple real-world action (no alter ego or future-self fiction).",
   "Today's angle: generic places or neighborhood without brand names (if no GPS) — avoid clichés.",
   "Today's angle: prefer a fact, a move, a precise message over generic “motivation”.",
   "Today's angle: vary wording and action type vs. the usual template for this family.",
+  "Today's angle: food or taste — a simple gesture (ingredient, smell, imperfect dish OK).",
+  "Today's angle: street or architecture — one detail to spot, count, or photo (safely).",
+  "Today's angle: sound, music, or silence — a short listening or sharing moment.",
+  "Today's angle: a brief written message to a real person (thanks, joke, news).",
+  "Today's angle: body — stairs, stretch, light movement with a tiny measurable goal.",
+  "Today's angle: world outside the window — sky, bird, weather, plant; one precise observation.",
+  "Today's angle: small kindness (hold door, return something, buy a coffee) — realistic.",
+  "Today's angle: playful “why not” — warm witty tone, not mean; a mini-challenge that sparks joy.",
+  "Today's angle: tidy, fix, or finish one visible thing — immediate satisfaction.",
 ];
 
 function pickCreativeAngle(locale: AppLocale, seed: string): string {
   const list = locale === 'en' ? CREATIVE_ANGLES_EN : CREATIVE_ANGLES_FR;
   let h = 2166136261;
   const s = `${seed}|creative`;
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return list[(h >>> 0) % list.length]!;
+}
+
+/** Second signal de variété (registre), indépendant de l’« angle » créatif — évite le même ton tous les jours. */
+const VARIETY_HINTS_FR: readonly string[] = [
+  'Registre à favoriser aujourd’hui : **sensoriel** (goût, odeur, texture, température).',
+  'Registre à favoriser aujourd’hui : **social léger** (vrai humain, vraie phrase, pas de performance).',
+  'Registre à favoriser aujourd’hui : **déplacement ou espace** (trajectoire, pièce, dehors si autorisé).',
+  'Registre à favoriser aujourd’hui : **curiosité maline** — surprends sans compliquer.',
+  'Registre à favoriser aujourd’hui : **mains / fabrication** (cuisiner, ranger, bricoler une chose minuscule).',
+  'Registre à favoriser aujourd’hui : **écrit court** (post-it, SMS, note vocale) vers quelqu’un de réel.',
+  'Registre à favoriser aujourd’hui : **nature domestique** (plante, fenêtre, ciel, animal).',
+  'Registre à favoriser aujourd’hui : **rythme & corps** (marche, pause active, respiration + mouvement).',
+];
+
+const VARIETY_HINTS_EN: readonly string[] = [
+  'Lean today toward **sensory** (taste, smell, texture, temperature).',
+  'Lean today toward **light social** (a real person, one real sentence, no performance).',
+  'Lean today toward **movement or space** (route, room, outdoors if allowed).',
+  'Lean today toward **clever curiosity** — surprise without complexity.',
+  'Lean today toward **hands / making** (cook, tidy, fix one tiny thing).',
+  'Lean today toward **short writing** (note, text, voice memo) to a real someone.',
+  'Lean today toward **domestic nature** (plant, window, sky, pet).',
+  'Lean today toward **rhythm & body** (walk, active break, breath + movement).',
+];
+
+function pickVarietyHint(locale: AppLocale, seed: string): string {
+  const list = locale === 'en' ? VARIETY_HINTS_EN : VARIETY_HINTS_FR;
+  let h = 2166136261;
+  const s = `${seed}|variety`;
   for (let i = 0; i < s.length; i += 1) {
     h ^= s.charCodeAt(i);
     h = Math.imul(h, 16777619);
@@ -458,6 +528,17 @@ function validateGeneratedPayload(
       };
     }
   }
+  const metaSnips = en ? ABSTRACT_META_MISSION_SNIPPETS_EN : ABSTRACT_META_MISSION_SNIPPETS_FR;
+  for (const bad of metaSnips) {
+    if (m.includes(bad)) {
+      return {
+        ok: false,
+        reason: en
+          ? 'mission too abstract or meta (one clear real-world action; no future-self / stacked rules)'
+          : 'mission trop abstraite ou méta (une action concrète ; pas de double « toi » ni de critères empilés)',
+      };
+    }
+  }
   if (cityMustAppearInMission(context.city) && !m.includes(context.city.trim().toLowerCase())) {
     return {
       ok: false,
@@ -545,6 +626,7 @@ function buildUserPrompt(
   const archetypeSummary = truncateArchetypeDescription(arch.description);
   const creativeSeed = `${profile.generationSeed ?? profile.questDateIso}|${profile.questDateIso}|${archetype.id}`;
   const creativeAngleLine = pickCreativeAngle(locale, creativeSeed);
+  const varietyLine = pickVarietyHint(locale, creativeSeed);
 
   if (locale === 'en') {
     const rerollBlock = profile.isRerollGeneration
@@ -600,9 +682,11 @@ ${personalityBlock}
 ${missionHintsBlock}
 
 ${creativeAngleLine}
+${varietyLine}
 
 PRIORITY: the mission must feel written for *this* person and *this* day — the family below is a compass, not a template to paste.
-ANTI-PATTERN: do not output a “stock quest” for this category; vary object, time window, constraint, and wording — two users in the same family should not get the same mission.
+INTEREST: avoid bland “homework” quests and the same register every time (not always “take a walk” or “write one line”). Make the title + hook + mission feel **specific and a bit memorable**, still doable in one sentence.
+ANTI-PATTERN: do not output a “stock quest” for this category; vary object, time window, constraint, tone, and wording — two users in the same family should not get the same mission.
 
 QUEST FAMILY (intent only; do not name the category as a label):
 - ${categoryLabel}
@@ -628,6 +712,8 @@ ABSOLUTE RULES:
    - GEO CONSISTENCY: place must match the mission (park if the mission says park). If local (neighborhood, café), stay near ${context.city}. If another town is described, destinationQuery must name that area clearly.` : 'If isOutdoor is false: destinationLabel and destinationQuery must be null.'}
 ${archetype.requiresSocial ? '9. This family needs real social interaction (stranger, friend, message, call…) — include it in the mission.\n' : ''}
 10. Safety: no physical danger, no medical/therapy advice, no illegal or hateful content.
+11. CLARITY: one read, one main action — no riddles, no absurd stacked meta-tasks (alter-ego + list + rename in one breath). Boring generic instructions are as bad as nonsense.
+12. VOICE: title and hook can have personality (wit, warmth, edge) — not corporate or school-like.
 
 Reply with strict JSON. Pick ONE icon name from: ${[...ICON_ALLOWLIST].join(', ')}.
 {
@@ -703,9 +789,11 @@ ${personalityBlock}
 ${missionHintsBlock}
 
 ${creativeAngleLine}
+${varietyLine}
 
 PRIORITÉ : la mission doit sembler écrite pour **cette** personne et **ce** jour — la famille ci-dessous est une boussole, pas un modèle à recopier.
-ANTI-RÉPÉTITION : n'invente pas une « quête catalogue » pour cette catégorie ; varie objet, créneau, contrainte ludique et formulation — deux utilisateurs de la même famille ne doivent pas recevoir la même mission.
+INTÉRÊT : évite les quêtes **plates** et le même registre à chaque fois (pas toujours « va marcher » ou « écris une ligne »). Titre + accroche + mission : un peu **mémorable**, précis, avec du mordant ou de la chaleur — toujours en **une phrase** pour la mission.
+ANTI-RÉPÉTITION : n'invente pas une « quête catalogue » pour cette catégorie ; varie objet, créneau, contrainte, **ton**, registre et formulation — deux utilisateurs de la même famille ne doivent pas recevoir la même mission.
 
 FAMILLE DE QUÊTE (intention seulement ; ne cite pas la catégorie comme étiquette) :
 - ${categoryLabel}
@@ -732,6 +820,8 @@ RÈGLES ABSOLUES :
 ${archetype.requiresSocial ? '9. Cette famille implique une interaction sociale réelle (inconnu, proche, message, appel…) — intègre-la dans la mission.\n' : ''}
 10. Respecte les garde-fous de sécurité : pas de danger physique, pas de conseils médicaux ou thérapeutiques, pas d'incitation à l'illégalité ou à la haine.
 11. LANGUE : tous les champs texte (title, mission, hook, duration, safetyNote, destinationLabel) en **français naturel** — pas d'anglicismes ni de mots anglais dans la phrase, pas de tournure calquée sur l'anglais ; phrases courtes et idiomatiques.
+12. **CLARTÉ** : compréhension immédiate, **une** action principale — pas d'énigme, pas d'empilement absurde (alter ego + liste + renommage dans le même souffle). Les consignes **fades** type devoir scolaire sont à éviter autant que le charabia.
+13. **VOIX** : le titre et le hook peuvent avoir de la personnalité (malice, chaleur, ton complice) — pas de style corporate ni notice.
 
 Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[...ICON_ALLOWLIST].join(', ')}.
 {
@@ -822,7 +912,9 @@ export async function generateDailyQuest(
     locale === 'en'
       ? `You are Questia's quest creator. You generate unique, concrete, doable daily adventures. Use a warm, direct "you". Never use clinical psychology jargon or mention "traits" or the Big Five. Each quest needs no prerequisites. Match tone and social exposure to the user profile in the message—without naming scores. Prioritize the person's operational profile and mission hints over repeating archetype wording; the family label is a hint, not a script.
 
-${QUEST_SYSTEM_GUARDRAILS_EN}`
+${QUEST_SYSTEM_GUARDRAILS_EN}
+
+${QUEST_CLARITY_EN}`
       : `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d'exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores. Priorise le profil opérationnel et les pistes « accroche mission » plutôt que de recopier l'archétype ; la famille de quête est un fil conducteur, pas un texte à répéter.
 
 ${QUEST_SYSTEM_GUARDRAILS}
@@ -877,15 +969,15 @@ ${QUEST_SYSTEM_LANG_FR}`;
       );
       const temperature = profile.isRerollGeneration
         ? attempt === 0
+          ? 0.92
+          : attempt === 1
+            ? 0.76
+            : 0.66
+        : attempt === 0
           ? 0.9
           : attempt === 1
             ? 0.72
-            : 0.64
-        : attempt === 0
-          ? 0.84
-          : attempt === 1
-            ? 0.65
-            : 0.56;
+            : 0.6;
       const raw = await callModel(user, system, temperature);
       const parsedRaw = JSON.parse(raw) as Record<string, unknown>;
 
