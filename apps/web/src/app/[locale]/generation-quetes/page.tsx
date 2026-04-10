@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { QuestGenerationExplainer } from '@/components/generation-quest/QuestGenerationExplainer';
+import {
+  QuestGenerationExplainer,
+  type QuestFlowStep,
+} from '@/components/generation-quest/QuestGenerationExplainer';
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -21,5 +24,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function GenerationQuetesPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <QuestGenerationExplainer />;
+  const t = await getTranslations({ locale, namespace: 'QuestGenerationPage' });
+  const raw = t.raw('stepsList');
+  const stepsList: QuestFlowStep[] = Array.isArray(raw) ? (raw as QuestFlowStep[]) : [];
+
+  return <QuestGenerationExplainer stepsList={stepsList} />;
 }

@@ -118,6 +118,10 @@ export function Navbar() {
   const marketingNavPillClass =
     'inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-2.5 lg:px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all text-sm';
 
+  /** Accès secondaire à la page « génération des quêtes » — ne rivalise pas avec les entrées principales. */
+  const questGenDiscreteClass =
+    'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-700 hover:bg-white/45 hover:border-slate-200/60 transition-all motion-reduce:transition-none ml-1 lg:ml-0';
+
   const marketingDesktop = (
     <>
       {marketingMenu.map(({ href, label, Icon }) => (
@@ -126,9 +130,18 @@ export function Navbar() {
           <Icon className="h-4 w-4 shrink-0 opacity-90" aria-hidden strokeWidth={2.25} />
         </a>
       ))}
-      <Link href="/generation-quetes" className={marketingNavPillClass}>
-        <span>{t('navQuestGen')}</span>
-        <Sparkles className="h-4 w-4 shrink-0 opacity-90" aria-hidden strokeWidth={2.25} />
+      <span
+        className="hidden lg:inline-block h-5 w-px shrink-0 bg-slate-300/50"
+        aria-hidden
+        role="presentation"
+      />
+      <Link
+        href="/generation-quetes"
+        className={questGenDiscreteClass}
+        title={t('navQuestGen')}
+      >
+        <Sparkles className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={2.25} aria-hidden />
+        <span>{t('navQuestGenShort')}</span>
       </Link>
     </>
   );
@@ -288,20 +301,6 @@ export function Navbar() {
             <div className="navbar-mobile-drawer-body min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
               {showMarketingNav ? (
                 <nav className="flex flex-col gap-0.5" aria-label={t('navSections')}>
-                  <Link
-                    href="/generation-quetes"
-                    onClick={closeMobile}
-                    className="group flex items-center gap-3 rounded-2xl px-3 py-3.5 text-[15px] font-bold text-[var(--text)] border-2 border-transparent hover:border-[color:color-mix(in_srgb,var(--violet)_35%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--card)_85%,transparent)] hover:shadow-[0_4px_0_rgba(139,92,246,.1)] active:scale-[0.99] transition-all"
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/15 to-orange-500/15 border border-violet-300/30">
-                      <Sparkles className="h-5 w-5 text-violet-600" strokeWidth={2.25} aria-hidden />
-                    </span>
-                    <span className="min-w-0 flex-1">{t('navQuestGen')}</span>
-                    <ChevronRight
-                      className="h-4 w-4 shrink-0 text-[var(--muted)] opacity-70 group-hover:translate-x-0.5 transition-transform"
-                      aria-hidden
-                    />
-                  </Link>
                   {marketingMenu.map(({ href, label, Icon }) => (
                     <a
                       key={href}
@@ -320,6 +319,17 @@ export function Navbar() {
                       />
                     </a>
                   ))}
+                  <div className="mt-2 border-t border-slate-200/70 pt-2">
+                    <Link
+                      href="/generation-quetes"
+                      onClick={closeMobile}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-colors"
+                      title={t('navQuestGen')}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 opacity-60" strokeWidth={2.25} aria-hidden />
+                      {t('navQuestGenShort')}
+                    </Link>
+                  </div>
                   {showLocaleSwitcher ? (
                     <div className="mt-4 flex w-full justify-center border-t border-orange-200/40 pt-4 md:hidden">
                       <LocaleSwitcher />

@@ -79,20 +79,14 @@ function FlowConnector({ index }: { index: number }) {
   );
 }
 
-type StepCopy = { title: string; body: string };
+export type QuestFlowStep = { title: string; body: string };
 
-export function QuestGenerationExplainer() {
+type Props = { stepsList: QuestFlowStep[] };
+
+export function QuestGenerationExplainer({ stepsList }: Props) {
   const t = useTranslations('QuestGenerationPage');
-  const steps = t.raw('stepsList') as StepCopy[];
+  const steps = stepsList;
   const reduceMotion = useReducedMotion();
-
-  const container = reduceMotion
-    ? {}
-    : {
-        initial: { opacity: 0, y: 12 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
-      };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100/90">
@@ -116,13 +110,13 @@ export function QuestGenerationExplainer() {
         </div>
       </div>
 
-      <motion.div className="mx-auto max-w-3xl px-4 py-4 sm:py-6" {...container}>
+      <div className="mx-auto max-w-3xl px-4 py-4 sm:py-6">
         <p className="mb-8 text-sm text-slate-600">
           <Link href="/" className="font-semibold text-orange-600 hover:underline">
             {t('backHome')}
           </Link>
         </p>
-      </motion.div>
+      </div>
 
       <div className="mx-auto max-w-3xl px-4 pb-16 sm:pb-24">
         <div
@@ -139,13 +133,14 @@ export function QuestGenerationExplainer() {
             {steps.map((step, i) => {
               const Icon = ICONS[i] ?? UserRound;
               const accent = ACCENT_STYLES[i % ACCENT_STYLES.length]!;
+              /** Ne pas partir de opacity:0 + whileInView seul : l’IntersectionObserver peut ne pas tirer au 1er paint (contenu invisible jusqu’à un remount, ex. changement de langue). */
               const itemMotion = reduceMotion
                 ? {}
                 : {
-                    initial: { opacity: 0, x: i % 2 === 0 ? -16 : 16 },
-                    whileInView: { opacity: 1, x: 0 },
-                    viewport: { once: true, margin: '-40px' },
-                    transition: { delay: i * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
+                    initial: { x: i % 2 === 0 ? -14 : 14 },
+                    whileInView: { x: 0 },
+                    viewport: { once: true, amount: 0.08, margin: '0px 0px -12% 0px' },
+                    transition: { delay: i * 0.03, duration: 0.38, ease: [0.22, 1, 0.36, 1] as const },
                   };
 
               return (
@@ -175,6 +170,11 @@ export function QuestGenerationExplainer() {
               );
             })}
           </ol>
+          {steps.length === 0 ? (
+            <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              {t('stepsLoadError')}
+            </p>
+          ) : null}
         </div>
 
         <div className="mt-12 rounded-2xl border border-orange-200/80 bg-gradient-to-br from-orange-50/90 to-amber-50/50 p-6 sm:p-8">
