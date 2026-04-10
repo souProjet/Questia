@@ -539,7 +539,8 @@ export default function DashboardScreen() {
         trackMobileEvent(AnalyticsEvent.questRerolled, { quest_id: questAnalyticsId(quest) });
         setQuestCardSwapKey((k) => k + 1);
         hapticSuccess();
-        await enrichQuestWithLocation();
+        /** Météo / coords : ne pas garder l’overlay « changement » le temps du GPS + 2ᵉ fetch. */
+        void enrichQuestWithLocation();
       } else {
         setError(homeUi.errReroll);
         hapticError();
@@ -575,7 +576,7 @@ export default function DashboardScreen() {
       if (ok) {
         hapticMedium();
         setQuestCardSwapKey((k) => k + 1);
-        await enrichQuestWithLocation();
+        void enrichQuestWithLocation();
       }
     } finally {
       setReporting(false);

@@ -165,7 +165,7 @@ function fr(): HistoryScreenStrings {
     emptyWalletFiltered: 'Aucune opération ne correspond à ces filtres.',
     balanceAfterTx: (n) => `Solde après : ${n} QC`,
     txLoadMoreA11y: 'Charger plus de mouvements',
-    walletShopHint: 'Recharge et achats depuis la boutique (onglet Shop).',
+    walletShopHint: 'Recharge et achats depuis la boutique',
     loadMore: "Charger plus d'entrées",
     loading: 'Chargement…',
     loadMoreA11y: 'Charger plus de quêtes',

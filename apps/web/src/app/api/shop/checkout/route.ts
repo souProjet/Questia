@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   if (!sku) return NextResponse.json({ error: 'SKU requis' }, { status: 400 });
   if (stripeReturnUrl.trim() && !nativeStripeReturnBase(stripeReturnUrl)) {
     return NextResponse.json(
-      { error: 'URL de retour Stripe mobile invalide (attendu questia://shop ou exp://…/--/shop).' },
+      { error: 'URL de retour Stripe mobile invalide (attendu questia://shop, questia://app/shop ou exp://…/--/shop).' },
       { status: 400 },
     );
   }
@@ -98,11 +98,12 @@ export async function POST(request: Request) {
     );
   }
 
+  const encSku = encodeURIComponent(pack.sku);
   const success_url = mobileRequested
-    ? `${siteUrl}/app/shop?stripe_success=1&session_id={CHECKOUT_SESSION_ID}`
+    ? `${siteUrl}/app/shop?stripe_success=1&session_id={CHECKOUT_SESSION_ID}&pack_sku=${encSku}`
     : `${siteUrl}/app/shop?success=1`;
   const cancel_url = mobileRequested
-    ? `${siteUrl}/app/shop?stripe_canceled=1`
+    ? `${siteUrl}/app/shop?stripe_canceled=1&pack_sku=${encSku}`
     : `${siteUrl}/app/shop?canceled=1`;
 
   let session: Awaited<ReturnType<typeof stripe.checkout.sessions.create>>;

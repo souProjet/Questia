@@ -446,26 +446,8 @@ export function QuestSwipeCard({
                 <Animated.View pointerEvents="none" style={[styles.overlayAccept, acceptOverlayStyle]}>
                   <Text style={styles.overlayAcceptText}>{s.swipeAccept}</Text>
                 </Animated.View>
-                <Animated.View
-                  pointerEvents="none"
-                  style={[
-                    styles.overlayReroll,
-                    { backgroundColor: colorWithAlpha(p.orange, isDarkCard ? 0.14 : 0.1) },
-                    rerollOverlayStyle,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.overlayRerollPill,
-                      {
-                        borderColor: colorWithAlpha(p.orange, 0.42),
-                        backgroundColor: isDarkCard ? colorWithAlpha(p.surface, 0.94) : 'rgba(255,255,255,0.94)',
-                        shadowColor: p.orange,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.overlayRerollText, { color: p.orange }]}>{s.swipeChange}</Text>
-                  </View>
+                <Animated.View pointerEvents="none" style={[styles.overlayReroll, rerollOverlayStyle]}>
+                  <Text style={styles.overlayRerollLabel}>{s.swipeChange}</Text>
                 </Animated.View>
                 <Animated.View pointerEvents="none" style={[styles.overlayDetail, detailHintStyle]}>
                   <Text style={styles.overlayDetailText}>{s.tapDetails}</Text>
@@ -725,32 +707,23 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     transform: [{ rotate: '-12deg' }],
   },
+  /** Même principe que « Accepter » : voile + gros libellé, sans forme de bouton. */
   overlayReroll: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(249,115,22,0.22)',
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 30,
   },
-  overlayRerollPill: {
-    maxWidth: '88%',
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
-    elevation: 4,
-  },
-  overlayRerollText: {
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.35,
+  overlayRerollLabel: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#ea580c',
+    letterSpacing: 1,
     textAlign: 'center',
-    lineHeight: 20,
+    maxWidth: '92%',
+    transform: [{ rotate: '12deg' }],
   },
   overlayDetail: {
     position: 'absolute',

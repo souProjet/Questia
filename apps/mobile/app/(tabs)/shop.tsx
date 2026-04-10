@@ -14,7 +14,7 @@ import {
   Easing,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { elevationAndroidSafe } from '../../lib/elevationAndroid';
@@ -194,6 +194,12 @@ function MarketingBadgeRN({ badge, label }: { badge: ShopMarketingBadge; label: 
 
 export default function ShopScreen() {
   const router = useRouter();
+  const stripeReturnParams = useLocalSearchParams<{
+    stripe_success?: string | string[];
+    stripe_canceled?: string | string[];
+    session_id?: string | string[];
+    pack_sku?: string | string[];
+  }>();
   const { locale: appLocale } = useAppLocale();
   const s = useMemo(() => getShopScreenStrings(appLocale), [appLocale]);
   const { palette, themeId, refresh: refreshAppTheme } = useAppTheme();
@@ -237,6 +243,8 @@ export default function ShopScreen() {
   const [selectKind, setSelectKind] = useState<null | 'theme' | 'title'>(null);
   const [rechargeModalVisible, setRechargeModalVisible] = useState(false);
   const stripeCheckoutSku = useRef<string | null>(null);
+  /** Évite double traitement (openAuthSession + deep link / onglet boutique). */
+  const handledStripeSessionsRef = useRef<Set<string>>(new Set());
   const [purchaseHighlightSku, setPurchaseHighlightSku] = useState<string | null>(null);
 
   const coinPurchasedSkus = useMemo(() => buildCoinPurchasedSkuSet(transactions), [transactions]);
@@ -361,6 +369,70 @@ export default function ShopScreen() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const rawSuccess = stripeReturnParams.stripe_success;
+    const rawCancel = stripeReturnParams.stripe_canceled;
+    const successFlag =
+      rawSuccess === '1' ||
+      rawSuccess === 'true' ||
+      (Array.isArray(rawSuccess) && (rawSuccess[0] === '1' || rawSuccess[0] === 'true'));
+    const canceledFlag = rawCancel === '1' || (Array.isArray(rawCancel) && rawCancel[0] === '1');
+    if (!successFlag && !canceledFlag) return;
+
+    const sidRaw = stripeReturnParams.session_id;
+    const sessionId =
+      typeof sidRaw === 'string' ? sidRaw : Array.isArray(sidRaw) ? sidRaw[0] : null;
+    const packRaw = stripeReturnParams.pack_sku;
+    const packSku =
+      typeof packRaw === 'string' ? packRaw : Array.isArray(packRaw) ? packRaw[0] : null;
+    const effectiveSku = packSku && getCoinPack(packSku) ? packSku : null;
+
+    const dedupeKey =
+      sessionId ?? (successFlag ? `ok:${effectiveSku ?? 'u'}` : `cancel:${effectiveSku ?? 'u'}`);
+    if (handledStripeSessionsRef.current.has(dedupeKey)) {
+      router.replace('/shop');
+      return;
+    }
+    handledStripeSessionsRef.current.add(dedupeKey);
+
+    if (canceledFlag) {
+      hapticLight();
+      setFlash({ message: s.flashStripeCanceled, kind: 'info' });
+      router.replace('/shop');
+      return;
+    }
+
+    void (async () => {
+      if (effectiveSku) {
+        const packDone = getCoinPack(effectiveSku)!;
+        trackMobileEvent(AnalyticsEvent.purchase, {
+          currency: 'EUR',
+          value: packDone.priceCents / 100,
+          transaction_id: `stripe_coin_${effectiveSku}_${Date.now()}`,
+          items: [{ item_id: effectiveSku, item_name: packDone.name }],
+          payment_type: 'stripe',
+        });
+      }
+      await load({ silent: true });
+      await new Promise((r) => setTimeout(r, 2000));
+      await load({ silent: true });
+      runPurchaseCelebration(effectiveSku);
+      hapticSuccess();
+      setFlash({ message: s.flashPaymentOk, kind: 'success' });
+      router.replace('/shop');
+    })();
+  }, [
+    stripeReturnParams.stripe_success,
+    stripeReturnParams.stripe_canceled,
+    stripeReturnParams.session_id,
+    stripeReturnParams.pack_sku,
+    load,
+    router,
+    runPurchaseCelebration,
+    s.flashPaymentOk,
+    s.flashStripeCanceled,
+  ]);
+
   const onRefresh = useCallback(() => {
     hapticLight();
     setRefreshing(true);
@@ -375,39 +447,59 @@ export default function ShopScreen() {
 
     const applyStripeReturnUrl = async (url: string, skuDone: string | null): Promise<boolean> => {
       if (returnHandledRef.current) return true;
-      if (!skuDone) return false;
       let sp: URLSearchParams;
       try {
         sp = new URL(url).searchParams;
       } catch {
         return false;
       }
-      if (sp.get('stripe_canceled') === '1') {
+      const packSkuFromUrl = sp.get('pack_sku');
+      const effectiveSku =
+        (skuDone && getCoinPack(skuDone) ? skuDone : null) ??
+        (packSkuFromUrl && getCoinPack(packSkuFromUrl) ? packSkuFromUrl : null);
+
+      const isCancel = sp.get('stripe_canceled') === '1';
+      const isSuccess = sp.get('stripe_success') === '1';
+      if (!isCancel && !isSuccess) return false;
+
+      const dedupeKey =
+        sp.get('session_id') ??
+        (isSuccess ? `ok:${effectiveSku ?? packSkuFromUrl ?? 'u'}` : `cancel:${effectiveSku ?? packSkuFromUrl ?? 'u'}`);
+      if (handledStripeSessionsRef.current.has(dedupeKey)) {
+        returnHandledRef.current = true;
+        return true;
+      }
+      handledStripeSessionsRef.current.add(dedupeKey);
+
+      if (isCancel) {
         returnHandledRef.current = true;
         hapticLight();
         setFlash({ message: s.flashStripeCanceled, kind: 'info' });
         return true;
       }
-      if (sp.get('stripe_success') === '1') {
-        returnHandledRef.current = true;
-        const packDone = getCoinPack(skuDone);
-        const valueEurDone = packDone ? packDone.priceCents / 100 : 0;
-        trackMobileEvent(AnalyticsEvent.purchase, {
-          currency: 'EUR',
-          value: valueEurDone,
-          transaction_id: `stripe_coin_${skuDone}_${Date.now()}`,
-          items: [{ item_id: skuDone, item_name: packDone?.name ?? skuDone }],
-          payment_type: 'stripe',
-        });
-        await load({ silent: true });
-        await new Promise((r) => setTimeout(r, 2000));
-        await load({ silent: true });
-        runPurchaseCelebration();
-        hapticSuccess();
-        setFlash({ message: s.flashPaymentOk, kind: 'success' });
-        return true;
-      }
-      return false;
+
+      returnHandledRef.current = true;
+      const packDone = effectiveSku ? getCoinPack(effectiveSku) : undefined;
+      const valueEurDone = packDone ? packDone.priceCents / 100 : 0;
+      trackMobileEvent(AnalyticsEvent.purchase, {
+        currency: 'EUR',
+        value: valueEurDone,
+        transaction_id: `stripe_coin_${effectiveSku ?? 'unknown'}_${Date.now()}`,
+        items: [
+          {
+            item_id: effectiveSku ?? 'unknown',
+            item_name: packDone?.name ?? effectiveSku ?? 'coins',
+          },
+        ],
+        payment_type: 'stripe',
+      });
+      await load({ silent: true });
+      await new Promise((r) => setTimeout(r, 2000));
+      await load({ silent: true });
+      runPurchaseCelebration(effectiveSku);
+      hapticSuccess();
+      setFlash({ message: s.flashPaymentOk, kind: 'success' });
+      return true;
     };
 
     try {

@@ -114,8 +114,9 @@ describe('POST /api/shop/checkout', () => {
     expect(createSession).toHaveBeenCalledWith(
       expect.objectContaining({
         success_url:
-          'http://localhost:3000/app/shop?stripe_success=1&session_id={CHECKOUT_SESSION_ID}',
-        cancel_url: 'http://localhost:3000/app/shop?stripe_canceled=1',
+          'http://localhost:3000/app/shop?stripe_success=1&session_id={CHECKOUT_SESSION_ID}&pack_sku=coin_pack_500',
+        cancel_url:
+          'http://localhost:3000/app/shop?stripe_canceled=1&pack_sku=coin_pack_500',
       }),
     );
   });
