@@ -5,7 +5,10 @@
     "ogTitle": "Questia — Daily real-life quests",
     "ogDescription": "Turn your everyday life into a light adventure: short, concrete missions—without guilt-tripping yourself.",
     "twitterTitle": "Questia — Daily IRL quests",
-    "twitterDescription": "One quest a day in your real life. iOS, Android, and web."
+    "twitterDescriptionStoresBoth": "One quest a day in your real life. iOS, Android, and web.",
+    "twitterDescriptionStoresAndroid": "One quest a day in your real life. Android and web.",
+    "twitterDescriptionStoresIos": "One quest a day in your real life. iOS and web.",
+    "twitterDescriptionNoStores": "One quest a day in your real life — on the web."
   },
   "OnboardingMetadata": {
     "title": "Discover your quest style",
@@ -100,8 +103,12 @@
     "adminLabel": "Console"
   },
   "HomeMetadata": {
-    "title": "Questia — Daily IRL quest app (iOS, Android & Web)",
-    "description": "Questia: daily real-life quest app. Motivation, IRL challenges, and small wins tailored to your profile and pace. Start free on iOS, Android, and web.",
+    "titleStoresBoth": "Questia — Daily IRL quest app (iOS, Android & Web)",
+    "titleStoresAndroid": "Questia — Daily IRL quest app (Android & Web)",
+    "titleStoresIos": "Questia — Daily IRL quest app (iOS & Web)",
+    "descriptionStoresBoth": "Questia: daily real-life quest app. Motivation, IRL challenges, and small wins tailored to your profile and pace. Start free on iOS, Android, and web.",
+    "descriptionStoresAndroid": "Questia: daily real-life quest app. Motivation, IRL challenges, and small wins tailored to your profile and pace. Start free on Android and web.",
+    "descriptionStoresIos": "Questia: daily real-life quest app. Motivation, IRL challenges, and small wins tailored to your profile and pace. Start free on iOS and web.",
     "titleWeb": "Questia — Daily IRL quests on the web",
     "descriptionWeb": "Questia: daily real-life quests in your browser. Motivation, IRL challenges, and small wins tailored to your profile and pace. Start free.",
     "ogTitle": "Questia — Daily real-life quests",
@@ -119,7 +126,9 @@
   },
   "HomePage": {
     "appStore": {
-      "ariaDownload": "Download the Questia app",
+      "ariaDownloadBoth": "Download the Questia app",
+      "ariaDownloadAndroid": "Download Questia on Google Play",
+      "ariaDownloadIos": "Download Questia on the App Store",
       "ariaWeb": "Questia on the web",
       "webOnly": "Play in your browser: onboarding, daily quests, and progress — all on the site."
     },
@@ -144,7 +153,9 @@
     "how": {
       "label": "How it works",
       "title": "Three steps, then your morning quest",
-      "subtitle": "You calibrate in about a minute, then every morning you get your mission. On mobile, everything in your pocket; on the web, the same experience in a browser.",
+      "subtitleStoresBoth": "You calibrate in about a minute, then every morning you get your mission. On mobile, everything in your pocket; on the web, the same experience in a browser.",
+      "subtitleStoresAndroid": "You calibrate in about a minute, then every morning you get your mission. On Android, everything in your pocket; on the web, the same experience in a browser.",
+      "subtitleStoresIos": "You calibrate in about a minute, then every morning you get your mission. On iPhone, everything in your pocket; on the web, the same experience in a browser.",
       "subtitleWeb": "You calibrate in about a minute, then every morning you get your mission — all in your browser, nothing to install.",
       "stepLabel": "Step"
     },
@@ -193,8 +204,12 @@
     ],
     "download": {
       "label": "Download",
-      "title": "iPhone & Android",
-      "subtitle": "Your daily quest and progress on your phone — or do everything on the web with the same account.",
+      "titleStoresBoth": "iPhone & Android",
+      "titleStoresAndroid": "Android",
+      "titleStoresIos": "iPhone",
+      "subtitleStoresBoth": "Your daily quest and progress on your phone — or do everything on the web with the same account.",
+      "subtitleStoresAndroid": "Your daily quest and progress on your Android phone — or do everything on the web with the same account.",
+      "subtitleStoresIos": "Your daily quest and progress on your iPhone — or do everything on the web with the same account.",
       "labelWeb": "On the web",
       "titleWeb": "Play in your browser",
       "subtitleWeb": "Create your profile, get your morning quest, and check off missions — all on the site, one account.",
@@ -226,7 +241,9 @@
     "faq": {
       "label": "FAQ",
       "title": "Frequently asked questions",
-      "subtitle": "What you should know before you start — web or mobile.",
+      "subtitleStoresBoth": "What you should know before you start — web or mobile.",
+      "subtitleStoresAndroid": "What you should know before you start — web or Android.",
+      "subtitleStoresIos": "What you should know before you start — web or iPhone.",
       "subtitleWeb": "What you should know before you start on the site."
     },
     "faqItems": [
@@ -261,6 +278,8 @@
       "titleGradient": "IRL quest",
       "titleAfter": "?",
       "storesReady": "Start free — on the stores or in your browser, with the same account.",
+      "storesReadyAndroid": "Start free — on Google Play or in your browser, with the same account.",
+      "storesReadyIos": "Start free — on the App Store or in your browser, with the same account.",
       "storesPending": "Create your profile on the web; when the app is ready, pick up with the same account.",
       "storesPendingWeb": "Create your profile and start your first quest — all on the web, free to begin.",
       "or": "or",

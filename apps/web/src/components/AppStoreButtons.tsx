@@ -20,6 +20,14 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
   const t = useTranslations('HomePage.appStore');
   const ios = hasAppStoreLink();
   const android = hasPlayStoreLink();
+  const ariaGroup =
+    ios && android
+      ? t('ariaDownloadBoth')
+      : android
+        ? t('ariaDownloadAndroid')
+        : ios
+          ? t('ariaDownloadIos')
+          : t('ariaWeb');
 
   /** Hauteur d'affichage : le PNG Google inclut beaucoup de marge autour du logo — un peu plus haut pour équilibrer avec Apple. */
   const hApple = variant === 'compact' ? 'h-9 sm:h-10' : 'h-12';
@@ -37,7 +45,7 @@ export function AppStoreButtons({ variant = 'default', className = '' }: Props) 
     <div
       className={`flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 sm:gap-6 w-full min-w-0 ${className}`}
       role="group"
-      aria-label={ios || android ? t('ariaDownload') : t('ariaWeb')}
+      aria-label={ariaGroup}
     >
       {ios ? (
         <a

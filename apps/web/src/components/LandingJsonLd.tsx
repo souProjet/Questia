@@ -1,5 +1,11 @@
 import { getTranslations } from 'next-intl/server';
-import { siteUrl, appStoreUrl, playStoreUrl, hasAnyStoreLink } from '@/config/marketing';
+import {
+  siteUrl,
+  appStoreUrl,
+  playStoreUrl,
+  hasAnyStoreLink,
+  softwareApplicationOperatingSystemLabel,
+} from '@/config/marketing';
 
 /** Locale explicite : évite `getLocale()` côté serveur (ordre RSC / navigation client). */
 export async function LandingJsonLd({ locale }: { locale: string }) {
@@ -23,7 +29,7 @@ export async function LandingJsonLd({ locale }: { locale: string }) {
     name: 'Questia',
     image: `${siteUrl}/brand/questia-logo.png`,
     applicationCategory: 'LifestyleApplication',
-    operatingSystem: hasAnyStoreLink() ? 'iOS, Android, Web' : 'Web',
+    operatingSystem: softwareApplicationOperatingSystemLabel(),
     description: t('jsonLd.appDescription'),
     offers: {
       '@type': 'Offer',

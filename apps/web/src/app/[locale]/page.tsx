@@ -8,7 +8,7 @@ import { QuestExamplesSlider, type ExampleQuestSlide } from '@/components/QuestE
 import { AppStoreButtons } from '@/components/AppStoreButtons';
 import { LandingJsonLd } from '@/components/LandingJsonLd';
 import { LandingReveal } from '@/components/LandingReveal';
-import { hasAnyStoreLink } from '@/config/marketing';
+import { hasAnyStoreLink, storeAvailability } from '@/config/marketing';
 import { canonicalUrlFor } from '@/lib/seo/alternates';
 
 export async function generateMetadata({
@@ -19,10 +19,13 @@ export async function generateMetadata({
   const { locale } = await params;
   setRequestLocale(locale);
   const stores = hasAnyStoreLink();
+  const avail = storeAvailability();
   const t = await getTranslations({ locale, namespace: 'HomeMetadata' });
   const keywords = t.raw('keywords') as string[];
-  const desc = stores ? t('description') : t('descriptionWeb');
-  const title = stores ? t('title') : t('titleWeb');
+  const metaSuffix =
+    avail === 'both' ? 'Both' : avail === 'android' ? 'Android' : avail === 'ios' ? 'Ios' : null;
+  const desc = stores && metaSuffix ? t(`descriptionStores${metaSuffix}`) : t('descriptionWeb');
+  const title = stores && metaSuffix ? t(`titleStores${metaSuffix}`) : t('titleWeb');
   const twitterDesc = stores ? desc : t('twitterDescriptionWeb');
   return {
     title,
@@ -59,6 +62,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   setRequestLocale(locale);
   const t = await getTranslations('HomePage');
   const storesReady = hasAnyStoreLink();
+  const storeAvail = storeAvailability();
+  const landingStoreSuffix: 'Both' | 'Android' | 'Ios' | null =
+    storesReady && storeAvail !== 'none'
+      ? storeAvail === 'both'
+        ? 'Both'
+        : storeAvail === 'android'
+          ? 'Android'
+          : 'Ios'
+      : null;
   const STEPS = t.raw('steps') as { emoji: string; title: string; desc: string }[];
   const EXAMPLE_QUESTS = t.raw('examples') as ExampleQuestSlide[];
   const testimonialQuotes = t.raw('testimonialQuotes') as { quote: string; name: string; age: number }[];
@@ -179,7 +191,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               {t('how.title')}
             </h2>
             <p className="text-slate-600 text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed px-1">
-              {t(storesReady ? 'how.subtitle' : 'how.subtitleWeb')}
+              {t(landingStoreSuffix ? `how.subtitleStores${landingStoreSuffix}` : 'how.subtitleWeb')}
             </p>
           </div>
 
@@ -219,10 +231,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <span aria-hidden>📲</span> {t(storesReady ? 'download.label' : 'download.labelWeb')}
           </p>
           <h2 id="download-heading" className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
-            {t(storesReady ? 'download.title' : 'download.titleWeb')}
+            {t(landingStoreSuffix ? `download.titleStores${landingStoreSuffix}` : 'download.titleWeb')}
           </h2>
           <p className="text-slate-600 text-base sm:text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
-            {t(storesReady ? 'download.subtitle' : 'download.subtitleWeb')}
+            {t(landingStoreSuffix ? `download.subtitleStores${landingStoreSuffix}` : 'download.subtitleWeb')}
           </p>
           <div className="pt-4 flex flex-col items-center gap-4">
             <AppStoreButtons className="justify-center" />
@@ -285,7 +297,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               {t('faq.title')}
             </h2>
             <p className="text-slate-600 text-sm sm:text-base md:text-lg font-medium max-w-lg mx-auto leading-relaxed">
-              {t(storesReady ? 'faq.subtitle' : 'faq.subtitleWeb')}
+              {t(landingStoreSuffix ? `faq.subtitleStores${landingStoreSuffix}` : 'faq.subtitleWeb')}
             </p>
           </div>
           <div
@@ -344,7 +356,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   {t('cta.titleAfter')}
                 </h2>
                 <p className="text-slate-700 text-sm sm:text-base md:text-lg font-medium leading-relaxed max-w-2xl mx-auto pt-1 px-0.5">
-                  {storesReady ? t('cta.storesReady') : t('cta.storesPendingWeb')}
+                  {storesReady
+                    ? t(
+                        landingStoreSuffix === 'Android'
+                          ? 'cta.storesReadyAndroid'
+                          : landingStoreSuffix === 'Ios'
+                            ? 'cta.storesReadyIos'
+                            : 'cta.storesReady',
+                      )
+                    : t('cta.storesPendingWeb')}
                 </p>
               </div>
 

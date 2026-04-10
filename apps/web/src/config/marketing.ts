@@ -34,5 +34,45 @@ export function hasAnyStoreLink(): boolean {
   return hasAppStoreLink() || hasPlayStoreLink();
 }
 
+/** Pour copy SEO / landing : quels stores sont réellement configurés. */
+export type StoreAvailability = 'none' | 'android' | 'ios' | 'both';
+
+export function storeAvailability(): StoreAvailability {
+  const ios = hasAppStoreLink();
+  const android = hasPlayStoreLink();
+  if (ios && android) return 'both';
+  if (android) return 'android';
+  if (ios) return 'ios';
+  return 'none';
+}
+
+/** Valeur `operatingSystem` (schema.org) — libellés usuels en anglais. */
+export function softwareApplicationOperatingSystemLabel(): string {
+  switch (storeAvailability()) {
+    case 'android':
+      return 'Android, Web';
+    case 'ios':
+      return 'iOS, Web';
+    case 'both':
+      return 'iOS, Android, Web';
+    default:
+      return 'Web';
+  }
+}
+
+/** Manifest PWA (une seule locale côté Next) — FR, aligné sur la dispo réelle des stores. */
+export function pwaManifestDescriptionFr(): string {
+  switch (storeAvailability()) {
+    case 'android':
+      return 'Questia : une quête IRL par jour — motivation et défis adaptés à ton profil. Android et web.';
+    case 'ios':
+      return 'Questia : une quête IRL par jour — motivation et défis adaptés à ton profil. iOS et web.';
+    case 'both':
+      return 'Questia : une quête IRL par jour — motivation et défis adaptés à ton profil. Web, iOS et Android.';
+    default:
+      return 'Questia : une quête IRL par jour — motivation et défis adaptés à ton profil. Sur le web.';
+  }
+}
+
 /** ID d'app Meta (`fb:app_id` dans le `<head>`) — optionnel ; https://developers.facebook.com/apps */
 export const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim() ?? '';

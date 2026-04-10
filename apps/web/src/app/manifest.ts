@@ -1,13 +1,12 @@
 import type { MetadataRoute } from 'next';
-import { siteUrl } from '@/config/marketing';
+import { pwaManifestDescriptionFr, siteUrl } from '@/config/marketing';
 
 /** PWA / ajout écran d'accueil — renforce la présence marque dans les résultats enrichis. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Questia',
     short_name: 'Questia',
-    description:
-      'Questia : une quête IRL par jour — motivation et défis adaptés à ton profil. Web, iOS et Android.',
+    description: pwaManifestDescriptionFr(),
     id: `${siteUrl}/`,
     start_url: '/',
     scope: '/',

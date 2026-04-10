@@ -8,7 +8,7 @@ import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server
 import { hasLocale } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
-import { facebookAppId, siteUrl } from '@/config/marketing';
+import { facebookAppId, siteUrl, storeAvailability } from '@/config/marketing';
 import { alternatesForLocalePath, canonicalUrlFor, stripLocalePrefix } from '@/lib/seo/alternates';
 import { CookieNotice } from '@/components/CookieNotice';
 import { AnalyticsClerkTracker } from '@/components/analytics/AnalyticsClerkTracker';
@@ -36,6 +36,15 @@ export async function generateMetadata({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'RootLayout' });
+  const stores = storeAvailability();
+  const twitterDescriptionKey =
+    stores === 'none'
+      ? 'twitterDescriptionNoStores'
+      : stores === 'android'
+        ? 'twitterDescriptionStoresAndroid'
+        : stores === 'ios'
+          ? 'twitterDescriptionStoresIos'
+          : 'twitterDescriptionStoresBoth';
 
   const h = await headers();
   const pathname = h.get('x-questia-pathname') ?? '/';
@@ -78,7 +87,7 @@ export async function generateMetadata({
     twitter: {
       card: 'summary_large_image',
       title: t('twitterTitle'),
-      description: t('twitterDescription'),
+      description: t(twitterDescriptionKey),
       images: ['/og/questia-open-graph.png'],
     },
     robots: { index: true, follow: true },

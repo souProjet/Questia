@@ -5,7 +5,10 @@
     "ogTitle": "Questia — App de quêtes quotidiennes dans la vraie vie",
     "ogDescription": "Transforme ton quotidien en jeu d'aventure : missions courtes, concrètes, sans culpabiliser.",
     "twitterTitle": "Questia — App de quêtes quotidiennes IRL",
-    "twitterDescription": "Une quête par jour dans ta vraie vie. iOS, Android et web."
+    "twitterDescriptionStoresBoth": "Une quête par jour dans ta vraie vie. iOS, Android et web.",
+    "twitterDescriptionStoresAndroid": "Une quête par jour dans ta vraie vie. Android et web.",
+    "twitterDescriptionStoresIos": "Une quête par jour dans ta vraie vie. iOS et web.",
+    "twitterDescriptionNoStores": "Une quête par jour dans ta vraie vie — sur le web."
   },
   "OnboardingMetadata": {
     "title": "Découvre ton style de quête",
@@ -100,8 +103,12 @@
     "adminLabel": "Console"
   },
   "HomeMetadata": {
-    "title": "Questia — App de quêtes quotidiennes IRL (iOS, Android & Web)",
-    "description": "Questia : application de quêtes quotidiennes dans la vraie vie. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer — iOS, Android et web.",
+    "titleStoresBoth": "Questia — App de quêtes quotidiennes IRL (iOS, Android & Web)",
+    "titleStoresAndroid": "Questia — App de quêtes quotidiennes IRL (Android & Web)",
+    "titleStoresIos": "Questia — App de quêtes quotidiennes IRL (iOS & Web)",
+    "descriptionStoresBoth": "Questia : application de quêtes quotidiennes dans la vraie vie. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer — iOS, Android et web.",
+    "descriptionStoresAndroid": "Questia : application de quêtes quotidiennes dans la vraie vie. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer — Android et web.",
+    "descriptionStoresIos": "Questia : application de quêtes quotidiennes dans la vraie vie. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer — iOS et web.",
     "titleWeb": "Questia — Quêtes quotidiennes IRL sur le web",
     "descriptionWeb": "Questia : quêtes quotidiennes dans la vraie vie, dans ton navigateur. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer.",
     "ogTitle": "Questia — App de quêtes quotidiennes dans la vraie vie",
@@ -121,7 +128,9 @@
   },
   "HomePage": {
     "appStore": {
-      "ariaDownload": "Télécharger l'application Questia",
+      "ariaDownloadBoth": "Télécharger l'application Questia",
+      "ariaDownloadAndroid": "Télécharger Questia sur Google Play",
+      "ariaDownloadIos": "Télécharger Questia sur l'App Store",
       "ariaWeb": "Questia sur le web",
       "webOnly": "Joue depuis ton navigateur : onboarding, quêtes du jour et progression — tout sur le site."
     },
@@ -146,7 +155,9 @@
     "how": {
       "label": "Fonctionnement",
       "title": "Trois étapes, puis ta quête du matin",
-      "subtitle": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur l'app mobile, tout dans la poche ; sur le web, même expérience depuis un navigateur.",
+      "subtitleStoresBoth": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur l'app mobile, tout dans la poche ; sur le web, même expérience depuis un navigateur.",
+      "subtitleStoresAndroid": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur Android, tout dans la poche ; sur le web, même expérience depuis un navigateur.",
+      "subtitleStoresIos": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission. Sur iPhone, tout dans la poche ; sur le web, même expérience depuis un navigateur.",
       "subtitleWeb": "Tu te calibres en une minute, puis chaque matin tu reçois ta mission — tout depuis ton navigateur, sans installation.",
       "stepLabel": "Étape"
     },
@@ -195,8 +206,12 @@
     ],
     "download": {
       "label": "Télécharger",
-      "title": "iPhone & Android",
-      "subtitle": "Quête du jour et progression sur ton téléphone. Tu peux aussi tout faire depuis le web avec le même compte.",
+      "titleStoresBoth": "iPhone & Android",
+      "titleStoresAndroid": "Android",
+      "titleStoresIos": "iPhone",
+      "subtitleStoresBoth": "Quête du jour et progression sur ton téléphone. Tu peux aussi tout faire depuis le web avec le même compte.",
+      "subtitleStoresAndroid": "Quête du jour et progression sur ton téléphone Android. Tu peux aussi tout faire depuis le web avec le même compte.",
+      "subtitleStoresIos": "Quête du jour et progression sur ton iPhone. Tu peux aussi tout faire depuis le web avec le même compte.",
       "labelWeb": "Sur le web",
       "titleWeb": "Joue depuis ton navigateur",
       "subtitleWeb": "Crée ton profil, reçois ta quête du matin et coche tes missions — tout sur le site, avec le même compte partout.",
@@ -228,7 +243,9 @@
     "faq": {
       "label": "FAQ",
       "title": "Questions fréquentes",
-      "subtitle": "Tout ce qu'il faut savoir avant de te lancer — web ou mobile.",
+      "subtitleStoresBoth": "Tout ce qu'il faut savoir avant de te lancer — web ou mobile.",
+      "subtitleStoresAndroid": "Tout ce qu'il faut savoir avant de te lancer — web ou Android.",
+      "subtitleStoresIos": "Tout ce qu'il faut savoir avant de te lancer — web ou iPhone.",
       "subtitleWeb": "Tout ce qu'il faut savoir avant de te lancer sur le site."
     },
     "faqItems": [
@@ -263,6 +280,8 @@
       "titleGradient": "quête IRL",
       "titleAfter": "?",
       "storesReady": "Gratuit pour commencer — sur les stores ou dans ton navigateur, avec le même compte.",
+      "storesReadyAndroid": "Gratuit pour commencer — sur Google Play ou dans ton navigateur, avec le même compte.",
+      "storesReadyIos": "Gratuit pour commencer — sur l'App Store ou dans ton navigateur, avec le même compte.",
       "storesPending": "Crée ton profil sur le web ; quand l'app sera dispo, tu reprends avec le même compte.",
       "storesPendingWeb": "Crée ton profil et lance ta première quête — tout sur le web, gratuit pour commencer.",
       "or": "ou",
