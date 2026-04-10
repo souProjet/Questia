@@ -196,12 +196,14 @@ export default function AuthScreen() {
         {/* Logo */}
         <View style={s.logoSection}>
           <View style={s.logoIcon}>
-            <Image
-              source={require('../../assets/icon.png')}
-              style={s.logoIconImage}
-              resizeMode="contain"
-              accessibilityIgnoresInvertColors
-            />
+            <View style={s.logoIconInset}>
+              <Image
+                source={require('../../assets/icon.png')}
+                style={s.logoIconImage}
+                resizeMode="contain"
+                accessibilityIgnoresInvertColors
+              />
+            </View>
           </View>
           <Text style={s.appTitle}>QUESTIA</Text>
           <View style={s.badgeRow}>
@@ -330,12 +332,22 @@ const s = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     marginBottom: 16,
-    padding: 8,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: 'rgba(15,23,42,0.08)',
     shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 14,
     elevation: 6,
+  },
+  /** Cadre interne : évite que l’Image ignore le padding et dépasse du cadre blanc (RN). */
+  logoIconInset: {
+    ...StyleSheet.absoluteFillObject,
+    top: 11,
+    left: 7,
+    right: 7,
+    bottom: 11,
   },
   logoIconImage: { width: '100%', height: '100%' },
   appTitle: {

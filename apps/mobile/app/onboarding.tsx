@@ -113,12 +113,14 @@ export default function OnboardingPage() {
         {step === 'welcome' && (
           <>
             <View style={s.iconBox}>
-              <Image
-                source={require('../assets/icon.png')}
-                style={s.iconImage}
-                resizeMode="contain"
-                accessibilityIgnoresInvertColors
-              />
+              <View style={s.iconBoxInset}>
+                <Image
+                  source={require('../assets/icon.png')}
+                  style={s.iconImage}
+                  resizeMode="contain"
+                  accessibilityIgnoresInvertColors
+                />
+              </View>
             </View>
             <Text style={[s.title, compact && s.titleCompact]}>Questia</Text>
             <Text style={[s.subtitle, compact && s.subtitleCompact]}>Une aventure quotidienne,{'\n'}rien que pour toi.</Text>
@@ -247,7 +249,6 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 24,
     alignSelf: 'center',
-    padding: 10,
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: 'rgba(15,23,42,0.08)',
@@ -256,6 +257,13 @@ const s = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 12,
     elevation: 5,
+  },
+  iconBoxInset: {
+    ...StyleSheet.absoluteFillObject,
+    top: 14,
+    left: 8,
+    right: 8,
+    bottom: 14,
   },
   iconImage: { width: '100%', height: '100%' },
 

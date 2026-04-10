@@ -1,4 +1,5 @@
 const path = require('path');
+const metroResolver = require('metro-resolver');
 const { getDefaultConfig } = require('expo/metro-config');
 
 // `__dirname` pointe toujours vers apps/mobile (fichier du config), même si Metro est
@@ -11,9 +12,17 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 // On garde la racine serveur = apps/mobile ; watchFolders ci-dessous inclut déjà monorepoRoot.
 process.env.EXPO_NO_METRO_WORKSPACE_ROOT = '1';
 
-// SDK 52+ : ne pas réactiver disableHierarchicalLookup ni nodeModulesPaths manuels :
-// ça casse la résolution des deps hoistées (ex. react-native-screens).
+// Avec EXPO_NO_METRO_WORKSPACE_ROOT, Expo considère workspaceRoot === projectRoot →
+// getModulesPaths ne pousse aucun chemin : nodeModulesPaths reste vide et Metro ne voit pas
+// les paquets hoistés à la racine du repo (ex. expo-web-browser → erreur ./node_modules/...).
+// On réinjecte project + racine monorepo uniquement (pas disableHierarchicalLookup).
 const config = getDefaultConfig(projectRoot);
+
+const mobileNodeModules = path.resolve(projectRoot, 'node_modules');
+const rootNodeModules = path.resolve(monorepoRoot, 'node_modules');
+config.resolver.nodeModulesPaths = [
+  ...new Set([...(config.resolver.nodeModulesPaths ?? []), mobileNodeModules, rootNodeModules]),
+];
 
 // Inclure explicitement le monorepo pour @questia/* et workspaces (évite un graphe trop petit).
 const folders = new Set([...(config.watchFolders ?? []), monorepoRoot]);
@@ -33,6 +42,43 @@ config.resolver.extraNodeModules = {
   react: reactPkg,
   'react-dom': reactDomPkg,
   'react-native': reactNativePkg,
+};
+
+// Les `import()` avec experimentalImportSupport deviennent des requêtes relatives
+// `./node_modules/pkg/...`. Metro les résout uniquement depuis le dossier du module
+// d'origine → échec si le paquet est hoisté à la racine du workspace.
+// On retente avec un chemin absolu sous apps/mobile puis sous le monorepo.
+const upstreamResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const runDefault = (name) =>
+    upstreamResolveRequest
+      ? upstreamResolveRequest(context, name, platform)
+      : metroResolver.resolve(
+          Object.freeze({
+            ...context,
+            resolveRequest: metroResolver.resolve,
+          }),
+          name,
+          platform,
+        );
+
+  if (
+    moduleName.startsWith('./node_modules/') ||
+    moduleName.startsWith('.\\node_modules\\')
+  ) {
+    const rel = moduleName.replace(/^\.\//, '').replace(/^\.\\/, '');
+    const absProject = path.normalize(path.join(projectRoot, rel));
+    const absRoot = path.normalize(path.join(monorepoRoot, rel));
+    for (const abs of [absProject, absRoot]) {
+      try {
+        return runDefault(abs);
+      } catch {
+        /* tenter l'autre racine */
+      }
+    }
+  }
+
+  return runDefault(moduleName);
 };
 
 module.exports = config;

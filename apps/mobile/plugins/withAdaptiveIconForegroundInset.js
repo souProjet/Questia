@@ -2,14 +2,24 @@ const fs = require('fs');
 const path = require('path');
 const { withDangerousMod } = require('expo/config-plugins');
 
-/** Marge horizontale (dp) — un peu moins pour ne pas trop rétrécir le logo. */
-const INSET_HORIZONTAL_DP = 14;
-/** Marge verticale (dp) — icône lanceur Android (écran d’accueil). Canvas adaptatif ≈ 108 dp ; au-delà de ~40 dp le logo devient trop petit. */
-const INSET_VERTICAL_DP = 40;
+/** Marge horizontale (dp) — icône adaptative (canvas ≈ 108 dp). */
+const INSET_HORIZONTAL_DP = 18;
+/**
+ * Marge verticale (dp) — icône adaptative ; au-delà de ~46 dp le pictogramme devient très petit.
+ */
+const INSET_VERTICAL_DP = 46;
 
 /**
- * Réduit visuellement le foreground de l’icône adaptative pour laisser respirer le fond
- * (sinon le PNG remplit tout le masque launcher / squircle).
+ * Splash (`windowBackground`) : sans boîte en dp fixe, Android étire le foreground sur tout l’écran et les
+ * marges « icône » ne suffisent plus — le logo déborde. On centre un carré en dp puis on inset le bitmap dedans.
+ */
+const SPLASH_LOGO_BOX_DP = 300;
+const SPLASH_INSET_HORIZONTAL_DP = 22;
+const SPLASH_INSET_VERTICAL_DP = 58;
+
+/**
+ * 1) Icône adaptative : foreground inset (fond blanc `iconBackground` visible autour du logo).
+ * 2) Splash natif : réécrit `ic_launcher_background.xml` (zone logo bornée + insets).
  */
 function withAdaptiveIconForegroundInset(config) {
   return withDangerousMod(config, [
@@ -58,6 +68,33 @@ function withAdaptiveIconForegroundInset(config) {
         );
         fs.writeFileSync(filePath, content, 'utf8');
       }
+
+      const splashBackgroundXml = `<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@color/splashscreen_background"/>
+  <item
+      android:width="${SPLASH_LOGO_BOX_DP}dp"
+      android:height="${SPLASH_LOGO_BOX_DP}dp"
+      android:gravity="center">
+    <layer-list>
+      <item
+          android:top="${SPLASH_INSET_VERTICAL_DP}dp"
+          android:bottom="${SPLASH_INSET_VERTICAL_DP}dp"
+          android:left="${SPLASH_INSET_HORIZONTAL_DP}dp"
+          android:right="${SPLASH_INSET_HORIZONTAL_DP}dp">
+        <bitmap
+            android:gravity="center"
+            android:src="@mipmap/ic_launcher_foreground" />
+      </item>
+    </layer-list>
+  </item>
+</layer-list>
+`;
+      fs.writeFileSync(
+        path.join(drawableDir, 'ic_launcher_background.xml'),
+        splashBackgroundXml,
+        'utf8',
+      );
 
       return config;
     },

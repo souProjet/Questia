@@ -460,6 +460,8 @@ function ShopPageInner() {
         return;
       }
       window.location.href = data.url;
+    } catch {
+      setFlash({ message: t('errCheckout'), kind: 'error' });
     } finally {
       setStripeLoadingSku(null);
     }
@@ -494,6 +496,8 @@ function ShopPageInner() {
       });
       await load();
       runPurchaseCelebration(sku);
+    } catch {
+      setFlash({ message: t('errPurchase'), kind: 'error' });
     } finally {
       setCoinPurchaseSku(null);
     }

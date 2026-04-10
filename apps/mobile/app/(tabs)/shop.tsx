@@ -475,6 +475,9 @@ export default function ShopScreen() {
         stripeCheckoutSku.current = null;
         detachLinkListener();
       }
+    } catch {
+      hapticError();
+      setFlash({ message: s.errCheckout, kind: 'error' });
     } finally {
       setStripeLoadingSku(null);
     }
@@ -504,6 +507,9 @@ export default function ShopScreen() {
       });
       await load({ silent: true });
       runPurchaseCelebration(sku);
+    } catch {
+      hapticError();
+      setFlash({ message: s.errPurchase, kind: 'error' });
     } finally {
       setCoinPurchaseSku(null);
     }

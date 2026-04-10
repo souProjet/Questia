@@ -18,10 +18,11 @@ const VARIANT: Record<
     img: 'drop-shadow-[0_1px_4px_rgba(15,23,42,0.4)]',
   },
   auth: {
-    box: 'h-10 w-10 min-h-10 min-w-10 sm:h-11 sm:w-11 sm:min-h-11 sm:min-w-11 rounded-xl overflow-hidden',
+    box: 'h-10 w-10 min-h-10 min-w-10 sm:h-11 sm:w-11 sm:min-h-11 sm:min-w-11 rounded-xl overflow-hidden bg-white ring-1 ring-slate-200/70',
     sizes: '44px',
-    inset: 'inset-[10%]',
-    img: 'drop-shadow-[0_1px_4px_rgba(15,23,42,0.35)]',
+    /** Inset vertical plus large : le visuel du PNG dépassait le cadre blanc (connexion / inscription). */
+    inset: 'inset-x-[6%] inset-y-[14%]',
+    img: 'drop-shadow-[0_1px_3px_rgba(15,23,42,0.2)]',
   },
   footer: {
     box: 'h-10 w-10 min-h-10 min-w-10 rounded-[11px] overflow-hidden',
@@ -30,10 +31,10 @@ const VARIANT: Record<
     img: 'drop-shadow-[0_1px_3px_rgba(15,23,42,0.3)]',
   },
   onboarding: {
-    box: 'h-[4.25rem] w-[4.25rem] min-h-[4.25rem] min-w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem] sm:min-h-[4.75rem] sm:min-w-[4.75rem] rounded-2xl overflow-hidden',
+    box: 'h-[4.25rem] w-[4.25rem] min-h-[4.25rem] min-w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem] sm:min-h-[4.75rem] sm:min-w-[4.75rem] rounded-2xl overflow-hidden bg-white ring-1 ring-slate-200/65',
     sizes: '(max-width: 640px) 68px, 76px',
-    inset: 'inset-[10%]',
-    img: 'drop-shadow-[0_2px_8px_rgba(15,23,42,0.2)]',
+    inset: 'inset-x-[6%] inset-y-[13%]',
+    img: 'drop-shadow-[0_2px_6px_rgba(15,23,42,0.18)]',
   },
   card: {
     box: 'h-[26px] w-[26px] min-h-[26px] min-w-[26px] rounded-[7px] overflow-hidden',
