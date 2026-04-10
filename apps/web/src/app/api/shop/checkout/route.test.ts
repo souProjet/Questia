@@ -101,7 +101,7 @@ describe('POST /api/shop/checkout', () => {
     );
   });
 
-  it('200 deep link boutique si stripeReturnUrl natif (questia://shop)', async () => {
+  it('200 mobile : success_url https /app/shop (Stripe refuse questia://)', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
     prismaMock.profile.findUnique.mockResolvedValue({ id: 'p1' });
     const res = await POST(
@@ -113,8 +113,9 @@ describe('POST /api/shop/checkout', () => {
     expect(res.status).toBe(200);
     expect(createSession).toHaveBeenCalledWith(
       expect.objectContaining({
-        success_url: 'questia://shop?stripe_success=1&session_id={CHECKOUT_SESSION_ID}',
-        cancel_url: 'questia://shop?stripe_canceled=1',
+        success_url:
+          'http://localhost:3000/app/shop?stripe_success=1&session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: 'http://localhost:3000/app/shop?stripe_canceled=1',
       }),
     );
   });

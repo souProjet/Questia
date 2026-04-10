@@ -420,15 +420,30 @@ export default function ShopScreen() {
       });
       const token = await getTokenRef.current();
       await maybeCompleteAuthSession();
-      const returnUrl = Linking.createURL('/shop');
+      /** Même base que Stripe success_url (https…/app/shop) — Stripe refuse questia:// pour openAuthSession. */
+      const returnUrl = `${API_BASE_URL.replace(/\/$/, '')}/app/shop`;
       const res = await apiFetch(`${API_BASE_URL}/api/shop/checkout`, token, {
         method: 'POST',
-        body: JSON.stringify({ sku, stripeReturnUrl: returnUrl }),
+        body: JSON.stringify({ sku, stripeReturnUrl: Linking.createURL('/shop') }),
       });
-      const data = (await res.json()) as { url?: string; error?: string };
+      const raw = await res.text();
+      let data: { url?: string; error?: string } = {};
+      try {
+        data = raw ? (JSON.parse(raw) as { url?: string; error?: string }) : {};
+      } catch {
+        hapticError();
+        setFlash({
+          message: `${s.errCheckout} (HTTP ${res.status})`,
+          kind: 'error',
+        });
+        return;
+      }
       if (!res.ok || !data.url) {
         hapticError();
-        setFlash({ message: data.error ?? s.errCheckout, kind: 'error' });
+        setFlash({
+          message: (data.error && String(data.error).trim()) || `${s.errCheckout} (HTTP ${res.status})`,
+          kind: 'error',
+        });
         return;
       }
       hapticLight();

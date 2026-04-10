@@ -4,9 +4,17 @@ import { getCoinPack } from '@questia/shared';
 import { prisma } from '@/lib/db';
 import { getStripe } from '@/lib/stripe';
 
+/** True si l’origine peut servir de redirect Stripe (https prod ou localhost en test). */
+function siteUrlAllowsStripeRedirect(siteUrl: string): boolean {
+  const s = siteUrl.trim();
+  if (s.startsWith('https://')) return true;
+  return /^http:\/\/localhost(?::\d+)?$/i.test(s) || /^http:\/\/127\.0\.0\.1(?::\d+)?$/i.test(s);
+}
+
 /**
- * URL de retour app native (expo-linking) pour fermer la session navigateur après Checkout.
- * Refus des URLs arbitraires (évite open redirect après paiement).
+ * Valide que `stripeReturnUrl` vient bien de notre app (questia:// ou exp:// boutique).
+ * Stripe n’accepte pas ces schémas en success_url (erreur url_invalid) : on redirige vers
+ * `${NEXT_PUBLIC_SITE_URL}/app/shop?…` pour mobile une fois la requête validée.
  */
 function nativeStripeReturnBase(stripeReturnUrl: string): string | null {
   const trimmed = stripeReturnUrl.trim();
@@ -78,37 +86,65 @@ export async function POST(request: Request) {
   }
   if (!siteUrl) siteUrl = 'http://localhost:3000';
 
-  const nativeBase = stripeReturnUrl ? nativeStripeReturnBase(stripeReturnUrl) : null;
-  const success_url = nativeBase
-    ? `${nativeBase}?stripe_success=1&session_id={CHECKOUT_SESSION_ID}`
-    : `${siteUrl}/app/shop?success=1`;
-  const cancel_url = nativeBase ? `${nativeBase}?stripe_canceled=1` : `${siteUrl}/app/shop?canceled=1`;
+  const mobileRequested = Boolean(stripeReturnUrl.trim());
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    line_items: [
+  if (mobileRequested && !siteUrlAllowsStripeRedirect(siteUrl)) {
+    return NextResponse.json(
       {
-        price_data: {
-          currency: pack.currency,
-          unit_amount: pack.priceCents,
-          product_data: {
-            name: pack.name,
-            description: pack.description.slice(0, 450),
-          },
-        },
-        quantity: 1,
+        error:
+          'NEXT_PUBLIC_SITE_URL doit être en https (ex. https://questia.fr) pour le paiement depuis l’app ; Stripe refuse les URLs questia://.',
       },
-    ],
-    success_url,
-    cancel_url,
-    metadata: {
-      type: 'coin_pack',
-      clerkId: userId,
-      profileId: profile.id,
-      sku: pack.sku,
-      coinsGranted: String(pack.coinsGranted),
-    },
-  });
+      { status: 400 },
+    );
+  }
+
+  const success_url = mobileRequested
+    ? `${siteUrl}/app/shop?stripe_success=1&session_id={CHECKOUT_SESSION_ID}`
+    : `${siteUrl}/app/shop?success=1`;
+  const cancel_url = mobileRequested
+    ? `${siteUrl}/app/shop?stripe_canceled=1`
+    : `${siteUrl}/app/shop?canceled=1`;
+
+  let session: Awaited<ReturnType<typeof stripe.checkout.sessions.create>>;
+  try {
+    session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: pack.currency,
+            unit_amount: pack.priceCents,
+            product_data: {
+              name: pack.name,
+              description: pack.description.slice(0, 450),
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      success_url,
+      cancel_url,
+      metadata: {
+        type: 'coin_pack',
+        clerkId: userId,
+        profileId: profile.id,
+        sku: pack.sku,
+        coinsGranted: String(pack.coinsGranted),
+      },
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('[api/shop/checkout] Stripe checkout.sessions.create', msg);
+    const hint =
+      /test mode key/i.test(msg) || /live mode/i.test(msg)
+        ? ' Vérifie STRIPE_SECRET_KEY sur le serveur : clé live (sk_live_…) pour les vrais paiements.'
+        : '';
+    const short = msg.length > 240 ? `${msg.slice(0, 237)}…` : msg;
+    return NextResponse.json(
+      { error: `Paiement Stripe indisponible : ${short}${hint}` },
+      { status: 502 },
+    );
+  }
 
   if (!session.url) {
     return NextResponse.json({ error: 'Impossible de créer la session de paiement' }, { status: 502 });
