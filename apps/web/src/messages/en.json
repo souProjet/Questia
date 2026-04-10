@@ -11,6 +11,65 @@
     "title": "Discover your quest style",
     "description": "A short quiz to tune your Questia profile before you sign up — explorer or homebody, planner or improviser."
   },
+  "QuestGenerationPage": {
+    "metaTitle": "How are my quests generated? | Questia",
+    "metaDescription": "See the full journey: profile, history, today’s context, archetype choice, AI writing, and safety checks — explained in plain language.",
+    "backHome": "← Home",
+    "kicker": "Behind the scenes",
+    "title": "How are your quests generated?",
+    "lead": "Every morning, a mission shaped for you: this flow walks from your onboarding answers to the quest you see in the app — with a spark of creativity and guardrails that keep you safe.",
+    "diagramAria": "Steps in the quest generation journey",
+    "noteTitle": "What to remember",
+    "noteBody": "Nothing is pure randomness: the engine blends your profile, your history, and the day ahead. AI writes the words; Questia enforces safety, clarity, and respect for your pace.",
+    "privacyNote": "You won’t see clinical labels: copy talks about tendencies and rhythm, not diagnosis. Data is used to personalize the experience, as described in our privacy policy.",
+    "privacyLink": "Privacy policy",
+    "stepsList": [
+      {
+        "title": "Your declared profile",
+        "body": "During onboarding you share how you like to play in real life — explorer vs homebody, cautious vs bold — plus a light personality footprint that steers recommendations without showing clinical jargon in the app."
+      },
+      {
+        "title": "Your quest history",
+        "body": "Each completed, accepted, or declined quest leaves a gentle trace. Recent choices feed the engine’s memory — not to judge you, but to understand how you actually move through the world."
+      },
+      {
+        "title": "Observed tendencies",
+        "body": "The system infers tendencies from the kinds of quests you’ve lived. It’s a soft read on behavior, not a box you’re locked into."
+      },
+      {
+        "title": "Identity ↔ actions gap",
+        "body": "We measure how closely what you say about yourself aligns with what recent quests suggest. That signal tunes tone and intensity — always supportive, never guilt-tripping."
+      },
+      {
+        "title": "Your journey phase",
+        "body": "Calibration (near comfort), expansion (small stretch), rupture (bigger challenge): the phase targets the kind of nudge that fits where you are right now."
+      },
+      {
+        "title": "Today’s context",
+        "body": "Weather, city, and — if you enable location — whether an outdoor outing makes sense today. When it fits the mission, we may suggest a public place on the map."
+      },
+      {
+        "title": "Archetype choice",
+        "body": "From a taxonomy of quest families, the engine picks the best match for your blended profile, phase, weather constraints, and recent quests — so you don’t get the same template on repeat."
+      },
+      {
+        "title": "A dash of diversity",
+        "body": "When several archetypes tie, a stable draw (tied to you and the date) prevents always landing on the same storyline. Creative angles for wording follow the same idea."
+      },
+      {
+        "title": "AI writing",
+        "body": "A language model drafts title, hook, and mission in a warm narrator voice. Prompts embed safety, clarity, no medical or dangerous instructions, and respect for your chosen language."
+      },
+      {
+        "title": "Server-side quality checks",
+        "body": "Automatic rules validate the mission: one actionable sentence, no forbidden content, outdoor place consistency when needed, city mention when GPS is on. If it fails, we retry or fall back to a safe template."
+      },
+      {
+        "title": "Your quest for the day, delivered",
+        "body": "One quest is stored per calendar day: reopening the app the same day shows the same mission — no spam regenerations. Tomorrow the journey runs again with fresh context."
+      }
+    ]
+  },
   "Navbar": {
     "ariaMain": "Main navigation",
     "ariaHome": "Questia, home",
@@ -21,6 +80,7 @@
     "navDownloadWeb": "The site",
     "navTestimonials": "Stories",
     "navFaq": "FAQ",
+    "navQuestGen": "How quests are made",
     "openApp": "Open the app",
     "shop": "Shop",
     "history": "History",
@@ -215,6 +275,7 @@
       "download": "Download",
       "downloadWeb": "The site",
       "faq": "FAQ",
+      "questGeneration": "How quests are created",
       "signIn": "Sign in",
       "privacy": "Privacy",
       "legal": "Legal notice",

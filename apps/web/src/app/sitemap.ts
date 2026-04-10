@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/legal/cgu', priority: 0.3, changeFrequency: 'yearly' as const },
     { path: '/legal/cgv', priority: 0.3, changeFrequency: 'yearly' as const },
     { path: '/legal/bien-etre', priority: 0.3, changeFrequency: 'yearly' as const },
+    { path: '/generation-quetes', priority: 0.5, changeFrequency: 'monthly' as const },
   ];
 
   const entries: MetadataRoute.Sitemap = [];

@@ -178,14 +178,19 @@ describe('ai actions', () => {
     );
 
     const callArg = createMock.mock.calls[0]?.[0] as {
+      model: string;
       temperature: number;
       messages: Array<{ role: string; content: string }>;
     };
+    expect(callArg.model).toBe('gpt-4o');
     expect(callArg.temperature).toBe(0.9);
     const userPrompt = callArg.messages.find((m) => m.role === 'user')?.content ?? '';
 
     expect(userPrompt).toContain('VARIATION (évite la copie)');
-    expect(userPrompt).toContain('Registre à favoriser');
+    expect(userPrompt).toContain('ID TIRAGE (unique à chaque appel API)');
+    expect(userPrompt).toContain('PIVOT CRÉATIF');
+    expect(userPrompt).toMatch(/VOIX NARRATIVE/);
+    expect(userPrompt).toMatch(/Angle du jour|Today's angle/i);
     expect(userPrompt).toContain('INTÉRÊT');
     expect(userPrompt).toContain('Jour n°17');
     expect(userPrompt).toContain('Niveau (phase effective pour cette quête) : en rupture');

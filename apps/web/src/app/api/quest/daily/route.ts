@@ -295,7 +295,7 @@ export async function GET(request: NextRequest) {
       exhibited,
       congruenceDelta,
       selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${regenTier}`,
-      diversityWindow: 7,
+      diversityWindow: 10,
       categoryScorePenalty: categoryRerollPenalty,
     },
   );

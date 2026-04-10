@@ -1,5 +1,6 @@
 'use server';
 
+import { randomUUID } from 'crypto';
 import OpenAI from 'openai';
 import type {
   AppLocale,
@@ -11,9 +12,10 @@ import type {
   QuestNarrationRequest,
   QuestNarrationResponse,
 } from '@questia/shared';
-import { questLocalizedText } from '@questia/shared';
+import { promptSeedIndex, questLocalizedText } from '@questia/shared';
 import {
   archetypeCategoryLabel,
+  buildNarrativeVoiceBlock,
   buildPersonalityMissionHints,
   buildPersonalityPromptBlock,
   describeArchetypeTargetTraits,
@@ -29,11 +31,24 @@ import {
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
 
-/** Modèle OpenAI (`chat.completions`). Surchargeable sans redéploiement de code via `OPENAI_MODEL`. */
+/** Modèle OpenAI (`chat.completions`) — narration et usages généraux. */
 const DEFAULT_OPENAI_MODEL = 'gpt-5.4';
 const OPENAI_MODEL =
   (typeof process.env.OPENAI_MODEL === 'string' ? process.env.OPENAI_MODEL.trim() : '') ||
   DEFAULT_OPENAI_MODEL;
+
+/**
+ * Quête quotidienne : modèle avec échantillonnage réel (temperature / top_p).
+ * Les variantes gpt-5.* ignorent souvent temperature → sorties quasi identiques d’un jour à l’autre.
+ */
+const DEFAULT_DAILY_QUEST_MODEL = 'gpt-4o';
+const DAILY_QUEST_OPENAI_MODEL =
+  (typeof process.env.OPENAI_DAILY_QUEST_MODEL === 'string' ? process.env.OPENAI_DAILY_QUEST_MODEL.trim() : '') ||
+  DEFAULT_DAILY_QUEST_MODEL;
+
+function dailyQuestModelIgnoresSampling(model: string): boolean {
+  return /^gpt-5/i.test(model.trim());
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -273,7 +288,7 @@ const CREATIVE_ANGLES_FR: readonly string[] = [
   'Angle du jour : une contrainte ludique courte (3 min, 3 photos, 3 lignes écrites, 1 détail nouveau).',
   "Angle du jour : explorer un sens (ouïe, odorat, toucher) plutôt qu'une longue introspection.",
   'Angle du jour : bousculer un ordre habituel (itinéraire, ordre des tâches, fenêtre) — geste léger.',
-  "Angle du jour : mini-récit (2 phrases) comme prétexte à l'action, sans théâtre.",
+  "Angle du jour : un clin d'œil narratif dans la même phrase que l'ordre — pas de second paragraphe.",
   'Angle du jour : interaction humaine minimale et réaliste — pas de « grand défi social ».',
   'Angle du jour : calme — une seule action, posée, bien sentie.',
   "Angle du jour : au besoin une seule ligne notée à la main, puis une action simple dans le monde réel (pas de personnage ou « autre toi »).",
@@ -297,7 +312,7 @@ const CREATIVE_ANGLES_EN: readonly string[] = [
   "Today's angle: a short playful constraint (3 min, 3 photos, 3 written lines, 1 new detail).",
   "Today's angle: explore a sense (hearing, smell, touch) instead of long introspection.",
   "Today's angle: gently break a usual order (route, task order, seat, window) — light disruption.",
-  "Today's angle: a 2-sentence micro-story as a pretext to act, no drama.",
+  "Today's angle: one narrative beat in the same sentence as the instruction — no second paragraph.",
   "Today's angle: minimal realistic human interaction — not a “big social challenge”.",
   "Today's angle: calm — one action, done with attention.",
   "Today's angle: if needed one line on paper, then one simple real-world action (no alter ego or future-self fiction).",
@@ -317,47 +332,59 @@ const CREATIVE_ANGLES_EN: readonly string[] = [
 
 function pickCreativeAngle(locale: AppLocale, seed: string): string {
   const list = locale === 'en' ? CREATIVE_ANGLES_EN : CREATIVE_ANGLES_FR;
-  let h = 2166136261;
-  const s = `${seed}|creative`;
-  for (let i = 0; i < s.length; i += 1) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return list[(h >>> 0) % list.length]!;
+  return list[promptSeedIndex(seed, 'creative', list.length)]!;
 }
 
-/** Second signal de variété (registre), indépendant de l’« angle » créatif — évite le même ton tous les jours. */
-const VARIETY_HINTS_FR: readonly string[] = [
-  'Registre à favoriser aujourd’hui : **sensoriel** (goût, odeur, texture, température).',
-  'Registre à favoriser aujourd’hui : **social léger** (vrai humain, vraie phrase, pas de performance).',
-  'Registre à favoriser aujourd’hui : **déplacement ou espace** (trajectoire, pièce, dehors si autorisé).',
-  'Registre à favoriser aujourd’hui : **curiosité maline** — surprends sans compliquer.',
-  'Registre à favoriser aujourd’hui : **mains / fabrication** (cuisiner, ranger, bricoler une chose minuscule).',
-  'Registre à favoriser aujourd’hui : **écrit court** (post-it, SMS, note vocale) vers quelqu’un de réel.',
-  'Registre à favoriser aujourd’hui : **nature domestique** (plante, fenêtre, ciel, animal).',
-  'Registre à favoriser aujourd’hui : **rythme & corps** (marche, pause active, respiration + mouvement).',
+/** Pivot créatif (tirage déterministe depuis la graine + nonce) pour éviter les quêtes « catalogue ». */
+const MISSION_PIVOTS_FR: readonly string[] = [
+  'Ancre la mission sur un objet déjà présent chez toi (câble, tasse, plante, clef) puis enchaîne avec une micro-action dehors ou dans l’espace partagé.',
+  'Choisis un moment précis (avant le premier café, en sortant du travail, après le dîner) et une durée plafond de 12 minutes.',
+  'Ajoute une contrainte ludique chiffrée : 2 photos, 4 pas de plus que d’habitude, ou 1 phrase écrite puis jetée/recyclée.',
+  'Pars d’un détail sensoriel (odeur, texture, bruit de fond) qui change ta trajectoire habituelle sans en faire une introspection.',
+  'Inverse un ordre routinier (autre escalier, autre file, autre chaise) comme prétexte à l’action principale.',
+  'Écris une seule ligne au stylo puis exécute l’action dans les 10 minutes — pas de liste, pas de second document.',
+  'Cible une interaction minimale : une phrase prononcée ou un message court à une personne réelle, sans « grand défi social ».',
+  'Formule la mission comme une chasse au détail (couleur, matériau, typo sur une affiche) dans un lieu public banal.',
+  'Lie l’action à un geste de soin concret (eau, lumière, rangement d’une surface visible) avant ou après un mini-déplacement.',
+  'Utilise un repère météo ou lumineux du jour (ombre, reflet, goutte) comme excuse pour changer d’itinéraire.',
+  'Mélange deux registres courts : corps (20 pas) + curiosité (1 question posée à quelqu’un ou notée pour toi seul·e).',
+  'Impose un « lieu interdit habituel » inverse : si tu restes souvent dedans, sors 7 minutes ; si tu fuis dehors, ancre 7 minutes près d’une fenêtre ouverte.',
+  'Choisis un verbe rare du quotidien (tâter, épeler, aligner, graver au doigt) et fais-en le cœur de la mission.',
+  'Termine par un petit rituel de clôture (respiration, verrouillage téléphone 15 min, rangement d’un objet) explicite dans la phrase.',
+  'Évite les lieux iconiques : quartier secondaire, rue parallèle, entrée de service, couloir ouvert au public.',
+  'Si social : précise le canal (vocal, SMS, présentiel) et le ton (merci, blague, nouvelle factuelle) en une goutte d’humour ou de chaleur.',
+  'Si créatif : une contrainte « une seule couleur visible » ou « un seul mot répété 3 fois à voix basse » intégrée à l’action.',
+  'Si déplacement : nomme un repère intermédiaire (banc, passage piéton, vitrine) à toucher ou longer, pas seulement « va au parc ».',
+  'Si intérieur : branche l’action sur une corvée en cours (lessive, vaisselle, courrier) transformée en micro-aventure.',
+  'Si extérieur : météo comme contrainte positive (parapluie = rythme lent ; soleil = ombre à trouver 2 minutes).',
 ];
 
-const VARIETY_HINTS_EN: readonly string[] = [
-  'Lean today toward **sensory** (taste, smell, texture, temperature).',
-  'Lean today toward **light social** (a real person, one real sentence, no performance).',
-  'Lean today toward **movement or space** (route, room, outdoors if allowed).',
-  'Lean today toward **clever curiosity** — surprise without complexity.',
-  'Lean today toward **hands / making** (cook, tidy, fix one tiny thing).',
-  'Lean today toward **short writing** (note, text, voice memo) to a real someone.',
-  'Lean today toward **domestic nature** (plant, window, sky, pet).',
-  'Lean today toward **rhythm & body** (walk, active break, breath + movement).',
+const MISSION_PIVOTS_EN: readonly string[] = [
+  'Anchor the mission on a household object (cable, mug, plant, key) then chain one tiny outdoor or shared-space action.',
+  'Pick a specific moment (before first coffee, after work, after dinner) and cap the whole thing at 12 minutes.',
+  'Add a playful numeric constraint: 2 photos, 4 extra steps vs usual, or 1 handwritten line then recycle the paper.',
+  'Start from a sensory detail (smell, texture, background noise) that nudges you off autopilot — not introspection.',
+  'Reverse a routine order (different stairs, queue, seat) as the pretext for the main action.',
+  'Write one pen line, then do the action within 10 minutes — no lists, no second document.',
+  'Target minimal interaction: one real sentence or short message to a real person, not a “big social challenge”.',
+  'Frame it as a detail hunt (color, material, typo on a poster) in an ordinary public place.',
+  'Tie the action to concrete care (water, light, tidy one visible surface) before or after a micro-move.',
+  'Use today’s weather or light cue (shadow, reflection, raindrop) as the excuse to reroute briefly.',
+  'Blend two short registers: body (20 steps) + curiosity (one question to someone or a private note).',
+  'Flip your usual bias: if you stay in, step out 7 minutes; if you avoid outside, spend 7 minutes by an open window.',
+  'Pick an uncommon everyday verb (trace, align, skim, tap out) and make it the core of the mission.',
+  'End with a tiny closing ritual (breath, phone away 15 min, pocket one object) stated in the same sentence.',
+  'Avoid iconic landmarks: side street, parallel road, public corridor, back entrance vibe.',
+  'If social: name the channel (voice, text, in person) and tone (thanks, joke, factual news) with a spark of warmth.',
+  'If creative: one-color-only constraint or whisper one word three times woven into the action.',
+  'If movement: name an intermediate landmark (bench, crosswalk, shop window) to touch or follow, not just “go to the park”.',
+  'If indoors: hook to an in-flight chore (dishes, mail, laundry) turned into a micro-adventure.',
+  'If outdoors: weather as a positive constraint (umbrella = slow pace; sun = find shade for 2 minutes).',
 ];
 
-function pickVarietyHint(locale: AppLocale, seed: string): string {
-  const list = locale === 'en' ? VARIETY_HINTS_EN : VARIETY_HINTS_FR;
-  let h = 2166136261;
-  const s = `${seed}|variety`;
-  for (let i = 0; i < s.length; i += 1) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return list[(h >>> 0) % list.length]!;
+function pickMissionPivot(locale: AppLocale, seed: string): string {
+  const list = locale === 'en' ? MISSION_PIVOTS_EN : MISSION_PIVOTS_FR;
+  return list[promptSeedIndex(seed, 'pivot', list.length)]!;
 }
 
 function truncateArchetypeDescription(text: string, max = 320): string {
@@ -510,7 +537,7 @@ function validateGeneratedPayload(
         : 'mission trop longue (une phrase courte, environ 300 caractères max)',
     };
   }
-  if (hook.length < 6 || hook.split(/\s+/).length > 22) {
+  if (hook.length < 6 || hook.split(/\s+/).length > 24) {
     return {
       ok: false,
       reason: en ? 'invalid hook (length or word count)' : 'hook invalide (longueur ou nombre de mots)',
@@ -620,13 +647,16 @@ function buildUserPrompt(
   categoryLabel: string,
   targetTraitsLine: string,
   repairHint: string | null,
+  attemptIndex: number,
+  stochasticNonce: string,
 ): string {
   const locale = profile.locale ?? 'fr';
   const arch = questLocalizedText(archetype, locale);
   const archetypeSummary = truncateArchetypeDescription(arch.description);
-  const creativeSeed = `${profile.generationSeed ?? profile.questDateIso}|${profile.questDateIso}|${archetype.id}`;
+  const creativeSeed = `${profile.generationSeed ?? profile.questDateIso}|${profile.questDateIso}|${archetype.id}|a${attemptIndex}|${stochasticNonce}`;
   const creativeAngleLine = pickCreativeAngle(locale, creativeSeed);
-  const varietyLine = pickVarietyHint(locale, creativeSeed);
+  const missionPivotLine = pickMissionPivot(locale, creativeSeed);
+  const narrativeVoiceBlock = buildNarrativeVoiceBlock(profile.phase, locale, creativeSeed);
 
   if (locale === 'en') {
     const rerollBlock = profile.isRerollGeneration
@@ -664,9 +694,14 @@ NO NAMED PLACES (required):
     return `Generate one unique daily quest for today.
 
 VARIATION (avoid repetition): ${variationSalt}
+CREATIVE DRAW ID (unique per API call): ${stochasticNonce}
+ATTEMPT: ${attemptIndex + 1} of ${DAILY_QUEST_MAX_ATTEMPTS}
+CREATIVE PIVOT (obey the intent; do not paste this block verbatim):
+${missionPivotLine}
+
 ${rerollBlock}${deferInstantBlock}${paceBlock}${repairBlock}
 DATE: ${profile.questDateIso}
-- "hook": short (max 15 words), DIFFERENT from other days.
+- "hook": one line, max 24 words — a beat of voice-over or wink to the reader; DIFFERENT from other days.
 - Avoid empty platitudes.
 
 ${locationBlock}
@@ -681,11 +716,12 @@ ${personalityBlock}
 
 ${missionHintsBlock}
 
+${narrativeVoiceBlock}
+
 ${creativeAngleLine}
-${varietyLine}
 
 PRIORITY: the mission must feel written for *this* person and *this* day — the family below is a compass, not a template to paste.
-INTEREST: avoid bland “homework” quests and the same register every time (not always “take a walk” or “write one line”). Make the title + hook + mission feel **specific and a bit memorable**, still doable in one sentence.
+INTEREST: avoid bland “homework” quests. **Title + hook** = where the narrative lives (image, tone, tiny scene). **Mission** = one flowing sentence with one clear action (you may open with a short time/sense beat in the *same* sentence, then the imperative).
 ANTI-PATTERN: do not output a “stock quest” for this category; vary object, time window, constraint, tone, and wording — two users in the same family should not get the same mission.
 
 QUEST FAMILY (intent only; do not name the category as a label):
@@ -699,7 +735,7 @@ Summary (paraphrase freely; do not copy-paste): ${archetypeSummary}
 Minimum duration: ${archetype.minimumDurationMinutes} minutes
 
 ABSOLUTE RULES:
-1. Mission must be CONCRETE (specific actions, objects, places, duration) — not only “reflect”. BREVITY: the "mission" field is exactly ONE short sentence, under 300 characters total (including spaces). No second sentence after a period; no semicolon between two clauses (use commas if needed); no storytelling, numbered lists, or preamble.
+1. Mission must be CONCRETE (specific actions, objects, places, duration) — not only “reflect”. BREVITY: the "mission" field is exactly ONE grammatical sentence, under 300 characters. No second sentence after a full stop; no semicolon between two orders (use commas). You MAY start with a brief beat (time, weather, sensation) in the same sentence, then the main imperative — still one sentence, no numbered lists.
 2. Must be doable TODAY${context.hasUserLocation && cityMustAppearInMission(context.city) ? ` in ${context.city}` : ''}.
 3. ${!context.hasUserLocation ? 'Without shared GPS: no outdoor mapped outing — isOutdoor stays false.' : context.isOutdoorFriendly ? 'May be outdoors if isOutdoor is true.' : 'Keep indoors or sheltered.'}
 4. Match duration to weather.
@@ -713,14 +749,14 @@ ABSOLUTE RULES:
 ${archetype.requiresSocial ? '9. This family needs real social interaction (stranger, friend, message, call…) — include it in the mission.\n' : ''}
 10. Safety: no physical danger, no medical/therapy advice, no illegal or hateful content.
 11. CLARITY: one read, one main action — no riddles, no absurd stacked meta-tasks (alter-ego + list + rename in one breath). Boring generic instructions are as bad as nonsense.
-12. VOICE: title and hook can have personality (wit, warmth, edge) — not corporate or school-like.
+12. VOICE & NARRATION: title and hook carry mood and micro-scene (wit, warmth, edge, light imagery) — not corporate. Mission stays direct inside its single sentence.
 
 Reply with strict JSON. Pick ONE icon name from: ${[...ICON_ALLOWLIST].join(', ')}.
 {
   "icon": "...",
-  "title": "short intriguing title (4-6 words max)",
-  "mission": "one short sentence only (under 300 chars)${context.hasUserLocation && cityMustAppearInMission(context.city) ? `; naturally mention ${context.city}` : ''}",
-  "hook": "max 15 words",
+  "title": "evocative chapter-style title (often 4–9 words)",
+  "mission": "one sentence only (under 300 chars)${context.hasUserLocation && cityMustAppearInMission(context.city) ? `; naturally mention ${context.city}` : ''}",
+  "hook": "max 24 words; narrative punch, not a slogan",
   "duration": "e.g. 45 min, 1h30",
   "isOutdoor": ${computedIsOutdoor},
   "safetyNote": ${computedIsOutdoor ? 'short string or null' : 'null'},
@@ -771,9 +807,14 @@ PAS DE LIEU NOMMÉ (obligatoire) :
   return `Génère une quête quotidienne unique pour aujourd'hui.
 
 VARIATION (évite la copie) : ${variationSalt}
+ID TIRAGE (unique à chaque appel API) : ${stochasticNonce}
+TENTATIVE : ${attemptIndex + 1} / ${DAILY_QUEST_MAX_ATTEMPTS}
+PIVOT CRÉATIF (respecte l'intention ; ne colle pas ce bloc tel quel) :
+${missionPivotLine}
+
 ${rerollBlock}${deferInstantBlock}${paceBlock}${repairBlock}
 DATE DU JOUR : ${profile.questDateIso}
-- Le champ "hook" : phrase courte (max 15 mots), DIFFÉRENTE d'un jour à l'autre.
+- Le champ "hook" : une ligne, max 24 mots — petit souffle de voix off ou clin d'œil au lecteur ; DIFFÉRENTE d'un jour à l'autre.
 - Évite les formules creuses (« Sois toi-même », « Crois en tes rêves »).
 
 ${locationBlock}
@@ -788,11 +829,12 @@ ${personalityBlock}
 
 ${missionHintsBlock}
 
+${narrativeVoiceBlock}
+
 ${creativeAngleLine}
-${varietyLine}
 
 PRIORITÉ : la mission doit sembler écrite pour **cette** personne et **ce** jour — la famille ci-dessous est une boussole, pas un modèle à recopier.
-INTÉRÊT : évite les quêtes **plates** et le même registre à chaque fois (pas toujours « va marcher » ou « écris une ligne »). Titre + accroche + mission : un peu **mémorable**, précis, avec du mordant ou de la chaleur — toujours en **une phrase** pour la mission.
+INTÉRÊT : évite les quêtes **plates**. **Titre + hook** = là où vit la narration (image, ton, micro-scène). **Mission** = **une** phrase fluide avec une action principale nette (tu peux commencer par une courte incipit — moment, sensation — **dans la même phrase**, puis l'impératif).
 ANTI-RÉPÉTITION : n'invente pas une « quête catalogue » pour cette catégorie ; varie objet, créneau, contrainte, **ton**, registre et formulation — deux utilisateurs de la même famille ne doivent pas recevoir la même mission.
 
 FAMILLE DE QUÊTE (intention seulement ; ne cite pas la catégorie comme étiquette) :
@@ -806,7 +848,7 @@ Résumé (paraphrase libre ; ne pas copier-coller) : ${archetypeSummary}
 Durée minimale : ${archetype.minimumDurationMinutes} minutes
 
 RÈGLES ABSOLUES :
-1. La mission doit être CONCRÈTE (actions précises, objets, lieux, durée) — pas seulement « réfléchir ». CONCISION : le champ "mission" est **une seule phrase courte**, **moins de 300 caractères** au total (espaces compris). Pas de 2e phrase après un point d'exclamation ou d'interrogation ; **pas de point-virgule** entre deux ordres (un seul fil avec des virgules si besoin) ; pas de récit, pas de listes numérotées, pas d'introduction.
+1. La mission doit être CONCRÈTE (actions précises, objets, lieux, durée) — pas seulement « réfléchir ». CONCISION : le champ "mission" est **une seule phrase grammaticale**, **moins de 300 caractères** au total (espaces compris). Pas de 2e phrase après un point final ; **pas de point-virgule** entre deux ordres (un seul fil avec des virgules). Tu **peux** commencer par une courte incipit (horaire, météo, sensation) **dans la même phrase**, puis l'action principale à l'impératif — pas de liste numérotée ni de paragraphe.
 2. Elle doit être faisable AUJOURD'HUI${context.hasUserLocation && cityMustAppearInMission(context.city) ? ` à ${context.city}` : ''}.
 3. ${!context.hasUserLocation ? 'Sans position GPS partagée : pas de sortie extérieure avec lieu sur carte — isOutdoor reste false.' : context.isOutdoorFriendly ? 'Peut se passer en extérieur si isOutdoor est true.' : 'Doit se passer en intérieur ou sous abri.'}
 4. Adapte la durée à la météo.
@@ -821,14 +863,14 @@ ${archetype.requiresSocial ? '9. Cette famille implique une interaction sociale 
 10. Respecte les garde-fous de sécurité : pas de danger physique, pas de conseils médicaux ou thérapeutiques, pas d'incitation à l'illégalité ou à la haine.
 11. LANGUE : tous les champs texte (title, mission, hook, duration, safetyNote, destinationLabel) en **français naturel** — pas d'anglicismes ni de mots anglais dans la phrase, pas de tournure calquée sur l'anglais ; phrases courtes et idiomatiques.
 12. **CLARTÉ** : compréhension immédiate, **une** action principale — pas d'énigme, pas d'empilement absurde (alter ego + liste + renommage dans le même souffle). Les consignes **fades** type devoir scolaire sont à éviter autant que le charabia.
-13. **VOIX** : le titre et le hook peuvent avoir de la personnalité (malice, chaleur, ton complice) — pas de style corporate ni notice.
+13. **VOIX & NARRATION** : titre et hook portent l'ambiance et une micro-scène (malice, chaleur, image légère) — pas de style corporate ; la mission reste directe dans sa phrase unique.
 
 Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[...ICON_ALLOWLIST].join(', ')}.
 {
   "icon": "...",
-  "title": "titre court (4-6 mots max), intrigant",
-  "mission": "une seule phrase courte (moins de 300 caractères)${context.hasUserLocation && cityMustAppearInMission(context.city) ? ` ; mention naturelle de ${context.city}` : ''}",
-  "hook": "max 15 mots",
+  "title": "titre évocateur, souvent 4 à 9 mots, comme un titre de chapitre",
+  "mission": "une seule phrase (moins de 300 caractères)${context.hasUserLocation && cityMustAppearInMission(context.city) ? ` ; mention naturelle de ${context.city}` : ''}",
+  "hook": "max 24 mots ; coup de voix, pas un slogan",
   "duration": "ex: 45 min, 1h30",
   "isOutdoor": ${computedIsOutdoor},
   "safetyNote": ${computedIsOutdoor ? 'string court ou null' : 'null'},
@@ -837,17 +879,24 @@ Réponds en JSON strict. Pour "icon" choisis UN SEUL nom dans cette liste : ${[.
 }`;
 }
 
-async function callModel(user: string, system: string, temperature: number): Promise<string> {
+async function callDailyQuestModel(user: string, system: string, temperature: number): Promise<string> {
+  const model = DAILY_QUEST_OPENAI_MODEL;
+  const samplingDisabled = dailyQuestModelIgnoresSampling(model);
   const t0 = performance.now();
   try {
     const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
+      model,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },
       ],
       response_format: { type: 'json_object' },
-      temperature,
+      ...(samplingDisabled
+        ? {}
+        : {
+            temperature,
+            top_p: 0.94,
+          }),
       max_completion_tokens: 600,
     });
     const durationMs = Math.round(performance.now() - t0);
@@ -859,7 +908,12 @@ async function callModel(user: string, system: string, temperature: number): Pro
         level: 'error',
         outcome: 'miss',
         durationMs,
-        meta: { model: OPENAI_MODEL, emptyChoices: true, temperature },
+        meta: {
+          model,
+          emptyChoices: true,
+          temperature: samplingDisabled ? undefined : temperature,
+          samplingDisabled,
+        },
       });
       throw new Error('Empty response');
     }
@@ -871,8 +925,9 @@ async function callModel(user: string, system: string, temperature: number): Pro
       outcome: 'ok',
       durationMs,
       meta: {
-        model: OPENAI_MODEL,
-        temperature,
+        model,
+        temperature: samplingDisabled ? undefined : temperature,
+        samplingDisabled,
         promptTokens: u?.prompt_tokens,
         completionTokens: u?.completion_tokens,
         totalTokens: u?.total_tokens,
@@ -885,7 +940,7 @@ async function callModel(user: string, system: string, temperature: number): Pro
     logStructuredError('ai', 'chat.completions.dailyQuest', err, {
       durationMs,
       outcome: 'degraded',
-      meta: { model: OPENAI_MODEL, temperature },
+      meta: { model, temperature: samplingDisabled ? undefined : temperature, samplingDisabled },
     });
     throw err;
   }
@@ -910,12 +965,14 @@ export async function generateDailyQuest(
 
   const system =
     locale === 'en'
-      ? `You are Questia's quest creator. You generate unique, concrete, doable daily adventures. Use a warm, direct "you". Never use clinical psychology jargon or mention "traits" or the Big Five. Each quest needs no prerequisites. Match tone and social exposure to the user profile in the message—without naming scores. Prioritize the person's operational profile and mission hints over repeating archetype wording; the family label is a hint, not a script.
+      ? `You are Questia's quest narrator-creator. You write short daily quests that feel human: a little scene-setting in the title and hook, one crisp actionable sentence for the mission. Warm, direct "you". Never clinical psychology jargon or "traits" / Big Five. No prerequisites. Match social exposure to the profile in the message without naming scores. The quest family is a compass, not a script to paste.
+Each message has a unique draw id and pivots: use them to avoid copy-paste defaults, but never sacrifice voice — readers should feel tone, image, and companionship, not a product spec.
 
 ${QUEST_SYSTEM_GUARDRAILS_EN}
 
 ${QUEST_CLARITY_EN}`
-      : `Tu es le créateur de quêtes de Questia. Tu génères des aventures quotidiennes uniques, concrètes et réalisables. Tu tutoies avec chaleur et direct. Jamais de jargon psychologique ni de mention des "traits" ou du Big Five. Chaque quête doit être faisable sans prérequis. Tu adaptes le ton et le niveau d'exposition sociale au profil décrit dans le message utilisateur, sans nommer des scores. Priorise le profil opérationnel et les pistes « accroche mission » plutôt que de recopier l'archétype ; la famille de quête est un fil conducteur, pas un texte à répéter.
+      : `Tu es le narrateur-créateur de quêtes de Questia. Tu écris des quêtes courtes qui sonnent humaines : un peu de mise en scène dans le titre et le hook, une phrase d'action nette pour la mission. Tutoiement chaleureux et direct. Jamais de jargon psychologique clinique ni de « traits » ou Big Five. Aucun prérequis. Adapte l'exposition sociale au profil du message sans citer de scores. La famille de quête est une boussole, pas un texte à recoller.
+Chaque message inclut un id de tirage et des pivots : sers-t'en pour éviter les formulations toutes faites, mais ne sacrifie jamais la voix — on doit sentir le ton, l'image, la complicité, pas une notice produit.
 
 ${QUEST_SYSTEM_GUARDRAILS}
 
@@ -956,6 +1013,7 @@ ${QUEST_SYSTEM_LANG_FR}`;
 
   for (let attempt = 0; attempt < DAILY_QUEST_MAX_ATTEMPTS; attempt++) {
     try {
+      const stochasticNonce = randomUUID();
       const user = buildUserPrompt(
         safeProfile,
         archetype,
@@ -966,6 +1024,8 @@ ${QUEST_SYSTEM_LANG_FR}`;
         categoryLabel,
         targetTraitsLine,
         repairHint,
+        attempt,
+        stochasticNonce,
       );
       const temperature = profile.isRerollGeneration
         ? attempt === 0
@@ -978,7 +1038,7 @@ ${QUEST_SYSTEM_LANG_FR}`;
           : attempt === 1
             ? 0.72
             : 0.6;
-      const raw = await callModel(user, system, temperature);
+      const raw = await callDailyQuestModel(user, system, temperature);
       const parsedRaw = JSON.parse(raw) as Record<string, unknown>;
 
       const parsed = {

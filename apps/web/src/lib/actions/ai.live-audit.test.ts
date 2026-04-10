@@ -228,14 +228,18 @@ describe.skipIf(!LIVE)('AUDIT LIVE — pertinence des quêtes générées', () =
 
       const missionLower = gen.mission.toLowerCase();
       const hookWords = gen.hook.trim().split(/\s+/).length;
-      const actionVerbStart = /^(va |prends|écris|fais|ouvre|note|choisis|envoie|pose|appelle|passe|reste|assieds|marche|sors|traverse|ferme|lis|regarde|laisse|dessine|prépare|offre|cuisine|range|réorganise|planifie|commence|arrête|écoute|demande|dis |quitte|monte|descends|entre|explore|participe|réfléchis|trace|crée|invente|imagine|place|lève|tourne|goûte|observe|cherche|installe|mets|rends|pars|profite|essaie|essaye|tente|repère|identifie|trouve|promène|détourne|filme|capture|inscris|consulte|contacte|déplace|découvre|visite|invite|respire|rédige|joue|danse|cours|plonge|lâche|éteins|déconnecte|coupe|ralentis|accorde|consacre|dédie|médite|supprime|réunis|collecte|suspends|accompagne|saisis|attrape|ramasse|organise|pense|songe|réserve|walk|go |take|write|open|pick|send|call|sit |stay|read|look|leave|draw|cook|clean|plan|start|stop|listen|ask |say |quit|climb|enter|join|set )/i;
+      const missionTrim = gen.mission.trim();
+      const missionHasStrongVerb =
+        /\b(va|prends|écris|fais|ouvre|note|choisis|envoie|pose|appelle|passe|marche|sors|traverse|ferme|lis|regarde|dessine|prépare|offre|cuisine|range|commence|arrête|écoute|demande|quitte|monte|descends|entre|explore|trace|crée|tourne|goûte|observe|cherche|installe|mets|rends|pars|profite|essaie|tente|repère|trouve|promène|filme|contacte|déplace|découvre|visite|invite|respire|rédige|joue|tire|lance|suis|montre|échange|laisse)\b/i.test(
+          missionTrim,
+        );
 
       const checks: Record<string, boolean> = {
         'titre-non-vide': gen.title.trim().length >= 3,
         'titre-pas-trop-long': gen.title.trim().length <= 90,
         'mission-concrete': gen.mission.trim().length >= 30,
-        'mission-verbe-action': actionVerbStart.test(gen.mission.trim()),
-        'hook-compact': hookWords <= 15,
+        'mission-verbe-action': missionHasStrongVerb,
+        'hook-compact': hookWords <= 24,
         'hook-non-vide': gen.hook.trim().length >= 5,
         'duration-presente': gen.duration.trim().length > 0,
         'outdoor-coherent': context.hasUserLocation

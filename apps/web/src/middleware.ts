@@ -28,6 +28,7 @@ function isPublicPagePath(pathname: string): boolean {
   if (p === '/') return true;
   if (p.startsWith('/q/')) return true;
   if (p.startsWith('/legal')) return true;
+  if (p.startsWith('/generation-quetes')) return true;
   if (p.startsWith('/onboarding')) return true;
   if (p.startsWith('/sign-in')) return true;
   if (p.startsWith('/sign-up')) return true;

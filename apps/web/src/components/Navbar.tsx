@@ -4,7 +4,7 @@ import { Link, usePathname } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useAuth, UserButton } from '@clerk/nextjs';
-import { ChevronRight, HelpCircle, Map, MessageCircle, Smartphone, X, Zap } from 'lucide-react';
+import { ChevronRight, HelpCircle, Map, MessageCircle, Smartphone, Sparkles, X, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AdminNavLink } from '@/components/AdminNavLink';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
@@ -115,18 +115,21 @@ export function Navbar() {
     return () => window.removeEventListener('keydown', onKey);
   }, [drawerMounted, closeMobile]);
 
+  const marketingNavPillClass =
+    'inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-2.5 lg:px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all text-sm';
+
   const marketingDesktop = (
     <>
       {marketingMenu.map(({ href, label, Icon }) => (
-        <a
-          key={href}
-          href={href}
-          className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-2.5 lg:px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all text-sm"
-        >
+        <a key={href} href={href} className={marketingNavPillClass}>
           <span>{label}</span>
           <Icon className="h-4 w-4 shrink-0 opacity-90" aria-hidden strokeWidth={2.25} />
         </a>
       ))}
+      <Link href="/generation-quetes" className={marketingNavPillClass}>
+        <span>{t('navQuestGen')}</span>
+        <Sparkles className="h-4 w-4 shrink-0 opacity-90" aria-hidden strokeWidth={2.25} />
+      </Link>
     </>
   );
 
@@ -285,6 +288,20 @@ export function Navbar() {
             <div className="navbar-mobile-drawer-body min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
               {showMarketingNav ? (
                 <nav className="flex flex-col gap-0.5" aria-label={t('navSections')}>
+                  <Link
+                    href="/generation-quetes"
+                    onClick={closeMobile}
+                    className="group flex items-center gap-3 rounded-2xl px-3 py-3.5 text-[15px] font-bold text-[var(--text)] border-2 border-transparent hover:border-[color:color-mix(in_srgb,var(--violet)_35%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--card)_85%,transparent)] hover:shadow-[0_4px_0_rgba(139,92,246,.1)] active:scale-[0.99] transition-all"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/15 to-orange-500/15 border border-violet-300/30">
+                      <Sparkles className="h-5 w-5 text-violet-600" strokeWidth={2.25} aria-hidden />
+                    </span>
+                    <span className="min-w-0 flex-1">{t('navQuestGen')}</span>
+                    <ChevronRight
+                      className="h-4 w-4 shrink-0 text-[var(--muted)] opacity-70 group-hover:translate-x-0.5 transition-transform"
+                      aria-hidden
+                    />
+                  </Link>
                   {marketingMenu.map(({ href, label, Icon }) => (
                     <a
                       key={href}

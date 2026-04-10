@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { PersonalityVector, QuestModel } from '@questia/shared';
 import { QUEST_TAXONOMY } from '@questia/shared';
-import { archetypeCategoryLabel, buildPersonalityPromptBlock, describeArchetypeTargetTraits } from './questGenerationPrompt';
+import {
+  archetypeCategoryLabel,
+  buildNarrativeVoiceBlock,
+  buildPersonalityPromptBlock,
+  describeArchetypeTargetTraits,
+} from './questGenerationPrompt';
 
 const base = (): PersonalityVector => ({
   openness: 0.5,
@@ -86,6 +91,19 @@ describe('questGenerationPrompt', () => {
     expect(block).toMatch(/rather low/);
     expect(block).toMatch(/moderate/);
     expect(block).toMatch(/rather high/);
+  });
+
+  it('buildNarrativeVoiceBlock FR / EN et phase', () => {
+    const frCal = buildNarrativeVoiceBlock('calibration', 'fr', 'seed-a');
+    expect(frCal).toMatch(/VOIX NARRATIVE \(calibration\)/);
+    expect(frCal).toMatch(/FORMAT/);
+
+    const frRup = buildNarrativeVoiceBlock('rupture', 'fr', 'seed-b');
+    expect(frRup).toMatch(/rupture/);
+
+    const enExp = buildNarrativeVoiceBlock('expansion', 'en', 'seed-c');
+    expect(enExp).toMatch(/NARRATIVE VOICE \(expansion\)/);
+    expect(enExp).toMatch(/FORMAT:/);
   });
 
   it('describeArchetypeTargetTraits et libellé famille', () => {

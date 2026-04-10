@@ -6,6 +6,7 @@ export * from './formatQuestDateFr';
 export * from './constants/quests';
 export * from './constants/personality';
 export * from './engine/congruence';
+export * from './engine/promptSeed';
 export * from './engine/escalation';
 export * from './engine/xp';
 export * from './xpBreakdownUi';

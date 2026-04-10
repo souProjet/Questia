@@ -11,6 +11,65 @@
     "title": "Découvre ton style de quête",
     "description": "Quelques questions pour calibrer ton profil Questia avant de créer ton compte — explorer ou cocooning, prudence ou improvisation."
   },
+  "QuestGenerationPage": {
+    "metaTitle": "Comment sont générées mes quêtes ? | Questia",
+    "metaDescription": "Découvre le parcours complet : profil, historique, contexte du jour, choix d'archétype, intelligence artificielle et garde-fous — sans jargon technique.",
+    "backHome": "← Accueil",
+    "kicker": "Sous le capot",
+    "title": "Comment sont générées tes quêtes ?",
+    "lead": "Chaque matin, une mission pensée pour toi : ce schéma raconte tout le voyage, de tes réponses d'onboarding jusqu'à la quête affichée dans l'app — avec un peu de magie et beaucoup de règles pour te protéger.",
+    "diagramAria": "Étapes du parcours de génération d'une quête",
+    "noteTitle": "Ce que tu peux retenir",
+    "noteBody": "Rien n'est tiré au hasard pur : le moteur combine ton profil, ton historique et le jour qui commence. L'IA rédige les mots ; Questia garde la main sur la sécurité, la clarté et le respect de ton rythme.",
+    "privacyNote": "Aucune étiquette clinique ne t'est affichée : les textes parlent de tendances et de rythme, pas de diagnostic. Les données servent à personnaliser l'expérience, comme décrit dans notre politique de confidentialité.",
+    "privacyLink": "Politique de confidentialité",
+    "stepsList": [
+      {
+        "title": "Ton profil déclaré",
+        "body": "À l'onboarding, tu indiques comment tu aimes jouer avec la vie réelle : plutôt explorateur ou casanier, prudence ou audace, et une empreinte de personnalité qui sert de boussole — sans jargon psy affiché dans l'app."
+      },
+      {
+        "title": "Ton historique de quêtes",
+        "body": "Chaque quête complétée, acceptée ou refusée laisse une trace légère. Ces choix récents alimentent une mémoire du moteur : pas pour te juger, mais pour comprendre comment tu avances vraiment."
+      },
+      {
+        "title": "Tendances observées",
+        "body": "Le système infère des tendances à partir des types de quêtes que tu as vécues. C'est une lecture douce de tes actions, pas une case dans laquelle on t'enferme."
+      },
+      {
+        "title": "L'écart identité ↔ actions",
+        "body": "On mesure à quel point ce que tu déclares et ce que tes quêtes suggèrent se rapprochent ou divergent. Ce signal calibre le ton et l'intensité — toujours avec bienveillance, jamais pour culpabiliser."
+      },
+      {
+        "title": "Ta phase de parcours",
+        "body": "Calibration (proche de ton confort), expansion (petit pas dehors), rupture (défi plus marqué) : la phase vise un type de mouvement adapté à ta progression du moment."
+      },
+      {
+        "title": "Le contexte du jour",
+        "body": "Météo, ville, et si tu actives la localisation : le moteur sait si une sortie extérieure a du sens aujourd'hui — et peut proposer un lieu public sur la carte lorsque c'est cohérent avec la mission."
+      },
+      {
+        "title": "Choix de l'archétype",
+        "body": "Parmi une taxonomie de familles de quêtes, le moteur sélectionne celle qui colle le mieux à ton profil mélangé, à la phase, aux contraintes météo et aux quêtes récentes — pour éviter la répétition mécanique."
+      },
+      {
+        "title": "Une pincée de diversité",
+        "body": "Quand plusieurs archétypes sont aussi bons les uns que les autres, un tirage stable (lié à toi et à la date) évite de retomber toujours sur le même scénario. Même logique pour les angles créatifs du texte."
+      },
+      {
+        "title": "Rédaction par intelligence artificielle",
+        "body": "Un modèle de langage compose titre, accroche et mission dans un ton narrateur complice. Les consignes incluent sécurité, clarté, interdiction de conseils médicaux ou dangereux, et respect de la langue choisie."
+      },
+      {
+        "title": "Contrôle qualité côté serveur",
+        "body": "Des règles automatiques vérifient la mission : une phrase actionnable, pas de contenu interdit, cohérence lieu extérieur si besoin, présence de la ville quand le GPS est activé. Sinon, nouvelle tentative ou repli sur un texte de secours sûr."
+      },
+      {
+        "title": "Ta quête du jour, livrée",
+        "body": "Une seule quête par jour calendaire est enregistrée : si tu rouvres l'app le même jour, tu retrouves la même mission — fini le spam de régénérations. Demain, le parcours reprend avec un nouveau contexte."
+      }
+    ]
+  },
   "Navbar": {
     "ariaMain": "Navigation principale",
     "ariaHome": "Questia, accueil",
@@ -21,6 +80,7 @@
     "navDownloadWeb": "Le site",
     "navTestimonials": "Avis",
     "navFaq": "FAQ",
+    "navQuestGen": "Génération des quêtes",
     "openApp": "Ouvrir l'app",
     "shop": "Boutique",
     "history": "Historique",
@@ -217,6 +277,7 @@
       "download": "Télécharger",
       "downloadWeb": "Le site",
       "faq": "FAQ",
+      "questGeneration": "Comment les quêtes sont créées",
       "signIn": "Connexion",
       "privacy": "Confidentialité",
       "legal": "Mentions légales",

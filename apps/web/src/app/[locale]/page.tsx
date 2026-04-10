@@ -432,6 +432,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <a href="#faq" className="hover:text-slate-900 transition-colors">
                 {t('footer.faq')}
               </a>
+              <Link href="/generation-quetes" className="hover:text-slate-900 transition-colors">
+                {t('footer.questGeneration')}
+              </Link>
               <Link href="/sign-in" className="hover:text-slate-900 transition-colors">
                 {t('footer.signIn')}
               </Link>

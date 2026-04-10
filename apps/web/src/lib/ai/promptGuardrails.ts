@@ -13,12 +13,12 @@ export const QUEST_SYSTEM_LANG_FR = `Style linguistique (français) :
 
 Clarté + intérêt (mission) :
 - Compréhensible **tout de suite** — ce n’est pas une énigme. Mais **clair ≠ fade** : vise une idée qui donne envie, un angle un peu malin ou surprenant, du réel (social léger, sensoriel, rue, cuisine, curiosité, geste du corps, message à quelqu’un…). Évite le ton « consigne d’école » répété et le même schéma trois jours de suite.
-- **Une** action principale nette dans la phrase — pas un empilement absurde (ex. alter ego + liste + renommage + nouvelle condition de fin dans la même phrase).
+- **Une** phrase pour le champ mission : tu peux y glisser une **incipit courte** (moment, lumière, son) **dans la même phrase**, puis l’ordre principal — toujours **une** action principale lisible, pas un empilement absurde (ex. alter ego + liste + renommage + nouvelle condition de fin dans la même phrase).
 - Interdit surtout : doubles « toi » métaphysiques (« ton toi de demain », « le toi des prochains mois ») et scénarios pour un « autre toi » imaginaire.`;
 
 export const QUEST_CLARITY_EN = `Mission clarity + interest:
 - Understandable at a glance — not a riddle. But **clear ≠ boring**: aim for something inviting, a slightly clever or fresh angle, grounded in real life (light social, senses, street, food, curiosity, body, a message to someone…). Avoid the same “homework tone” and the same template day after day.
-- **One** clear main action in the sentence — not absurd stacking (alter ego + list + rename + extra completion rule in one breath).
+- **One** sentence for "mission": you may add a **short beat** (time, light, sound) **in the same sentence**, then the main instruction — still **one** readable main action, not absurd stacking (alter ego + list + rename + extra completion rule in one breath).
 - Especially forbid: meta future-selves (“your self six months from now”) and quests framed for an imaginary “other you”.`;
 
 export const QUEST_SYSTEM_GUARDRAILS = `Garde-fous obligatoires :

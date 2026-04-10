@@ -1,5 +1,15 @@
-import type { AppLocale, PersonalityVector, PsychologicalCategory, QuestModel } from '@questia/shared';
-import { QUEST_CATEGORY_LABEL_EN, QUEST_CATEGORY_LABEL_FR } from '@questia/shared';
+import type {
+  AppLocale,
+  EscalationPhase,
+  PersonalityVector,
+  PsychologicalCategory,
+  QuestModel,
+} from '@questia/shared';
+import {
+  QUEST_CATEGORY_LABEL_EN,
+  QUEST_CATEGORY_LABEL_FR,
+  promptSeedIndex,
+} from '@questia/shared';
 
 const BIG_KEYS: (keyof PersonalityVector)[] = [
   'openness',
@@ -271,6 +281,60 @@ export function buildPersonalityMissionHints(
     lines.push('- Ton : chaleureux \u2014 petite bienveillance ou lien doux dans le grain.');
   }
   return lines.join('\n');
+}
+
+const NARRATIVE_COLOR_FR: readonly string[] = [
+  'Couleur du texte : un soupçon de cinéma du quotidien — lumière, bruit de fond, texture du trottoir ou de la table.',
+  'Couleur du texte : comme une carte postale qu’on s’envoie à soi-même — image nette, phrase qui résonne.',
+  'Couleur du texte : ton complice, légèrement taquin·e, jamais moqueur·se ; on sourit en lisant.',
+  'Couleur du texte : rythme de phrase varié (coupe courte + reprise) sans alourdir.',
+  'Couleur du texte : ancrage dans un moment vérifiable (matin, pause, retour, veilleuse).',
+  'Couleur du texte : chaleur humaine — on sent que quelqu’un de vrai a écrit pour un humain de vrai.',
+];
+
+const NARRATIVE_COLOR_EN: readonly string[] = [
+  'Text color: a hint of everyday cinema — light, background sound, texture of pavement or table.',
+  'Text color: like a postcard to yourself — crisp image, resonant line.',
+  'Text color: warm witty confidant tone — never mean; the reader almost smiles.',
+  'Text color: varied sentence rhythm (short beat + glide) without heaviness.',
+  'Text color: anchored in a checkable moment (morning, break, commute home, evening light).',
+  'Text color: human warmth — it feels written by a real voice for a real person.',
+];
+
+/**
+ * Voix narrative par phase + une touche de couleur tirée (stable pour une graine donnée).
+ * Complète les hints « mission » sans les remplacer.
+ */
+export function buildNarrativeVoiceBlock(
+  phase: EscalationPhase,
+  locale: AppLocale,
+  seed: string,
+): string {
+  const colors = locale === 'en' ? NARRATIVE_COLOR_EN : NARRATIVE_COLOR_FR;
+  const idx = promptSeedIndex(seed, 'narrative-color', colors.length);
+  const colorLine = colors[idx]!;
+
+  if (locale === 'en') {
+    const phaseLine: Record<EscalationPhase, string> = {
+      calibration:
+        'NARRATIVE VOICE (calibration): gentle, close, reassuring — like a friend’s note, not a coach shouting.',
+      expansion:
+        'NARRATIVE VOICE (expansion): curious, lightly adventurous — the day opens a little wider; still kind.',
+      rupture:
+        'NARRATIVE VOICE (rupture): bolder imagery and cadence, still grounded — opening scene of a short film about today, not a fantasy epic.',
+    };
+    return `${phaseLine[phase]}\n${colorLine}\nFORMAT: title + hook carry most of the “story breath”; mission stays one clear sentence (you may start with a short beat in the same sentence, then the main action).`;
+  }
+
+  const phaseLine: Record<EscalationPhase, string> = {
+    calibration:
+      'VOIX NARRATIVE (calibration) : douce, proche, rassurante — comme un mot d’un·e ami·e, pas un coach qui crie.',
+    expansion:
+      'VOIX NARRATIVE (expansion) : curieuse, légèrement aventureuse — la journée s’élargit un peu ; toujours bienveillante.',
+    rupture:
+      'VOIX NARRATIVE (rupture) : images et rythme plus affirmés, mais ancrés dans le réel — comme le début d’un court métrage sur aujourd’hui, pas un roman fantastique.',
+  };
+  return `${phaseLine[phase]}\n${colorLine}\nFORMAT : le titre et le hook portent le « souffle » du récit ; la mission reste **une** phrase claire (tu peux commencer par une courte incipit dans la même phrase, puis l’action principale).`;
 }
 
 export function archetypeCategoryLabel(category: PsychologicalCategory, locale: AppLocale = 'fr'): string {

@@ -148,13 +148,26 @@ export function computeGentleness(p: PersonalityVector): number {
   );
 }
 
+/**
+ * Mélange déclaré / observé pour noter les quêtes : plus la phase avance et plus Δ est haut,
+ * plus le comportement récent doit peser (sans écraser l’identité déclarée).
+ */
 function mixPersonality(
   declared: PersonalityVector,
   exhibited: PersonalityVector | undefined,
   congruenceDelta: number | undefined,
+  phase: 'calibration' | 'expansion' | 'rupture',
 ): PersonalityVector {
   if (!exhibited) return declared;
-  const w = Math.min(0.45, Math.max(0.12, congruenceDelta ?? 0.22));
+  const delta = congruenceDelta ?? 0.22;
+  let w = Math.min(0.45, Math.max(0.12, delta));
+  if (phase === 'calibration') {
+    w *= 0.78;
+  } else if (phase === 'expansion') {
+    w = Math.min(0.48, w * 1.05);
+  } else {
+    w = Math.min(0.54, w * 1.14 + 0.035);
+  }
   const out = emptyVector();
   for (const key of PERSONALITY_KEYS) {
     out[key] = declared[key] * (1 - w) + exhibited[key] * w;
@@ -196,11 +209,7 @@ export function selectQuest(
   options?: SelectQuestOptions,
 ): QuestModel | null {
   const targetDelta = getTargetDelta(phase);
-  const scoringVector = mixPersonality(
-    declared,
-    options?.exhibited,
-    options?.congruenceDelta,
-  );
+  const scoringVector = mixPersonality(declared, options?.exhibited, options?.congruenceDelta, phase);
   const candidates = QUEST_TAXONOMY
     .filter((q) => !recentQuestIds.includes(q.id))
     .filter((q) => allowOutdoor || !q.requiresOutdoor)
@@ -256,7 +265,7 @@ export function selectQuest(
     .slice(0, window)
     .map((entry, idx) => {
       // Jitter léger et stable : varie entre utilisateurs/jours sans casser le fit.
-      const jitter = (hashToUnit(`${options.selectionSeed}:${entry.quest.id}`) - 0.5) * 0.14;
+      const jitter = (hashToUnit(`${options.selectionSeed}:${entry.quest.id}`) - 0.5) * 0.24;
       return {
         quest: entry.quest,
         score: entry.score + idx * 0.012 + jitter,
