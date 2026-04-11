@@ -19,6 +19,7 @@
     "dev:web": "turbo dev --filter=@questia/web",
     "dev:mobile": "turbo dev --filter=@questia/mobile",
     "expo:start": "expo start apps/mobile",
+    "mobile:android:bundle": "npm run android:bundle -w @questia/mobile",
     "android:assemble:win": "powershell -ExecutionPolicy Bypass -NoProfile -File scripts/win-android-assemble.ps1",
     "eas:android": "cd apps/mobile && eas build --platform android",
     "eas:ios": "cd apps/mobile && eas build --platform ios",

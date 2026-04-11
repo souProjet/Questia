@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "225646783600",
+    "project_id": "questia-4874a",
+    "storage_bucket": "questia-4874a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:225646783600:android:d9519528976e67c2fa98b5",
+        "android_client_info": {
+          "package_name": "fr.questia.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjWDnU_17279J9ih4puO35RrcoYz-8_pU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

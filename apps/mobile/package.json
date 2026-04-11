@@ -18,6 +18,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "android": "expo run:android",
+    "android:bundle": "bash ../../scripts/android-bundle-release.sh",
     "android:assemble:win": "powershell -ExecutionPolicy Bypass -NoProfile -File ../../scripts/win-android-assemble.ps1",
     "ios": "expo run:ios"
   },
