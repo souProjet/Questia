@@ -45,6 +45,32 @@ function writeKeystorePropertiesFromCredentials(androidRoot) {
   fs.writeFileSync(path.join(androidRoot, 'keystore.properties'), lines.join('\n'), 'utf8');
 }
 
+/** Recrée `local.properties` après `prebuild --clean` (Gradle a besoin de sdk.dir). */
+function writeAndroidLocalProperties(androidRoot) {
+  const home = process.env.HOME || process.env.USERPROFILE;
+  const candidates = [
+    process.env.ANDROID_HOME,
+    process.env.ANDROID_SDK_ROOT,
+    home && path.join(home, 'Android', 'Sdk'),
+    home && path.join(home, 'Library', 'Android', 'sdk'),
+  ].filter(Boolean);
+  for (const dir of candidates) {
+    try {
+      if (dir && fs.existsSync(path.join(dir, 'platform-tools'))) {
+        const resolved = path.resolve(dir);
+        const sdkLine =
+          process.platform === 'win32'
+            ? `sdk.dir=${resolved.replace(/\\/g, '\\\\')}\r\n`
+            : `sdk.dir=${resolved}\n`;
+        fs.writeFileSync(path.join(androidRoot, 'local.properties'), sdkLine, 'utf8');
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 function patchAppBuildGradle(gradlePath) {
   let content = fs.readFileSync(gradlePath, 'utf8');
   if (content.includes('questiaKeystorePropertiesFile')) {
@@ -122,6 +148,7 @@ function withAndroidReleaseSigning(config) {
         fs.writeFileSync(gradlePath, next, 'utf8');
       }
       writeKeystorePropertiesFromCredentials(androidRoot);
+      writeAndroidLocalProperties(androidRoot);
       return config;
     },
   ]);
