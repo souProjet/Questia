@@ -83,7 +83,8 @@
           "cameraPermission": "Questia utilise l'appareil photo pour ta carte à partager."
         }
       ],
-      "./plugins/withAdaptiveIconForegroundInset.js"
+      "./plugins/withAdaptiveIconForegroundInset.js",
+      "./plugins/withAndroidReleaseSigning.js"
     ],
     "autolinking": {
       "searchPaths": ["../../node_modules", "./node_modules"]
