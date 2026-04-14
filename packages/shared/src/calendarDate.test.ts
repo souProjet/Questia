@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { calendarDateInTimeZone, getQuestCalendarDateNow, QUEST_CALENDAR_TIMEZONE } from './calendarDate';
+import {
+  calendarDateInTimeZone,
+  getQuestCalendarDateForInstant,
+  getQuestCalendarDateNow,
+  QUEST_CALENDAR_TIMEZONE,
+} from './calendarDate';
 
 describe('calendarDateInTimeZone', () => {
   it('retourne AAAA-MM-JJ', () => {
@@ -11,5 +16,11 @@ describe('calendarDateInTimeZone', () => {
 describe('getQuestCalendarDateNow', () => {
   it('format ISO date', () => {
     expect(getQuestCalendarDateNow()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe('getQuestCalendarDateForInstant', () => {
+  it('aligne sur Paris, pas sur le jour UTC', () => {
+    expect(getQuestCalendarDateForInstant(new Date('2026-05-31T22:30:00.000Z'))).toBe('2026-06-01');
   });
 });

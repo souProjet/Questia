@@ -13,6 +13,11 @@ export function calendarDateInTimeZone(date: Date, timeZone: string): string {
 /** Fuseau utilisé pour « aujourd'hui » côté API et affichage (questia.fr). */
 export const QUEST_CALENDAR_TIMEZONE = 'Europe/Paris';
 
+/** Date civile de la quête du jour pour un instant donné (alignée sur l’API `/api/quest/daily`). */
+export function getQuestCalendarDateForInstant(date: Date): string {
+  return calendarDateInTimeZone(date, QUEST_CALENDAR_TIMEZONE);
+}
+
 export function getQuestCalendarDateNow(): string {
-  return calendarDateInTimeZone(new Date(), QUEST_CALENDAR_TIMEZONE);
+  return getQuestCalendarDateForInstant(new Date());
 }

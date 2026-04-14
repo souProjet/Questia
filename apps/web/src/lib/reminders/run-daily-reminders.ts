@@ -1,10 +1,42 @@
+import { getQuestCalendarDateForInstant } from '@questia/shared';
 import { clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
-import { isInReminderWindow, isValidIanaTimeZone, utcCalendarDateString } from '@/lib/reminders/time';
+import {
+  isInReminderWindow,
+  isValidIanaTimeZone,
+  minutesFromMidnightInZone,
+} from '@/lib/reminders/time';
 import { sendExpoPushMessages } from '@/lib/reminders/expo-push';
 import { sendReminderEmail } from '@/lib/reminders/send-email';
 
-const WINDOW_MINUTES = 15;
+/** Fenêtre « serrée » autour de l’heure de rappel (défaut 45 min). Surcronter avec REMINDER_WINDOW_MINUTES (5–180). */
+const DEFAULT_REMINDER_WINDOW_MINUTES = 45;
+
+function resolveReminderWindowMinutes(): number {
+  const raw = process.env.REMINDER_WINDOW_MINUTES;
+  if (raw === undefined || raw === '') return DEFAULT_REMINDER_WINDOW_MINUTES;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n)) return DEFAULT_REMINDER_WINDOW_MINUTES;
+  return Math.min(180, Math.max(5, n));
+}
+
+/**
+ * Si REMINDER_LOOSE_AFTER_START=1 : tout instant le jour local (fuseau profil) après l’heure de rappel
+ * est éligible (une seule notif / jour grâce à lastReminder*Date). Utile si le cron ne passe qu’une fois par jour (ex. Vercel Hobby).
+ */
+function isReminderEligible(
+  now: Date,
+  timeZone: string,
+  startMinutesFromMidnight: number,
+  windowMinutes: number,
+): boolean {
+  const loose =
+    process.env.REMINDER_LOOSE_AFTER_START === '1' || process.env.REMINDER_LOOSE_AFTER_START === 'true';
+  if (loose) {
+    return minutesFromMidnightInZone(now, timeZone) >= startMinutesFromMidnight;
+  }
+  return isInReminderWindow(now, timeZone, startMinutesFromMidnight, windowMinutes);
+}
 
 const TITLE = 'Quête du jour';
 const PUSH_BODY = "Ta quête t'attend sur Questia — ouvre l'app pour la découvrir.";
@@ -25,7 +57,8 @@ export async function runDailyReminders(now: Date): Promise<{
   emailSent: number;
   skipped: number;
 }> {
-  const todayUtc = utcCalendarDateString(now);
+  const questCalendarDay = getQuestCalendarDateForInstant(now);
+  const windowMinutes = resolveReminderWindowMinutes();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questia.fr';
 
   const profiles = await prisma.profile.findMany({
@@ -55,14 +88,14 @@ export async function runDailyReminders(now: Date): Promise<{
       continue;
     }
 
-    if (!isInReminderWindow(now, tz, start, WINDOW_MINUTES)) {
+    if (!isReminderEligible(now, tz, start, windowMinutes)) {
       continue;
     }
 
     checked++;
 
     const log = await prisma.questLog.findUnique({
-      where: { profileId_questDate: { profileId: profile.id, questDate: todayUtc } },
+      where: { profileId_questDate: { profileId: profile.id, questDate: questCalendarDay } },
     });
     if (log?.status === 'completed') {
       skipped++;
@@ -70,7 +103,7 @@ export async function runDailyReminders(now: Date): Promise<{
     }
 
     if (profile.reminderPushEnabled && profile.pushDevices.length > 0) {
-      if (profile.lastReminderPushDate === todayUtc) {
+      if (profile.lastReminderPushDate === questCalendarDay) {
         /* déjà envoyé */
       } else {
         const messages = profile.pushDevices.map((d) => ({
@@ -83,7 +116,7 @@ export async function runDailyReminders(now: Date): Promise<{
         if (result.ok) {
           await prisma.profile.update({
             where: { id: profile.id },
-            data: { lastReminderPushDate: todayUtc },
+            data: { lastReminderPushDate: questCalendarDay },
           });
           pushSent++;
         }
@@ -91,7 +124,7 @@ export async function runDailyReminders(now: Date): Promise<{
     }
 
     if (profile.reminderEmailEnabled) {
-      if (profile.lastReminderEmailDate === todayUtc) {
+      if (profile.lastReminderEmailDate === questCalendarDay) {
         /* déjà envoyé */
       } else {
         if (!process.env.RESEND_API_KEY) {
@@ -113,7 +146,7 @@ export async function runDailyReminders(now: Date): Promise<{
               if (r.ok) {
                 await prisma.profile.update({
                   where: { id: profile.id },
-                  data: { lastReminderEmailDate: todayUtc },
+                  data: { lastReminderEmailDate: questCalendarDay },
                 });
                 emailSent++;
               }

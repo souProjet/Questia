@@ -103,6 +103,20 @@ export default function AdminConsoleClient() {
   const [remEmail, setRemEmail] = useState(false);
   const [remMin, setRemMin] = useState('540');
   const [remTz, setRemTz] = useState('Europe/Paris');
+  const [manualPushTitle, setManualPushTitle] = useState('Questia');
+  const [manualPushBody, setManualPushBody] = useState('');
+  const [manualEmailSubject, setManualEmailSubject] = useState('');
+  const [manualEmailText, setManualEmailText] = useState('');
+
+  const [globalPushTitle, setGlobalPushTitle] = useState('Questia');
+  const [globalPushBody, setGlobalPushBody] = useState('');
+  const [globalEmailSubject, setGlobalEmailSubject] = useState('');
+  const [globalEmailText, setGlobalEmailText] = useState('');
+  const [globalBroadcastConfirm, setGlobalBroadcastConfirm] = useState(false);
+  const [broadcastBusy, setBroadcastBusy] = useState(false);
+  const [broadcastMsg, setBroadcastMsg] = useState<string | null>(null);
+
+  const textareaClass = `${inputClass} min-h-[88px] resize-y font-mono text-xs`;
 
   const targetPayload = useCallback(() => {
     const t = targetClerkId.trim();
@@ -214,6 +228,43 @@ export default function AdminConsoleClient() {
       setProfilePreview(JSON.stringify(j, null, 2));
     } catch (e) {
       setProfilePreview(e instanceof Error ? e.message : 'Erreur');
+    }
+  };
+
+  const broadcastGlobal = async (kind: 'push' | 'email') => {
+    if (!globalBroadcastConfirm) {
+      setBroadcastMsg('Coche la case de confirmation avant d’envoyer à tout le monde.');
+      return;
+    }
+    setBroadcastBusy(true);
+    setBroadcastMsg(null);
+    try {
+      const payload =
+        kind === 'push'
+          ? {
+              kind: 'push' as const,
+              confirm: true,
+              pushTitle: globalPushTitle.trim(),
+              pushBody: globalPushBody.trim(),
+            }
+          : {
+              kind: 'email' as const,
+              confirm: true,
+              emailSubject: globalEmailSubject.trim(),
+              emailText: globalEmailText.trim(),
+            };
+      const res = await fetch('/api/admin/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((j as { error?: string }).error ?? `Réponse serveur ${res.status}`);
+      setBroadcastMsg(JSON.stringify(j, null, 2));
+    } catch (e) {
+      setBroadcastMsg(e instanceof Error ? e.message : 'Erreur');
+    } finally {
+      setBroadcastBusy(false);
     }
   };
 
@@ -527,6 +578,190 @@ export default function AdminConsoleClient() {
             Effacer les dates de derniers rappels
           </button>
         </div>
+
+        {d.snapshotScope === 'self' ? (
+          <div className="mt-8 rounded-2xl border-2 border-red-300/50 bg-gradient-to-br from-red-50/90 via-white to-amber-50/50 p-4 sm:p-5">
+            <h3 className="font-display text-base font-black text-red-900">Diffusion globale (tous les comptes)</h3>
+            <p className="mt-1 text-xs font-semibold text-red-900/80">
+              Push : chaque jeton Expo distinct en base (~{d.pushDevicesCount} appareils). E-mail : une lettre par
+              adresse Clerk unique pour chaque profil (~{d.totalProfiles} profils). Peut prendre du temps ; prévoir
+              limites Vercel / Resend / Clerk sur les gros volumes.
+            </p>
+            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-red-200/80 bg-white/80 p-3 text-sm font-bold text-red-950">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 shrink-0 accent-red-600"
+                checked={globalBroadcastConfirm}
+                onChange={(e) => setGlobalBroadcastConfirm(e.target.checked)}
+              />
+              <span>
+                Je confirme vouloir envoyer ce message à <strong>tous les utilisateurs</strong> Questia (action
+                irréversible pour les destinataires).
+              </span>
+            </label>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div className="space-y-2 rounded-xl border border-cyan-200/60 bg-white/90 p-3">
+                <p className="text-xs font-black uppercase tracking-wide text-cyan-900/80">Push — tous les appareils</p>
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Titre
+                  <input
+                    className={`${inputClass} mt-1 w-full`}
+                    value={globalPushTitle}
+                    onChange={(e) => setGlobalPushTitle(e.target.value)}
+                    maxLength={100}
+                  />
+                </label>
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Corps
+                  <textarea
+                    className={`${textareaClass} mt-1 w-full`}
+                    value={globalPushBody}
+                    onChange={(e) => setGlobalPushBody(e.target.value)}
+                    maxLength={280}
+                    rows={3}
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={broadcastBusy || godBusy}
+                  onClick={() => void broadcastGlobal('push')}
+                  className="btn btn-md w-full border-2 border-red-400/70 bg-red-600 font-black text-white hover:bg-red-700"
+                >
+                  Diffuser le push à tout le monde
+                </button>
+              </div>
+              <div className="space-y-2 rounded-xl border border-amber-200/60 bg-white/90 p-3">
+                <p className="text-xs font-black uppercase tracking-wide text-amber-900/80">E-mail — toutes les adresses</p>
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Objet
+                  <input
+                    className={`${inputClass} mt-1 w-full`}
+                    value={globalEmailSubject}
+                    onChange={(e) => setGlobalEmailSubject(e.target.value)}
+                    maxLength={200}
+                  />
+                </label>
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Corps (texte)
+                  <textarea
+                    className={`${textareaClass} mt-1 w-full`}
+                    value={globalEmailText}
+                    onChange={(e) => setGlobalEmailText(e.target.value)}
+                    maxLength={20000}
+                    rows={6}
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={broadcastBusy || godBusy}
+                  onClick={() => void broadcastGlobal('email')}
+                  className="btn btn-md w-full border-2 border-red-400/70 bg-red-600 font-black text-white hover:bg-red-700"
+                >
+                  Diffuser l’e-mail à tout le monde
+                </button>
+              </div>
+            </div>
+            {broadcastMsg ? (
+              <pre className="mt-4 max-h-48 overflow-auto rounded-xl border border-red-200/60 bg-black/5 p-3 text-xs font-mono text-red-950">
+                {broadcastMsg}
+              </pre>
+            ) : null}
+          </div>
+        ) : null}
+
+        {d.snapshotScope === 'target' ? (
+          <div className="mt-8 rounded-2xl border-2 border-dashed border-cyan-400/40 bg-white/70 p-4 sm:p-5">
+            <h3 className="font-display text-base font-black text-[var(--on-cream)]">
+              Message personnalisé au joueur
+            </h3>
+            <p className="mt-1 text-xs font-semibold text-[var(--on-cream-muted)]">
+              Prise de compte : <strong className="text-[var(--on-cream)]">{focusTitle}</strong>. Tu peux lui envoyer un
+              push et/ou un e-mail personnalisés (push = appareils enregistrés dans Questia ; e-mail = adresse Clerk via
+              Resend).
+            </p>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div className="space-y-2 rounded-xl border border-cyan-200/60 bg-cyan-50/30 p-3">
+                <p className="text-xs font-black uppercase tracking-wide text-cyan-900/80">Notification push</p>
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Titre
+                  <input
+                    className={`${inputClass} mt-1 w-full`}
+                    value={manualPushTitle}
+                    onChange={(e) => setManualPushTitle(e.target.value)}
+                    maxLength={100}
+                  />
+                </label>
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Corps
+                  <textarea
+                    className={`${textareaClass} mt-1 w-full`}
+                    value={manualPushBody}
+                    onChange={(e) => setManualPushBody(e.target.value)}
+                    maxLength={280}
+                    rows={3}
+                    placeholder="Message affiché sur le téléphone…"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={godBusy}
+                  onClick={() =>
+                    void god({
+                      action: 'send_manual_push',
+                      pushTitle: manualPushTitle.trim(),
+                      pushBody: manualPushBody.trim(),
+                    })
+                  }
+                  className="btn btn-primary btn-md w-full font-black"
+                >
+                  Envoyer le push
+                </button>
+              </div>
+              <div className="space-y-2 rounded-xl border border-amber-200/60 bg-amber-50/30 p-3">
+                <p className="text-xs font-black uppercase tracking-wide text-amber-900/80">Courriel</p>
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Objet
+                  <input
+                    className={`${inputClass} mt-1 w-full`}
+                    value={manualEmailSubject}
+                    onChange={(e) => setManualEmailSubject(e.target.value)}
+                    maxLength={200}
+                  />
+                </label>
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Corps (texte — retours à la ligne conservés)
+                  <textarea
+                    className={`${textareaClass} mt-1 w-full`}
+                    value={manualEmailText}
+                    onChange={(e) => setManualEmailText(e.target.value)}
+                    maxLength={20000}
+                    rows={6}
+                    placeholder="Message au joueur…"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={godBusy}
+                  onClick={() =>
+                    void god({
+                      action: 'send_manual_email',
+                      emailSubject: manualEmailSubject.trim(),
+                      emailText: manualEmailText.trim(),
+                    })
+                  }
+                  className="btn btn-primary btn-md w-full font-black"
+                >
+                  Envoyer l’e-mail
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-8 rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--muted)_35%,transparent)] bg-white/40 px-4 py-3 text-sm font-semibold text-[var(--on-cream-muted)]">
+            Pour envoyer un push ou un e-mail <strong className="text-[var(--on-cream)]">personnalisés</strong>, choisis
+            d’abord un compte joueur dans le bandeau « compte concerné » (recherche puis prise de compte).
+          </p>
+        )}
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <GodField label="Créditer des pièces (QC)">

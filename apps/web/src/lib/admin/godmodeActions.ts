@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { ExplorerAxis, Profile, QuestStatus, RiskAxis } from '@prisma/client';
 import { prisma } from '@/lib/db';
@@ -33,7 +34,9 @@ export type GodmodeBody = {
     | 'set_explorer_risk'
     | 'set_owned_titles'
     | 'set_equipped_title'
-    | 'reset_reminder_dates';
+    | 'reset_reminder_dates'
+    | 'send_manual_push'
+    | 'send_manual_email';
   targetClerkId?: string;
   amount?: number;
   daily?: number;
@@ -59,6 +62,16 @@ export type GodmodeBody = {
   riskAxis?: RiskAxis;
   ownedTitleIds?: string[];
   equippedTitleId?: string | null;
+  /** Titre notification push (1–100). */
+  pushTitle?: string;
+  /** Corps notification push (1–280). */
+  pushBody?: string;
+  /** Objet e-mail (1–200). */
+  emailSubject?: string;
+  /** Corps HTML (prioritaire sur emailText). Max ~40k. */
+  emailHtml?: string;
+  /** Corps texte → échappé en HTML si emailHtml absent. */
+  emailText?: string;
 };
 
 function isValidTimeZone(tz: string): boolean {
@@ -68,6 +81,14 @@ function isValidTimeZone(tz: string): boolean {
   } catch {
     return false;
   }
+}
+
+function escapeHtmlForEmail(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function validateBadgesJson(raw: unknown): { id: string; unlockedAt: string }[] | null {
@@ -354,6 +375,87 @@ export async function runGodmodeAction(profile: Profile, body: GodmodeBody, toda
           data: { lastReminderPushDate: null, lastReminderEmailDate: null },
         });
         return NextResponse.json({ ok: true, message: 'Dates de dernier rappel effacées.' });
+      }
+      case 'send_manual_push': {
+        const devices = await prisma.pushDevice.findMany({ where: { profileId: profile.id } });
+        if (devices.length === 0) {
+          return NextResponse.json(
+            { error: 'Aucun appareil push enregistré pour ce profil (ouvre l’app mobile connectée).' },
+            { status: 400 },
+          );
+        }
+        const title = typeof body.pushTitle === 'string' ? body.pushTitle.trim() : '';
+        const text = typeof body.pushBody === 'string' ? body.pushBody.trim() : '';
+        if (!title || title.length > 100) {
+          return NextResponse.json({ error: 'Titre push requis (1 à 100 caractères).' }, { status: 400 });
+        }
+        if (!text || text.length > 280) {
+          return NextResponse.json({ error: 'Corps push requis (1 à 280 caractères).' }, { status: 400 });
+        }
+        const { sendExpoPushMessages } = await import('@/lib/reminders/expo-push');
+        const messages = devices.map((d) => ({
+          to: d.expoPushToken,
+          title,
+          body: text,
+          sound: 'default' as const,
+        }));
+        const result = await sendExpoPushMessages(messages);
+        if (!result.ok) {
+          return NextResponse.json(
+            { ok: false, error: 'Échec envoi Expo', details: result.errors },
+            { status: 502 },
+          );
+        }
+        return NextResponse.json({ ok: true, devices: devices.length, title, previewBody: text.slice(0, 80) });
+      }
+      case 'send_manual_email': {
+        const subject = typeof body.emailSubject === 'string' ? body.emailSubject.trim() : '';
+        const rawHtml = typeof body.emailHtml === 'string' ? body.emailHtml.trim() : '';
+        const rawText = typeof body.emailText === 'string' ? body.emailText.trim() : '';
+        if (!subject || subject.length > 200) {
+          return NextResponse.json({ error: 'Objet requis (1 à 200 caractères).' }, { status: 400 });
+        }
+        let inner: string;
+        if (rawHtml) {
+          if (rawHtml.length > 40_000) {
+            return NextResponse.json({ error: 'Corps HTML trop long (max 40 000 caractères).' }, { status: 400 });
+          }
+          inner = rawHtml;
+        } else if (rawText) {
+          if (rawText.length > 20_000) {
+            return NextResponse.json({ error: 'Corps texte trop long (max 20 000 caractères).' }, { status: 400 });
+          }
+          inner = `<p>${escapeHtmlForEmail(rawText).replace(/\r\n|\n|\r/g, '<br/>')}</p>`;
+        } else {
+          return NextResponse.json(
+            { error: 'Fournis emailHtml ou emailText (corps du message).' },
+            { status: 400 },
+          );
+        }
+        const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questia.fr').replace(/\/$/, '');
+        const html = `${inner}<p style="color:#64748b;font-size:12px;margin-top:24px">Message envoyé depuis l’administration Questia. — <a href="${siteUrl}/app">Ouvrir Questia</a></p>`;
+
+        const client = await clerkClient();
+        let email: string | undefined;
+        try {
+          const user = await client.users.getUser(profile.clerkId);
+          email =
+            user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress ?? undefined;
+        } catch {
+          return NextResponse.json({ error: 'Impossible de lire l’utilisateur Clerk.' }, { status: 502 });
+        }
+        if (!email) {
+          return NextResponse.json({ error: 'Aucune adresse e-mail sur le compte Clerk.' }, { status: 400 });
+        }
+        const { sendReminderEmail } = await import('@/lib/reminders/send-email');
+        const r = await sendReminderEmail(email, subject, html);
+        if (!r.ok) {
+          return NextResponse.json({ ok: false, error: r.error ?? 'Échec Resend' }, { status: 502 });
+        }
+        const at = email.indexOf('@');
+        const toMasked =
+          at > 0 ? `${email.slice(0, Math.min(2, at))}***@${email.slice(at + 1)}` : '***';
+        return NextResponse.json({ ok: true, toMasked });
       }
       case 'set_quest_status': {
         const st = body.questStatus;

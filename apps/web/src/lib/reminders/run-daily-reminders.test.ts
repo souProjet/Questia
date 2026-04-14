@@ -38,6 +38,7 @@ describe('runDailyReminders', () => {
     prismaMock.profile.findMany.mockReset();
     prismaMock.profile.update.mockReset();
     prismaMock.questLog.findUnique.mockReset();
+    vi.unstubAllEnvs();
     vi.stubEnv('RESEND_API_KEY', 're_test');
     const { sendExpoPushMessages } = await import('@/lib/reminders/expo-push');
     vi.mocked(sendExpoPushMessages).mockClear();
@@ -142,7 +143,7 @@ describe('runDailyReminders', () => {
     expect(r.skipped).toBe(1);
   });
 
-  it('push envoyé dans la fenêtre UTC', async () => {
+  it('push envoyé dans la fenêtre de rappel', async () => {
     prismaMock.profile.findMany.mockResolvedValue([
       {
         id: 'p1',
@@ -186,6 +187,28 @@ describe('runDailyReminders', () => {
     expect(r.checked).toBe(1);
     expect(r.pushSent).toBe(0);
     expect(vi.mocked(sendExpoPushMessages)).not.toHaveBeenCalled();
+  });
+
+  it('date de quête = calendrier Paris (pas UTC)', async () => {
+    prismaMock.profile.findMany.mockResolvedValue([
+      {
+        id: 'p1',
+        clerkId: 'c1',
+        reminderTimezone: 'Europe/Paris',
+        reminderTimeMinutes: 30,
+        reminderPushEnabled: true,
+        reminderEmailEnabled: false,
+        lastReminderPushDate: null,
+        pushDevices: [{ expoPushToken: 'ExponentPushToken[t]' }],
+      },
+    ]);
+    prismaMock.questLog.findUnique.mockResolvedValue(null);
+    prismaMock.profile.update.mockResolvedValue({});
+    const { runDailyReminders } = await import('./run-daily-reminders');
+    await runDailyReminders(new Date('2026-05-31T22:30:00.000Z'));
+    expect(prismaMock.questLog.findUnique).toHaveBeenCalledWith({
+      where: { profileId_questDate: { profileId: 'p1', questDate: '2026-06-01' } },
+    });
   });
 
   it('email sans RESEND_API_KEY → skipped', async () => {

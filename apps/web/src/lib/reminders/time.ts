@@ -26,9 +26,7 @@ export function minutesFromMidnightInZone(date: Date, timeZone: string): number 
   return h * 60 + m;
 }
 
-/**
- * La quête du jour côté API utilise la date calendaire UTC (voir quest/daily).
- */
+/** Date civile UTC (AAAA-MM-JJ) — utile pour logs / comparaisons ; la quête du jour utilise `getQuestCalendarDateForInstant` (Paris). */
 export function utcCalendarDateString(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
