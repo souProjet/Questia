@@ -8,14 +8,17 @@ export type ExpoPushMessage = {
 };
 
 export async function sendExpoPushMessages(messages: ExpoPushMessage[]): Promise<{ ok: boolean; errors?: string[] }> {
-  if (messages.length === 0) return { ok: true };
+  const valid = messages.filter((m) => typeof m.to === 'string' && m.to.trim().length > 0);
+  if (valid.length === 0) return { ok: true };
+  /** L’API Expo attend un seul objet ou un tableau racine — pas `{ messages: [...] }`. */
+  const payload: ExpoPushMessage | ExpoPushMessage[] = valid.length === 1 ? valid[0]! : valid;
   const res = await fetch(EXPO_PUSH_URL, {
     method: 'POST',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify(payload),
   });
   const json = (await res.json().catch(() => ({}))) as {
     data?: { status?: string; message?: string }[];
