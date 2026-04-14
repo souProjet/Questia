@@ -74,6 +74,55 @@ function buildCategoryPenaltyFromExcludedIds(
   return penalty;
 }
 
+/** Pénalise les catégories déjà servies récemment pour diversifier le « type » de quête. */
+function buildCategoryPenaltyFromRecentArchetypeIds(
+  archetypeIds: number[],
+  weightPerOccurrence = 0.065,
+): Partial<Record<PsychologicalCategory, number>> {
+  const penalty: Partial<Record<PsychologicalCategory, number>> = {};
+  for (const id of archetypeIds) {
+    const q = QUEST_TAXONOMY.find((x) => x.id === id);
+    if (!q) continue;
+    penalty[q.category] = Math.min(0.48, (penalty[q.category] ?? 0) + weightPerOccurrence);
+  }
+  return penalty;
+}
+
+function mergeCategoryScorePenalties(
+  a: Partial<Record<PsychologicalCategory, number>>,
+  b: Partial<Record<PsychologicalCategory, number>>,
+): Partial<Record<PsychologicalCategory, number>> {
+  const out: Partial<Record<PsychologicalCategory, number>> = { ...a };
+  for (const key of Object.keys(b) as PsychologicalCategory[]) {
+    const v = b[key];
+    if (v === undefined) continue;
+    out[key] = (out[key] ?? 0) + v;
+  }
+  return out;
+}
+
+/** Snippets des dernières missions pour le prompt (anti-copie sémantique). */
+function buildRecentMissionsAntiRepeatBlock(
+  rows: { generatedMission: string; generatedTitle: string }[],
+  locale: AppLocale,
+): string | null {
+  const bullets: string[] = [];
+  for (const r of rows) {
+    const m = (r.generatedMission || '').trim();
+    const t = (r.generatedTitle || '').trim();
+    if (!m || m.includes('Mission simulée')) continue;
+    const snip = m.length > 220 ? `${m.slice(0, 220)}…` : m;
+    bullets.push(t ? `- (${t}) ${snip}` : `- ${snip}`);
+    if (bullets.length >= 5) break;
+  }
+  if (bullets.length === 0) return null;
+  const body = bullets.join('\n');
+  if (locale === 'en') {
+    return `RECENT QUESTS FOR THIS USER (do **not** reuse the same beat, gimmick, object-in-a-book, or scene; change the gesture, medium, constraint, or setting):\n${body}`;
+  }
+  return `QUÊTES RÉCENTES DE CET UTILISATEUR (**ne pas** réutiliser le même ressort, la même scène ou le même gimmick — ex. lettre + « dans 5 ans » + livre / carnet si c’est déjà là ; change de geste, de support, de contrainte ou de lieu) :\n${body}`;
+}
+
 /** Libellés génériques renvoyés par le modèle ou des prompts — à ignorer au profit du géocodage. */
 function isPlaceholderDestinationLabel(s: string): boolean {
   const t = s.trim().toLowerCase();
@@ -234,13 +283,14 @@ export async function GET(request: NextRequest) {
   /** Sans GPS : pas d'archétype extérieur ni de lieu nommé / carte */
   const allowOutdoorQuests = context.isOutdoorFriendly && context.hasUserLocation;
 
-  // Get recent logs for Delta de congruence
-  const recentLogs = await prisma.questLog.findMany({
+  // Historique récent : moteur (14) + textes anti-répétition + pénalité de catégorie (10)
+  const recentLogRows = await prisma.questLog.findMany({
     where: { profileId: profile.id },
     orderBy: { assignedAt: 'desc' },
-    take: 14,
-    select: { archetypeId: true, status: true },
+    take: 20,
+    select: { archetypeId: true, status: true, generatedMission: true, generatedTitle: true },
   });
+  const recentLogs = recentLogRows.slice(0, 14).map((r) => ({ archetypeId: r.archetypeId, status: r.status }));
 
   const engineLogs: QuestLog[] = recentLogs.map((r) => ({
     id: '',
@@ -268,6 +318,17 @@ export async function GET(request: NextRequest) {
     lastQuestDateStr === today ? parseRerollExcludedArchetypeIds(profile) : [];
   const recentIdsForSelect = Array.from(new Set([...recentIds, ...extraExclude]));
   const categoryRerollPenalty = buildCategoryPenaltyFromExcludedIds(extraExclude);
+  const categoryRecentPenalty = buildCategoryPenaltyFromRecentArchetypeIds(
+    recentLogRows.slice(0, 10).map((r) => r.archetypeId),
+  );
+  const categoryScorePenaltyMerged = mergeCategoryScorePenalties(
+    categoryRerollPenalty,
+    categoryRecentPenalty,
+  );
+  const recentMissionsAntiRepeat = buildRecentMissionsAntiRepeatBlock(
+    recentLogRows.slice(0, 8),
+    questLocale,
+  );
 
   const storedRefinementAnswers =
     (profile.refinementSchemaVersion ?? 0) >= REFINEMENT_SCHEMA_VERSION
@@ -296,7 +357,7 @@ export async function GET(request: NextRequest) {
       congruenceDelta,
       selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${regenTier}`,
       diversityWindow: 10,
-      categoryScorePenalty: categoryRerollPenalty,
+      categoryScorePenalty: categoryScorePenaltyMerged,
     },
   );
 
@@ -340,6 +401,7 @@ export async function GET(request: NextRequest) {
       substitutedInstantAfterDefer: instantOnly,
       refinementContext,
       locale: questLocale,
+      recentMissionsAntiRepeat,
     },
     archetype,
     context,

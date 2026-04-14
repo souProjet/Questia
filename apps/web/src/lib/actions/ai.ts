@@ -103,6 +103,8 @@ export interface DailyQuestProfileInput {
   locale?: AppLocale;
   /** Graine stable (ex. `userId:date:phase`) pour varier les angles créatifs sans dépendre du seul archétype. */
   generationSeed?: string;
+  /** Dernières missions réelles (snippet) — éviter les ressorts / gimmicks répétés à l’écriture. */
+  recentMissionsAntiRepeat?: string | null;
 }
 
 // ── Phase → human label ───────────────────────────────────────────────────────
@@ -118,6 +120,28 @@ const PHASE_LABEL_EN: Record<EscalationPhase, string> = {
   expansion: 'stretching (light discomfort OK)',
   rupture: 'breakthrough (seeking a meaningful challenge)',
 };
+
+/** Intensité perçue / stimulation : complète INTÉRÊT en ancrant l'ambition sur la phase effective. */
+function phaseStimulationGuidance(locale: AppLocale, phase: EscalationPhase): string {
+  if (locale === 'en') {
+    switch (phase) {
+      case 'calibration':
+        return `PHASE FEEL (calibration): still **doable today**, but avoid generic output — one crisp novelty (object, timing, sensory detail) so the quest is not interchangeable with "any day".`;
+      case 'expansion':
+        return `PHASE FEEL (expansion): add a **light push** versus habit — a measurable mini-challenge, slightly bolder angle, or concrete novelty — no hollow spectacle.`;
+      case 'rupture':
+        return `PHASE FEEL (rupture): aim for a **memorable edge** — constructive tension or legitimate stretch within guardrails; it must not feel like yesterday's interchangeable homework.`;
+    }
+  }
+  switch (phase) {
+    case 'calibration':
+      return `RESSENTI PHASE (calibration) : reste **faisable aujourd'hui**, mais évite le générique : une nouveauté nette (objet, horaire, détail sensoriel) pour que ce ne soit pas interchangeable avec « n'importe quel jour ».`;
+    case 'expansion':
+      return `RESSENTI PHASE (expansion) : ajoute un **léger décalage** par rapport à l'habitude — mini-défi mesurable, angle un peu plus vif, ou nouveauté concrète — sans mise en scène creuse.`;
+    case 'rupture':
+      return `RESSENTI PHASE (rupture) : vise un **cran mémorable** — tension constructive ou sortie de zone légitime dans les garde-fous ; ce ne doit pas ressembler à un devoir interchangeable avec hier.`;
+  }
+}
 
 const PROFILE_LABEL = (e: ExplorerAxis, r: RiskAxis) => {
   const explorer = e === 'explorer' ? 'aime explorer et découvrir' : 'préfère le confort du foyer';
@@ -716,9 +740,13 @@ ${personalityBlock}
 
 ${missionHintsBlock}
 
+${profile.recentMissionsAntiRepeat ? `\n${profile.recentMissionsAntiRepeat}\n` : ''}
+
 ${narrativeVoiceBlock}
 
 ${creativeAngleLine}
+
+${phaseStimulationGuidance('en', profile.phase)}
 
 PRIORITY: the mission must feel written for *this* person and *this* day — the family below is a compass, not a template to paste.
 INTEREST: avoid bland “homework” quests. **Title + hook** = where the narrative lives (image, tone, tiny scene). **Mission** = one flowing sentence with one clear action (you may open with a short time/sense beat in the *same* sentence, then the imperative).
@@ -829,9 +857,13 @@ ${personalityBlock}
 
 ${missionHintsBlock}
 
+${profile.recentMissionsAntiRepeat ? `\n${profile.recentMissionsAntiRepeat}\n` : ''}
+
 ${narrativeVoiceBlock}
 
 ${creativeAngleLine}
+
+${phaseStimulationGuidance('fr', profile.phase)}
 
 PRIORITÉ : la mission doit sembler écrite pour **cette** personne et **ce** jour — la famille ci-dessous est une boussole, pas un modèle à recopier.
 INTÉRÊT : évite les quêtes **plates**. **Titre + hook** = là où vit la narration (image, ton, micro-scène). **Mission** = **une** phrase fluide avec une action principale nette (tu peux commencer par une courte incipit — moment, sensation — **dans la même phrase**, puis l'impératif).
@@ -958,6 +990,10 @@ export async function generateDailyQuest(
     refinementContext:
       truncateForPrompt(profile.refinementContext ?? undefined, 1500) ??
       profile.refinementContext ??
+      null,
+    recentMissionsAntiRepeat:
+      truncateForPrompt(profile.recentMissionsAntiRepeat ?? undefined, 2200) ??
+      profile.recentMissionsAntiRepeat ??
       null,
   };
 
