@@ -65,11 +65,13 @@ type UserSearchHit = {
   role: string | null;
 };
 
+type GodFeedback = { tone: 'success' | 'error'; body: string };
+
 export default function AdminConsoleClient() {
   const [data, setData] = useState<OverviewJson | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [godMsg, setGodMsg] = useState<string | null>(null);
+  const [godFeedback, setGodFeedback] = useState<GodFeedback | null>(null);
   const [godBusy, setGodBusy] = useState(false);
 
   const [targetClerkId, setTargetClerkId] = useState('');
@@ -270,19 +272,35 @@ export default function AdminConsoleClient() {
 
   const god = async (body: Record<string, unknown>) => {
     setGodBusy(true);
-    setGodMsg(null);
+    setGodFeedback(null);
     try {
       const res = await fetch('/api/admin/godmode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...targetPayload(), ...body }),
       });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((j as { error?: string }).error ?? `Réponse serveur ${res.status}`);
-      setGodMsg(JSON.stringify(j, null, 2));
+      const raw = await res.text();
+      let j: unknown = {};
+      try {
+        j = raw ? JSON.parse(raw) : {};
+      } catch {
+        j = { _raw: raw.slice(0, 500) };
+      }
+      if (!res.ok) {
+        const errMsg =
+          typeof (j as { error?: string }).error === 'string'
+            ? (j as { error: string }).error
+            : `Réponse serveur ${res.status}`;
+        setGodFeedback({ tone: 'error', body: errMsg });
+        return;
+      }
+      setGodFeedback({
+        tone: 'success',
+        body: JSON.stringify(j, null, 2),
+      });
       await load();
     } catch (e) {
-      setGodMsg(e instanceof Error ? e.message : 'Erreur');
+      setGodFeedback({ tone: 'error', body: e instanceof Error ? e.message : 'Erreur' });
     } finally {
       setGodBusy(false);
     }
@@ -528,6 +546,32 @@ export default function AdminConsoleClient() {
           l'interface graphique Prisma.
         </p>
 
+        {(godBusy || godFeedback) && (
+          <output
+            aria-live="polite"
+            className={`mt-4 block rounded-2xl border-2 p-4 text-sm shadow-inner ${
+              godBusy
+                ? 'border-cyan-300/70 bg-cyan-50/90 text-cyan-950'
+                : godFeedback?.tone === 'error'
+                  ? 'border-red-400/80 bg-red-50/95 text-red-950'
+                  : 'border-emerald-400/80 bg-emerald-50/95 text-emerald-950'
+            }`}
+          >
+            {godBusy ? (
+              <p className="font-black">Exécution en cours…</p>
+            ) : godFeedback ? (
+              <>
+                <p className="font-display text-xs font-black uppercase tracking-wide text-[var(--muted)]">
+                  {godFeedback.tone === 'success' ? 'Succès' : 'Erreur'}
+                </p>
+                <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words font-mono text-xs font-semibold">
+                  {godFeedback.body}
+                </pre>
+              </>
+            ) : null}
+          </output>
+        )}
+
         <div className="mt-6 flex flex-wrap gap-2">
           <button
             type="button"
@@ -669,15 +713,23 @@ export default function AdminConsoleClient() {
           </div>
         ) : null}
 
-        {d.snapshotScope === 'target' ? (
+        {d.snapshotScope === 'target' || d.snapshotScope === 'self' ? (
           <div className="mt-8 rounded-2xl border-2 border-dashed border-cyan-400/40 bg-white/70 p-4 sm:p-5">
             <h3 className="font-display text-base font-black text-[var(--on-cream)]">
-              Message personnalisé au joueur
+              {d.snapshotScope === 'target' ? 'Message personnalisé au joueur' : 'Message personnalisé (test sur toi)'}
             </h3>
             <p className="mt-1 text-xs font-semibold text-[var(--on-cream-muted)]">
-              Prise de compte : <strong className="text-[var(--on-cream)]">{focusTitle}</strong>. Tu peux lui envoyer un
-              push et/ou un e-mail personnalisés (push = appareils enregistrés dans Questia ; e-mail = adresse Clerk via
-              Resend).
+              {d.snapshotScope === 'target' ? (
+                <>
+                  Prise de compte : <strong className="text-[var(--on-cream)]">{focusTitle}</strong>. Push = appareils
+                  enregistrés pour ce profil ; e-mail = adresse Clerk via Resend.
+                </>
+              ) : (
+                <>
+                  Tu es sur <strong className="text-[var(--on-cream)]">ton compte admin</strong> : tu peux t’envoyer un
+                  push / un e-mail pour tester, sans sélectionner un autre joueur.
+                </>
+              )}
             </p>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <div className="space-y-2 rounded-xl border border-cyan-200/60 bg-cyan-50/30 p-3">
@@ -756,12 +808,7 @@ export default function AdminConsoleClient() {
               </div>
             </div>
           </div>
-        ) : (
-          <p className="mt-8 rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--muted)_35%,transparent)] bg-white/40 px-4 py-3 text-sm font-semibold text-[var(--on-cream-muted)]">
-            Pour envoyer un push ou un e-mail <strong className="text-[var(--on-cream)]">personnalisés</strong>, choisis
-            d’abord un compte joueur dans le bandeau « compte concerné » (recherche puis prise de compte).
-          </p>
-        )}
+        ) : null}
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <GodField label="Créditer des pièces (QC)">
@@ -955,7 +1002,7 @@ export default function AdminConsoleClient() {
                 const parsed = JSON.parse(badgesJson) as unknown;
                 void god({ action: 'set_badges_json', badgesJson: parsed });
               } catch {
-                setGodMsg('Format de données invalide pour les insignes.');
+                setGodFeedback({ tone: 'error', body: 'Format de données invalide pour les insignes.' });
               }
             }}
           >
@@ -1087,12 +1134,6 @@ export default function AdminConsoleClient() {
             Forcer statut
           </button>
         </div>
-
-        {godMsg ? (
-          <pre className="mt-6 max-h-52 overflow-auto rounded-2xl border border-emerald-200/80 bg-emerald-50/90 p-4 font-mono text-xs font-semibold text-emerald-950 shadow-inner">
-            {godMsg}
-          </pre>
-        ) : null}
 
         <p className="mt-6 text-xs font-medium text-[var(--on-cream-subtle)]">
           Accès réservé aux comptes avec le rôle administrateur en base de données (interface graphique Prisma ou

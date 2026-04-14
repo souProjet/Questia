@@ -27,22 +27,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Champ « action » requis.' }, { status: 400 });
   }
 
-  const manualActions = body.action === 'send_manual_push' || body.action === 'send_manual_email';
-  if (manualActions) {
-    const tid = typeof raw.targetClerkId === 'string' ? raw.targetClerkId.trim() : '';
-    if (!tid) {
-      return NextResponse.json(
-        { error: 'Sélectionne un joueur (prise de compte) pour envoyer un message personnalisé.' },
-        { status: 400 },
-      );
-    }
-    if (tid === gate.userId) {
-      return NextResponse.json(
-        { error: 'Les envois personnalisés concernent uniquement un autre compte que le tien.' },
-        { status: 400 },
-      );
-    }
-  }
-
   return runGodmodeAction(target, body, todayIsoUtc());
 }
