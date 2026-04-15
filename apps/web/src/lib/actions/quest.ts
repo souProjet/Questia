@@ -1,8 +1,15 @@
 'use server';
 
-import { selectQuest, getEffectivePhase, computeExhibitedPersonality, computeCongruenceDelta, FALLBACK_QUEST_ID, QUEST_TAXONOMY } from '@questia/shared';
+import {
+  selectQuest,
+  getEffectivePhase,
+  computeExhibitedPersonality,
+  computeCongruenceDelta,
+} from '@questia/shared';
 import type { PersonalityVector, QuestLog, QuestModel } from '@questia/shared';
 import { checkWeatherSafety } from './weather';
+import { getQuestTaxonomy, getDefaultFallbackArchetypeId } from '@/lib/quest-taxonomy/cache';
+import { findArchetypeById } from '@/lib/quest-taxonomy/map-prisma';
 
 export interface AssignQuestInput {
   declaredPersonality: PersonalityVector;
@@ -23,7 +30,10 @@ export interface AssignQuestResult {
 export async function assignDailyQuest(input: AssignQuestInput): Promise<AssignQuestResult> {
   const { declaredPersonality, questLogs, currentDay, lat, lon } = input;
 
-  const exhibited = computeExhibitedPersonality(questLogs);
+  const taxonomy = await getQuestTaxonomy();
+  const fallbackDefault = await getDefaultFallbackArchetypeId();
+
+  const exhibited = computeExhibitedPersonality(questLogs, taxonomy);
   const delta = computeCongruenceDelta(declaredPersonality, exhibited);
   const recentLogs = questLogs.slice(-3);
   const phase = getEffectivePhase(currentDay, recentLogs);
@@ -36,6 +46,7 @@ export async function assignDailyQuest(input: AssignQuestInput): Promise<AssignQ
   }
 
   let quest = selectQuest(
+    taxonomy,
     declaredPersonality,
     phase,
     recentQuestIds,
@@ -47,8 +58,8 @@ export async function assignDailyQuest(input: AssignQuestInput): Promise<AssignQ
 
   let wasFallback = false;
   if (quest && !weatherSafe && quest.requiresOutdoor) {
-    const fallbackId = quest.fallbackQuestId ?? FALLBACK_QUEST_ID;
-    quest = QUEST_TAXONOMY.find((q) => q.id === fallbackId) ?? quest;
+    const fallbackId = quest.fallbackQuestId ?? fallbackDefault;
+    quest = findArchetypeById(taxonomy, fallbackId) ?? quest;
     wasFallback = true;
   }
 

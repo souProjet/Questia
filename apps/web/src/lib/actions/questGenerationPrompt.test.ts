@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PersonalityVector, QuestModel } from '@questia/shared';
-import { QUEST_TAXONOMY } from '@questia/shared';
+import { TEST_QUEST_TAXONOMY } from '@questia/shared';
 import {
   archetypeCategoryLabel,
   buildNarrativeVoiceBlock,
@@ -107,13 +107,13 @@ describe('questGenerationPrompt', () => {
   });
 
   it('describeArchetypeTargetTraits et libellé famille', () => {
-    const q = QUEST_TAXONOMY[0]!;
+    const q = TEST_QUEST_TAXONOMY[0]!;
     expect(archetypeCategoryLabel(q.category).length).toBeGreaterThan(3);
     expect(describeArchetypeTargetTraits(q).length).toBeGreaterThan(5);
   });
 
   it('archetypeCategoryLabel EN et describeArchetypeTargetTraits sans traits / EN / forces', () => {
-    const q = QUEST_TAXONOMY[0]!;
+    const q = TEST_QUEST_TAXONOMY[0]!;
     expect(archetypeCategoryLabel(q.category, 'en').length).toBeGreaterThan(2);
 
     const bare: QuestModel = { ...q, targetTraits: {} };

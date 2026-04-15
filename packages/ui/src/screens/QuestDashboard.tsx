@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator,
 } from 'react-native';
 import {
-  QUEST_TAXONOMY, DAILY_FREE_REROLLS, MAX_REROLLS_PER_DAY,
+  DAILY_FREE_REROLLS, MAX_REROLLS_PER_DAY,
 } from '@questia/shared';
 import type {
   QuestModel, EscalationPhase, OperationalQuadrant, QuestNarrationResponse,
@@ -41,9 +41,38 @@ export function QuestDashboard({
   congruenceDelta = 0,
   apiBaseUrl = '',
 }: QuestDashboardProps) {
-  const [currentQuest, setCurrentQuest] = useState<QuestModel>(
-    QUEST_TAXONOMY[QUEST_TAXONOMY.length - 1]!,
-  );
+  const [taxonomy, setTaxonomy] = useState<QuestModel[]>([]);
+  const [currentQuest, setCurrentQuest] = useState<QuestModel | null>(null);
+
+  useEffect(() => {
+    if (!apiBaseUrl.trim()) {
+      setTaxonomy([]);
+      setCurrentQuest(null);
+      return;
+    }
+    const base = apiBaseUrl.replace(/\/$/, '');
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${base}/api/quest/archetypes`);
+        if (!res.ok) throw new Error('archetypes');
+        const list = (await res.json()) as QuestModel[];
+        if (cancelled) return;
+        setTaxonomy(list);
+        if (list.length > 0) {
+          setCurrentQuest(list[list.length - 1]!);
+        }
+      } catch {
+        if (!cancelled) {
+          setTaxonomy([]);
+          setCurrentQuest(null);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl]);
   const [rerollsLeft, setRerollsLeft] = useState(initialRerolls);
   const [showConsent, setShowConsent] = useState(false);
   const [showNarration, setShowNarration] = useState(false);
@@ -55,6 +84,7 @@ export function QuestDashboard({
   const pc = PHASE_CONFIG[phase];
 
   const fetchNarration = useCallback(async () => {
+    if (!currentQuest) return;
     setLoading(true);
     try {
       const res = await fetch(`${apiBaseUrl}/api/quest/accept`, {
@@ -89,7 +119,7 @@ export function QuestDashboard({
   }, [currentQuest, apiBaseUrl, quadrant, phase, congruenceDelta, day]);
 
   const handleAcceptQuest = useCallback(() => {
-    if (loading || questAccepted) return;
+    if (!currentQuest || loading || questAccepted) return;
     if (currentQuest.requiresOutdoor) {
       setShowConsent(true);
     } else {
@@ -108,11 +138,12 @@ export function QuestDashboard({
   }, []);
 
   const handleReroll = useCallback(() => {
-    if (rerollsLeft <= 0 || questAccepted || loading) return;
-    const others = QUEST_TAXONOMY.filter((q) => q.id !== currentQuest.id);
-    setCurrentQuest(others[Math.floor(Math.random() * others.length)]);
+    if (!currentQuest || rerollsLeft <= 0 || questAccepted || loading) return;
+    const others = taxonomy.filter((q) => q.id !== currentQuest.id);
+    if (others.length === 0) return;
+    setCurrentQuest(others[Math.floor(Math.random() * others.length)]!);
     setRerollsLeft((r) => r - 1);
-  }, [rerollsLeft, currentQuest, questAccepted, loading]);
+  }, [rerollsLeft, currentQuest, questAccepted, loading, taxonomy]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
@@ -153,7 +184,16 @@ export function QuestDashboard({
         {questAccepted ? '✅  Quête en cours' : '⚔️  Quête du Jour'}
       </Text>
 
-      {loading ? (
+      {!apiBaseUrl.trim() ? (
+        <View style={styles.loadingCard}>
+          <Text style={styles.loadingSubtitle}>Passe apiBaseUrl (ex. EXPO_PUBLIC_API_BASE_URL) pour charger la taxonomie.</Text>
+        </View>
+      ) : !currentQuest ? (
+        <View style={styles.loadingCard}>
+          <ActivityIndicator size="large" color="#22d3ee" />
+          <Text style={styles.loadingTitle}>Chargement des archétypes…</Text>
+        </View>
+      ) : loading ? (
         <View style={styles.loadingCard}>
           <ActivityIndicator size="large" color="#22d3ee" />
           <Text style={styles.loadingTitle}>Le Maître des Quêtes rédige ta narration…</Text>
@@ -164,7 +204,7 @@ export function QuestDashboard({
       )}
 
       {/* ── Reroll ── */}
-      {!questAccepted && !loading && (
+      {!questAccepted && !loading && currentQuest && (
         <View style={styles.rerollSection}>
           <Pressable
             style={[styles.rerollButton, rerollsLeft <= 0 && styles.rerollButtonDisabled]}
@@ -200,7 +240,7 @@ export function QuestDashboard({
 
       <SafetyConsentModal
         visible={showConsent}
-        quest={currentQuest}
+        quest={currentQuest!}
         onConfirm={handleConsentConfirm}
         onCancel={() => setShowConsent(false)}
       />

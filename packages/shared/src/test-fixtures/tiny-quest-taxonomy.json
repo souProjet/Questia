@@ -1,0 +1,323 @@
+[
+  {
+    "id": 1,
+    "title": "Le Voyage Aléatoire",
+    "description": "Prendre un train vers une ville au hasard et se débrouiller une fois arrivé.",
+    "category": "spatial_adventure",
+    "targetTraits": {
+      "openness": 0.95,
+      "emotionalStability": 0.7
+    },
+    "comfortLevel": "extreme",
+    "requiresOutdoor": true,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 480,
+    "fallbackQuestId": 9,
+    "titleEn": "The Random Journey",
+    "descriptionEn": "Take a train to a random town and figure things out once you arrive.",
+    "questPace": "planned"
+  },
+  {
+    "id": 2,
+    "title": "Le Dîner Solitaire",
+    "description": "Manger seul dans un resto chic. Téléphone éteint. Être à l'aise avec soi-même.",
+    "category": "public_introspection",
+    "targetTraits": {
+      "emotionalStability": 0.8,
+      "extraversion": 0.3
+    },
+    "comfortLevel": "high",
+    "requiresOutdoor": true,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 90,
+    "fallbackQuestId": 9,
+    "titleEn": "The Solo Dinner",
+    "descriptionEn": "Eat alone at a nice restaurant. Phone off. Be comfortable with yourself.",
+    "questPace": "instant"
+  },
+  {
+    "id": 3,
+    "title": "La Nuit Étoilée",
+    "description": "Passer une nuit sous les étoiles, sans distraction, juste avec ses pensées.",
+    "category": "sensory_deprivation",
+    "targetTraits": {
+      "openness": 0.6,
+      "conscientiousness": 0.5
+    },
+    "comfortLevel": "high",
+    "requiresOutdoor": true,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 600,
+    "fallbackQuestId": 9,
+    "titleEn": "The Starry Night",
+    "descriptionEn": "Spend a night under the stars, no distractions—just your thoughts.",
+    "questPace": "planned"
+  },
+  {
+    "id": 4,
+    "title": "L'Explorateur Local",
+    "description": "Aller dans une ville minuscule et parler à au moins une personne locale.",
+    "category": "exploratory_sociability",
+    "targetTraits": {
+      "extraversion": 0.7,
+      "agreeableness": 0.6,
+      "openness": 0.7
+    },
+    "comfortLevel": "high",
+    "requiresOutdoor": true,
+    "requiresSocial": true,
+    "minimumDurationMinutes": 240,
+    "fallbackQuestId": 13,
+    "titleEn": "The Local Explorer",
+    "descriptionEn": "Go to a tiny town and talk to at least one local person.",
+    "questPace": "planned"
+  },
+  {
+    "id": 5,
+    "title": "Le Point Culminant",
+    "description": "Monter au point le plus haut de la ville et réfléchir à sa direction de vie.",
+    "category": "physical_existential",
+    "targetTraits": {
+      "openness": 0.6,
+      "conscientiousness": 0.5
+    },
+    "comfortLevel": "moderate",
+    "requiresOutdoor": true,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 120,
+    "fallbackQuestId": 9,
+    "titleEn": "The High Point",
+    "descriptionEn": "Climb to the highest point in town and reflect on your life direction.",
+    "questPace": "instant"
+  },
+  {
+    "id": 6,
+    "title": "L'Entraînement de l'Aube",
+    "description": "S'entraîner seul un dimanche matin pendant que tout le monde dort.",
+    "category": "async_discipline",
+    "targetTraits": {
+      "conscientiousness": 0.9
+    },
+    "comfortLevel": "moderate",
+    "requiresOutdoor": true,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 60,
+    "fallbackQuestId": 9,
+    "titleEn": "The Dawn Workout",
+    "descriptionEn": "Train alone on a Sunday morning while everyone else is asleep.",
+    "questPace": "instant"
+  },
+  {
+    "id": 7,
+    "title": "La Détox Digitale",
+    "description": "Passer 24h sans réseaux sociaux et observer les changements cognitifs.",
+    "category": "dopamine_detox",
+    "targetTraits": {
+      "emotionalStability": 0.7,
+      "conscientiousness": 0.8
+    },
+    "comfortLevel": "high",
+    "requiresOutdoor": false,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 1440,
+    "titleEn": "The Digital Detox",
+    "descriptionEn": "Go 24 hours without social media and notice how your mind shifts.",
+    "questPace": "planned"
+  },
+  {
+    "id": 8,
+    "title": "Le Pont Humain",
+    "description": "Lancer une vraie conversation avec un inconnu. Écouter vraiment.",
+    "category": "active_empathy",
+    "targetTraits": {
+      "extraversion": 0.8,
+      "agreeableness": 0.8
+    },
+    "comfortLevel": "high",
+    "requiresOutdoor": true,
+    "requiresSocial": true,
+    "minimumDurationMinutes": 30,
+    "fallbackQuestId": 12,
+    "titleEn": "The Human Bridge",
+    "descriptionEn": "Start a real conversation with a stranger. Listen for real.",
+    "questPace": "planned"
+  },
+  {
+    "id": 9,
+    "title": "La Lettre au Futur",
+    "description": "Écrire une lettre à la personne que l'on veut devenir dans 5 ans.",
+    "category": "temporal_projection",
+    "targetTraits": {
+      "openness": 0.5,
+      "conscientiousness": 0.6
+    },
+    "comfortLevel": "low",
+    "requiresOutdoor": false,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 45,
+    "titleEn": "The Letter to the Future",
+    "descriptionEn": "Write a letter to the person you want to become in five years.",
+    "questPace": "instant"
+  },
+  {
+    "id": 10,
+    "title": "L'Immersion Totale",
+    "description": "Aller à un événement où l'on ne connaît personne et rester jusqu'à être à l'aise.",
+    "category": "hostile_immersion",
+    "targetTraits": {
+      "extraversion": 0.9,
+      "emotionalStability": 0.8
+    },
+    "comfortLevel": "extreme",
+    "requiresOutdoor": true,
+    "requiresSocial": true,
+    "minimumDurationMinutes": 180,
+    "fallbackQuestId": 8,
+    "titleEn": "Total Immersion",
+    "descriptionEn": "Go to an event where you know no one and stay until you feel somewhat at ease.",
+    "questPace": "planned"
+  },
+  {
+    "id": 11,
+    "title": "Le Rayon de Soleil",
+    "description": "Complimenter sincèrement cinq inconnus dans la même journée.",
+    "category": "spontaneous_altruism",
+    "targetTraits": {
+      "agreeableness": 0.7,
+      "extraversion": 0.6
+    },
+    "comfortLevel": "moderate",
+    "requiresOutdoor": true,
+    "requiresSocial": true,
+    "minimumDurationMinutes": 60,
+    "fallbackQuestId": 13,
+    "titleEn": "The Ray of Sunshine",
+    "descriptionEn": "Give five sincere compliments to strangers in the same day.",
+    "questPace": "planned"
+  },
+  {
+    "id": 12,
+    "title": "La Reconnexion",
+    "description": "Appeler un ancien ami et rallumer un lien laissé éteint.",
+    "category": "relational_vulnerability",
+    "targetTraits": {
+      "agreeableness": 0.7,
+      "emotionalStability": 0.6
+    },
+    "comfortLevel": "high",
+    "requiresOutdoor": false,
+    "requiresSocial": true,
+    "minimumDurationMinutes": 30,
+    "titleEn": "The Reconnection",
+    "descriptionEn": "Call an old friend and rekindle a bond that went cold.",
+    "questPace": "planned"
+  },
+  {
+    "id": 13,
+    "title": "Le Festin Altruiste",
+    "description": "Cuisiner un repas pour quelqu'un sans rien attendre en retour.",
+    "category": "unconditional_service",
+    "targetTraits": {
+      "agreeableness": 0.8,
+      "conscientiousness": 0.6
+    },
+    "comfortLevel": "low",
+    "requiresOutdoor": false,
+    "requiresSocial": true,
+    "minimumDurationMinutes": 120,
+    "titleEn": "The Altruistic Feast",
+    "descriptionEn": "Cook a meal for someone without expecting anything in return.",
+    "questPace": "planned"
+  },
+  {
+    "id": 14,
+    "title": "Le Regret des Anciens",
+    "description": "Demander à une personne plus âgée son plus grand regret. Écouter sans juger.",
+    "category": "active_empathy",
+    "targetTraits": {
+      "agreeableness": 0.85,
+      "extraversion": 0.55,
+      "emotionalStability": 0.65
+    },
+    "comfortLevel": "high",
+    "requiresOutdoor": false,
+    "requiresSocial": true,
+    "minimumDurationMinutes": 45,
+    "fallbackQuestId": 8,
+    "titleEn": "The Elders' Regret",
+    "descriptionEn": "Ask an older person their biggest regret. Listen without judging.",
+    "questPace": "planned"
+  },
+  {
+    "id": 15,
+    "title": "La Lecture Profonde",
+    "description": "Lire 50 pages d'un livre exigeant en une journée, sans distraction.",
+    "category": "dopamine_detox",
+    "targetTraits": {
+      "conscientiousness": 0.85,
+      "openness": 0.7
+    },
+    "comfortLevel": "high",
+    "requiresOutdoor": false,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 240,
+    "fallbackQuestId": 7,
+    "titleEn": "Deep Reading",
+    "descriptionEn": "Read 50 pages of a demanding book in one day, without distraction.",
+    "questPace": "instant"
+  },
+  {
+    "id": 16,
+    "title": "Le Narrateur Intérieur",
+    "description": "Écrire ton journal intime à la troisième personne. Te voir comme un personnage.",
+    "category": "temporal_projection",
+    "targetTraits": {
+      "openness": 0.75,
+      "conscientiousness": 0.55
+    },
+    "comfortLevel": "moderate",
+    "requiresOutdoor": false,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 60,
+    "fallbackQuestId": 9,
+    "titleEn": "The Inner Narrator",
+    "descriptionEn": "Write your journal in third person. See yourself as a character.",
+    "questPace": "instant"
+  },
+  {
+    "id": 17,
+    "title": "Le Plan sans Égo",
+    "description": "Une séance de sport où tu respectes exactement le plan. Discipline avant ego.",
+    "category": "async_discipline",
+    "targetTraits": {
+      "conscientiousness": 0.92,
+      "emotionalStability": 0.65
+    },
+    "comfortLevel": "moderate",
+    "requiresOutdoor": true,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 60,
+    "fallbackQuestId": 6,
+    "titleEn": "The Ego-Free Plan",
+    "descriptionEn": "A workout where you follow the plan exactly. Discipline before ego.",
+    "questPace": "instant"
+  },
+  {
+    "id": 18,
+    "title": "L'Œil Nu",
+    "description": "Prendre 30 photos en une heure sans filtre ni retouche. Apprendre à voir le réel.",
+    "category": "sensory_deprivation",
+    "targetTraits": {
+      "openness": 0.65,
+      "conscientiousness": 0.55
+    },
+    "comfortLevel": "moderate",
+    "requiresOutdoor": true,
+    "requiresSocial": false,
+    "minimumDurationMinutes": 60,
+    "fallbackQuestId": 3,
+    "titleEn": "The Naked Eye",
+    "descriptionEn": "Take 30 photos in one hour with no filters or edits. Learn to see what's real.",
+    "questPace": "instant"
+  }
+]

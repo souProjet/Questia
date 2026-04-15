@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { EscalationPhase, PersonalityVector, QuestLog, QuestModel } from '../types';
 import { computeCongruenceDelta, computeExhibitedPersonality, selectQuest } from './congruence';
 import { getEffectivePhase } from './escalation';
+import { FULL_QUEST_TAXONOMY } from '../test-fixtures/fullTaxonomy';
 
 type Persona = {
   id: string;
@@ -97,13 +98,14 @@ describe('quest relevance stress tests', () => {
       const chosen: QuestModel[] = [];
 
       for (let day = 1; day <= 28; day += 1) {
-        const exhibited = computeExhibitedPersonality(questLogs);
+        const exhibited = computeExhibitedPersonality(questLogs, FULL_QUEST_TAXONOMY);
         const delta = computeCongruenceDelta(persona.declared, exhibited);
         const phase = getEffectivePhase(day, questLogs.slice(-3));
         const recentQuestIds = questLogs.slice(-5).map((l) => l.questId);
         const allowOutdoor = day % 3 !== 0;
 
         const quest = selectQuest(
+          FULL_QUEST_TAXONOMY,
           persona.declared,
           phase,
           recentQuestIds,
@@ -149,11 +151,11 @@ describe('quest relevance stress tests', () => {
       let rupCount = 0;
 
       for (let day = 1; day <= 24; day += 1) {
-        const exhibited = computeExhibitedPersonality(questLogs);
+        const exhibited = computeExhibitedPersonality(questLogs, FULL_QUEST_TAXONOMY);
         const delta = computeCongruenceDelta(persona.declared, exhibited);
         const phase = getEffectivePhase(day, questLogs.slice(-3));
         const recentQuestIds = questLogs.slice(-5).map((l) => l.questId);
-        const quest = selectQuest(persona.declared, phase, recentQuestIds, true, undefined, false, {
+        const quest = selectQuest(FULL_QUEST_TAXONOMY, persona.declared, phase, recentQuestIds, true, undefined, false, {
           exhibited,
           congruenceDelta: delta,
           selectionSeed: `${persona.id}:${day}:difficulty`,
@@ -187,8 +189,8 @@ describe('quest relevance stress tests', () => {
     const bIds: number[] = [];
 
     for (let day = 1; day <= 20; day += 1) {
-      const aEx = computeExhibitedPersonality(aLogs);
-      const bEx = computeExhibitedPersonality(bLogs);
+      const aEx = computeExhibitedPersonality(aLogs, FULL_QUEST_TAXONOMY);
+      const bEx = computeExhibitedPersonality(bLogs, FULL_QUEST_TAXONOMY);
       const aDelta = computeCongruenceDelta(first.declared, aEx);
       const bDelta = computeCongruenceDelta(second.declared, bEx);
       const aPhase = getEffectivePhase(day, aLogs.slice(-3));
@@ -196,13 +198,13 @@ describe('quest relevance stress tests', () => {
       const aRecent = aLogs.slice(-5).map((l) => l.questId);
       const bRecent = bLogs.slice(-5).map((l) => l.questId);
 
-      const aQ = selectQuest(first.declared, aPhase, aRecent, true, undefined, false, {
+      const aQ = selectQuest(FULL_QUEST_TAXONOMY, first.declared, aPhase, aRecent, true, undefined, false, {
         exhibited: aEx,
         congruenceDelta: aDelta,
         selectionSeed: `A:${day}`,
         diversityWindow: 7,
       });
-      const bQ = selectQuest(second.declared, bPhase, bRecent, true, undefined, false, {
+      const bQ = selectQuest(FULL_QUEST_TAXONOMY, second.declared, bPhase, bRecent, true, undefined, false, {
         exhibited: bEx,
         congruenceDelta: bDelta,
         selectionSeed: `B:${day}`,

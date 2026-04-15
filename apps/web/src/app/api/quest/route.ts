@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { selectQuest, computeExhibitedPersonality, computeCongruenceDelta, getEffectivePhase } from '@questia/shared';
+import {
+  selectQuest,
+  computeExhibitedPersonality,
+  computeCongruenceDelta,
+  getEffectivePhase,
+} from '@questia/shared';
 import type { PersonalityVector, QuestLog } from '@questia/shared';
+import { getQuestTaxonomy } from '@/lib/quest-taxonomy/cache';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,13 +23,16 @@ export async function POST(request: NextRequest) {
       allowOutdoor: boolean;
     };
 
-    const exhibited = computeExhibitedPersonality(questLogs);
+    const taxonomy = await getQuestTaxonomy();
+
+    const exhibited = computeExhibitedPersonality(questLogs, taxonomy);
     const delta = computeCongruenceDelta(declaredPersonality, exhibited);
     const recentLogs = questLogs.slice(-3);
     const phase = getEffectivePhase(currentDay, recentLogs);
     const recentQuestIds = questLogs.slice(-5).map((l) => l.questId);
 
     const quest = selectQuest(
+      taxonomy,
       declaredPersonality,
       phase,
       recentQuestIds,

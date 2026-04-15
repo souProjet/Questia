@@ -23,3 +23,5 @@ export * from './calendarDate';
 export * from './questLoadingMessages';
 export * from './analytics/events';
 export * from './analytics/questId';
+export { TEST_QUEST_TAXONOMY, TEST_FALLBACK_QUEST_ID } from './test-fixtures/testTaxonomy';
+export { FULL_QUEST_TAXONOMY } from './test-fixtures/fullTaxonomy';

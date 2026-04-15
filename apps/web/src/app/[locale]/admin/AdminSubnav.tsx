@@ -13,6 +13,7 @@ export function AdminSubnav() {
   const pathname = usePathname();
   const isIntervention = pathname === '/admin';
   const isStats = pathname === '/admin/stats';
+  const isQuests = pathname === '/admin/quests';
 
   return (
     <nav className="mb-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3" aria-label="Sections console">
@@ -21,6 +22,9 @@ export function AdminSubnav() {
       </Link>
       <Link href="/admin/stats" className={tabClass(isStats)} prefetch>
         Statistiques globales
+      </Link>
+      <Link href="/admin/quests" className={tabClass(isQuests)} prefetch>
+        Taxonomie des quêtes
       </Link>
     </nav>
   );

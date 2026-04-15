@@ -16,6 +16,10 @@ vi.mock('@/lib/db', () => ({
   prisma: prismaMock,
 }));
 
+vi.mock('@/lib/quest-taxonomy/cache', () => ({
+  getQuestTaxonomy: vi.fn().mockResolvedValue([]),
+}));
+
 describe('GET /api/quest/history', () => {
   beforeEach(() => {
     vi.mocked(auth).mockReset();

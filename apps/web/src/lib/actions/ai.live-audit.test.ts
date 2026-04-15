@@ -174,6 +174,7 @@ describe.skipIf(!LIVE)('AUDIT LIVE — pertinence des quêtes générées', () =
 
     const { generateDailyQuest } = await import('./ai');
     const {
+      FULL_QUEST_TAXONOMY,
       selectQuest,
       computeExhibitedPersonality,
       computeCongruenceDelta,
@@ -186,10 +187,11 @@ describe.skipIf(!LIVE)('AUDIT LIVE — pertinence des quêtes générées', () =
       const persona = PERSONAS[sc.personaIdx]!;
       const context = CITIES[sc.cityKey]!;
       const phase = getEffectivePhase(sc.day, []);
-      const exhibited = computeExhibitedPersonality([]);
+      const exhibited = computeExhibitedPersonality([], FULL_QUEST_TAXONOMY);
       const delta = computeCongruenceDelta(persona.declared, exhibited);
 
       const archetype = selectQuest(
+        FULL_QUEST_TAXONOMY,
         persona.declared,
         phase,
         [],

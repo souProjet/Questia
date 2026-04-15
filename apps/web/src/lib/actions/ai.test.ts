@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { QUEST_TAXONOMY } from '@questia/shared';
+import { TEST_QUEST_TAXONOMY } from '@questia/shared';
 import type { PersonalityVector } from '@questia/shared';
 
 const uniformPersonality = (v: number): PersonalityVector => ({
@@ -53,7 +53,7 @@ describe('ai actions', () => {
     });
     vi.resetModules();
     const { generateDailyQuest } = await import('./ai');
-    const archetype = QUEST_TAXONOMY.find((q) => !q.requiresOutdoor)!;
+    const archetype = TEST_QUEST_TAXONOMY.find((q) => !q.requiresOutdoor)!;
     const q = await generateDailyQuest(
       {
         phase: 'calibration',
@@ -84,7 +84,7 @@ describe('ai actions', () => {
     createMock.mockRejectedValue(new Error('api'));
     vi.resetModules();
     const { generateDailyQuest } = await import('./ai');
-    const archetype = QUEST_TAXONOMY[0]!;
+    const archetype = TEST_QUEST_TAXONOMY[0]!;
     const q = await generateDailyQuest(
       {
         phase: 'calibration',
@@ -115,7 +115,7 @@ describe('ai actions', () => {
     createMock.mockRejectedValue(new Error('api'));
     vi.resetModules();
     const { generateQuestNarration } = await import('./ai');
-    const archetype = QUEST_TAXONOMY[0]!;
+    const archetype = TEST_QUEST_TAXONOMY[0]!;
     const n = await generateQuestNarration({
       anonymizedProfile: {
         quadrant: { explorerAxis: 'explorer', riskAxis: 'cautious' },
@@ -151,7 +151,7 @@ describe('ai actions', () => {
     });
     vi.resetModules();
     const { generateDailyQuest } = await import('./ai');
-    const archetype = QUEST_TAXONOMY.find((q) => q.requiresOutdoor && !q.requiresSocial)!;
+    const archetype = TEST_QUEST_TAXONOMY.find((q) => q.requiresOutdoor && !q.requiresSocial)!;
     await generateDailyQuest(
       {
         phase: 'rupture',
@@ -242,7 +242,7 @@ describe('ai actions', () => {
 
     vi.resetModules();
     const { generateDailyQuest } = await import('./ai');
-    const archetype = QUEST_TAXONOMY.find((q) => !q.requiresOutdoor && q.requiresSocial)!;
+    const archetype = TEST_QUEST_TAXONOMY.find((q) => !q.requiresOutdoor && q.requiresSocial)!;
     const out = await generateDailyQuest(
       {
         phase: 'expansion',

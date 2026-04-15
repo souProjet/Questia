@@ -2,12 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
 import {
-  QUEST_TAXONOMY,
   selectQuest,
   computeExhibitedPersonality,
   computeCongruenceDelta,
   getEffectivePhase,
-  FALLBACK_QUEST_ID,
   computeCompletionXp,
   evaluateNewBadges,
   levelFromTotalXp,
@@ -29,6 +27,7 @@ import type {
   PersonalityVector,
   PsychologicalCategory,
   QuestLog,
+  QuestModel,
 } from '@questia/shared';
 import { generateDailyQuest } from '@/lib/actions/ai';
 import { getQuestContext } from '@/lib/actions/weather';
@@ -38,6 +37,11 @@ import { parseAppLocaleFromRequest } from '@/lib/requestLocale';
 import { badgeIdsSet, parseBadgesEarned, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
 import { getRefinementSurveyPayload } from '@/lib/refinementPayload';
+import {
+  getQuestTaxonomy,
+  getDefaultFallbackArchetypeId,
+} from '@/lib/quest-taxonomy/cache';
+import { findArchetypeById } from '@/lib/quest-taxonomy/map-prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,11 +67,12 @@ function mergeRerollExcludedArchetypeIds(
 
 /** Moins on retombe sur le même « thème » (catégorie psychologique) après plusieurs relances. */
 function buildCategoryPenaltyFromExcludedIds(
+  taxonomy: QuestModel[],
   excludedIds: number[],
 ): Partial<Record<PsychologicalCategory, number>> {
   const penalty: Partial<Record<PsychologicalCategory, number>> = {};
   for (const id of excludedIds) {
-    const q = QUEST_TAXONOMY.find((x) => x.id === id);
+    const q = taxonomy.find((x) => x.id === id);
     if (!q) continue;
     penalty[q.category] = (penalty[q.category] ?? 0) + 0.18;
   }
@@ -76,12 +81,13 @@ function buildCategoryPenaltyFromExcludedIds(
 
 /** Pénalise les catégories déjà servies récemment pour diversifier le « type » de quête. */
 function buildCategoryPenaltyFromRecentArchetypeIds(
+  taxonomy: QuestModel[],
   archetypeIds: number[],
   weightPerOccurrence = 0.065,
 ): Partial<Record<PsychologicalCategory, number>> {
   const penalty: Partial<Record<PsychologicalCategory, number>> = {};
   for (const id of archetypeIds) {
-    const q = QUEST_TAXONOMY.find((x) => x.id === id);
+    const q = taxonomy.find((x) => x.id === id);
     if (!q) continue;
     penalty[q.category] = Math.min(0.48, (penalty[q.category] ?? 0) + weightPerOccurrence);
   }
@@ -244,7 +250,7 @@ export async function GET(request: NextRequest) {
           }
         : undefined;
     return NextResponse.json({
-      ...toQuestResponse(historical, profile),
+      ...(await toQuestResponse(historical, profile)),
       fromCache: true,
       day: profile.currentDay,
       streak: profile.streakCount,
@@ -264,7 +270,7 @@ export async function GET(request: NextRequest) {
 
   if (existing) {
     return NextResponse.json({
-      ...toQuestResponse(existing, profile),
+      ...(await toQuestResponse(existing, profile)),
       fromCache: true,
       day: profile.currentDay,
       streak: profile.streakCount,
@@ -282,6 +288,15 @@ export async function GET(request: NextRequest) {
   const context = await getQuestContext(lat, lon);
   /** Sans GPS : pas d'archétype extérieur ni de lieu nommé / carte */
   const allowOutdoorQuests = context.isOutdoorFriendly && context.hasUserLocation;
+
+  const taxonomy = await getQuestTaxonomy();
+  const fallbackDefault = await getDefaultFallbackArchetypeId();
+  if (taxonomy.length === 0) {
+    return NextResponse.json(
+      { error: 'Aucun archétype publié en base. Exécute npm run db:seed-archetypes (apps/web).' },
+      { status: 503 },
+    );
+  }
 
   // Historique récent : moteur (14) + textes anti-répétition + pénalité de catégorie (10)
   const recentLogRows = await prisma.questLog.findMany({
@@ -306,7 +321,7 @@ export async function GET(request: NextRequest) {
   }));
 
   const declaredPersonality = profile.declaredPersonality as unknown as PersonalityVector;
-  const exhibited = computeExhibitedPersonality(engineLogs);
+  const exhibited = computeExhibitedPersonality(engineLogs, taxonomy);
   const congruenceDelta = computeCongruenceDelta(declaredPersonality, exhibited);
   const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs);
   const recentIds = recentLogs.slice(0, 7).map((r) => r.archetypeId);
@@ -317,8 +332,9 @@ export async function GET(request: NextRequest) {
   const extraExclude =
     lastQuestDateStr === today ? parseRerollExcludedArchetypeIds(profile) : [];
   const recentIdsForSelect = Array.from(new Set([...recentIds, ...extraExclude]));
-  const categoryRerollPenalty = buildCategoryPenaltyFromExcludedIds(extraExclude);
+  const categoryRerollPenalty = buildCategoryPenaltyFromExcludedIds(taxonomy, extraExclude);
   const categoryRecentPenalty = buildCategoryPenaltyFromRecentArchetypeIds(
+    taxonomy,
     recentLogRows.slice(0, 10).map((r) => r.archetypeId),
   );
   const categoryScorePenaltyMerged = mergeCategoryScorePenalties(
@@ -346,6 +362,7 @@ export async function GET(request: NextRequest) {
 
   // Select archetype via moteur Delta de congruence (+ biais questionnaire)
   let archetype = selectQuest(
+    taxonomy,
     declaredPersonality,
     effectivePhase,
     recentIdsForSelect,
@@ -362,7 +379,7 @@ export async function GET(request: NextRequest) {
   );
 
   if (!archetype && instantOnly) {
-    const pool = QUEST_TAXONOMY.filter(
+    const pool = taxonomy.filter(
       (q) =>
         q.questPace === 'instant' &&
         !recentIdsForSelect.includes(q.id) &&
@@ -370,8 +387,8 @@ export async function GET(request: NextRequest) {
     );
     archetype =
       pool[0] ??
-      QUEST_TAXONOMY.find((q) => q.id === FALLBACK_QUEST_ID) ??
-      QUEST_TAXONOMY[0] ??
+      findArchetypeById(taxonomy, fallbackDefault) ??
+      taxonomy[0] ??
       null;
   }
 
@@ -379,10 +396,11 @@ export async function GET(request: NextRequest) {
   let wasWeatherFallback = false;
   if (archetype?.requiresOutdoor && !context.isOutdoorFriendly) {
     wasWeatherFallback = true;
-    archetype = QUEST_TAXONOMY.find((q) => q.id === (archetype!.fallbackQuestId ?? FALLBACK_QUEST_ID)) ?? archetype;
+    const fbId = archetype!.fallbackQuestId ?? fallbackDefault;
+    archetype = findArchetypeById(taxonomy, fbId) ?? archetype;
   }
   if (!archetype) {
-    archetype = QUEST_TAXONOMY.find((q) => q.id === FALLBACK_QUEST_ID) ?? QUEST_TAXONOMY[0];
+    archetype = findArchetypeById(taxonomy, fallbackDefault) ?? taxonomy[0]!;
   }
 
   // Generate the quest via OpenAI (phase effective + delta calculés = alignés avec le choix d'archétype)
@@ -511,7 +529,7 @@ export async function GET(request: NextRequest) {
   const p = freshProfile ?? profile;
 
   return NextResponse.json({
-    ...toQuestResponse(questLog, p),
+    ...(await toQuestResponse(questLog, p)),
     fromCache: false,
     day: newDay,
     streak: newStreak,
@@ -573,7 +591,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const reportArchetype = QUEST_TAXONOMY.find((q) => q.id === existing.archetypeId);
+    const taxReport = await getQuestTaxonomy();
+    const reportArchetype = findArchetypeById(taxReport, existing.archetypeId);
     if (!reportArchetype || reportArchetype.questPace === 'instant') {
       return NextResponse.json(
         {
@@ -674,7 +693,7 @@ export async function POST(request: NextRequest) {
     const p = profileAfter ?? profile;
 
     return NextResponse.json({
-      ...toQuestResponse(updated, p),
+      ...(await toQuestResponse(updated, p)),
       abandoned: true,
       streak: p.streakCount,
       deferredSocialUntil: null,
@@ -841,7 +860,7 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({
-      ...toQuestResponse(updated, profileAfter),
+      ...(await toQuestResponse(updated, profileAfter)),
       progression: prog,
       ...shopClientPayload(profileAfter),
       xpGain: {
@@ -872,7 +891,7 @@ export async function POST(request: NextRequest) {
   }
   if (logForAccept.status === 'accepted') {
     return NextResponse.json({
-      ...toQuestResponse(logForAccept, profile),
+      ...(await toQuestResponse(logForAccept, profile)),
       ...shopClientPayload(profile),
     });
   }
@@ -887,14 +906,14 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({
-    ...toQuestResponse(updated, profile),
+    ...(await toQuestResponse(updated, profile)),
     ...shopClientPayload(profile),
   });
 }
 
 // ── Helper: shape the response ─────────────────────────────────────────────────
 
-function toQuestResponse(
+async function toQuestResponse(
   log: {
     questDate: string;
     archetypeId: number;
@@ -918,7 +937,8 @@ function toQuestResponse(
   },
   profile?: { deferredSocialUntil?: string | null } | null,
 ) {
-  const archetype = QUEST_TAXONOMY.find((q) => q.id === log.archetypeId);
+  const taxonomy = await getQuestTaxonomy();
+  const archetype = findArchetypeById(taxonomy, log.archetypeId);
   const hasCoords =
     log.destinationLat != null &&
     log.destinationLon != null &&

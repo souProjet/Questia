@@ -1,6 +1,5 @@
 import type { PersonalityVector, PsychologicalCategory, QuestLog, QuestModel } from '../types';
 import { ACTIVITY_PERSONALITY_CORRELATION, PERSONALITY_KEYS } from '../constants/personality';
-import { QUEST_TAXONOMY } from '../constants/quests';
 
 /**
  * Creates a zero-initialized personality vector.
@@ -27,12 +26,12 @@ function emptyVector(): PersonalityVector {
  *  +0.3 for accepted but not completed
  *  -0.5 for rejected quests
  */
-export function computeExhibitedPersonality(logs: QuestLog[]): PersonalityVector {
+export function computeExhibitedPersonality(logs: QuestLog[], taxonomy: QuestModel[]): PersonalityVector {
   const pEx = emptyVector();
   let totalWeight = 0;
 
   for (const log of logs) {
-    const quest = QUEST_TAXONOMY.find((q) => q.id === log.questId);
+    const quest = taxonomy.find((q) => q.id === log.questId);
     if (!quest) continue;
 
     const weight =
@@ -198,8 +197,10 @@ type SelectQuestOptions = {
  * Filters out recently assigned quests and respects outdoor/weather constraints.
  * @param categoryBias — optionnel : valeurs positives réduisent le score (favorisent la catégorie), ex. questionnaire de raffinement.
  * @param instantOnly — si true, uniquement des archétypes « instant » (après report + relance).
+ * @param taxonomy — liste d’archétypes (ex. chargée depuis la base).
  */
 export function selectQuest(
+  taxonomy: QuestModel[],
   declared: PersonalityVector,
   phase: 'calibration' | 'expansion' | 'rupture',
   recentQuestIds: number[],
@@ -210,7 +211,7 @@ export function selectQuest(
 ): QuestModel | null {
   const targetDelta = getTargetDelta(phase);
   const scoringVector = mixPersonality(declared, options?.exhibited, options?.congruenceDelta, phase);
-  const candidates = QUEST_TAXONOMY
+  const candidates = taxonomy
     .filter((q) => !recentQuestIds.includes(q.id))
     .filter((q) => allowOutdoor || !q.requiresOutdoor)
     .filter((q) => !instantOnly || q.questPace === 'instant');

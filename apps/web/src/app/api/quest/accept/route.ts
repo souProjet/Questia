@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { QUEST_TAXONOMY, FALLBACK_QUEST_ID } from '@questia/shared';
 import type { OperationalQuadrant, EscalationPhase } from '@questia/shared';
 import { generateQuestNarration } from '@/lib/actions/ai';
 import { checkWeatherSafety } from '@/lib/actions/weather';
+import { getQuestTaxonomy, getDefaultFallbackArchetypeId } from '@/lib/quest-taxonomy/cache';
+import { findArchetypeById } from '@/lib/quest-taxonomy/map-prisma';
 
 export interface AcceptQuestBody {
   questId: number;
@@ -19,7 +20,10 @@ export async function POST(request: NextRequest) {
     const body: AcceptQuestBody = await request.json();
     const { questId, quadrant, phase, congruenceDelta, currentDay, lat, lon } = body;
 
-    let quest = QUEST_TAXONOMY.find((q) => q.id === questId);
+    const taxonomy = await getQuestTaxonomy();
+    const fallbackDefault = await getDefaultFallbackArchetypeId();
+
+    let quest = findArchetypeById(taxonomy, questId);
     if (!quest) {
       return NextResponse.json({ error: 'Quête introuvable' }, { status: 404 });
     }
@@ -29,8 +33,8 @@ export async function POST(request: NextRequest) {
     if (quest.requiresOutdoor && lat !== undefined && lon !== undefined) {
       const weather = await checkWeatherSafety(lat, lon);
       if (!weather.safe) {
-        const fallbackId = quest.fallbackQuestId ?? FALLBACK_QUEST_ID;
-        quest = QUEST_TAXONOMY.find((q) => q.id === fallbackId) ?? quest;
+        const fallbackId = quest.fallbackQuestId ?? fallbackDefault;
+        quest = findArchetypeById(taxonomy, fallbackId) ?? quest;
         wasFallback = true;
       }
     }

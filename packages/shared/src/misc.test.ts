@@ -4,11 +4,11 @@ import { formatQuestDateFr } from './formatQuestDateFr';
 import { questDisplayEmoji, QUEST_LUCIDE_ICON_TO_EMOJI } from './questDisplayEmoji';
 import { QUEST_SHARE_BACKGROUNDS, getQuestShareBackgroundById } from './questShareBackgrounds';
 import {
-  QUEST_TAXONOMY,
   questFamilyLabel,
   questLocalizedText,
   isValidReportDeferredDate,
 } from './constants/quests';
+import { TEST_QUEST_TAXONOMY } from './test-fixtures/testTaxonomy';
 import { QUADRANT_DEFAULTS } from './constants/personality';
 
 describe('historyPagination', () => {
@@ -76,8 +76,8 @@ describe('isValidReportDeferredDate', () => {
 });
 
 describe('constants re-export sanity', () => {
-  it('taxonomie et quadrants', () => {
-    expect(QUEST_TAXONOMY.length).toBe(65);
+  it('taxonomie de test et quadrants', () => {
+    expect(TEST_QUEST_TAXONOMY.length).toBeGreaterThan(3);
     expect(QUADRANT_DEFAULTS.explorer_risktaker.openness).toBeGreaterThan(0.5);
   });
   it('questFamilyLabel', () => {
@@ -86,7 +86,7 @@ describe('constants re-export sanity', () => {
     expect(questFamilyLabel('not_a_category' as never)).toBeNull();
   });
   it('questLocalizedText FR et EN', () => {
-    const q = QUEST_TAXONOMY[0]!;
+    const q = TEST_QUEST_TAXONOMY[0]!;
     expect(questLocalizedText(q, 'fr').title).toBe(q.title);
     expect(questLocalizedText(q, 'en').title).toBe(q.titleEn);
     expect(questLocalizedText(q, 'en').description).toBe(q.descriptionEn);

@@ -1,0 +1,1317 @@
+{
+  "fallbackArchetypeId": 9,
+  "categories": [
+    {
+      "slug": "spatial_adventure",
+      "labelFr": "Déplacement & exploration",
+      "labelEn": "Travel & exploration",
+      "correlation": {
+        "openness": 0.9,
+        "extraversion": 0.5,
+        "emotionalStability": 0.6,
+        "thrillSeeking": 0.95
+      }
+    },
+    {
+      "slug": "public_introspection",
+      "labelFr": "Présence en public",
+      "labelEn": "Presence in public",
+      "correlation": {
+        "openness": 0.6,
+        "emotionalStability": 0.7,
+        "extraversion": -0.2,
+        "conscientiousness": 0.3
+      }
+    },
+    {
+      "slug": "sensory_deprivation",
+      "labelFr": "Immersion & calme",
+      "labelEn": "Immersion & calm",
+      "correlation": {
+        "openness": 0.5,
+        "emotionalStability": 0.5,
+        "extraversion": -0.4,
+        "conscientiousness": 0.4
+      }
+    },
+    {
+      "slug": "exploratory_sociability",
+      "labelFr": "Rencontre & lieu",
+      "labelEn": "Meetups & places",
+      "correlation": {
+        "openness": 0.7,
+        "extraversion": 0.8,
+        "agreeableness": 0.6,
+        "thrillSeeking": 0.5
+      }
+    },
+    {
+      "slug": "physical_existential",
+      "labelFr": "Corps & perspective",
+      "labelEn": "Body & perspective",
+      "correlation": {
+        "openness": 0.6,
+        "conscientiousness": 0.5,
+        "emotionalStability": 0.3
+      }
+    },
+    {
+      "slug": "async_discipline",
+      "labelFr": "Discipline & rythme",
+      "labelEn": "Discipline & rhythm",
+      "correlation": {
+        "conscientiousness": 0.9,
+        "emotionalStability": 0.4,
+        "extraversion": -0.3
+      }
+    },
+    {
+      "slug": "dopamine_detox",
+      "labelFr": "Rythme & écrans",
+      "labelEn": "Rhythm & screens",
+      "correlation": {
+        "conscientiousness": 0.8,
+        "emotionalStability": 0.6,
+        "boredomSusceptibility": -0.7
+      }
+    },
+    {
+      "slug": "active_empathy",
+      "labelFr": "Connexion & écoute",
+      "labelEn": "Connection & listening",
+      "correlation": {
+        "extraversion": 0.85,
+        "agreeableness": 0.8,
+        "openness": 0.4
+      }
+    },
+    {
+      "slug": "temporal_projection",
+      "labelFr": "Projection",
+      "labelEn": "Projection",
+      "correlation": {
+        "openness": 0.5,
+        "conscientiousness": 0.6,
+        "emotionalStability": 0.3
+      }
+    },
+    {
+      "slug": "hostile_immersion",
+      "labelFr": "Immersion sociale",
+      "labelEn": "Social immersion",
+      "correlation": {
+        "extraversion": 0.9,
+        "emotionalStability": 0.7,
+        "thrillSeeking": 0.8
+      }
+    },
+    {
+      "slug": "spontaneous_altruism",
+      "labelFr": "Geste & chaleur",
+      "labelEn": "Warm gestures",
+      "correlation": {
+        "agreeableness": 0.7,
+        "extraversion": 0.6,
+        "openness": 0.3
+      }
+    },
+    {
+      "slug": "relational_vulnerability",
+      "labelFr": "Liens proches",
+      "labelEn": "Close ties",
+      "correlation": {
+        "agreeableness": 0.7,
+        "emotionalStability": 0.5,
+        "extraversion": 0.3
+      }
+    },
+    {
+      "slug": "unconditional_service",
+      "labelFr": "Don & partage",
+      "labelEn": "Giving & sharing",
+      "correlation": {
+        "agreeableness": 0.8,
+        "conscientiousness": 0.6,
+        "extraversion": 0.1
+      }
+    }
+  ],
+  "archetypes": [
+    {
+      "id": 1,
+      "title": "Le Voyage Aléatoire",
+      "description": "Prendre un train vers une ville au hasard et se débrouiller une fois arrivé.",
+      "titleEn": "The Random Journey",
+      "descriptionEn": "Take a train to a random town and figure things out once you arrive.",
+      "categorySlug": "spatial_adventure",
+      "targetTraits": {
+        "openness": 0.95,
+        "emotionalStability": 0.7
+      },
+      "comfortLevel": "extreme",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 480,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 2,
+      "title": "Le Dîner Solitaire",
+      "description": "Manger seul dans un resto chic. Téléphone éteint. Être à l'aise avec soi-même.",
+      "titleEn": "The Solo Dinner",
+      "descriptionEn": "Eat alone at a nice restaurant. Phone off. Be comfortable with yourself.",
+      "categorySlug": "public_introspection",
+      "targetTraits": {
+        "emotionalStability": 0.8,
+        "extraversion": 0.3
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 90,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 3,
+      "title": "La Nuit Étoilée",
+      "description": "Passer une nuit sous les étoiles, sans distraction, juste avec ses pensées.",
+      "titleEn": "The Starry Night",
+      "descriptionEn": "Spend a night under the stars, no distractions—just your thoughts.",
+      "categorySlug": "sensory_deprivation",
+      "targetTraits": {
+        "openness": 0.6,
+        "conscientiousness": 0.5
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 600,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 4,
+      "title": "L'Explorateur Local",
+      "description": "Aller dans une ville minuscule et parler à au moins une personne locale.",
+      "titleEn": "The Local Explorer",
+      "descriptionEn": "Go to a tiny town and talk to at least one local person.",
+      "categorySlug": "exploratory_sociability",
+      "targetTraits": {
+        "extraversion": 0.7,
+        "agreeableness": 0.6,
+        "openness": 0.7
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": true,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 240,
+      "fallbackQuestId": 13,
+      "published": true
+    },
+    {
+      "id": 5,
+      "title": "Le Point Culminant",
+      "description": "Monter au point le plus haut de la ville et réfléchir à sa direction de vie.",
+      "titleEn": "The High Point",
+      "descriptionEn": "Climb to the highest point in town and reflect on your life direction.",
+      "categorySlug": "physical_existential",
+      "targetTraits": {
+        "openness": 0.6,
+        "conscientiousness": 0.5
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 120,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 6,
+      "title": "L'Entraînement de l'Aube",
+      "description": "S'entraîner seul un dimanche matin pendant que tout le monde dort.",
+      "titleEn": "The Dawn Workout",
+      "descriptionEn": "Train alone on a Sunday morning while everyone else is asleep.",
+      "categorySlug": "async_discipline",
+      "targetTraits": {
+        "conscientiousness": 0.9
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 7,
+      "title": "La Détox Digitale",
+      "description": "Passer 24h sans réseaux sociaux et observer les changements cognitifs.",
+      "titleEn": "The Digital Detox",
+      "descriptionEn": "Go 24 hours without social media and notice how your mind shifts.",
+      "categorySlug": "dopamine_detox",
+      "targetTraits": {
+        "emotionalStability": 0.7,
+        "conscientiousness": 0.8
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 1440,
+      "fallbackQuestId": null,
+      "published": true
+    },
+    {
+      "id": 8,
+      "title": "Le Pont Humain",
+      "description": "Lancer une vraie conversation avec un inconnu. Écouter vraiment.",
+      "titleEn": "The Human Bridge",
+      "descriptionEn": "Start a real conversation with a stranger. Listen for real.",
+      "categorySlug": "active_empathy",
+      "targetTraits": {
+        "extraversion": 0.8,
+        "agreeableness": 0.8
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": true,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 30,
+      "fallbackQuestId": 12,
+      "published": true
+    },
+    {
+      "id": 9,
+      "title": "La Lettre au Futur",
+      "description": "Écrire une lettre à la personne que l'on veut devenir dans 5 ans.",
+      "titleEn": "The Letter to the Future",
+      "descriptionEn": "Write a letter to the person you want to become in five years.",
+      "categorySlug": "temporal_projection",
+      "targetTraits": {
+        "openness": 0.5,
+        "conscientiousness": 0.6
+      },
+      "comfortLevel": "low",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 45,
+      "fallbackQuestId": null,
+      "published": true
+    },
+    {
+      "id": 10,
+      "title": "L'Immersion Totale",
+      "description": "Aller à un événement où l'on ne connaît personne et rester jusqu'à être à l'aise.",
+      "titleEn": "Total Immersion",
+      "descriptionEn": "Go to an event where you know no one and stay until you feel somewhat at ease.",
+      "categorySlug": "hostile_immersion",
+      "targetTraits": {
+        "extraversion": 0.9,
+        "emotionalStability": 0.8
+      },
+      "comfortLevel": "extreme",
+      "requiresOutdoor": true,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 180,
+      "fallbackQuestId": 8,
+      "published": true
+    },
+    {
+      "id": 11,
+      "title": "Le Rayon de Soleil",
+      "description": "Complimenter sincèrement cinq inconnus dans la même journée.",
+      "titleEn": "The Ray of Sunshine",
+      "descriptionEn": "Give five sincere compliments to strangers in the same day.",
+      "categorySlug": "spontaneous_altruism",
+      "targetTraits": {
+        "agreeableness": 0.7,
+        "extraversion": 0.6
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 13,
+      "published": true
+    },
+    {
+      "id": 12,
+      "title": "La Reconnexion",
+      "description": "Appeler un ancien ami et rallumer un lien laissé éteint.",
+      "titleEn": "The Reconnection",
+      "descriptionEn": "Call an old friend and rekindle a bond that went cold.",
+      "categorySlug": "relational_vulnerability",
+      "targetTraits": {
+        "agreeableness": 0.7,
+        "emotionalStability": 0.6
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 30,
+      "fallbackQuestId": null,
+      "published": true
+    },
+    {
+      "id": 13,
+      "title": "Le Festin Altruiste",
+      "description": "Cuisiner un repas pour quelqu'un sans rien attendre en retour.",
+      "titleEn": "The Altruistic Feast",
+      "descriptionEn": "Cook a meal for someone without expecting anything in return.",
+      "categorySlug": "unconditional_service",
+      "targetTraits": {
+        "agreeableness": 0.8,
+        "conscientiousness": 0.6
+      },
+      "comfortLevel": "low",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 120,
+      "fallbackQuestId": null,
+      "published": true
+    },
+    {
+      "id": 14,
+      "title": "Le Regret des Anciens",
+      "description": "Demander à une personne plus âgée son plus grand regret. Écouter sans juger.",
+      "titleEn": "The Elders' Regret",
+      "descriptionEn": "Ask an older person their biggest regret. Listen without judging.",
+      "categorySlug": "active_empathy",
+      "targetTraits": {
+        "agreeableness": 0.85,
+        "extraversion": 0.55,
+        "emotionalStability": 0.65
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 45,
+      "fallbackQuestId": 8,
+      "published": true
+    },
+    {
+      "id": 15,
+      "title": "La Lecture Profonde",
+      "description": "Lire 50 pages d'un livre exigeant en une journée, sans distraction.",
+      "titleEn": "Deep Reading",
+      "descriptionEn": "Read 50 pages of a demanding book in one day, without distraction.",
+      "categorySlug": "dopamine_detox",
+      "targetTraits": {
+        "conscientiousness": 0.85,
+        "openness": 0.7
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 240,
+      "fallbackQuestId": 7,
+      "published": true
+    },
+    {
+      "id": 16,
+      "title": "Le Narrateur Intérieur",
+      "description": "Écrire ton journal intime à la troisième personne. Te voir comme un personnage.",
+      "titleEn": "The Inner Narrator",
+      "descriptionEn": "Write your journal in third person. See yourself as a character.",
+      "categorySlug": "temporal_projection",
+      "targetTraits": {
+        "openness": 0.75,
+        "conscientiousness": 0.55
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 17,
+      "title": "Le Plan sans Égo",
+      "description": "Une séance de sport où tu respectes exactement le plan. Discipline avant ego.",
+      "titleEn": "The Ego-Free Plan",
+      "descriptionEn": "A workout where you follow the plan exactly. Discipline before ego.",
+      "categorySlug": "async_discipline",
+      "targetTraits": {
+        "conscientiousness": 0.92,
+        "emotionalStability": 0.65
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 6,
+      "published": true
+    },
+    {
+      "id": 18,
+      "title": "L'Œil Nu",
+      "description": "Prendre 30 photos en une heure sans filtre ni retouche. Apprendre à voir le réel.",
+      "titleEn": "The Naked Eye",
+      "descriptionEn": "Take 30 photos in one hour with no filters or edits. Learn to see what's real.",
+      "categorySlug": "sensory_deprivation",
+      "targetTraits": {
+        "openness": 0.65,
+        "conscientiousness": 0.55
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 3,
+      "published": true
+    },
+    {
+      "id": 19,
+      "title": "Le Grand Rangement",
+      "description": "Réorganiser entièrement un espace de vie (pièce ou zone majeure) jusqu'au bout.",
+      "titleEn": "The Big Tidy",
+      "descriptionEn": "Fully reorganize a living space (room or major zone) to completion.",
+      "categorySlug": "async_discipline",
+      "targetTraits": {
+        "conscientiousness": 0.88
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 180,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 20,
+      "title": "La Vie Hardie",
+      "description": "Écrire l'histoire de ta vie si tu avais eu plus de courage.",
+      "titleEn": "The Bold Life",
+      "descriptionEn": "Write your life story as if you had had more courage.",
+      "categorySlug": "temporal_projection",
+      "targetTraits": {
+        "openness": 0.8,
+        "emotionalStability": 0.55
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 120,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 21,
+      "title": "La Bande-Son du Futur",
+      "description": "Créer une playlist pour la version de toi que tu es en train de devenir.",
+      "titleEn": "The Future Soundtrack",
+      "descriptionEn": "Make a playlist for the version of you you're becoming.",
+      "categorySlug": "temporal_projection",
+      "targetTraits": {
+        "openness": 0.75,
+        "conscientiousness": 0.5
+      },
+      "comfortLevel": "low",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 22,
+      "title": "La Journée Sans Mensonge",
+      "description": "Pendant une journée entière, ne dire que la vérité (avec tact). Observer le coût et le soulagement.",
+      "titleEn": "The Day Without Lies",
+      "descriptionEn": "For one full day, only tell the truth (with tact). Notice the cost and the relief.",
+      "categorySlug": "relational_vulnerability",
+      "targetTraits": {
+        "agreeableness": 0.65,
+        "emotionalStability": 0.7
+      },
+      "comfortLevel": "extreme",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 1440,
+      "fallbackQuestId": 12,
+      "published": true
+    },
+    {
+      "id": 23,
+      "title": "Le Micro-Défi",
+      "description": "Faire une chose qui te fait légèrement peur, juste pour prouver que tu peux.",
+      "titleEn": "The Micro-Challenge",
+      "descriptionEn": "Do something that scares you a little, just to prove you can.",
+      "categorySlug": "physical_existential",
+      "targetTraits": {
+        "openness": 0.85,
+        "emotionalStability": 0.6
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 30,
+      "fallbackQuestId": 5,
+      "published": true
+    },
+    {
+      "id": 24,
+      "title": "La Semaine Vitale",
+      "description": "Planifier une semaine complète comme si ta vie en dépendait : blocs, priorités, imprévus.",
+      "titleEn": "The Vital Week",
+      "descriptionEn": "Plan a full week as if your life depended on it: blocks, priorities, contingencies.",
+      "categorySlug": "async_discipline",
+      "targetTraits": {
+        "conscientiousness": 0.95,
+        "openness": 0.45
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 90,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 25,
+      "title": "L'Arrêt Inconnu",
+      "description": "Prendre une ligne de bus que tu n'empruntes jamais, descendre à un arrêt au hasard et marcher 20 minutes sans itinéraire fixé.",
+      "titleEn": "The Unknown Stop",
+      "descriptionEn": "Take a bus line you never use, get off at a random stop, and walk 20 minutes with no fixed route.",
+      "categorySlug": "spatial_adventure",
+      "targetTraits": {
+        "openness": 0.9,
+        "emotionalStability": 0.65
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 120,
+      "fallbackQuestId": 1,
+      "published": true
+    },
+    {
+      "id": 26,
+      "title": "Le Banc Silencieux",
+      "description": "Rester assis seul sur un banc public 30 minutes : pas d'écran, pas de casque, seulement présence.",
+      "titleEn": "The Silent Bench",
+      "descriptionEn": "Sit alone on a public bench for 30 minutes: no screen, no headphones—just presence.",
+      "categorySlug": "public_introspection",
+      "targetTraits": {
+        "emotionalStability": 0.75,
+        "extraversion": 0.35
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 30,
+      "fallbackQuestId": 2,
+      "published": true
+    },
+    {
+      "id": 27,
+      "title": "La Marche Sans Musique",
+      "description": "Une promenade d'au moins 20 minutes en silence total, sans musique ni podcast.",
+      "titleEn": "The Walk Without Music",
+      "descriptionEn": "Walk at least 20 minutes in total silence—no music or podcast.",
+      "categorySlug": "sensory_deprivation",
+      "targetTraits": {
+        "openness": 0.55,
+        "conscientiousness": 0.5
+      },
+      "comfortLevel": "low",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 20,
+      "fallbackQuestId": 3,
+      "published": true
+    },
+    {
+      "id": 28,
+      "title": "Le Lieu du Commerçant",
+      "description": "Demander à un commerçant local son endroit préféré dans le coin et s'y rendre une fois.",
+      "titleEn": "The Merchant's Pick",
+      "descriptionEn": "Ask a local shopkeeper their favorite spot nearby and go there once.",
+      "categorySlug": "exploratory_sociability",
+      "targetTraits": {
+        "extraversion": 0.65,
+        "agreeableness": 0.65,
+        "openness": 0.7
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 120,
+      "fallbackQuestId": 4,
+      "published": true
+    },
+    {
+      "id": 29,
+      "title": "Le Trajet Lent",
+      "description": "Refaire un trajet habituel à pied ou à vélo au lieu des transports ; noter une pensée à mi-parcours.",
+      "titleEn": "The Slow Commute",
+      "descriptionEn": "Redo a usual commute on foot or by bike instead of transit; note one thought halfway.",
+      "categorySlug": "physical_existential",
+      "targetTraits": {
+        "conscientiousness": 0.55,
+        "openness": 0.6
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 90,
+      "fallbackQuestId": 5,
+      "published": true
+    },
+    {
+      "id": 30,
+      "title": "La Soirée Analogique",
+      "description": "Une soirée complète sans aucun écran après une heure fixée (lecture papier, conversation, repos).",
+      "titleEn": "The Analog Evening",
+      "descriptionEn": "A full evening with no screens after a set hour (paper reading, conversation, rest).",
+      "categorySlug": "dopamine_detox",
+      "targetTraits": {
+        "conscientiousness": 0.75,
+        "emotionalStability": 0.65
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 180,
+      "fallbackQuestId": 7,
+      "published": true
+    },
+    {
+      "id": 31,
+      "title": "L'Écoute Profonde",
+      "description": "Poser une question ouverte à quelqu'un et ne parler que pour reformuler ou approfondir pendant 10 minutes.",
+      "titleEn": "Deep Listening",
+      "descriptionEn": "Ask someone an open question and only speak to rephrase or go deeper for 10 minutes.",
+      "categorySlug": "active_empathy",
+      "targetTraits": {
+        "agreeableness": 0.85,
+        "extraversion": 0.55
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 15,
+      "fallbackQuestId": 8,
+      "published": true
+    },
+    {
+      "id": 32,
+      "title": "La Lettre du Non",
+      "description": "Écrire une page adressée à une version de toi qui dit toujours non par peur : ce que tu lui refuserais encore.",
+      "titleEn": "The Letter of No",
+      "descriptionEn": "Write a page to a version of you who always says no out of fear: what you'd still refuse.",
+      "categorySlug": "temporal_projection",
+      "targetTraits": {
+        "openness": 0.7,
+        "emotionalStability": 0.55
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 45,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 33,
+      "title": "L'Autre Monde",
+      "description": "Passer au moins une heure dans un lieu où tu te sens minoritaire (langue, âge, scène) et rester jusqu'à être un peu à l'aise.",
+      "titleEn": "The Other World",
+      "descriptionEn": "Spend at least an hour somewhere you feel in the minority (language, age, scene) until you settle a bit.",
+      "categorySlug": "hostile_immersion",
+      "targetTraits": {
+        "extraversion": 0.75,
+        "emotionalStability": 0.75,
+        "openness": 0.7
+      },
+      "comfortLevel": "extreme",
+      "requiresOutdoor": true,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 120,
+      "fallbackQuestId": 10,
+      "published": true
+    },
+    {
+      "id": 34,
+      "title": "Le Mot Égaré",
+      "description": "Laisser un mot manuscrit d'encouragement dans un lieu public (sans signature narcissique).",
+      "titleEn": "The Misplaced Word",
+      "descriptionEn": "Leave a handwritten note of encouragement in a public place (no narcissistic signature).",
+      "categorySlug": "spontaneous_altruism",
+      "targetTraits": {
+        "agreeableness": 0.75,
+        "extraversion": 0.5
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 45,
+      "fallbackQuestId": 11,
+      "published": true
+    },
+    {
+      "id": 35,
+      "title": "Le Remerciement Tardif",
+      "description": "Dire à un proche une chose précise que tu apprécies chez lui depuis longtemps sans l'avoir dit.",
+      "titleEn": "The Late Thank-You",
+      "descriptionEn": "Tell someone close something specific you appreciate about them that you've long left unsaid.",
+      "categorySlug": "relational_vulnerability",
+      "targetTraits": {
+        "agreeableness": 0.75,
+        "emotionalStability": 0.6
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 30,
+      "fallbackQuestId": 12,
+      "published": true
+    },
+    {
+      "id": 36,
+      "title": "Le Cadeau Sans Occasion",
+      "description": "Offrir un petit cadeau ou un repas à un voisin ou un collègue sans occasion particulière.",
+      "titleEn": "The Gift Without Occasion",
+      "descriptionEn": "Give a small gift or a meal to a neighbor or colleague for no special reason.",
+      "categorySlug": "unconditional_service",
+      "targetTraits": {
+        "agreeableness": 0.85,
+        "conscientiousness": 0.55
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 90,
+      "fallbackQuestId": 13,
+      "published": true
+    },
+    {
+      "id": 37,
+      "title": "La Rose des Vents",
+      "description": "Tracer une direction au hasard sur une carte (ou une appli) et marcher au moins 15 minutes dans cette direction sans but précis.",
+      "titleEn": "The Wind Rose",
+      "descriptionEn": "Pick a random direction on a map (or app) and walk at least 15 minutes that way with no fixed goal.",
+      "categorySlug": "spatial_adventure",
+      "targetTraits": {
+        "openness": 0.9,
+        "emotionalStability": 0.65
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 25,
+      "published": true
+    },
+    {
+      "id": 38,
+      "title": "Le Café Sans Écran",
+      "description": "Passer 30 minutes dans un café avec un carnet ou un livre papier, téléphone éteint ou mode avion.",
+      "titleEn": "The Screen-Free Café",
+      "descriptionEn": "Spend 30 minutes in a café with a notebook or paper book—phone off or in airplane mode.",
+      "categorySlug": "public_introspection",
+      "targetTraits": {
+        "emotionalStability": 0.7,
+        "extraversion": 0.4
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 30,
+      "fallbackQuestId": 26,
+      "published": true
+    },
+    {
+      "id": 39,
+      "title": "La Chambre Sous les Bruits",
+      "description": "Dix minutes allongé·e, yeux fermés, à écouter uniquement les sons du lieu sans bouger.",
+      "titleEn": "The Room Under the Sounds",
+      "descriptionEn": "Lie down ten minutes, eyes closed, listening only to the sounds of the space—no moving.",
+      "categorySlug": "sensory_deprivation",
+      "targetTraits": {
+        "openness": 0.5,
+        "emotionalStability": 0.6
+      },
+      "comfortLevel": "low",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 15,
+      "fallbackQuestId": 27,
+      "published": true
+    },
+    {
+      "id": 40,
+      "title": "Le Voisin du Quartier",
+      "description": "Demander à un voisin ou un commerçant ce qu'il changerait en premier dans le quartier — et noter une idée retenue.",
+      "titleEn": "The Neighborhood Neighbor",
+      "descriptionEn": "Ask a neighbor or shopkeeper what they would change first in the area—and note one idea you keep.",
+      "categorySlug": "exploratory_sociability",
+      "targetTraits": {
+        "extraversion": 0.65,
+        "agreeableness": 0.7,
+        "openness": 0.65
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 45,
+      "fallbackQuestId": 28,
+      "published": true
+    },
+    {
+      "id": 41,
+      "title": "L'Escalier Complet",
+      "description": "Sur un trajet habituel, prendre les escaliers du début à la fin à la place d'un ascenseur ; une phrase sur l'humeur à l'arrivée.",
+      "titleEn": "The Full Stairwell",
+      "descriptionEn": "On a usual route, take the stairs start-to-finish instead of an elevator; jot one line about your mood at arrival.",
+      "categorySlug": "physical_existential",
+      "targetTraits": {
+        "conscientiousness": 0.6,
+        "openness": 0.55
+      },
+      "comfortLevel": "low",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 35,
+      "fallbackQuestId": 29,
+      "published": true
+    },
+    {
+      "id": 42,
+      "title": "Les Quatre Blocs",
+      "description": "Enchaîner quatre blocs de 25 minutes sans distraction sur une seule tâche, avec 5 minutes de pause entre chaque.",
+      "titleEn": "The Four Blocks",
+      "descriptionEn": "Chain four 25-minute distraction-free blocks on one task, with 5-minute breaks between.",
+      "categorySlug": "async_discipline",
+      "targetTraits": {
+        "conscientiousness": 0.9,
+        "emotionalStability": 0.6
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 120,
+      "fallbackQuestId": 19,
+      "published": true
+    },
+    {
+      "id": 43,
+      "title": "L'Heure Sans Ping",
+      "description": "Une heure sans notification ni badge : mode avion partiel ou réglages, une seule activité à la fois.",
+      "titleEn": "The Hour Without Pings",
+      "descriptionEn": "One hour with no notifications or badges—partial airplane mode or settings, one activity only.",
+      "categorySlug": "dopamine_detox",
+      "targetTraits": {
+        "conscientiousness": 0.85,
+        "emotionalStability": 0.65
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 30,
+      "published": true
+    },
+    {
+      "id": 44,
+      "title": "Le Miroir de Phrases",
+      "description": "Réformuler deux fois ce que l'autre vient de dire avant d'ajouter une seule phrase à toi.",
+      "titleEn": "The Phrase Mirror",
+      "descriptionEn": "Rephrase twice what the other person said before adding a single sentence of your own.",
+      "categorySlug": "active_empathy",
+      "targetTraits": {
+        "agreeableness": 0.85,
+        "extraversion": 0.5
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 20,
+      "fallbackQuestId": 31,
+      "published": true
+    },
+    {
+      "id": 45,
+      "title": "Les Trois Futurs",
+      "description": "Écrire en trois paragraphes : ton futur dans un mois, dans un an, dans dix ans — sans juger le texte.",
+      "titleEn": "The Three Futures",
+      "descriptionEn": "Write three paragraphs: your future in one month, one year, ten years—without judging the draft.",
+      "categorySlug": "temporal_projection",
+      "targetTraits": {
+        "openness": 0.75,
+        "conscientiousness": 0.55
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 46,
+      "title": "La Première Main Levée",
+      "description": "Dans un groupe (réunion, cours, apéro), prendre la parole une première fois même si la voix tremble.",
+      "titleEn": "The First Hand Raised",
+      "descriptionEn": "In a group (meeting, class, drinks), speak up once even if your voice shakes.",
+      "categorySlug": "hostile_immersion",
+      "targetTraits": {
+        "extraversion": 0.85,
+        "emotionalStability": 0.75,
+        "openness": 0.6
+      },
+      "comfortLevel": "extreme",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 90,
+      "fallbackQuestId": 10,
+      "published": true
+    },
+    {
+      "id": 47,
+      "title": "Le Pourboire d'Aujourd'hui",
+      "description": "Offrir un pourboire ou un geste de reconnaissance inhabituel à quelqu'un qui t'a servi (café, soin, livraison).",
+      "titleEn": "Today's Tip",
+      "descriptionEn": "Give an unusually generous tip or thank-you to someone who served you (café, care, delivery).",
+      "categorySlug": "spontaneous_altruism",
+      "targetTraits": {
+        "agreeableness": 0.8,
+        "extraversion": 0.55
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 25,
+      "fallbackQuestId": 11,
+      "published": true
+    },
+    {
+      "id": 48,
+      "title": "Le Vocal de Vérité",
+      "description": "Envoyer un message vocal d'environ une minute à quelqu'un que tu évites, sans mentir sur l'essentiel.",
+      "titleEn": "The Truth Voice Note",
+      "descriptionEn": "Send a ~1-minute voice message to someone you've been avoiding, honest on what matters.",
+      "categorySlug": "relational_vulnerability",
+      "targetTraits": {
+        "agreeableness": 0.7,
+        "emotionalStability": 0.65
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 15,
+      "fallbackQuestId": 12,
+      "published": true
+    },
+    {
+      "id": 49,
+      "title": "Le Plat Dédicacé",
+      "description": "Préparer un plat ou un goûter pour une personne précise et le lui remettre en main propre avec une phrase simple.",
+      "titleEn": "The Dedicated Dish",
+      "descriptionEn": "Cook a dish or snack for a specific person and hand it to them with one simple sentence.",
+      "categorySlug": "unconditional_service",
+      "targetTraits": {
+        "agreeableness": 0.8,
+        "conscientiousness": 0.65
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 75,
+      "fallbackQuestId": 13,
+      "published": true
+    },
+    {
+      "id": 50,
+      "title": "Le Fil de l'Eau",
+      "description": "Marcher au moins 30 minutes le long d'un cours d'eau, d'un canal ou d'une voie verte sans objectif précis.",
+      "titleEn": "The Waterline",
+      "descriptionEn": "Walk at least 30 minutes along a river, canal, or greenway with no fixed goal.",
+      "categorySlug": "spatial_adventure",
+      "targetTraits": {
+        "openness": 0.85,
+        "emotionalStability": 0.65
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 90,
+      "fallbackQuestId": 25,
+      "published": true
+    },
+    {
+      "id": 51,
+      "title": "Le Dernier Rang",
+      "description": "T'asseoir au dernier rang d'un lieu public ouvert (sport, pratique culturelle) 25 minutes : observer, pas d'écran.",
+      "titleEn": "The Back Row",
+      "descriptionEn": "Sit in the back row of an open public venue (sport, cultural practice) for 25 minutes—observe, no screen.",
+      "categorySlug": "public_introspection",
+      "targetTraits": {
+        "emotionalStability": 0.72,
+        "extraversion": 0.38
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 25,
+      "fallbackQuestId": 26,
+      "published": true
+    },
+    {
+      "id": 52,
+      "title": "La Bouchée Lente",
+      "description": "Choisir un seul aliment ; le premier morceau yeux fermés, puis terminer en lent, sans autre distraction.",
+      "titleEn": "The Slow Bite",
+      "descriptionEn": "Pick one food; first bite eyes closed, then finish slowly with no other distraction.",
+      "categorySlug": "sensory_deprivation",
+      "targetTraits": {
+        "openness": 0.55,
+        "conscientiousness": 0.5
+      },
+      "comfortLevel": "low",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 15,
+      "fallbackQuestId": 39,
+      "published": true
+    },
+    {
+      "id": 53,
+      "title": "L'Accueil Visiteur",
+      "description": "Participer à une réunion d'accueil, un apéro nouveaux arrivants ou un club avec tour de présentation.",
+      "titleEn": "The Visitor Welcome",
+      "descriptionEn": "Join a welcome meetup, newcomers drink, or club with introductions.",
+      "categorySlug": "exploratory_sociability",
+      "targetTraits": {
+        "extraversion": 0.75,
+        "agreeableness": 0.65,
+        "openness": 0.7
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 90,
+      "fallbackQuestId": 4,
+      "published": true
+    },
+    {
+      "id": 54,
+      "title": "Le Réveil Corps",
+      "description": "Avant tout écran le matin, au moins 12 minutes d'étirements ou de mobilité douce en silence.",
+      "titleEn": "The Body Wake-Up",
+      "descriptionEn": "Before any screen in the morning, at least 12 minutes of stretches or gentle mobility in silence.",
+      "categorySlug": "physical_existential",
+      "targetTraits": {
+        "conscientiousness": 0.65,
+        "openness": 0.55
+      },
+      "comfortLevel": "low",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 15,
+      "fallbackQuestId": 29,
+      "published": true
+    },
+    {
+      "id": 55,
+      "title": "Les Trois MIT",
+      "description": "La veille au soir, noter trois tâches indispensables ; le lendemain, ne traiter qu'elles avant 18 h.",
+      "titleEn": "The Three MITs",
+      "descriptionEn": "The night before, write three must-do tasks; the next day, only those before 6 p.m.",
+      "categorySlug": "async_discipline",
+      "targetTraits": {
+        "conscientiousness": 0.92,
+        "openness": 0.45
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 180,
+      "fallbackQuestId": 24,
+      "published": true
+    },
+    {
+      "id": 56,
+      "title": "Le Repas Hors Pièce",
+      "description": "Pour un repas complet, laisser téléphone et tablette hors de la pièce où tu manges.",
+      "titleEn": "The Meal Outside the Room",
+      "descriptionEn": "For one full meal, leave phone and tablet outside the room where you eat.",
+      "categorySlug": "dopamine_detox",
+      "targetTraits": {
+        "conscientiousness": 0.8,
+        "emotionalStability": 0.62
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 45,
+      "fallbackQuestId": 30,
+      "published": true
+    },
+    {
+      "id": 57,
+      "title": "Le Silence des Deux",
+      "description": "Après avoir posé une question à quelqu'un, attendre deux minutes en silence avant de reformuler ou répondre.",
+      "titleEn": "The Silence of Two",
+      "descriptionEn": "After asking someone a question, wait two minutes in silence before you rephrase or answer.",
+      "categorySlug": "active_empathy",
+      "targetTraits": {
+        "agreeableness": 0.88,
+        "extraversion": 0.48
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 25,
+      "fallbackQuestId": 31,
+      "published": true
+    },
+    {
+      "id": 58,
+      "title": "La Frise des Cinq Ans",
+      "description": "Sur une page, dessiner une frise des cinq dernières années avec au moins cinq jalons datés.",
+      "titleEn": "The Five-Year Timeline",
+      "descriptionEn": "On one page, draw a timeline of the last five years with at least five dated milestones.",
+      "categorySlug": "temporal_projection",
+      "targetTraits": {
+        "openness": 0.72,
+        "conscientiousness": 0.58
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 50,
+      "fallbackQuestId": 9,
+      "published": true
+    },
+    {
+      "id": 59,
+      "title": "Le Stand Inconnu",
+      "description": "Traverser seul l'entrée d'un salon, d'une foire ou d'un forum et poser une question précise à un exposant.",
+      "titleEn": "The Unknown Booth",
+      "descriptionEn": "Enter a fair or expo alone and ask one specific question to an exhibitor.",
+      "categorySlug": "hostile_immersion",
+      "targetTraits": {
+        "extraversion": 0.82,
+        "emotionalStability": 0.72,
+        "openness": 0.65
+      },
+      "comfortLevel": "extreme",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 75,
+      "fallbackQuestId": 33,
+      "published": true
+    },
+    {
+      "id": 60,
+      "title": "Le Café Suivant",
+      "description": "Si le lieu le permet, régler discrètement le café ou le thé de la personne derrière toi à la file.",
+      "titleEn": "The Next Coffee",
+      "descriptionEn": "If the place allows, quietly pay for the coffee or tea of the person behind you in line.",
+      "categorySlug": "spontaneous_altruism",
+      "targetTraits": {
+        "agreeableness": 0.78,
+        "extraversion": 0.58
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": true,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 20,
+      "fallbackQuestId": 11,
+      "published": true
+    },
+    {
+      "id": 61,
+      "title": "La Phrase en Je",
+      "description": "Écrire ou dire une phrase qui commence par « j'ai besoin » ou « je ressens », sans accuser l'autre.",
+      "titleEn": "The I-Statement",
+      "descriptionEn": "Write or say a sentence starting with “I need” or “I feel,” without blaming the other person.",
+      "categorySlug": "relational_vulnerability",
+      "targetTraits": {
+        "agreeableness": 0.72,
+        "emotionalStability": 0.68
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 20,
+      "fallbackQuestId": 35,
+      "published": true
+    },
+    {
+      "id": 62,
+      "title": "La Course Sans Redemande",
+      "description": "Accomplir une course ou une démarche administrative pour quelqu'un de proche sans qu'on te la redemande.",
+      "titleEn": "The Errand Unasked",
+      "descriptionEn": "Run one errand or admin task for someone close without them asking again.",
+      "categorySlug": "unconditional_service",
+      "targetTraits": {
+        "agreeableness": 0.82,
+        "conscientiousness": 0.68
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 60,
+      "fallbackQuestId": 13,
+      "published": true
+    },
+    {
+      "id": 63,
+      "title": "Le Terminus Vierge",
+      "description": "Prendre un bus ou un tram jusqu'à un terminus que tu n'as jamais visité et marcher 20 minutes sur place.",
+      "titleEn": "The Virgin Terminus",
+      "descriptionEn": "Take a bus or tram to a terminus you've never visited, then walk 20 minutes there.",
+      "categorySlug": "spatial_adventure",
+      "targetTraits": {
+        "openness": 0.88,
+        "emotionalStability": 0.62
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": true,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 120,
+      "fallbackQuestId": 1,
+      "published": true
+    },
+    {
+      "id": 64,
+      "title": "Le Soir Sans Flux",
+      "description": "Après une heure fixée, aucun écran ni flux jusqu'au coucher (lecture papier, conversation, repos).",
+      "titleEn": "The No-Feed Evening",
+      "descriptionEn": "After a set hour, no screens or feeds until bed (paper, conversation, rest).",
+      "categorySlug": "dopamine_detox",
+      "targetTraits": {
+        "conscientiousness": 0.78,
+        "emotionalStability": 0.68
+      },
+      "comfortLevel": "high",
+      "requiresOutdoor": false,
+      "requiresSocial": false,
+      "minimumDurationMinutes": 120,
+      "fallbackQuestId": 30,
+      "published": true
+    },
+    {
+      "id": 65,
+      "title": "Les Trois Pourquoi",
+      "description": "Face à quelqu'un qui te confie un souci, poser « pourquoi » jusqu'à trois fois avec douceur avant de conseiller.",
+      "titleEn": "The Three Whys",
+      "descriptionEn": "When someone shares a worry, ask “why” up to three times gently before advising.",
+      "categorySlug": "active_empathy",
+      "targetTraits": {
+        "agreeableness": 0.86,
+        "extraversion": 0.52
+      },
+      "comfortLevel": "moderate",
+      "requiresOutdoor": false,
+      "requiresSocial": true,
+      "minimumDurationMinutes": 25,
+      "fallbackQuestId": 44,
+      "published": true
+    }
+  ]
+}

@@ -38,6 +38,64 @@ enum UserRole {
   admin
 }
 
+enum QuestPsychologicalCategory {
+  spatial_adventure
+  public_introspection
+  sensory_deprivation
+  exploratory_sociability
+  physical_existential
+  async_discipline
+  dopamine_detox
+  active_empathy
+  temporal_projection
+  hostile_immersion
+  spontaneous_altruism
+  relational_vulnerability
+  unconditional_service
+}
+
+enum QuestComfortLevel {
+  low
+  moderate
+  high
+  extreme
+}
+
+enum QuestArchetypePace {
+  instant
+  planned
+}
+
+/** Taxonomie des archétypes (source unique côté produit — plus de liste en dur dans le code). */
+model QuestArchetype {
+  id                     Int                       @id
+  title                  String
+  description            String                    @db.Text
+  titleEn                String                    @map("title_en")
+  descriptionEn          String                    @db.Text @map("description_en")
+  category               QuestPsychologicalCategory
+  targetTraits           Json                      @map("target_traits")
+  comfortLevel           QuestComfortLevel         @map("comfort_level")
+  requiresOutdoor        Boolean                   @map("requires_outdoor")
+  requiresSocial         Boolean                   @map("requires_social")
+  minimumDurationMinutes Int                       @map("minimum_duration_minutes")
+  fallbackQuestId        Int?                      @map("fallback_quest_id")
+  questPace              QuestArchetypePace        @map("quest_pace")
+  published              Boolean                   @default(true)
+  createdAt              DateTime                  @default(now()) @map("created_at")
+  updatedAt              DateTime                  @updatedAt @map("updated_at")
+
+  @@map("quest_archetypes")
+}
+
+/** Clés de configuration applicative (ex. fallback archetype id). */
+model AppSetting {
+  key   String @id
+  value String @db.Text
+
+  @@map("app_settings")
+}
+
 model Profile {
   id                    String          @id @default(cuid())
   clerkId               String          @unique @map("clerk_id")

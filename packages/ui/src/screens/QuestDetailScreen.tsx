@@ -1,25 +1,74 @@
 'use client';
 
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
-import { QUEST_TAXONOMY } from '@questia/shared';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import type { QuestModel } from '@questia/shared';
 import { DA } from '../theme';
 
 interface QuestDetailScreenProps {
   questId: number;
+  /** Ex. EXPO_PUBLIC_API_BASE_URL — requis pour charger l’archétype depuis l’API. */
+  apiBaseUrl?: string;
 }
 
 const comfortLevelConfig = {
-  low:      { label: 'Faible', color: '#22c55e', emoji: '🟢' },
+  low: { label: 'Faible', color: '#22c55e', emoji: '🟢' },
   moderate: { label: 'Modéré', color: '#f59e0b', emoji: '🟡' },
-  high:     { label: 'Élevé', color: '#f97316', emoji: '🟠' },
-  extreme:  { label: 'Extrême', color: '#ef4444', emoji: '🔴' },
+  high: { label: 'Élevé', color: '#f97316', emoji: '🟠' },
+  extreme: { label: 'Extrême', color: '#ef4444', emoji: '🔴' },
 };
 
-export function QuestDetailScreen({ questId }: QuestDetailScreenProps) {
-  const quest = QUEST_TAXONOMY.find((q) => q.id === questId);
+export function QuestDetailScreen({ questId, apiBaseUrl = '' }: QuestDetailScreenProps) {
+  const [quest, setQuest] = useState<QuestModel | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
-  if (!quest) {
+  useEffect(() => {
+    if (!apiBaseUrl.trim()) {
+      setLoading(false);
+      setErr('config');
+      return;
+    }
+    let cancelled = false;
+    const base = apiBaseUrl.replace(/\/$/, '');
+    setLoading(true);
+    setErr(null);
+    (async () => {
+      try {
+        const res = await fetch(`${base}/api/quest/archetype/${questId}`);
+        if (!res.ok) throw new Error('http');
+        const data = (await res.json()) as QuestModel;
+        if (!cancelled) {
+          setQuest(data);
+        }
+      } catch {
+        if (!cancelled) setErr('load');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [questId, apiBaseUrl]);
+
+  if (!apiBaseUrl.trim()) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Définis l&apos;URL API (EXPO_PUBLIC_API_BASE_URL) pour ce détail.</Text>
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color={DA.cyan} />
+      </View>
+    );
+  }
+
+  if (err || !quest) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>Quête introuvable</Text>
@@ -73,40 +122,38 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: DA.bg,
   },
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   content: {
     padding: 24,
     paddingTop: 40,
   },
   questNumber: {
-    fontSize: 14,
-    color: '#22d3ee',
-    fontWeight: '600',
+    fontSize: 12,
+    color: DA.muted,
     marginBottom: 8,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800',
     color: DA.text,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   description: {
     fontSize: 16,
+    lineHeight: 24,
     color: DA.muted,
-    lineHeight: 26,
-    marginBottom: 32,
+    marginBottom: 20,
   },
   metaRow: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 24,
+    gap: 24,
+    marginBottom: 16,
   },
   metaItem: {
     flex: 1,
-    backgroundColor: DA.card,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: DA.border,
   },
   metaLabel: {
     fontSize: 12,
@@ -115,46 +162,42 @@ const styles = StyleSheet.create({
   },
   metaValue: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: DA.text,
   },
   tags: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   tag: {
-    backgroundColor: DA.surface,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: DA.border,
   },
   tagText: {
     fontSize: 13,
-    color: DA.muted,
+    color: DA.text,
   },
   acceptButton: {
-    backgroundColor: '#f97316',
+    backgroundColor: DA.cyan,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
-    shadowColor: '#f97316',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
   },
   acceptButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0f172a',
   },
   errorText: {
-    color: '#ef4444',
-    fontSize: 18,
-    textAlign: 'center',
-    marginTop: 40,
+    color: '#b91c1c',
+    padding: 24,
+    fontSize: 15,
+  },
+  loadingText: {
+    color: DA.muted,
   },
 });
