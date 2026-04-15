@@ -63,7 +63,7 @@ export const ACTIVITY_PERSONALITY_CORRELATION: Record<string, Partial<Personalit
   active_empathy:           { extraversion: 0.85, agreeableness: 0.8, openness: 0.4 },
   temporal_projection:      { openness: 0.5, conscientiousness: 0.6, emotionalStability: 0.3 },
   hostile_immersion:        { extraversion: 0.9, emotionalStability: 0.7, thrillSeeking: 0.8 },
-  spontaneous_altruism:     { agreeableness: 0.7, extraversion: 0.6, openness: 0.3 },
+  spontaneous_altruism:     { agreeableness: 0.7, extraversion: 0.82, openness: 0.3 },
   relational_vulnerability: { agreeableness: 0.7, emotionalStability: 0.5, extraversion: 0.3 },
   unconditional_service:    { agreeableness: 0.8, conscientiousness: 0.6, extraversion: 0.1 },
 };

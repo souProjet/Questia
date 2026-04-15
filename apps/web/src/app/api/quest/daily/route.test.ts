@@ -159,6 +159,15 @@ describe('/api/quest/daily', () => {
     expect(res.status).toBe(404);
   });
 
+  it('GET 400 questDate invalide', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue(profileRow);
+    const res = await GET(
+      new NextRequest('http://localhost/api/quest/daily?questDate=not-a-date'),
+    );
+    expect(res.status).toBe(400);
+  });
+
   it('GET 404 date historique sans quête', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
     prismaMock.profile.findUnique.mockResolvedValue(profileRow);
@@ -167,6 +176,61 @@ describe('/api/quest/daily', () => {
       new NextRequest('http://localhost/api/quest/daily?questDate=2026-01-01'),
     );
     expect(res.status).toBe(404);
+  });
+
+  it('GET 200 génère une nouvelle quête (pas de log du jour)', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique
+      .mockResolvedValueOnce({
+        ...profileRow,
+        lastQuestDate: null,
+        flagNextQuestAfterReroll: false,
+        flagNextQuestInstantOnly: false,
+        rerollExcludeArchetypeIds: [],
+      })
+      .mockResolvedValueOnce({
+        ...profileRow,
+        currentDay: 3,
+        streakCount: 1,
+        lastQuestDate: new Date('2026-03-24'),
+        rerollsRemaining: 1,
+      });
+    prismaMock.questLog.findUnique.mockResolvedValue(null);
+    prismaMock.questLog.findMany.mockResolvedValue([]);
+    prismaMock.$transaction.mockResolvedValue([
+      {
+        id: 'new-log',
+        questDate: '2026-03-24',
+        archetypeId: 1,
+        generatedEmoji: 'Target',
+        generatedTitle: 'Titre',
+        generatedMission: 'Mission',
+        generatedHook: 'Hook',
+        generatedDuration: '1h',
+        generatedSafetyNote: null,
+        isOutdoor: false,
+        destinationLabel: null,
+        destinationLat: null,
+        destinationLon: null,
+        locationCity: 'Paris',
+        weatherDescription: 'Beau',
+        weatherTemp: 20,
+        status: 'pending',
+        wasRerolled: false,
+        wasFallback: false,
+        phaseAtAssignment: 'calibration',
+        profileId: 'p1',
+      },
+      {},
+    ]);
+
+    const res = await GET(
+      new NextRequest('http://localhost/api/quest/daily?lat=48.85&lon=2.35'),
+    );
+    expect(res.status).toBe(201);
+    const json = await res.json();
+    expect(json.fromCache).toBe(false);
+    expect(json.title).toBe('Titre');
   });
 
   it('GET 200 cache quête du jour', async () => {

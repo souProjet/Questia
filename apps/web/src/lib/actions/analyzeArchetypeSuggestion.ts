@@ -74,6 +74,32 @@ function normalizeSuggestion(raw: Record<string, unknown>): ArchetypeAiSuggestio
   };
 }
 
+const SOCIAL_APPROACH_HINT =
+  /compliment|éloge|éloges|inconnu|inconnus|inconnue|stranger|parler à|talk to|personne|personnes|people|trois |three |quelqu|someone|approach|approcher|discute|discuter|positiv|sourire|smile|remerci|thank|grateful/i;
+
+/**
+ * Si la quête exige d’initier le contact (compliments, parler à des gens…) mais le modèle met une extraversion trop basse, on rehausse — le moteur de congruence s’appuie sur ce signal.
+ */
+export function bumpExtraversionForSocialApproachQuests(
+  a: ArchetypeAiSuggestion,
+  supplementaryLocaleText?: string,
+): ArchetypeAiSuggestion {
+  if (!a.requiresSocial) return a;
+  const parts = [supplementaryLocaleText ?? '', a.titleEn, a.descriptionEn];
+  if ('titleFr' in a && typeof (a as FreeformArchetypeAnalysis).titleFr === 'string') {
+    const ff = a as FreeformArchetypeAnalysis;
+    parts.unshift(ff.titleFr, ff.descriptionFr);
+  }
+  const blob = parts.filter(Boolean).join('\n').toLowerCase();
+  if (!SOCIAL_APPROACH_HINT.test(blob)) return a;
+  const ex = a.targetTraits.extraversion ?? 0.5;
+  if (ex >= 0.62) return a;
+  return {
+    ...a,
+    targetTraits: { ...a.targetTraits, extraversion: Math.max(ex, 0.76) },
+  };
+}
+
 function detectLangHeuristic(text: string): 'fr' | 'en' {
   const t = text.toLowerCase();
   const frHits = (t.match(/\b(le|la|les|un|une|des|pour|avec|sans|très|dans|sur|être|vous|ton|ta|tes)\b/g) ?? []).length;
@@ -177,6 +203,8 @@ requiresSocial (boolean),
 minimumDurationMinutes (integer, 5-1440),
 titleEn (short English title),
 descriptionEn (English description, same meaning as the French).
+
+targetTraits: If the quest requires initiating contact with other people (compliments, speaking to strangers, approaching someone, thanking people in person), set extraversion to at least 0.65 — typically 0.75–0.9. Reserve low extraversion (e.g. under 0.45) only for truly solitary or internal quests with no real social approach.
 Be conservative on safety: no illegal or medical instructions.`;
 
   const user = `French title: ${input.titleFr.trim()}\nFrench description:\n${input.descriptionFr.trim()}`;
@@ -194,6 +222,10 @@ Be conservative on safety: no illegal or medical instructions.`;
   const text = res.choices[0]?.message?.content?.trim() ?? '{}';
   const raw = JSON.parse(text) as Record<string, unknown>;
   let result = normalizeSuggestion(raw);
+  result = bumpExtraversionForSocialApproachQuests(
+    result,
+    `${input.titleFr}\n${input.descriptionFr}`,
+  );
   if (needsEnRepair(result.titleEn, result.descriptionEn)) {
     const en = await translateQuestTitleDescription(input.titleFr, input.descriptionFr, 'fr_to_en');
     result = { ...result, titleEn: en.title, descriptionEn: en.description };
@@ -225,6 +257,7 @@ requiresOutdoor (boolean),
 requiresSocial (boolean),
 minimumDurationMinutes (integer, 5-1440).
 
+targetTraits: If the quest requires initiating contact with other people (compliments, speaking to strangers, approaching someone), set extraversion to at least 0.65 — typically 0.75–0.9. Use low extraversion only for solitary or introspective quests with no real social approach.
 Be conservative on safety: no illegal or medical instructions.`;
 
   const user = `Quest content (French or English, free-form):\n${freeformContent.trim()}`;
@@ -243,6 +276,7 @@ Be conservative on safety: no illegal or medical instructions.`;
   const raw = JSON.parse(text) as Record<string, unknown>;
   let analysis = normalizeFreeformArchetype(raw, freeformContent);
   analysis = await ensureBilingualArchetypeTexts(analysis, freeformContent);
+  analysis = bumpExtraversionForSocialApproachQuests(analysis) as FreeformArchetypeAnalysis;
   return analysis;
 }
 

@@ -184,7 +184,7 @@
     "category": "spontaneous_altruism",
     "targetTraits": {
       "agreeableness": 0.7,
-      "extraversion": 0.6
+      "extraversion": 0.82
     },
     "comfortLevel": "moderate",
     "requiresOutdoor": true,

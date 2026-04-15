@@ -78,7 +78,6 @@ export function AdminQuestsPageClient() {
             yes: 'yes',
             no: 'no',
             detailTitle: 'Title & description',
-            detailLang: '(English)',
             expandShow: 'Show detail',
             expandHide: 'Hide detail',
             fallbackLabel: 'Fallback archetype id',
@@ -104,7 +103,6 @@ export function AdminQuestsPageClient() {
             yes: 'oui',
             no: 'non',
             detailTitle: 'Titre & description',
-            detailLang: '(français)',
             expandShow: 'Afficher le détail',
             expandHide: 'Replier le détail',
             fallbackLabel: 'Archétype de secours (fallback)',
@@ -378,10 +376,7 @@ export function AdminQuestsPageClient() {
                               <div className="space-y-4">
                                 <div>
                                   <p className="text-xs font-black uppercase tracking-wide text-[var(--muted)]">
-                                    {listUi.detailTitle}{' '}
-                                    <span className="font-semibold normal-case text-[var(--on-cream-muted)]">
-                                      {listUi.detailLang}
-                                    </span>
+                                    {listUi.detailTitle}
                                   </p>
                                   <p className="mt-1 font-display text-base font-black text-[var(--on-cream)]">
                                     {copy.title}

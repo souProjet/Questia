@@ -25,19 +25,12 @@ export default defineConfig({
         'apps/web/src/lib/analytics/**',
         'apps/web/src/app/api/admin/**',
         'apps/web/src/app/api/user/**',
-        /** Intégration LLM / taxonomie DB — couverte par tests API ciblés, pas utile au ratio global. */
-        'apps/web/src/lib/actions/analyzeArchetypeSuggestion.ts',
-        'apps/web/src/lib/seo/**',
-        'apps/web/src/lib/quest-taxonomy/**',
-        'apps/web/src/app/api/quest/archetypes/**',
-        'apps/web/src/app/api/quest/archetype/**',
       ],
-      /** Alignés sur la base réelle du dépôt ; relever progressivement avec de nouveaux tests. */
       thresholds: {
-        lines: 78,
-        functions: 90,
-        branches: 58,
-        statements: 78,
+        lines: 85,
+        functions: 94,
+        branches: 60,
+        statements: 85,
       },
     },
   },
