@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { POST } from './route';
+import { TEST_FALLBACK_QUEST_ID, TEST_QUEST_TAXONOMY } from '@questia/shared';
+
+vi.mock('@/lib/quest-taxonomy/cache', () => ({
+  getQuestTaxonomy: vi.fn().mockResolvedValue(TEST_QUEST_TAXONOMY),
+  getDefaultFallbackArchetypeId: vi.fn().mockResolvedValue(TEST_FALLBACK_QUEST_ID),
+  invalidateQuestTaxonomyCache: vi.fn(),
+  setDefaultFallbackArchetypeId: vi.fn(),
+}));
 
 vi.mock('@/lib/actions/ai', () => ({
   generateQuestNarration: vi.fn().mockResolvedValue({
@@ -21,6 +28,8 @@ vi.mock('@/lib/actions/weather', () => ({
     precipitation: 0,
   }),
 }));
+
+import { POST } from './route';
 
 describe('POST /api/quest/accept', () => {
   it('404 quête inconnue', async () => {

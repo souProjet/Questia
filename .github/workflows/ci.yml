@@ -15,6 +15,8 @@ jobs:
     timeout-minutes: 20
     env:
       TURBO_TELEMETRY_DISABLED: 1
+      # Vitest / Prisma : init client (les tests mocquent la taxonomie, pas de DB réelle)
+      DATABASE_URL: postgresql://user:pass@localhost:5432/db
     steps:
       - uses: actions/checkout@v5
 

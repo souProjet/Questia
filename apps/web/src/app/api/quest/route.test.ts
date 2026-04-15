@@ -1,5 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { TEST_FALLBACK_QUEST_ID, TEST_QUEST_TAXONOMY } from '@questia/shared';
+
+vi.mock('@/lib/quest-taxonomy/cache', () => ({
+  getQuestTaxonomy: vi.fn().mockResolvedValue(TEST_QUEST_TAXONOMY),
+  getDefaultFallbackArchetypeId: vi.fn().mockResolvedValue(TEST_FALLBACK_QUEST_ID),
+  invalidateQuestTaxonomyCache: vi.fn(),
+  setDefaultFallbackArchetypeId: vi.fn(),
+}));
+
 import { POST } from './route';
 
 describe('POST /api/quest', () => {

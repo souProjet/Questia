@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PersonalityVector, QuestLog } from '@questia/shared';
+import { TEST_FALLBACK_QUEST_ID, TEST_QUEST_TAXONOMY } from '@questia/shared';
 
 vi.mock('./weather', () => ({
   checkWeatherSafety: vi.fn().mockResolvedValue({
@@ -9,6 +10,13 @@ vi.mock('./weather', () => ({
     windSpeed: 0,
     precipitation: 0,
   }),
+}));
+
+vi.mock('@/lib/quest-taxonomy/cache', () => ({
+  getQuestTaxonomy: vi.fn().mockResolvedValue(TEST_QUEST_TAXONOMY),
+  getDefaultFallbackArchetypeId: vi.fn().mockResolvedValue(TEST_FALLBACK_QUEST_ID),
+  invalidateQuestTaxonomyCache: vi.fn(),
+  setDefaultFallbackArchetypeId: vi.fn(),
 }));
 
 import { assignDailyQuest } from './quest';
