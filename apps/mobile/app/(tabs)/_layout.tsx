@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import { useAuth } from '@clerk/expo';
 import { QuestiaTabBar } from '../../components/QuestiaTabBar';
@@ -6,17 +6,22 @@ import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { getTabTitles } from '../../lib/tabTitles';
 import { syncPushRemindersWithServer } from '../../lib/syncPushReminders';
 
+/**
+ * Garde module : survit au remontage React (ex. Strict Mode en dev) — évite deux appels à
+ * requestPermissionsAsync() pour les mêmes onglets.
+ */
+let pushRemindersSyncScheduled = false;
+
 function PushRemindersSync() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
-  const ran = useRef(false);
   useEffect(() => {
     if (!isLoaded) return;
     if (!isSignedIn) {
-      ran.current = false;
+      pushRemindersSyncScheduled = false;
       return;
     }
-    if (ran.current) return;
-    ran.current = true;
+    if (pushRemindersSyncScheduled) return;
+    pushRemindersSyncScheduled = true;
     void syncPushRemindersWithServer(() => getToken());
   }, [isLoaded, isSignedIn, getToken]);
   return null;

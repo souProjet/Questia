@@ -55,6 +55,9 @@ export async function registerForExpoPushTokenAsync(): Promise<string | null> {
   if (!mod) return null;
 
   const { status: existing } = await mod.getPermissionsAsync();
+  if (existing === 'denied') {
+    return null;
+  }
   let finalStatus = existing;
   if (existing !== 'granted') {
     const { status } = await mod.requestPermissionsAsync();
