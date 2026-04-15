@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 type Row = {
   id: number;
@@ -9,6 +10,7 @@ type Row = {
   titleEn: string;
   descriptionEn: string;
   category: string;
+  targetTraits: Record<string, unknown>;
   comfortLevel: string;
   requiresOutdoor: boolean;
   requiresSocial: boolean;
@@ -16,12 +18,43 @@ type Row = {
   fallbackQuestId: number | null;
   questPace: string;
   published: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
+
+function formatTraits(traits: Record<string, unknown>): { key: string; value: string }[] {
+  const entries = Object.entries(traits).filter(([, v]) => typeof v === 'number' && !Number.isNaN(v));
+  return entries.map(([key, v]) => ({
+    key,
+    value: typeof v === 'number' ? v.toFixed(2) : String(v),
+  }));
+}
+
+function formatIsoDate(iso?: string) {
+  if (!iso) return '—';
+  try {
+    return new Intl.DateTimeFormat('fr-FR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+const inputClass =
+  'mt-2 w-full min-w-0 rounded-xl border-2 border-[color:color-mix(in_srgb,var(--cyan)_42%,transparent)] bg-white px-3 py-2.5 text-sm font-semibold text-[var(--text)] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/40';
+
+const cardClass =
+  'relative overflow-hidden rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-[#fffbeb] via-white/95 to-cyan-50/40 px-5 py-6 shadow-[0_10px_0_rgba(180,83,9,.08),0_22px_48px_rgba(249,115,22,.1)] sm:px-6';
 
 export function AdminQuestsPageClient() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [freeformContent, setFreeformContent] = useState('');
+  const [fallbackQuestId, setFallbackQuestId] = useState<number | ''>('');
 
   const load = useCallback(async () => {
     setErr(null);
@@ -30,7 +63,16 @@ export function AdminQuestsPageClient() {
       setErr(`Erreur ${res.status}`);
       return;
     }
-    const data = (await res.json()) as Row[];
+    const raw = (await res.json()) as unknown[];
+    const data = raw.map((r) => {
+      const o = r as Record<string, unknown>;
+      const tt = o.targetTraits;
+      const targetTraits =
+        tt && typeof tt === 'object' && tt !== null && !Array.isArray(tt)
+          ? (tt as Record<string, unknown>)
+          : {};
+      return { ...o, targetTraits } as Row;
+    });
     setRows(data);
   }, []);
 
@@ -38,21 +80,10 @@ export function AdminQuestsPageClient() {
     void load();
   }, [load]);
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [titleEn, setTitleEn] = useState('');
-  const [descriptionEn, setDescriptionEn] = useState('');
-  const [category, setCategory] = useState('exploratory_sociability');
-  const [comfortLevel, setComfortLevel] = useState('moderate');
-  const [requiresOutdoor, setRequiresOutdoor] = useState(false);
-  const [requiresSocial, setRequiresSocial] = useState(false);
-  const [minimumDurationMinutes, setMinimumDurationMinutes] = useState(45);
-  const [fallbackQuestId, setFallbackQuestId] = useState<number | ''>('');
-  const [questPace, setQuestPace] = useState<'instant' | 'planned'>('instant');
-
-  const analyze = async () => {
-    if (!title.trim() || !description.trim()) {
-      setErr('Renseigne au moins le titre et la description FR.');
+  const createFromContent = async () => {
+    const raw = freeformContent.trim();
+    if (raw.length < 8) {
+      setErr('Décris la quête en quelques phrases (au moins 8 caractères).');
       return;
     }
     setBusy(true);
@@ -61,58 +92,43 @@ export function AdminQuestsPageClient() {
       const res = await fetch('/api/admin/quest-archetypes/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ titleFr: title, descriptionFr: description }),
+        body: JSON.stringify({ content: raw }),
       });
       if (!res.ok) {
-        setErr('Analyse impossible.');
+        setErr('L’analyse automatique a échoué. Vérifie la clé OpenAI ou réessaie plus tard.');
         return;
       }
       const j = (await res.json()) as Record<string, unknown>;
-      setTitleEn(String(j.titleEn ?? ''));
-      setDescriptionEn(String(j.descriptionEn ?? ''));
-      setCategory(String(j.category ?? category));
-      setComfortLevel(String(j.comfortLevel ?? comfortLevel));
-      setRequiresOutdoor(Boolean(j.requiresOutdoor));
-      setRequiresSocial(Boolean(j.requiresSocial));
-      setMinimumDurationMinutes(Number(j.minimumDurationMinutes) || 45);
-      setQuestPace(String(j.questPace) === 'planned' ? 'planned' : 'instant');
-    } finally {
-      setBusy(false);
-    }
-  };
+      const traits =
+        j.targetTraits && typeof j.targetTraits === 'object' && j.targetTraits !== null
+          ? (j.targetTraits as object)
+          : { openness: 0.5 };
 
-  const create = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      const res = await fetch('/api/admin/quest-archetypes', {
+      const post = await fetch('/api/admin/quest-archetypes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title,
-          description,
-          titleEn,
-          descriptionEn,
-          category,
-          targetTraits: { openness: 0.5 },
-          comfortLevel,
-          requiresOutdoor,
-          requiresSocial,
-          minimumDurationMinutes,
+          title: String(j.titleFr ?? ''),
+          description: String(j.descriptionFr ?? ''),
+          titleEn: String(j.titleEn ?? ''),
+          descriptionEn: String(j.descriptionEn ?? ''),
+          category: String(j.category ?? 'exploratory_sociability'),
+          targetTraits: traits,
+          comfortLevel: String(j.comfortLevel ?? 'moderate'),
+          requiresOutdoor: Boolean(j.requiresOutdoor),
+          requiresSocial: Boolean(j.requiresSocial),
+          minimumDurationMinutes: Math.max(5, Math.min(1440, Number(j.minimumDurationMinutes) || 45)),
           fallbackQuestId: fallbackQuestId === '' ? null : fallbackQuestId,
-          questPace,
+          questPace: String(j.questPace) === 'planned' ? 'planned' : 'instant',
           published: true,
         }),
       });
-      if (!res.ok) {
-        const t = await res.text();
-        setErr(t || `Erreur ${res.status}`);
+      if (!post.ok) {
+        const t = await post.text();
+        setErr(t || `Erreur ${post.status}`);
         return;
       }
-      setTitle('');
-      setDescription('');
-      setTitleEn('');
-      setDescriptionEn('');
+      setFreeformContent('');
       await load();
     } finally {
       setBusy(false);
@@ -135,170 +151,229 @@ export function AdminQuestsPageClient() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border-2 border-white/60 bg-white/90 p-5 shadow-sm">
-        <h2 className="font-display text-lg font-black text-[var(--on-cream)]">Nouvel archétype</h2>
-        <p className="mt-1 text-sm font-semibold text-[var(--on-cream-muted)]">
-          Saisis FR puis « Analyser (IA) » pour remplir catégorie, flags et texte EN — vérifie avant création.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-            Titre FR
-            <input
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+      <section className={cardClass}>
+        <div
+          className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-gradient-to-br from-cyan-200/35 to-orange-200/25 blur-2xl"
+          aria-hidden
+        />
+        <div className="relative">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--muted)]">Archétypes</p>
+          <h2 className="font-display mt-1 text-xl font-black tracking-tight text-gradient-pop md:text-2xl">
+            Nouvelle quête
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm font-semibold leading-relaxed text-[var(--on-cream-muted)]">
+            Colle le texte en français ou en anglais (consignes, idée, ton). L’autre langue est traduite automatiquement ; la taxonomie, la durée et les drapeaux sont aussi déduits avant enregistrement.
+          </p>
+
+          <label className="mt-6 block text-xs font-black uppercase tracking-wide text-[var(--on-cream)]">
+            Contenu de la quête (FR ou EN)
+            <textarea
+              className={`${inputClass} min-h-[160px] resize-y leading-relaxed`}
+              value={freeformContent}
+              placeholder="FR : « Marche 20 minutes sans téléphone… » — EN : « Walk for 20 minutes without your phone… »"
+              onChange={(e) => setFreeformContent(e.target.value)}
+              disabled={busy}
             />
           </label>
-          <label className="block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-            Catégorie
-            <input
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            />
-          </label>
-        </div>
-        <label className="mt-3 block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-          Description FR
-          <textarea
-            className="mt-1 min-h-[88px] w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </label>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="btn btn-md font-black"
-            disabled={busy}
-            onClick={() => void analyze()}
-          >
-            Analyser (IA)
-          </button>
-        </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-            Titre EN
-            <input
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold"
-              value={titleEn}
-              onChange={(e) => setTitleEn(e.target.value)}
-            />
-          </label>
-          <label className="block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-            Confort
-            <select
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold"
-              value={comfortLevel}
-              onChange={(e) => setComfortLevel(e.target.value)}
+
+          <details className="mt-4 rounded-2xl border border-cyan-200/50 bg-white/50 px-4 py-3 text-sm">
+            <summary className="cursor-pointer font-black text-[var(--on-cream)]">Réglages optionnels</summary>
+            <p className="mt-2 text-xs font-semibold text-[var(--on-cream-muted)]">
+              Rarement utile : lier un archétype de secours si le moteur doit proposer un repli.
+            </p>
+            <label className="mt-3 block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
+              ID archétype de secours
+              <input
+                type="number"
+                className={inputClass}
+                value={fallbackQuestId}
+                placeholder="ex. 9"
+                disabled={busy}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFallbackQuestId(v === '' ? '' : parseInt(v, 10));
+                }}
+              />
+            </label>
+          </details>
+
+          {err ? (
+            <p className="mt-4 rounded-xl border border-amber-300/80 bg-amber-50/95 px-4 py-3 text-sm font-semibold text-amber-950">
+              {err}
+            </p>
+          ) : null}
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="btn btn-cta btn-md font-black"
+              disabled={busy}
+              onClick={() => void createFromContent()}
             >
-              <option value="low">low</option>
-              <option value="moderate">moderate</option>
-              <option value="high">high</option>
-              <option value="extreme">extreme</option>
-            </select>
-          </label>
+              {busy ? 'Analyse et création…' : 'Créer la quête'}
+            </button>
+            <span className="text-xs font-semibold text-[var(--on-cream-subtle)]">
+              Un appel IA puis enregistrement en base
+            </span>
+          </div>
         </div>
-        <label className="mt-3 block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-          Description EN
-          <textarea
-            className="mt-1 min-h-[88px] w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold"
-            value={descriptionEn}
-            onChange={(e) => setDescriptionEn(e.target.value)}
-          />
-        </label>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <label className="flex items-center gap-2 text-sm font-bold">
-            <input type="checkbox" checked={requiresOutdoor} onChange={(e) => setRequiresOutdoor(e.target.checked)} />
-            Extérieur
-          </label>
-          <label className="flex items-center gap-2 text-sm font-bold">
-            <input type="checkbox" checked={requiresSocial} onChange={(e) => setRequiresSocial(e.target.checked)} />
-            Social
-          </label>
-          <label className="block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-            Durée min
-            <input
-              type="number"
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold"
-              value={minimumDurationMinutes}
-              min={5}
-              max={1440}
-              onChange={(e) => setMinimumDurationMinutes(parseInt(e.target.value, 10) || 45)}
-            />
-          </label>
-        </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-            Rythme
-            <select
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold"
-              value={questPace}
-              onChange={(e) => setQuestPace(e.target.value as 'instant' | 'planned')}
-            >
-              <option value="instant">instant</option>
-              <option value="planned">planned</option>
-            </select>
-          </label>
-          <label className="block text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-            Fallback archetype id (optionnel)
-            <input
-              type="number"
-              className="mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold"
-              value={fallbackQuestId}
-              placeholder="ex. 9"
-              onChange={(e) => {
-                const v = e.target.value;
-                setFallbackQuestId(v === '' ? '' : parseInt(v, 10));
-              }}
-            />
-          </label>
-        </div>
-        {err && <p className="mt-3 text-sm font-bold text-red-600">{err}</p>}
-        <button
-          type="button"
-          className="btn btn-cta btn-md mt-4 font-black"
-          disabled={busy}
-          onClick={() => void create()}
-        >
-          Créer en base
-        </button>
       </section>
 
-      <section className="rounded-2xl border-2 border-white/60 bg-white/90 p-5 shadow-sm">
-        <h2 className="font-display text-lg font-black text-[var(--on-cream)]">Archétypes ({rows?.length ?? '…'})</h2>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border)]">
-                <th className="py-2 pr-2 font-black">ID</th>
-                <th className="py-2 pr-2 font-black">Titre</th>
-                <th className="py-2 pr-2 font-black">Cat.</th>
-                <th className="py-2 pr-2 font-black">Publié</th>
-                <th className="py-2 font-black">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows?.map((r) => (
-                <tr key={r.id} className="border-b border-[var(--border)]/60">
-                  <td className="py-2 pr-2 font-mono text-xs">{r.id}</td>
-                  <td className="py-2 pr-2 font-semibold">{r.title}</td>
-                  <td className="py-2 pr-2 text-xs">{r.category}</td>
-                  <td className="py-2 pr-2">{r.published ? 'oui' : 'non'}</td>
-                  <td className="py-2">
-                    <button
-                      type="button"
-                      className="text-xs font-black text-cyan-700 underline"
-                      disabled={busy}
-                      onClick={() => void togglePublished(r)}
-                    >
-                      {r.published ? 'Dépublier' : 'Publier'}
-                    </button>
-                  </td>
+      <section className={cardClass}>
+        <div
+          className="pointer-events-none absolute -left-4 bottom-0 h-24 w-24 rounded-full bg-gradient-to-tr from-orange-200/20 to-transparent blur-2xl"
+          aria-hidden
+        />
+        <div className="relative">
+          <h2 className="font-display text-lg font-black text-[var(--on-cream)] md:text-xl">
+            Archétypes publiés ({rows?.length ?? '…'})
+          </h2>
+          <p className="mt-1 text-sm font-semibold text-[var(--on-cream-muted)]">
+            Dépublier masque l’archétype pour les tirages futurs. Utilise « Détail » pour voir textes, traits et
+            paramètres moteur.
+          </p>
+          <div className="mt-5 overflow-x-auto rounded-2xl border border-cyan-200/40 bg-white/70">
+            <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-[var(--border)] bg-cyan-50/50">
+                  <th className="py-3 pl-4 pr-1 font-black text-[var(--on-cream)] w-10" />
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">ID</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)] min-w-[10rem]">Titre</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Catégorie</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Durée</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Rythme</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Confort</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Ext. / soc.</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Publié</th>
+                  <th className="py-3 pr-4 font-black text-[var(--on-cream)]">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows?.map((r) => {
+                  const open = expandedId === r.id;
+                  const traitRows = formatTraits(r.targetTraits ?? {});
+                  return (
+                    <Fragment key={r.id}>
+                      <tr
+                        className="border-b border-[var(--border)]/50 transition hover:bg-cyan-50/30"
+                      >
+                        <td className="py-2 pl-3 pr-1 align-middle">
+                          <button
+                            type="button"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-200/70 bg-white text-cyan-900 shadow-sm transition hover:bg-cyan-50/90"
+                            aria-expanded={open}
+                            aria-label={open ? 'Replier le détail' : 'Afficher le détail'}
+                            disabled={busy}
+                            onClick={() => setExpandedId((id) => (id === r.id ? null : r.id))}
+                          >
+                            <ChevronDown
+                              className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`}
+                              strokeWidth={2.25}
+                              aria-hidden
+                            />
+                          </button>
+                        </td>
+                        <td className="py-3 pr-2 font-mono text-xs font-semibold text-[var(--muted)]">{r.id}</td>
+                        <td className="py-3 pr-2 font-semibold text-[var(--text)] max-w-[14rem]">
+                          <span className="line-clamp-2" title={r.title}>
+                            {r.title}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-2 text-xs font-medium text-[var(--on-cream-muted)] max-w-[9rem] break-words">
+                          {r.category}
+                        </td>
+                        <td className="py-3 pr-2 tabular-nums text-[var(--text)]">{r.minimumDurationMinutes} min</td>
+                        <td className="py-3 pr-2 text-xs font-semibold uppercase text-slate-600">{r.questPace}</td>
+                        <td className="py-3 pr-2 text-xs font-semibold text-slate-600">{r.comfortLevel}</td>
+                        <td className="py-3 pr-2 text-xs font-semibold text-slate-700">
+                          {r.requiresOutdoor ? 'ext.' : '—'}
+                          {' · '}
+                          {r.requiresSocial ? 'soc.' : '—'}
+                        </td>
+                        <td className="py-3 pr-2 text-sm font-semibold">{r.published ? 'oui' : 'non'}</td>
+                        <td className="py-3 pr-4">
+                          <button
+                            type="button"
+                            className="rounded-xl border-2 border-cyan-300/60 bg-white px-3 py-1.5 text-xs font-black text-cyan-900 shadow-sm transition hover:border-cyan-400 hover:bg-cyan-50/80"
+                            disabled={busy}
+                            onClick={() => void togglePublished(r)}
+                          >
+                            {r.published ? 'Dépublier' : 'Publier'}
+                          </button>
+                        </td>
+                      </tr>
+                      {open ? (
+                        <tr key={`${r.id}-detail`} className="border-b border-[var(--border)]/50 bg-gradient-to-b from-cyan-50/40 to-white/80">
+                          <td colSpan={10} className="px-4 py-5 sm:px-6">
+                            <div className="grid gap-6 lg:grid-cols-2">
+                              <div className="space-y-4">
+                                <div>
+                                  <p className="text-xs font-black uppercase tracking-wide text-[var(--muted)]">
+                                    Titre &amp; description (FR)
+                                  </p>
+                                  <p className="mt-1 font-display text-base font-black text-[var(--on-cream)]">{r.title}</p>
+                                  <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-relaxed text-[var(--text)]">
+                                    {r.description}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black uppercase tracking-wide text-[var(--muted)]">
+                                    Titre &amp; description (EN)
+                                  </p>
+                                  <p className="mt-1 font-semibold text-[var(--text)]">{r.titleEn}</p>
+                                  <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-700">
+                                    {r.descriptionEn}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="space-y-4">
+                                <div>
+                                  <p className="text-xs font-black uppercase tracking-wide text-[var(--muted)]">
+                                    Traits cibles (0–1)
+                                  </p>
+                                  {traitRows.length ? (
+                                    <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                                      {traitRows.map(({ key, value }) => (
+                                        <li
+                                          key={key}
+                                          className="flex items-center justify-between gap-3 rounded-lg border border-slate-200/80 bg-white/90 px-3 py-2 text-xs font-semibold"
+                                        >
+                                          <span className="font-mono text-slate-600">{key}</span>
+                                          <span className="tabular-nums font-bold text-cyan-900">{value}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="mt-2 text-sm font-medium text-slate-500">Aucun trait renseigné.</p>
+                                  )}
+                                </div>
+                                <dl className="grid gap-2 rounded-xl border border-orange-200/50 bg-white/60 px-4 py-3 text-sm">
+                                  <div className="flex flex-wrap justify-between gap-2">
+                                    <dt className="font-bold text-[var(--muted)]">Archétype de secours (fallback)</dt>
+                                    <dd className="font-mono font-semibold text-[var(--text)]">
+                                      {r.fallbackQuestId ?? '—'}
+                                    </dd>
+                                  </div>
+                                  <div className="flex flex-wrap justify-between gap-2">
+                                    <dt className="font-bold text-[var(--muted)]">Créé</dt>
+                                    <dd className="font-semibold text-slate-700">{formatIsoDate(r.createdAt)}</dd>
+                                  </div>
+                                  <div className="flex flex-wrap justify-between gap-2">
+                                    <dt className="font-bold text-[var(--muted)]">Mis à jour</dt>
+                                    <dd className="font-semibold text-slate-700">{formatIsoDate(r.updatedAt)}</dd>
+                                  </div>
+                                </dl>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </div>

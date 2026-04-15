@@ -118,9 +118,9 @@ export function Navbar() {
   const marketingNavPillClass =
     'inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-2.5 lg:px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all text-sm';
 
-  /** Accès secondaire à la page « génération des quêtes » — ne rivalise pas avec les entrées principales. */
+  /** Accès secondaire à la page « génération des quêtes » — à droite avec la langue pour éviter le chevauchement sur largeurs moyennes. */
   const questGenDiscreteClass =
-    'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-700 hover:bg-white/45 hover:border-slate-200/60 transition-all motion-reduce:transition-none ml-1 lg:ml-0';
+    'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-700 hover:bg-white/45 hover:border-slate-200/60 transition-all motion-reduce:transition-none';
 
   const marketingDesktop = (
     <>
@@ -130,19 +130,6 @@ export function Navbar() {
           <Icon className="h-4 w-4 shrink-0 opacity-90" aria-hidden strokeWidth={2.25} />
         </a>
       ))}
-      <span
-        className="hidden lg:inline-block h-5 w-px shrink-0 bg-slate-300/50"
-        aria-hidden
-        role="presentation"
-      />
-      <Link
-        href="/generation-quetes"
-        className={questGenDiscreteClass}
-        title={t('navQuestGen')}
-      >
-        <Sparkles className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={2.25} aria-hidden />
-        <span>{t('navQuestGenShort')}</span>
-      </Link>
     </>
   );
 
@@ -171,12 +158,22 @@ export function Navbar() {
         </Link>
 
         {showMarketingNav && (
-          <div className="hidden md:flex flex-nowrap items-center gap-1.5 lg:gap-2.5 xl:gap-3 text-sm min-w-0 shrink">
+          <div className="hidden min-w-0 flex-1 md:flex md:flex-nowrap md:items-center md:justify-center md:gap-1.5 md:px-2 lg:gap-2.5 xl:gap-3 text-sm md:overflow-x-auto md:overflow-y-visible md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden">
             {marketingDesktop}
           </div>
         )}
 
-        <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-2 md:gap-3 md:pl-1 lg:pl-2">
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-2 md:gap-2.5 md:pl-1 lg:gap-3 lg:pl-2">
+          {showMarketingNav ? (
+            <Link
+              href="/generation-quetes"
+              className={`${questGenDiscreteClass} hidden md:inline-flex`}
+              title={t('navQuestGen')}
+            >
+              <Sparkles className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={2.25} aria-hidden />
+              <span>{t('navQuestGenShort')}</span>
+            </Link>
+          ) : null}
           {/* Sur mobile, la langue est dans le menu burger (évite la barre surchargée). */}
           {showLocaleSwitcher ? (
             <div className="hidden md:flex md:shrink-0 md:items-center">
