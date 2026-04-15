@@ -123,25 +123,29 @@ export function Navbar() {
     'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-700 hover:bg-white/45 hover:border-slate-200/60 transition-all motion-reduce:transition-none';
 
   const marketingDesktop = (
-    <>
+    <div className="inline-flex w-max min-w-0 max-w-none flex-nowrap items-center gap-1.5 lg:gap-2 xl:gap-2.5">
       {marketingMenu.map(({ href, label, Icon }) => (
         <a key={href} href={href} className={marketingNavPillClass}>
           <span>{label}</span>
           <Icon className="h-4 w-4 shrink-0 opacity-90" aria-hidden strokeWidth={2.25} />
         </a>
       ))}
-    </>
+    </div>
   );
+
+  const navShellClass = [
+    'navbar-shell mx-auto w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[min(90rem,calc(100vw-2rem))] rounded-2xl min-w-0 px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3',
+    showMarketingNav
+      ? 'flex flex-nowrap items-center justify-between gap-2 sm:gap-3 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-x-2 md:gap-y-0 lg:gap-x-4 xl:gap-x-6'
+      : 'flex flex-nowrap items-center justify-between gap-2 sm:gap-4 md:gap-5 lg:gap-7 xl:gap-10',
+  ].join(' ');
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 lg:px-6 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
-      <nav
-        className="navbar-shell flex flex-nowrap items-center justify-between gap-2 sm:gap-4 md:gap-5 lg:gap-7 xl:gap-10 px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3 mx-auto w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[min(90rem,calc(100vw-2rem))] rounded-2xl min-w-0"
-        aria-label={t('ariaMain')}
-      >
+      <nav className={navShellClass} aria-label={t('ariaMain')}>
         <Link
           href={isSignedIn ? '/app' : '/'}
-          className="flex min-w-0 shrink items-center gap-2 sm:gap-3 group"
+          className="flex shrink-0 items-center gap-2 sm:gap-3 group"
           aria-label={t('ariaHome')}
         >
           <span className="flex min-w-0 items-center gap-2 sm:gap-3" aria-hidden>
@@ -158,12 +162,12 @@ export function Navbar() {
         </Link>
 
         {showMarketingNav && (
-          <div className="hidden min-w-0 flex-1 md:flex md:flex-nowrap md:items-center md:justify-center md:gap-1.5 md:px-2 lg:gap-2.5 xl:gap-3 text-sm md:overflow-x-auto md:overflow-y-visible md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden">
+          <div className="hidden min-w-0 justify-self-stretch md:flex md:min-w-0 md:items-center md:justify-center md:overflow-x-auto md:overflow-y-visible md:px-1 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden">
             {marketingDesktop}
           </div>
         )}
 
-        <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-2 md:gap-2.5 md:pl-1 lg:gap-3 lg:pl-2">
+        <div className="flex min-w-0 shrink-0 items-center justify-end justify-self-end gap-1.5 sm:gap-2 md:gap-2.5 md:pl-1 lg:gap-3 lg:pl-2">
           {showMarketingNav ? (
             <Link
               href="/generation-quetes"

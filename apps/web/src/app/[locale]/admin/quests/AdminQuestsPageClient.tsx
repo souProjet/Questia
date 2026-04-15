@@ -1,6 +1,7 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { ChevronDown } from 'lucide-react';
 
 type Row = {
@@ -30,16 +31,25 @@ function formatTraits(traits: Record<string, unknown>): { key: string; value: st
   }));
 }
 
-function formatIsoDate(iso?: string) {
+function formatIsoDate(iso: string | undefined, locale: string) {
   if (!iso) return '—';
   try {
-    return new Intl.DateTimeFormat('fr-FR', {
+    const tag = locale === 'en' ? 'en-GB' : 'fr-FR';
+    return new Intl.DateTimeFormat(tag, {
       dateStyle: 'short',
       timeStyle: 'short',
     }).format(new Date(iso));
   } catch {
     return iso;
   }
+}
+
+function pickQuestCopy(row: Row, locale: string) {
+  const en = locale === 'en';
+  return {
+    title: en ? row.titleEn : row.title,
+    description: en ? row.descriptionEn : row.description,
+  };
 }
 
 const inputClass =
@@ -49,6 +59,65 @@ const cardClass =
   'relative overflow-hidden rounded-[1.75rem] border-2 border-orange-300/45 bg-gradient-to-br from-[#fffbeb] via-white/95 to-cyan-50/40 px-5 py-6 shadow-[0_10px_0_rgba(180,83,9,.08),0_22px_48px_rgba(249,115,22,.1)] sm:px-6';
 
 export function AdminQuestsPageClient() {
+  const locale = useLocale();
+  const listUi = useMemo(
+    () =>
+      locale === 'en'
+        ? {
+            archetypesTitle: 'Published archetypes',
+            archetypesHint:
+              'Unpublishing hides the archetype from future draws. Use “Detail” to see traits and engine fields.',
+            colCategory: 'Category',
+            colDuration: 'Duration',
+            colPace: 'Pace',
+            colComfort: 'Comfort',
+            colExtSoc: 'Out. / soc.',
+            colActions: 'Actions',
+            colTitle: 'Title',
+            colPublished: 'Published',
+            yes: 'yes',
+            no: 'no',
+            detailTitle: 'Title & description',
+            detailLang: '(English)',
+            expandShow: 'Show detail',
+            expandHide: 'Hide detail',
+            fallbackLabel: 'Fallback archetype id',
+            createdLabel: 'Created',
+            updatedLabel: 'Updated',
+            traitsHeading: 'Target traits (0–1)',
+            traitsEmpty: 'No traits set.',
+            unpublish: 'Unpublish',
+            publish: 'Publish',
+          }
+        : {
+            archetypesTitle: 'Archétypes publiés',
+            archetypesHint:
+              'Dépublier masque l’archétype pour les tirages futurs. Utilise « Détail » pour voir textes, traits et paramètres moteur.',
+            colCategory: 'Catégorie',
+            colDuration: 'Durée',
+            colPace: 'Rythme',
+            colComfort: 'Confort',
+            colExtSoc: 'Ext. / soc.',
+            colActions: 'Actions',
+            colTitle: 'Titre',
+            colPublished: 'Publié',
+            yes: 'oui',
+            no: 'non',
+            detailTitle: 'Titre & description',
+            detailLang: '(français)',
+            expandShow: 'Afficher le détail',
+            expandHide: 'Replier le détail',
+            fallbackLabel: 'Archétype de secours (fallback)',
+            createdLabel: 'Créé',
+            updatedLabel: 'Mis à jour',
+            traitsHeading: 'Traits cibles (0–1)',
+            traitsEmpty: 'Aucun trait renseigné.',
+            unpublish: 'Dépublier',
+            publish: 'Publier',
+          },
+    [locale],
+  );
+
   const [rows, setRows] = useState<Row[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -226,32 +295,30 @@ export function AdminQuestsPageClient() {
         />
         <div className="relative">
           <h2 className="font-display text-lg font-black text-[var(--on-cream)] md:text-xl">
-            Archétypes publiés ({rows?.length ?? '…'})
+            {listUi.archetypesTitle} ({rows?.length ?? '…'})
           </h2>
-          <p className="mt-1 text-sm font-semibold text-[var(--on-cream-muted)]">
-            Dépublier masque l’archétype pour les tirages futurs. Utilise « Détail » pour voir textes, traits et
-            paramètres moteur.
-          </p>
+          <p className="mt-1 text-sm font-semibold text-[var(--on-cream-muted)]">{listUi.archetypesHint}</p>
           <div className="mt-5 overflow-x-auto rounded-2xl border border-cyan-200/40 bg-white/70">
             <table className="w-full min-w-[900px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-[var(--border)] bg-cyan-50/50">
                   <th className="py-3 pl-4 pr-1 font-black text-[var(--on-cream)] w-10" />
                   <th className="py-3 pr-2 font-black text-[var(--on-cream)]">ID</th>
-                  <th className="py-3 pr-2 font-black text-[var(--on-cream)] min-w-[10rem]">Titre</th>
-                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Catégorie</th>
-                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Durée</th>
-                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Rythme</th>
-                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Confort</th>
-                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Ext. / soc.</th>
-                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">Publié</th>
-                  <th className="py-3 pr-4 font-black text-[var(--on-cream)]">Actions</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)] min-w-[10rem]">{listUi.colTitle}</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">{listUi.colCategory}</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">{listUi.colDuration}</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">{listUi.colPace}</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">{listUi.colComfort}</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">{listUi.colExtSoc}</th>
+                  <th className="py-3 pr-2 font-black text-[var(--on-cream)]">{listUi.colPublished}</th>
+                  <th className="py-3 pr-4 font-black text-[var(--on-cream)]">{listUi.colActions}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows?.map((r) => {
                   const open = expandedId === r.id;
                   const traitRows = formatTraits(r.targetTraits ?? {});
+                  const copy = pickQuestCopy(r, locale);
                   return (
                     <Fragment key={r.id}>
                       <tr
@@ -262,7 +329,7 @@ export function AdminQuestsPageClient() {
                             type="button"
                             className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-200/70 bg-white text-cyan-900 shadow-sm transition hover:bg-cyan-50/90"
                             aria-expanded={open}
-                            aria-label={open ? 'Replier le détail' : 'Afficher le détail'}
+                            aria-label={open ? listUi.expandHide : listUi.expandShow}
                             disabled={busy}
                             onClick={() => setExpandedId((id) => (id === r.id ? null : r.id))}
                           >
@@ -275,8 +342,8 @@ export function AdminQuestsPageClient() {
                         </td>
                         <td className="py-3 pr-2 font-mono text-xs font-semibold text-[var(--muted)]">{r.id}</td>
                         <td className="py-3 pr-2 font-semibold text-[var(--text)] max-w-[14rem]">
-                          <span className="line-clamp-2" title={r.title}>
-                            {r.title}
+                          <span className="line-clamp-2" title={copy.title}>
+                            {copy.title}
                           </span>
                         </td>
                         <td className="py-3 pr-2 text-xs font-medium text-[var(--on-cream-muted)] max-w-[9rem] break-words">
@@ -290,7 +357,9 @@ export function AdminQuestsPageClient() {
                           {' · '}
                           {r.requiresSocial ? 'soc.' : '—'}
                         </td>
-                        <td className="py-3 pr-2 text-sm font-semibold">{r.published ? 'oui' : 'non'}</td>
+                        <td className="py-3 pr-2 text-sm font-semibold">
+                          {r.published ? listUi.yes : listUi.no}
+                        </td>
                         <td className="py-3 pr-4">
                           <button
                             type="button"
@@ -298,7 +367,7 @@ export function AdminQuestsPageClient() {
                             disabled={busy}
                             onClick={() => void togglePublished(r)}
                           >
-                            {r.published ? 'Dépublier' : 'Publier'}
+                            {r.published ? listUi.unpublish : listUi.publish}
                           </button>
                         </td>
                       </tr>
@@ -309,27 +378,23 @@ export function AdminQuestsPageClient() {
                               <div className="space-y-4">
                                 <div>
                                   <p className="text-xs font-black uppercase tracking-wide text-[var(--muted)]">
-                                    Titre &amp; description (FR)
+                                    {listUi.detailTitle}{' '}
+                                    <span className="font-semibold normal-case text-[var(--on-cream-muted)]">
+                                      {listUi.detailLang}
+                                    </span>
                                   </p>
-                                  <p className="mt-1 font-display text-base font-black text-[var(--on-cream)]">{r.title}</p>
+                                  <p className="mt-1 font-display text-base font-black text-[var(--on-cream)]">
+                                    {copy.title}
+                                  </p>
                                   <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-relaxed text-[var(--text)]">
-                                    {r.description}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-xs font-black uppercase tracking-wide text-[var(--muted)]">
-                                    Titre &amp; description (EN)
-                                  </p>
-                                  <p className="mt-1 font-semibold text-[var(--text)]">{r.titleEn}</p>
-                                  <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-700">
-                                    {r.descriptionEn}
+                                    {copy.description}
                                   </p>
                                 </div>
                               </div>
                               <div className="space-y-4">
                                 <div>
                                   <p className="text-xs font-black uppercase tracking-wide text-[var(--muted)]">
-                                    Traits cibles (0–1)
+                                    {listUi.traitsHeading}
                                   </p>
                                   {traitRows.length ? (
                                     <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
@@ -344,23 +409,23 @@ export function AdminQuestsPageClient() {
                                       ))}
                                     </ul>
                                   ) : (
-                                    <p className="mt-2 text-sm font-medium text-slate-500">Aucun trait renseigné.</p>
+                                    <p className="mt-2 text-sm font-medium text-slate-500">{listUi.traitsEmpty}</p>
                                   )}
                                 </div>
                                 <dl className="grid gap-2 rounded-xl border border-orange-200/50 bg-white/60 px-4 py-3 text-sm">
                                   <div className="flex flex-wrap justify-between gap-2">
-                                    <dt className="font-bold text-[var(--muted)]">Archétype de secours (fallback)</dt>
+                                    <dt className="font-bold text-[var(--muted)]">{listUi.fallbackLabel}</dt>
                                     <dd className="font-mono font-semibold text-[var(--text)]">
                                       {r.fallbackQuestId ?? '—'}
                                     </dd>
                                   </div>
                                   <div className="flex flex-wrap justify-between gap-2">
-                                    <dt className="font-bold text-[var(--muted)]">Créé</dt>
-                                    <dd className="font-semibold text-slate-700">{formatIsoDate(r.createdAt)}</dd>
+                                    <dt className="font-bold text-[var(--muted)]">{listUi.createdLabel}</dt>
+                                    <dd className="font-semibold text-slate-700">{formatIsoDate(r.createdAt, locale)}</dd>
                                   </div>
                                   <div className="flex flex-wrap justify-between gap-2">
-                                    <dt className="font-bold text-[var(--muted)]">Mis à jour</dt>
-                                    <dd className="font-semibold text-slate-700">{formatIsoDate(r.updatedAt)}</dd>
+                                    <dt className="font-bold text-[var(--muted)]">{listUi.updatedLabel}</dt>
+                                    <dd className="font-semibold text-slate-700">{formatIsoDate(r.updatedAt, locale)}</dd>
                                   </div>
                                 </dl>
                               </div>
