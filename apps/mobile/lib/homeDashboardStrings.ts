@@ -38,7 +38,6 @@ export type HomeDashboardStrings = {
   shareVictoryCta: string;
   swipeAccept: string;
   swipeChange: string;
-  tapDetails: string;
   validateCta: string;
   /** Texte court sur l’overlay vert au swipe (quête acceptée) — pas le long libellé du bouton. */
   swipeValidateOverlay: string;
@@ -102,7 +101,6 @@ function fr(): HomeDashboardStrings {
     shareVictoryCta: 'Partager ta carte',
     swipeAccept: 'ACCEPTER',
     swipeChange: 'CHANGER',
-    tapDetails: 'Appuie pour voir les détails',
     validateCta: "J'ai fait la quête — valider",
     swipeValidateOverlay: 'VALIDER',
     abandonedTitle: 'À demain',
@@ -166,7 +164,6 @@ function en(): HomeDashboardStrings {
     shareVictoryCta: 'Share your card',
     swipeAccept: 'ACCEPT',
     swipeChange: 'CHANGE',
-    tapDetails: 'Tap to see details',
     validateCta: 'I did the quest — complete',
     swipeValidateOverlay: 'COMPLETE',
     abandonedTitle: 'See you tomorrow',

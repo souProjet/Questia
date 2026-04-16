@@ -37,9 +37,8 @@ const QuestDestinationMap = dynamic(
   },
 );
 
-/** Seuils de glissé sur la carte quête (web), alignés sur l'app mobile à ~100px / ~72px */
+/** Seuil de glissé horizontal sur la carte quête (web), aligné sur l'app mobile ~100px */
 const QUEST_CARD_SWIPE_X = 100;
-const QUEST_CARD_SWIPE_UP = 72;
 const QUEST_CARD_ROT_MAX = 12;
 /** Rotation au « mur » (même logique que mobile : la carte ne quitte pas l'écran) */
 const QUEST_CARD_BUMP_ROT = 14;
@@ -101,6 +100,18 @@ interface DailyQuest {
     questions?: RefinementQuestionUi[];
     consentNotice?: string;
   };
+}
+
+function cloneDailyQuestSnapshot(q: DailyQuest): DailyQuest {
+  return JSON.parse(JSON.stringify(q)) as DailyQuest;
+}
+
+function applyOptimisticRerollDecrement(q: DailyQuest): DailyQuest {
+  const daily = q.rerollsRemaining ?? 0;
+  const bonus = q.bonusRerollCredits ?? 0;
+  if (daily > 0) return { ...q, rerollsRemaining: Math.max(0, daily - 1) };
+  if (bonus > 0) return { ...q, bonusRerollCredits: Math.max(0, bonus - 1) };
+  return q;
 }
 
 // ── Safety consent ─────────────────────────────────────────────────────────────
@@ -235,8 +246,6 @@ function AppPageContent() {
   const [quest, setQuest] = useState<DailyQuest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [accepting, setAccepting] = useState(false);
-  const [completing, setCompleting] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
   const [rerolling, setRerolling] = useState(false);
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);
@@ -246,9 +255,7 @@ function AppPageContent() {
   const [reportDeferredDate, setReportDeferredDate] = useState(() =>
     new Date().toISOString().slice(0, 10),
   );
-  const [reporting, setReporting] = useState(false);
   const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
-  const [abandoning, setAbandoning] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<{ lat: number; lon: number } | null>(null);
   const [showShareCard, setShowShareCard] = useState(false);
@@ -266,6 +273,10 @@ function AppPageContent() {
   const [showRefinement, setShowRefinement] = useState(false);
   /** Évite les doublons quest_viewed sur relances silencieuses de la même quête. */
   const lastQuestViewKey = useRef<string | null>(null);
+  const acceptInFlightRef = useRef(false);
+  const completeInFlightRef = useRef(false);
+  const abandonInFlightRef = useRef(false);
+  const reportInFlightRef = useRef(false);
 
   // ── Ensure profile exists (get-or-create from onboarding localStorage) ───────
 
@@ -474,53 +485,68 @@ function AppPageContent() {
   // ── Accept quest ──────────────────────────────────────────────────────────
 
   const doAccept = useCallback(async () => {
-    if (!quest) return;
-    setAccepting(true);
+    if (!quest || acceptInFlightRef.current || quest.status !== 'pending') return;
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    acceptInFlightRef.current = true;
     setBannerError(null);
+    setQuest((prev) => (prev ? { ...prev, status: 'accepted' } : null));
+    setShowSafety(false);
+    setAcceptQuestFlash(true);
+    window.setTimeout(() => setAcceptQuestFlash(false), 780);
     try {
       const res = await fetch('/api/quest/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questDate: quest.questDate, safetyConsentGiven: quest.isOutdoor }),
+        body: JSON.stringify({
+          questDate: snapshot.questDate,
+          safetyConsentGiven: snapshot.isOutdoor,
+        }),
         cache: 'no-store',
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string };
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        setQuest(snapshot);
         setBannerError(err.error ?? t('bannerAcceptFailed'));
         return;
       }
-      const data = await res.json() as Partial<DailyQuest>;
-      setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? prev.status) as DailyQuest['status'] } : null));
+      const data = (await res.json()) as Partial<DailyQuest>;
+      setQuest((prev) =>
+        prev ? { ...prev, ...data, status: (data.status ?? 'accepted') as DailyQuest['status'] } : null,
+      );
       trackAnalyticsEvent(AnalyticsEvent.questAccepted, {
-        quest_id: questAnalyticsId(quest),
-        quest_phase: quest.phase,
-        is_outdoor: quest.isOutdoor,
+        quest_id: questAnalyticsId(snapshot),
+        quest_phase: snapshot.phase,
+        is_outdoor: snapshot.isOutdoor,
       });
-      setAcceptQuestFlash(true);
-      window.setTimeout(() => setAcceptQuestFlash(false), 780);
+    } catch {
+      setQuest(snapshot);
+      setBannerError(t('bannerAcceptFailed'));
     } finally {
-      setAccepting(false);
-      setShowSafety(false);
+      acceptInFlightRef.current = false;
     }
   }, [quest, t]);
 
   const doComplete = useCallback(async () => {
-    if (!quest) return;
-    setCompleting(true);
+    if (!quest || completeInFlightRef.current || quest.status !== 'accepted') return;
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    const qd = snapshot.questDate;
+    completeInFlightRef.current = true;
     setBannerError(null);
+    setQuest((prev) => (prev ? { ...prev, status: 'completed' } : null));
     try {
       const res = await fetch('/api/quest/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questDate: quest.questDate, action: 'complete' }),
+        body: JSON.stringify({ questDate: qd, action: 'complete' }),
         cache: 'no-store',
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string };
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        setQuest(snapshot);
         setBannerError(err.error ?? t('bannerCompleteFailed'));
         return;
       }
-      const data = await res.json() as Partial<DailyQuest> & {
+      const data = (await res.json()) as Partial<DailyQuest> & {
         xpGain?: {
           gained: number;
           breakdown: XpBreakdown;
@@ -541,8 +567,8 @@ function AppPageContent() {
           : null,
       );
       trackAnalyticsEvent(AnalyticsEvent.questCompleted, {
-        quest_id: questAnalyticsId(quest),
-        quest_phase: quest.phase,
+        quest_id: questAnalyticsId(snapshot),
+        quest_phase: snapshot.phase,
         xp_gained: data.xpGain?.gained,
       });
       if (data.xpGain) {
@@ -553,8 +579,11 @@ function AppPageContent() {
       } else {
         setShowShareCard(true);
       }
+    } catch {
+      setQuest(snapshot);
+      setBannerError(t('bannerCompleteFailed'));
     } finally {
-      setCompleting(false);
+      completeInFlightRef.current = false;
     }
   }, [quest, t]);
 
@@ -576,85 +605,111 @@ function AppPageContent() {
 
   const handleReroll = async () => {
     if (!quest || rerolling) return;
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    const qd = snapshot.questDate;
     setShowRerollConfirm(false);
     setRerolling(true);
     setBannerError(null);
+    setQuest((prev) => (prev && prev.questDate === qd ? applyOptimisticRerollDecrement(prev) : prev));
     try {
       const res = await fetch('/api/quest/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questDate: quest.questDate, action: 'reroll' }),
+        body: JSON.stringify({ questDate: qd, action: 'reroll' }),
         cache: 'no-store',
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setQuest(snapshot);
         setBannerError(data.error ?? t('bannerRerollFailed'));
         return;
       }
-      // Rechargement immédiat (pas d'attente géoloc : évite plusieurs secondes sans retour visible).
       const ok = await loadQuest(userPosition?.lat, userPosition?.lon, {
         silent: true,
-        questDate: quest.questDate,
+        questDate: qd,
       });
       if (!ok) {
         setBannerError(t('bannerReloadFailed'));
       } else {
         setQuestCardSwapKey((k) => k + 1);
-        trackAnalyticsEvent(AnalyticsEvent.questRerolled, { quest_id: questAnalyticsId(quest) });
+        trackAnalyticsEvent(AnalyticsEvent.questRerolled, { quest_id: questAnalyticsId(snapshot) });
       }
+    } catch {
+      setQuest(snapshot);
+      setBannerError(t('bannerRerollFailed'));
     } finally {
       setRerolling(false);
     }
   };
 
   const handleReportConfirm = async () => {
-    if (!quest || reporting) return;
+    if (!quest || reportInFlightRef.current) return;
     if (quest.status !== 'pending') return;
     if ((quest.questPace ?? 'instant') !== 'planned') return;
-    setReporting(true);
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    const qd = snapshot.questDate;
+    const deferred = reportDeferredDate;
+    reportInFlightRef.current = true;
     setBannerError(null);
+    setShowReportModal(false);
+    setQuest((prev) => (prev && prev.questDate === qd ? applyOptimisticRerollDecrement(prev) : prev));
     try {
       const res = await fetch('/api/quest/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'report',
-          questDate: quest.questDate,
-          deferredUntil: reportDeferredDate,
+          questDate: qd,
+          deferredUntil: deferred,
         }),
         cache: 'no-store',
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setQuest(snapshot);
+        setShowReportModal(true);
         setBannerError(data.error ?? t('bannerReportFailed'));
         return;
       }
-      setShowReportModal(false);
       const ok = await loadQuest(userPosition?.lat, userPosition?.lon, {
         silent: true,
-        questDate: quest.questDate,
+        questDate: qd,
       });
       if (!ok) setBannerError(t('bannerReloadFailed'));
       else setQuestCardSwapKey((k) => k + 1);
+    } catch {
+      setQuest(snapshot);
+      setShowReportModal(true);
+      setBannerError(t('bannerReportFailed'));
     } finally {
-      setReporting(false);
+      reportInFlightRef.current = false;
     }
   };
 
   const confirmAbandon = async () => {
-    if (!quest || abandoning) return;
+    if (!quest || abandonInFlightRef.current) return;
     if (quest.status !== 'pending' && quest.status !== 'accepted') return;
-    setAbandoning(true);
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    const qd = snapshot.questDate;
+    abandonInFlightRef.current = true;
     setBannerError(null);
+    setShowAbandonConfirm(false);
+    setQuest((prev) =>
+      prev && prev.questDate === qd
+        ? { ...prev, status: 'abandoned' as const, streak: 0 }
+        : prev,
+    );
     try {
       const res = await fetch('/api/quest/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'abandon', questDate: quest.questDate }),
+        body: JSON.stringify({ action: 'abandon', questDate: qd }),
         cache: 'no-store',
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setQuest(snapshot);
+        setShowAbandonConfirm(true);
         setBannerError(data.error ?? t('bannerAbandonFailed'));
         return;
       }
@@ -669,10 +724,13 @@ function AppPageContent() {
             }
           : null,
       );
-      trackAnalyticsEvent(AnalyticsEvent.questAbandoned, { quest_id: questAnalyticsId(quest) });
-      setShowAbandonConfirm(false);
+      trackAnalyticsEvent(AnalyticsEvent.questAbandoned, { quest_id: questAnalyticsId(snapshot) });
+    } catch {
+      setQuest(snapshot);
+      setShowAbandonConfirm(true);
+      setBannerError(t('bannerAbandonFailed'));
     } finally {
-      setAbandoning(false);
+      abandonInFlightRef.current = false;
     }
   };
 
@@ -697,8 +755,6 @@ function AppPageContent() {
   const questPace = quest?.questPace ?? 'instant';
   const isPlannedQuest = questPace === 'planned';
 
-  const [showDetails, setShowDetails] = useState(false);
-
   /** Glisser sur la carte (pointeur / tactile) */
   const [questSwipeOffset, setQuestSwipeOffset] = useState({ x: 0, y: 0 });
   const [questSwipeDragging, setQuestSwipeDragging] = useState(false);
@@ -713,7 +769,7 @@ function AppPageContent() {
     startX: 0,
     startY: 0,
   });
-  const swipePendingActionRef = useRef<null | 'accept' | 'reroll' | 'details' | 'complete'>(null);
+  const swipePendingActionRef = useRef<null | 'accept' | 'reroll' | 'complete'>(null);
 
   const endQuestSwipe = useCallback(() => {
     questSwipeRef.current = { active: false, pointerId: null, startX: 0, startY: 0 };
@@ -755,16 +811,13 @@ function AppPageContent() {
       handleAccept();
       return;
     }
-    if (action === 'details') {
-      setSwipeParkedAfterFlight(true);
-    }
   }, [handleAccept, quest?.isOutdoor, doComplete]);
 
   const runSwipeCompletionRef = useRef(runSwipeCompletion);
   runSwipeCompletionRef.current = runSwipeCompletion;
 
   const startSwipeFlight = useCallback(
-    (dir: 'right' | 'left' | 'up') => {
+    (dir: 'right' | 'left') => {
       if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         if (isAccepted) {
           void doComplete();
@@ -773,16 +826,12 @@ function AppPageContent() {
         }
         if (dir === 'right') handleAccept();
         else if (dir === 'left' && canReroll) confirmReroll();
-        else if (dir === 'up') setShowDetails(true);
         endQuestSwipe();
         return;
       }
       const vw = typeof window !== 'undefined' ? window.innerWidth : 400;
-      const vh = typeof window !== 'undefined' ? window.innerHeight : 700;
       const wallX = Math.min(vw * 0.22, 112);
-      const wallY = -Math.min(vh * 0.12, 88);
       let endX = 0;
-      let endY = 0;
       if (dir === 'right') {
         swipePendingActionRef.current = isAccepted ? 'complete' : 'accept';
         endX = wallX;
@@ -790,11 +839,6 @@ function AppPageContent() {
         swipePendingActionRef.current = 'reroll';
         endX = -wallX;
         confirmReroll();
-      } else {
-        swipePendingActionRef.current = 'details';
-        endX = 0;
-        endY = wallY;
-        setShowDetails(true);
       }
       questSwipeRef.current = { active: false, pointerId: null, startX: 0, startY: 0 };
       setQuestSwipeDragging(false);
@@ -802,11 +846,11 @@ function AppPageContent() {
       setSwipeFlying(true);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          setQuestSwipeOffset({ x: endX, y: endY });
+          setQuestSwipeOffset({ x: endX, y: 0 });
         });
       });
     },
-    [isAccepted, canReroll, handleAccept, confirmReroll, doComplete, endQuestSwipe, setShowDetails],
+    [isAccepted, canReroll, handleAccept, confirmReroll, doComplete, endQuestSwipe],
   );
 
   useEffect(() => {
@@ -820,16 +864,16 @@ function AppPageContent() {
   /** Quand toutes les surfaces « bloquantes » sont fermées, on ramène la carte au centre. */
   useEffect(() => {
     if (!swipeParkedAfterFlight) return;
-    if (showRerollConfirm || showSafety || showDetails) return;
+    if (showRerollConfirm || showSafety) return;
     setSwipeParkedAfterFlight(false);
     endQuestSwipe();
-  }, [swipeParkedAfterFlight, showRerollConfirm, showSafety, showDetails, endQuestSwipe]);
+  }, [swipeParkedAfterFlight, showRerollConfirm, showSafety, endQuestSwipe]);
 
   const onQuestCardPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!(isPending || isAccepted) || accepting || rerolling || reporting || completing || swipeFlying || swipeParkedAfterFlight) return;
+      if (!(isPending || isAccepted) || rerolling || swipeFlying || swipeParkedAfterFlight) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      if ((e.target as HTMLElement).closest('button')) return;
+      if ((e.target as HTMLElement).closest('button, a, [data-quest-card-scroll]')) return;
       questSwipeRef.current = {
         active: true,
         pointerId: e.pointerId,
@@ -839,17 +883,17 @@ function AppPageContent() {
       setQuestSwipeDragging(true);
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [isPending, isAccepted, accepting, rerolling, reporting, completing, swipeFlying, swipeParkedAfterFlight],
+    [isPending, isAccepted, rerolling, swipeFlying, swipeParkedAfterFlight],
   );
 
-  /** Une seule direction à la fois : horizontal (gauche/droite) ou vertical (haut), pas les deux. */
+  /** Quête en attente : seul le swipe horizontal compte (pas d’ouverture « détails » au vertical). */
   const projectSwipeDelta = useCallback((dx: number, dy: number) => {
     const ax = Math.abs(dx);
     const ay = Math.abs(dy);
     if (ax >= ay) {
       return { x: dx, y: 0 };
     }
-    return { x: 0, y: Math.min(0, dy) };
+    return { x: 0, y: 0 };
   }, []);
 
   /** En accepté : seul le swipe vers la droite suit le doigt (pas de gauche / haut inutiles). */
@@ -894,7 +938,7 @@ function AppPageContent() {
       const horizontal = absX >= absY;
 
       if (isAccepted) {
-        if (horizontal && absX > QUEST_CARD_SWIPE_X && dx > 0 && !completing) {
+        if (horizontal && absX > QUEST_CARD_SWIPE_X && dx > 0 && !completeInFlightRef.current) {
           startSwipeFlight('right');
           return;
         }
@@ -902,27 +946,19 @@ function AppPageContent() {
         return;
       }
 
-      if (horizontal) {
-        if (absX > QUEST_CARD_SWIPE_X) {
-          if (dx > 0) {
-            startSwipeFlight('right');
-            return;
-          }
-          if (canReroll) {
-            startSwipeFlight('left');
-            return;
-          }
+      if (horizontal && absX > QUEST_CARD_SWIPE_X) {
+        if (dx > 0) {
+          startSwipeFlight('right');
+          return;
         }
-        endQuestSwipe();
-        return;
-      }
-      if (dy < -QUEST_CARD_SWIPE_UP) {
-        startSwipeFlight('up');
-        return;
+        if (canReroll) {
+          startSwipeFlight('left');
+          return;
+        }
       }
       endQuestSwipe();
     },
-    [isAccepted, completing, endQuestSwipe, startSwipeFlight, canReroll],
+    [isAccepted, endQuestSwipe, startSwipeFlight, canReroll],
   );
 
   const onQuestCardPointerCancel = useCallback(
@@ -958,24 +994,17 @@ function AppPageContent() {
   }, [swipeFlying]);
 
   /** Transform / overlays : en attente ou acceptée (swipe pour valider), hors chargements */
-  const questCardTransformsActive =
-    (isPending || isAccepted) && !(rerolling || reporting || accepting) && !completing;
+  const questCardTransformsActive = (isPending || isAccepted) && !rerolling;
   /** Gestes : pas pendant l'animation de sortie */
   const questCardSwipeInteractive =
-    (isPending || isAccepted) &&
-    !(rerolling || reporting || accepting) &&
-    !completing &&
-    !swipeFlying &&
-    !swipeParkedAfterFlight;
+    (isPending || isAccepted) && !rerolling && !swipeFlying && !swipeParkedAfterFlight;
 
   const swipeOverlayOpacity = useMemo(() => {
     const ox = questSwipeOffset.x;
-    const oy = questSwipeOffset.y;
     const acceptOp = ox > 0 ? Math.min(1, ox / QUEST_CARD_SWIPE_X) : 0;
     const changeOp =
       isPending && ox < 0 ? Math.min(1, (-ox / QUEST_CARD_SWIPE_X) * (canReroll ? 1 : 0.35)) : 0;
-    const detailOp = isPending && oy < 0 ? Math.min(1, -oy / QUEST_CARD_SWIPE_UP) : 0;
-    return { acceptOp, changeOp, detailOp };
+    return { acceptOp, changeOp };
   }, [questSwipeOffset, canReroll, isPending]);
 
   const questCardSwipeStyle = useMemo((): React.CSSProperties | undefined => {
@@ -985,20 +1014,15 @@ function AppPageContent() {
       -QUEST_CARD_ROT_MAX,
       Math.min(QUEST_CARD_ROT_MAX, (x / 220) * QUEST_CARD_ROT_MAX),
     );
-    let scale = 1;
     if (swipeFlying) {
       if (x > 40) rot = QUEST_CARD_BUMP_ROT;
       else if (x < -40) rot = -QUEST_CARD_BUMP_ROT;
-      else if (y < -40) {
-        rot = -6;
-        scale = 0.97;
-      }
     }
     const bumpOutEase = 'cubic-bezier(0.22, 0.82, 0.28, 1)';
     const bumpBackEase = 'cubic-bezier(0.34, 1.25, 0.45, 1)';
     const snapEase = 'cubic-bezier(0.34, 1.25, 0.45, 1)';
     return {
-      transform: `translate3d(${x}px, ${y}px, 0) rotate(${rot}deg) scale(${scale})`,
+      transform: `translate3d(${x}px, ${y}px, 0) rotate(${rot}deg)`,
       transition:
         questSwipeDragging && !swipeFlying
           ? 'none'
@@ -1029,17 +1053,16 @@ function AppPageContent() {
       if (quest.status === 'pending') {
         if (e.key === 'ArrowRight') { handleAccept(); e.preventDefault(); }
         else if (e.key === 'ArrowLeft' && canReroll) { confirmReroll(); e.preventDefault(); }
-        else if (e.key === 'ArrowUp' || e.key === 'Enter') { setShowDetails(true); e.preventDefault(); }
         return;
       }
-      if (quest.status === 'accepted' && e.key === 'ArrowRight' && !completing) {
+      if (quest.status === 'accepted' && e.key === 'ArrowRight' && !completeInFlightRef.current) {
         e.preventDefault();
         void doComplete();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [quest, canReroll, completing, handleAccept, confirmReroll, doComplete]);
+  }, [quest, canReroll, handleAccept, confirmReroll, doComplete]);
 
   if (!isLoaded || loading) {
     return (
@@ -1148,7 +1171,7 @@ function AppPageContent() {
                 : isAccepted || isCompleted
                   ? 'border-emerald-400/40 shadow-emerald-500/15'
                   : 'border-[var(--orange)]/30 shadow-orange-500/10'
-            } bg-[var(--card)] ${rerolling || reporting || accepting || completing ? 'pointer-events-none opacity-50 scale-[0.97]' : ''} ${
+            } bg-[var(--card)] ${rerolling ? 'pointer-events-none opacity-50 scale-[0.97]' : ''} ${
               questCardSwipeInteractive
                 ? questSwipeDragging
                   ? 'cursor-grabbing select-none'
@@ -1197,32 +1220,47 @@ function AppPageContent() {
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
                       {t('questCardMissionEyebrow')}
                     </p>
-                    <div className="max-h-[min(12.5rem,38vh)] overflow-y-auto pr-1">
+                    <div
+                      className="max-h-[min(22rem,52vh)] overflow-y-auto overscroll-y-contain pr-1"
+                      data-quest-card-scroll
+                    >
                       <p className="text-[15px] leading-relaxed text-[var(--text)]">{quest.mission}</p>
+                      <p className="mt-4 text-xs font-semibold tabular-nums text-[var(--muted)]">{quest.duration}</p>
+
+                      {quest.deferredSocialUntil && isPending ? (
+                        <div className="mt-4 rounded-xl border border-[var(--link-on-bg)]/30 bg-[var(--link-on-bg)]/[0.08] px-3 py-3 text-sm font-semibold leading-snug text-[var(--link-on-bg)]">
+                          {t('reportHint')}
+                        </div>
+                      ) : null}
+
+                      {quest.isOutdoor && quest.destination ? (
+                        <section className="mt-5">
+                          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">
+                            {t('mapHeading')}
+                          </p>
+                          <p className="mt-1 text-[11px] leading-snug text-[var(--muted)] sm:text-xs">{t('mapDescription')}</p>
+                          <div className="mt-3">
+                            <QuestDestinationMap destination={quest.destination} userPosition={userPosition} compact />
+                          </div>
+                        </section>
+                      ) : null}
+
+                      {quest.safetyNote && isPending ? (
+                        <section className="mt-5 rounded-xl border border-[var(--orange)]/30 bg-[var(--orange)]/[0.06] p-3 sm:p-4">
+                          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">
+                            {t('safetyTitle')}
+                          </p>
+                          <p className="mt-2 text-sm leading-relaxed text-[var(--text)]">{quest.safetyNote}</p>
+                        </section>
+                      ) : null}
                     </div>
-                    <p className="mt-4 text-xs font-semibold tabular-nums text-[var(--muted)]">{quest.duration}</p>
                   </div>
                 </div>
 
-                {isPending && (
-                  <button
-                    type="button"
-                    onClick={() => setShowDetails(true)}
-                    className="w-full border-t border-[var(--border-ui)]/25 py-3 text-center text-xs font-semibold text-[var(--muted)]/70 transition-colors hover:text-[var(--muted)]"
-                  >
-                    {t('swipeTapDetails')}
-                  </button>
-                )}
-
                 {isAccepted && (
                   <div className="px-5 pb-5 space-y-2">
-                    <button
-                      type="button"
-                      onClick={doComplete}
-                      disabled={completing}
-                      className="btn btn-primary btn-lg w-full text-base font-black"
-                    >
-                      {completing ? '\u2026' : t('validateQuest')}
+                    <button type="button" onClick={() => void doComplete()} className="btn btn-primary btn-lg w-full text-base font-black">
+                      {t('validateQuest')}
                     </button>
                     <button
                       type="button"
@@ -1250,6 +1288,19 @@ function AppPageContent() {
 
                 {isPending && (
                   <div className="relative z-0 px-5 pb-5 space-y-2">
+                    {isPlannedQuest ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReportDeferredDate(calendarDay);
+                          setShowReportModal(true);
+                        }}
+                        disabled={!canReroll}
+                        className="w-full rounded-xl border border-[var(--link-on-bg)]/30 py-3 text-sm font-bold text-[var(--link-on-bg)] transition-colors hover:bg-[var(--link-on-bg)]/5 disabled:opacity-40"
+                      >
+                        {t('reportShortQuest')}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={confirmReroll}
@@ -1258,9 +1309,8 @@ function AppPageContent() {
                     >
                       {rerolling ? '\u2026' : t('changeQuest', { label: rerollLabel })}
                     </button>
-                    <button type="button" onClick={handleAccept} disabled={accepting}
-                      className="btn btn-cta btn-lg w-full text-base font-black">
-                      {accepting ? '\u2026' : t('acceptChallenge')}
+                    <button type="button" onClick={handleAccept} className="btn btn-cta btn-lg w-full text-base font-black">
+                      {t('acceptChallenge')}
                     </button>
                     <button
                       type="button"
@@ -1291,14 +1341,6 @@ function AppPageContent() {
                     >
                       <span className="rotate-12 text-2xl font-black tracking-[0.2em] text-orange-800">
                         {t('swipeOverlayChange')}
-                      </span>
-                    </div>
-                    <div
-                      className="absolute left-0 right-0 top-0 flex h-[52px] items-center justify-center rounded-t-[28px] bg-indigo-500/20"
-                      style={{ opacity: swipeOverlayOpacity.detailOp }}
-                    >
-                      <span className="text-base font-black tracking-wide text-indigo-600 dark:text-indigo-400">
-                        {t('swipeOverlayDetails')}
                       </span>
                     </div>
                   </div>
@@ -1348,110 +1390,6 @@ function AppPageContent() {
         </div>
       </main>
 
-      {/* Detail panel — mobile-first : hauteur limitée, scroll interne, actions collées en bas */}
-      {showDetails && quest && (
-        <div className="fixed inset-0 z-[90] flex flex-col justify-end sm:justify-center sm:p-4">
-          <div className="quest-modal-backdrop absolute inset-0 cursor-pointer" onClick={() => setShowDetails(false)} />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="quest-detail-title"
-            className="quest-modal-sheet relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden sm:mx-auto sm:max-h-[min(88vh,820px)]"
-          >
-            <div className="flex shrink-0 justify-center pt-2.5 pb-1 sm:hidden">
-              <div className="h-1 w-10 rounded-full bg-[var(--muted)]/30" />
-            </div>
-            <div className="quest-modal-panel-accent shrink-0" />
-            <div className="flex shrink-0 items-start justify-between gap-2 border-b border-[var(--border-ui)]/25 px-4 pb-3 pt-1 sm:px-5 sm:pb-4 sm:pt-3">
-              <div className="min-w-0 flex-1 pr-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--orange)]">{t('detailEyebrow')}</p>
-                <h2 id="quest-detail-title" className="font-display text-lg font-black leading-tight text-[var(--text)] sm:text-xl">
-                  {quest.title}
-                </h2>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[var(--muted)] sm:text-xs">
-                  <span>{quest.duration}</span>
-                  {quest.isOutdoor ? (
-                    <span className="rounded-full border border-[var(--green)]/30 bg-[var(--green)]/8 px-2 py-0.5 text-[10px] font-bold text-[var(--green)]">
-                      {t('outdoorBadge')}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowDetails(false)}
-                className="shrink-0 rounded-xl px-3 py-2 text-sm font-bold text-[var(--muted)] hover:bg-[var(--muted)]/10"
-                aria-label={t('detailCloseLabel')}
-              >
-                {t('detailCloseLabel')}
-              </button>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 sm:px-5 space-y-4">
-              {quest.hook ? (
-                <section>
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">{t('hookLabel')}</p>
-                  <blockquote className="mt-2 rounded-xl border border-[var(--muted)]/15 bg-[var(--bg)]/40 px-3 py-3 text-center text-sm italic leading-relaxed text-[var(--text)] sm:px-4">
-                    &ldquo;{quest.hook}&rdquo;
-                  </blockquote>
-                </section>
-              ) : null}
-
-              <section>
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">{t('missionHeading')}</p>
-                <p className="mt-2 text-sm font-medium leading-relaxed text-[var(--text)] sm:text-[15px]">{quest.mission}</p>
-              </section>
-
-              {quest.isOutdoor && quest.destination ? (
-                <section>
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">{t('mapHeading')}</p>
-                  <p className="mt-1 text-[11px] leading-snug text-[var(--muted)] sm:text-xs">{t('mapDescription')}</p>
-                  <div className="mt-3">
-                    <QuestDestinationMap destination={quest.destination} userPosition={userPosition} compact />
-                  </div>
-                </section>
-              ) : null}
-
-              {quest.safetyNote && isPending ? (
-                <section className="rounded-xl border border-[var(--orange)]/30 bg-[var(--orange)]/[0.06] p-3 sm:p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">{t('safetyTitle')}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--text)]">{quest.safetyNote}</p>
-                </section>
-              ) : null}
-            </div>
-
-            {isPending ? (
-              <div className="shrink-0 space-y-2 border-t border-[var(--border-ui)]/25 bg-[var(--card)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5">
-                {isPlannedQuest ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowDetails(false);
-                      setReportDeferredDate(calendarDay);
-                      setShowReportModal(true);
-                    }}
-                    disabled={!canReroll}
-                    className="w-full rounded-xl border border-[var(--link-on-bg)]/30 py-3 text-sm font-bold text-[var(--link-on-bg)] transition-colors hover:bg-[var(--link-on-bg)]/5 disabled:opacity-40"
-                  >
-                    {t('reportShortQuest')}
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDetails(false);
-                    setShowAbandonConfirm(true);
-                  }}
-                  className="w-full rounded-xl border border-[var(--muted)]/25 py-3 text-sm font-bold text-[var(--muted)] transition-colors hover:bg-[var(--muted)]/5"
-                >
-                  {t('notForMe')}
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      )}
-
       {showSafety && quest && (
         <SafetySheet quest={quest} onConfirm={doAccept} onClose={() => setShowSafety(false)} />
       )}
@@ -1484,8 +1422,8 @@ function AppPageContent() {
               <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[var(--subtle)]" htmlFor="report-date">{t('reportDateLabel')}</label>
               <input id="report-date" type="date" className="mt-1 w-full rounded-xl border border-[color:var(--border-ui)] bg-[var(--input-bg)] px-3 py-2 text-[var(--text)]" min={calendarDay} max={reportDateMax} value={reportDeferredDate} onChange={(e) => setReportDeferredDate(e.target.value)} />
               <div className="mt-5 flex gap-2">
-                <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowReportModal(false)} disabled={reporting}>{t('cancel')}</button>
-                <button type="button" className="btn btn-primary btn-md flex-[2] font-black" onClick={() => void handleReportConfirm()} disabled={reporting || !canReroll}>{reporting ? '\u2026' : t('confirm')}</button>
+                <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowReportModal(false)}>{t('cancel')}</button>
+                <button type="button" className="btn btn-primary btn-md flex-[2] font-black" onClick={() => void handleReportConfirm()} disabled={!canReroll}>{t('confirm')}</button>
               </div>
             </div>
           </div>
@@ -1501,8 +1439,8 @@ function AppPageContent() {
               <h3 id="abandon-title" className="font-display text-lg font-black text-[var(--text)]">{t('abandonModalTitle')}</h3>
               <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{t('abandonModalBody')}</p>
               <div className="mt-5 flex gap-2">
-                <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowAbandonConfirm(false)} disabled={abandoning}>{t('back')}</button>
-                <button type="button" className="btn btn-md flex-[2] border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--text)_10%,var(--card))] font-black text-[var(--text)]" onClick={() => void confirmAbandon()} disabled={abandoning}>{abandoning ? '\u2026' : t('confirm')}</button>
+                <button type="button" className="btn btn-ghost btn-md flex-1" onClick={() => setShowAbandonConfirm(false)}>{t('back')}</button>
+                <button type="button" className="btn btn-md flex-[2] border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--text)_10%,var(--card))] font-black text-[var(--text)]" onClick={() => void confirmAbandon()}>{t('confirm')}</button>
               </div>
             </div>
           </div>

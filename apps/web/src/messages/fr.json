@@ -379,7 +379,7 @@
     "swipeOverlayChange": "CHANGER",
     "swipeOverlayDetails": "DÉTAILS",
     "swipeOverlayValidate": "VALIDER",
-    "swipeKeyboardHint": "← changer · → accepter · ↑ détails",
+    "swipeKeyboardHint": "← changer · → accepter",
     "swipeKeyboardHintAccepted": "→ glisser pour valider la quête",
     "abandonedTitle": "Pas cette fois — c'est noté.",
     "abandonedSubtitle": "Aucun jugement : ta série est repartie à zéro, demain est une nouvelle carte.",

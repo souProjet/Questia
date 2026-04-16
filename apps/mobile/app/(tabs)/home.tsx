@@ -39,7 +39,6 @@ import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/Qu
 import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
 import { QuestHomeLoading } from '../../components/QuestHomeLoading';
 import { QuestSwipeCard } from '../../components/QuestSwipeCard';
-import { QuestDetailDrawer } from '../../components/QuestDetailDrawer';
 import { LinearGradient } from 'expo-linear-gradient';
 import { hapticError, hapticMedium, hapticSuccess, hapticWarning } from '../../lib/haptics';
 import { getQuestReportStrings } from '../../lib/questReportStrings';
@@ -97,6 +96,18 @@ interface DailyQuest {
     questions?: RefinementQuestionUi[];
     consentNotice?: string;
   };
+}
+
+function cloneDailyQuestSnapshot(q: DailyQuest): DailyQuest {
+  return JSON.parse(JSON.stringify(q)) as DailyQuest;
+}
+
+function applyOptimisticRerollDecrement(q: DailyQuest): DailyQuest {
+  const daily = q.rerollsRemaining ?? 0;
+  const bonus = q.bonusRerollCredits ?? 0;
+  if (daily > 0) return { ...q, rerollsRemaining: Math.max(0, daily - 1) };
+  if (bonus > 0) return { ...q, bonusRerollCredits: Math.max(0, bonus - 1) };
+  return q;
 }
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
@@ -200,12 +211,9 @@ export default function DashboardScreen() {
   const [showRefinement, setShowRefinement] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [accepting, setAccepting] = useState(false);
-  const [completing, setCompleting] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
   const [rerolling, setRerolling] = useState(false);
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const [showSwipeOnboarding, setShowSwipeOnboarding] = useState(false);
   const [questCardSwapKey, setQuestCardSwapKey] = useState(0);
   const [rerollsRemaining, setRerollsRemaining] = useState(1);
@@ -230,9 +238,9 @@ export default function DashboardScreen() {
   const [reportDeferredDate, setReportDeferredDate] = useState(() =>
     new Date().toISOString().slice(0, 10),
   );
-  const [reporting, setReporting] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
-  const [abandoning, setAbandoning] = useState(false);
+  const abandonInFlightRef = useRef(false);
+  const reportInFlightRef = useRef(false);
 
   const ensureProfile = useCallback(async (token: string | null): Promise<{ ok: boolean; error?: string }> => {
     try {
@@ -389,90 +397,108 @@ export default function DashboardScreen() {
   }, [authLoaded, loadQuest, enrichQuestWithLocation, questDateFromRoute]);
 
   const doAccept = useCallback(async () => {
-    if (!quest) return;
-    setAccepting(true);
+    if (!quest || quest.status !== 'pending') return;
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    setError(null);
+    hapticMedium();
+    setQuest((prev) => (prev ? { ...prev, status: 'accepted' } : null));
+    setShowSafety(false);
+    acceptFlashOp.setValue(0);
+    Animated.sequence([
+      Animated.timing(acceptFlashOp, { toValue: 1, duration: 72, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(acceptFlashOp, { toValue: 0, duration: 620, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+    ]).start();
     try {
       const token = await getToken();
       const res = await apiFetch(`${API_BASE_URL}/api/quest/daily`, token, {
         method: 'POST',
-        body: JSON.stringify({ questDate: quest.questDate, safetyConsentGiven: quest.isOutdoor }),
+        body: JSON.stringify({ questDate: snapshot.questDate, safetyConsentGiven: snapshot.isOutdoor }),
       });
-      if (res.ok) {
-        hapticMedium();
-        const data = await res.json() as Partial<DailyQuest>;
-        trackMobileEvent(AnalyticsEvent.questAccepted, {
-          quest_id: questAnalyticsId(quest),
-          quest_phase: quest.phase,
-          is_outdoor: quest.isOutdoor,
-        });
-        setQuest((prev) => (prev ? { ...prev, ...data, status: (data.status ?? prev.status) as DailyQuest['status'] } : null));
-        setShowSafety(false);
-        acceptFlashOp.setValue(0);
-        Animated.sequence([
-          Animated.timing(acceptFlashOp, { toValue: 1, duration: 72, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(acceptFlashOp, { toValue: 0, duration: 620, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
-        ]).start();
-      } else {
+      if (!res.ok) {
         hapticError();
+        const data = await res.json().catch(() => ({}));
+        setQuest(snapshot);
+        setError((data as { error?: string }).error ?? homeUi.errApiCheck);
         setQuestCardSwapKey((k) => k + 1);
+        return;
       }
-    } finally {
-      setAccepting(false);
+      const data = await res.json() as Partial<DailyQuest>;
+      trackMobileEvent(AnalyticsEvent.questAccepted, {
+        quest_id: questAnalyticsId(snapshot),
+        quest_phase: snapshot.phase,
+        is_outdoor: snapshot.isOutdoor,
+      });
+      setQuest((prev) =>
+        prev ? { ...prev, ...data, status: (data.status ?? 'accepted') as DailyQuest['status'] } : null,
+      );
+    } catch {
+      hapticError();
+      setQuest(snapshot);
+      setError(homeUi.errApiCheck);
+      setQuestCardSwapKey((k) => k + 1);
     }
-  }, [quest, getToken, acceptFlashOp]);
+  }, [quest, getToken, acceptFlashOp, homeUi.errApiCheck]);
 
   const doComplete = useCallback(async () => {
-    if (!quest) return;
-    setCompleting(true);
+    if (!quest || quest.status !== 'accepted') return;
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    const qd = snapshot.questDate;
+    setError(null);
+    setQuest((prev) => (prev ? { ...prev, status: 'completed' } : null));
     try {
       const token = await getToken();
       const res = await apiFetch(`${API_BASE_URL}/api/quest/daily`, token, {
         method: 'POST',
-        body: JSON.stringify({ questDate: quest.questDate, action: 'complete' }),
+        body: JSON.stringify({ questDate: qd, action: 'complete' }),
       });
-      if (res.ok) {
-        const data = await res.json() as Partial<DailyQuest> & {
-          xpGain?: { gained: number; breakdown: XpBreakdown; newTotal: number; previousTotal: number };
-          badgesUnlocked?: DisplayBadge[];
-          progression?: ProgressionPayload;
-        };
-        const qd = quest.questDate;
-        setQuest((prev) =>
-          prev
-            ? {
-                ...prev,
-                ...data,
-                status: (data.status ?? 'completed') as DailyQuest['status'],
-                progression: data.progression ?? prev.progression,
-                xpAwarded: data.xpAwarded ?? prev.xpAwarded,
-              }
-            : null,
-        );
-        trackMobileEvent(AnalyticsEvent.questCompleted, {
-          quest_id: questAnalyticsId(quest),
-          quest_phase: quest.phase,
-          ...(data.xpGain?.gained != null ? { xp_gained: data.xpGain.gained } : {}),
-        });
-        if (data.xpGain) {
-          hapticSuccess();
-          setReward({
-            xpGain: data.xpGain,
-            badgesUnlocked: data.badgesUnlocked ?? [],
-          });
-          setShowReward(true);
-        } else {
-          hapticSuccess();
-          trackMobileEvent(AnalyticsEvent.shareOpened, { share_channel: 'quest_card' });
-          router.push({ pathname: '/share-card', params: { questDate: qd } });
-        }
-      } else {
+      if (!res.ok) {
         hapticError();
+        const data = await res.json().catch(() => ({}));
+        setQuest(snapshot);
+        setError((data as { error?: string }).error ?? homeUi.errApiCheck);
         setQuestCardSwapKey((k) => k + 1);
+        return;
       }
-    } finally {
-      setCompleting(false);
+      const data = await res.json() as Partial<DailyQuest> & {
+        xpGain?: { gained: number; breakdown: XpBreakdown; newTotal: number; previousTotal: number };
+        badgesUnlocked?: DisplayBadge[];
+        progression?: ProgressionPayload;
+      };
+      setQuest((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...data,
+              status: (data.status ?? 'completed') as DailyQuest['status'],
+              progression: data.progression ?? prev.progression,
+              xpAwarded: data.xpAwarded ?? prev.xpAwarded,
+            }
+          : null,
+      );
+      trackMobileEvent(AnalyticsEvent.questCompleted, {
+        quest_id: questAnalyticsId(snapshot),
+        quest_phase: snapshot.phase,
+        ...(data.xpGain?.gained != null ? { xp_gained: data.xpGain.gained } : {}),
+      });
+      if (data.xpGain) {
+        hapticSuccess();
+        setReward({
+          xpGain: data.xpGain,
+          badgesUnlocked: data.badgesUnlocked ?? [],
+        });
+        setShowReward(true);
+      } else {
+        hapticSuccess();
+        trackMobileEvent(AnalyticsEvent.shareOpened, { share_channel: 'quest_card' });
+        router.push({ pathname: '/share-card', params: { questDate: qd } });
+      }
+    } catch {
+      hapticError();
+      setQuest(snapshot);
+      setError(homeUi.errApiCheck);
+      setQuestCardSwapKey((k) => k + 1);
     }
-  }, [quest, getToken, router]);
+  }, [quest, getToken, router, homeUi.errApiCheck]);
 
   const finishRewardAndShare = useCallback(() => {
     const qd = quest?.questDate;
@@ -518,25 +544,29 @@ export default function DashboardScreen() {
 
   const handleReroll = async () => {
     if (!quest || quest.status !== 'pending' || rerolling || !canRerollQuest) return;
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    const qd = snapshot.questDate;
     setShowRerollConfirm(false);
     setRerolling(true);
     setError(null);
+    setQuest((prev) => (prev && prev.questDate === qd ? applyOptimisticRerollDecrement(prev) : prev));
     try {
       const token = await getToken();
       const res = await apiFetch(`${API_BASE_URL}/api/quest/daily`, token, {
         method: 'POST',
-        body: JSON.stringify({ questDate: quest.questDate, action: 'reroll' }),
+        body: JSON.stringify({ questDate: qd, action: 'reroll' }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        setQuest(snapshot);
         setError((data as { error?: string }).error ?? homeUi.errReroll);
         hapticError();
         setQuestCardSwapKey((k) => k + 1);
         return;
       }
-      const ok = await loadQuest(undefined, undefined, { questDate: quest.questDate, silent: true });
+      const ok = await loadQuest(undefined, undefined, { questDate: qd, silent: true });
       if (ok) {
-        trackMobileEvent(AnalyticsEvent.questRerolled, { quest_id: questAnalyticsId(quest) });
+        trackMobileEvent(AnalyticsEvent.questRerolled, { quest_id: questAnalyticsId(snapshot) });
         setQuestCardSwapKey((k) => k + 1);
         hapticSuccess();
         /** Météo / coords : ne pas garder l’overlay « changement » le temps du GPS + 2ᵉ fetch. */
@@ -546,62 +576,92 @@ export default function DashboardScreen() {
         hapticError();
         setQuestCardSwapKey((k) => k + 1);
       }
+    } catch {
+      setQuest(snapshot);
+      setError(homeUi.errApiCheck);
+      hapticError();
+      setQuestCardSwapKey((k) => k + 1);
     } finally {
       setRerolling(false);
     }
   };
 
   const handleReportConfirm = async () => {
-    if (!quest || reporting || !canRerollQuest) return;
-    setReporting(true);
+    if (!quest || reportInFlightRef.current || !canRerollQuest) return;
+    if (quest.status !== 'pending' || (quest.questPace ?? 'instant') !== 'planned') return;
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    const qd = snapshot.questDate;
+    const deferred = reportDeferredDate;
+    reportInFlightRef.current = true;
     setError(null);
+    setShowReportModal(false);
+    setQuest((prev) => (prev && prev.questDate === qd ? applyOptimisticRerollDecrement(prev) : prev));
     try {
       const token = await getToken();
       const res = await apiFetch(`${API_BASE_URL}/api/quest/daily`, token, {
         method: 'POST',
         body: JSON.stringify({
           action: 'report',
-          questDate: quest.questDate,
-          deferredUntil: reportDeferredDate,
+          questDate: qd,
+          deferredUntil: deferred,
         }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        setQuest(snapshot);
+        setShowReportModal(true);
         setError((data as { error?: string }).error ?? homeUi.errReport);
         hapticError();
         return;
       }
-      setShowReportModal(false);
-      const ok = await loadQuest(undefined, undefined, { questDate: quest.questDate, silent: true });
+      const ok = await loadQuest(undefined, undefined, { questDate: qd, silent: true });
       if (ok) {
         hapticMedium();
         setQuestCardSwapKey((k) => k + 1);
         void enrichQuestWithLocation();
+      } else {
+        setError(homeUi.errReport);
+        hapticError();
       }
+    } catch {
+      setQuest(snapshot);
+      setShowReportModal(true);
+      setError(homeUi.errApiCheck);
+      hapticError();
     } finally {
-      setReporting(false);
+      reportInFlightRef.current = false;
     }
   };
 
   const confirmAbandon = async () => {
-    if (!quest || abandoning) return;
+    if (!quest || abandonInFlightRef.current) return;
     if (quest.status !== 'pending' && quest.status !== 'accepted') return;
-    setAbandoning(true);
+    const snapshot = cloneDailyQuestSnapshot(quest);
+    const qd = snapshot.questDate;
+    abandonInFlightRef.current = true;
     setError(null);
+    setShowAbandonModal(false);
+    hapticWarning();
+    setQuest((prev) =>
+      prev && prev.questDate === qd
+        ? { ...prev, status: 'abandoned' as const, streak: 0 }
+        : prev,
+    );
     try {
       const token = await getToken();
       const res = await apiFetch(`${API_BASE_URL}/api/quest/daily`, token, {
         method: 'POST',
-        body: JSON.stringify({ action: 'abandon', questDate: quest.questDate }),
+        body: JSON.stringify({ action: 'abandon', questDate: qd }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        setQuest(snapshot);
+        setShowAbandonModal(true);
         setError((data as { error?: string }).error ?? homeUi.errAbandon);
         hapticError();
         return;
       }
-      trackMobileEvent(AnalyticsEvent.questAbandoned, { quest_id: questAnalyticsId(quest) });
-      hapticWarning();
+      trackMobileEvent(AnalyticsEvent.questAbandoned, { quest_id: questAnalyticsId(snapshot) });
       const data = (await res.json()) as Partial<DailyQuest>;
       setQuest((prev) =>
         prev
@@ -613,9 +673,13 @@ export default function DashboardScreen() {
             }
           : null,
       );
-      setShowAbandonModal(false);
+    } catch {
+      setQuest(snapshot);
+      setShowAbandonModal(true);
+      setError(homeUi.errApiCheck);
+      hapticError();
     } finally {
-      setAbandoning(false);
+      abandonInFlightRef.current = false;
     }
   };
 
@@ -647,7 +711,6 @@ export default function DashboardScreen() {
   const swipeStrings = useMemo(() => ({
     swipeAccept: homeUi.swipeAccept,
     swipeChange: homeUi.swipeChange,
-    tapDetails: homeUi.tapDetails,
     validateCta: homeUi.validateCta,
     swipeValidateOverlay: homeUi.swipeValidateOverlay,
     shareCta: homeUi.shareVictoryCta,
@@ -659,19 +722,11 @@ export default function DashboardScreen() {
     pacePlanned: homeUi.pacePlanned,
     missionEyebrow: homeUi.missionHeading,
     outdoorTag: homeUi.outdoorTag,
-  }), [homeUi]);
-
-  const drawerStrings = useMemo(() => ({
-    missionHeading: homeUi.missionHeading,
-    hookLabel: homeUi.hookLabel,
     destinationLabel: homeUi.destinationLabel,
     destinationHint: homeUi.destinationHint,
     safetyLabel: homeUi.safetyLabel,
     reportCta: homeUi.reportCta,
     abandonCta: homeUi.abandonCta,
-    close: homeUi.close,
-    durationLabel: homeUi.durationLabel,
-    outdoorTag: homeUi.outdoorTag,
     reportHint: homeUi.reportHint,
   }), [homeUi]);
 
@@ -778,9 +833,17 @@ export default function DashboardScreen() {
               canReroll={canRerollQuest}
               onAccept={handleAccept}
               onReroll={confirmReroll}
-              onOpenDetails={() => setShowDetails(true)}
               onValidate={doComplete}
               onShare={openQuestShare}
+              onReport={
+                questPace === 'planned'
+                  ? () => {
+                      setReportDeferredDate(calendarDay);
+                      setShowReportModal(true);
+                    }
+                  : undefined
+              }
+              onAbandon={() => setShowAbandonModal(true)}
               strings={swipeStrings}
               rerolling={rerolling}
               rerollLoadingLabel={homeUi.rerollLoading}
@@ -793,35 +856,14 @@ export default function DashboardScreen() {
             <View style={[styles.onboardingTooltip, { backgroundColor: palette.card, borderColor: `${palette.orange}55` }]}>
               <Text style={[styles.onboardingText, { color: palette.text }]}>
                 {appLocale === 'en'
-                  ? 'Swipe right to accept, left to change, or tap for details.'
-                  : 'Glisse à droite pour accepter, à gauche pour changer, ou appuie pour les détails.'}
+                  ? 'Swipe right to accept, or left to change the quest.'
+                  : 'Glisse à droite pour accepter, ou à gauche pour changer de quête.'}
               </Text>
               <Text style={[styles.onboardingDismiss, { color: palette.muted }]}>
                 {appLocale === 'en' ? 'Got it' : 'Compris'}
               </Text>
             </View>
           </Pressable>
-        ) : null}
-
-        {/* Drawer de détails */}
-        {quest ? (
-          <QuestDetailDrawer
-            quest={quest}
-            visible={showDetails}
-            palette={palette}
-            canReroll={canRerollQuest}
-            onClose={() => setShowDetails(false)}
-            onReport={questPace === 'planned' ? () => {
-              setShowDetails(false);
-              setReportDeferredDate(calendarDay);
-              setShowReportModal(true);
-            } : undefined}
-            onAbandon={() => {
-              setShowDetails(false);
-              setShowAbandonModal(true);
-            }}
-            strings={drawerStrings}
-          />
         ) : null}
 
         {/* Safety sheet */}
@@ -850,15 +892,15 @@ export default function DashboardScreen() {
                 ))}
               </ScrollView>
               <View style={styles.modalActions}>
-                <Pressable style={styles.modalBtnGhost} onPress={() => setShowReportModal(false)} disabled={reporting}>
+                <Pressable style={styles.modalBtnGhost} onPress={() => setShowReportModal(false)}>
                   <Text style={styles.modalBtnGhostText}>{homeUi.rerollConfirmCancel}</Text>
                 </Pressable>
                 <Pressable
-                  style={[styles.modalBtnPrimary, (!canRerollQuest || reporting) && styles.rerollBtnDisabled]}
+                  style={[styles.modalBtnPrimary, !canRerollQuest && styles.rerollBtnDisabled]}
                   onPress={() => void handleReportConfirm()}
-                  disabled={!canRerollQuest || reporting}
+                  disabled={!canRerollQuest}
                 >
-                  <Text style={styles.modalBtnPrimaryText}>{reporting ? '…' : homeUi.rerollConfirmAction}</Text>
+                  <Text style={styles.modalBtnPrimaryText}>{homeUi.rerollConfirmAction}</Text>
                 </Pressable>
               </View>
             </View>
@@ -872,15 +914,11 @@ export default function DashboardScreen() {
               <Text style={styles.modalTitle}>{homeUi.abandonCta} ?</Text>
               <Text style={styles.modalBody}>{homeUi.abandonedSub}</Text>
               <View style={styles.modalActions}>
-                <Pressable style={styles.modalBtnGhost} onPress={() => setShowAbandonModal(false)} disabled={abandoning}>
+                <Pressable style={styles.modalBtnGhost} onPress={() => setShowAbandonModal(false)}>
                   <Text style={styles.modalBtnGhostText}>{homeUi.rerollConfirmCancel}</Text>
                 </Pressable>
-                <Pressable
-                  style={[styles.modalBtnAbandon, abandoning && styles.rerollBtnDisabled]}
-                  onPress={() => void confirmAbandon()}
-                  disabled={abandoning}
-                >
-                  <Text style={styles.modalBtnAbandonText}>{abandoning ? '…' : homeUi.rerollConfirmAction}</Text>
+                <Pressable style={styles.modalBtnAbandon} onPress={() => void confirmAbandon()}>
+                  <Text style={styles.modalBtnAbandonText}>{homeUi.rerollConfirmAction}</Text>
                 </Pressable>
               </View>
             </View>
