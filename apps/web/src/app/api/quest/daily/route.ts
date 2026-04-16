@@ -6,6 +6,7 @@ import {
   computeExhibitedPersonality,
   computeCongruenceDelta,
   getEffectivePhase,
+  getPhaseForDay,
   computeCompletionXp,
   evaluateNewBadges,
   levelFromTotalXp,
@@ -303,15 +304,20 @@ export async function GET(request: NextRequest) {
     where: { profileId: profile.id },
     orderBy: { assignedAt: 'desc' },
     take: 20,
-    select: { archetypeId: true, status: true, generatedMission: true, generatedTitle: true },
+    select: { archetypeId: true, status: true, questDate: true, generatedMission: true, generatedTitle: true },
   });
-  const recentLogs = recentLogRows.slice(0, 14).map((r) => ({ archetypeId: r.archetypeId, status: r.status }));
+  const recentLogs = recentLogRows.slice(0, 14).map((r) => ({
+    archetypeId: r.archetypeId,
+    status: r.status,
+    questDate: r.questDate,
+  }));
 
   const engineLogs: QuestLog[] = recentLogs.map((r) => ({
     id: '',
     userId: profile.clerkId,
     questId: r.archetypeId,
     assignedAt: '',
+    questDate: r.questDate,
     status: r.status as QuestLog['status'],
     congruenceDeltaAtAssignment: 0,
     phaseAtAssignment: profile.currentPhase as EscalationPhase,
@@ -323,7 +329,7 @@ export async function GET(request: NextRequest) {
   const declaredPersonality = profile.declaredPersonality as unknown as PersonalityVector;
   const exhibited = computeExhibitedPersonality(engineLogs, taxonomy);
   const congruenceDelta = computeCongruenceDelta(declaredPersonality, exhibited);
-  const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs);
+  const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs, today);
   const recentIds = recentLogs.slice(0, 7).map((r) => r.archetypeId);
   /** Après relance/report, les archétypes déjà proposés aujourd'hui ne sont plus dans l'historique BDD — on les cumule ici. */
   const lastQuestDateStr =
@@ -373,7 +379,7 @@ export async function GET(request: NextRequest) {
       exhibited,
       congruenceDelta,
       selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${regenTier}`,
-      diversityWindow: 10,
+      diversityWindow: 5,
       categoryScorePenalty: categoryScorePenaltyMerged,
     },
   );
@@ -474,7 +480,7 @@ export async function GET(request: NextRequest) {
       ? profile.streakCount + 1
       : 1;
   const newDay = profile.currentDay + (lastDate !== today ? 1 : 0);
-  const newPhase: EscalationPhase = newDay <= 3 ? 'calibration' : newDay <= 10 ? 'expansion' : 'rupture';
+  const newPhase: EscalationPhase = getPhaseForDay(newDay);
 
   const assignAfterReroll = profile.flagNextQuestAfterReroll;
 
@@ -482,7 +488,7 @@ export async function GET(request: NextRequest) {
   const rerollsAfterQuestCreate = assignAfterReroll ? profile.rerollsRemaining : 1;
 
   // Save quest log + update profile atomically
-  const [questLog] = await prisma.$transaction([
+  const [questLog, updatedProfile] = await prisma.$transaction([
     prisma.questLog.create({
       data: {
         profileId:          profile.id,
@@ -502,7 +508,7 @@ export async function GET(request: NextRequest) {
         weatherDescription: context.weatherDescription,
         weatherTemp:        context.temp,
         phaseAtAssignment:  profile.currentPhase as EscalationPhase,
-        congruenceDeltaAtTime: profile.congruenceDelta,
+        congruenceDeltaAtTime: congruenceDelta,
         wasRerolled:        assignAfterReroll,
         wasFallback:        wasWeatherFallback,
       },
@@ -519,17 +525,15 @@ export async function GET(request: NextRequest) {
         flagNextQuestAfterReroll: false,
         flagNextQuestInstantOnly: false,
         rerollExcludeArchetypeId: null,
-        /** Tous les archétypes déjà tirés aujourd'hui (relances) — évite de retomber en boucle sur les mêmes quêtes. */
         rerollExcludeArchetypeIds: Array.from(new Set([...extraExclude, archetype.id])),
       },
     }),
   ]);
 
-  const freshProfile = await prisma.profile.findUnique({ where: { id: profile.id } });
-  const p = freshProfile ?? profile;
+  const p = updatedProfile;
 
   return NextResponse.json({
-    ...(await toQuestResponse(questLog, p)),
+    ...(await toQuestResponse(questLog, p, taxonomy)),
     fromCache: false,
     day: newDay,
     streak: newStreak,
@@ -936,8 +940,9 @@ async function toQuestResponse(
     xpAwarded?: number | null;
   },
   profile?: { deferredSocialUntil?: string | null } | null,
+  cachedTaxonomy?: QuestModel[],
 ) {
-  const taxonomy = await getQuestTaxonomy();
+  const taxonomy = cachedTaxonomy ?? await getQuestTaxonomy();
   const archetype = findArchetypeById(taxonomy, log.archetypeId);
   const hasCoords =
     log.destinationLat != null &&

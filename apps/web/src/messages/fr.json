@@ -1,9 +1,16 @@
 {
+  "ErrorPage": {
+    "title": "Un problème est survenu",
+    "description": "Quelque chose s'est mal passé. Tu peux réessayer ou retourner à l'accueil.",
+    "retry": "Réessayer",
+    "home": "Accueil"
+  },
   "RootLayout": {
     "titleDefault": "Questia — App de quêtes quotidiennes dans la vraie vie",
     "description": "Questia est l'app qui te donne une quête IRL par jour : motivation, sorties et défis adaptés à ton profil et à ton rythme. Gratuit pour commencer.",
     "ogTitle": "Questia — App de quêtes quotidiennes dans la vraie vie",
     "ogDescription": "Transforme ton quotidien en jeu d'aventure : missions courtes, concrètes, sans culpabiliser.",
+    "ogImageAlt": "Questia — Quêtes du quotidien dans la vraie vie",
     "twitterTitle": "Questia — App de quêtes quotidiennes IRL",
     "twitterDescriptionStoresBoth": "Une quête par jour dans ta vraie vie. iOS, Android et web.",
     "twitterDescriptionStoresAndroid": "Une quête par jour dans ta vraie vie. Android et web.",
@@ -112,6 +119,7 @@
     "titleWeb": "Questia — Quêtes quotidiennes IRL sur le web",
     "descriptionWeb": "Questia : quêtes quotidiennes dans la vraie vie, dans ton navigateur. Motivation, défis IRL et petites victoires adaptés à ton profil et à ton rythme. Gratuit pour commencer.",
     "ogTitle": "Questia — App de quêtes quotidiennes dans la vraie vie",
+    "ogImageAlt": "Questia — Quêtes du quotidien dans la vraie vie",
     "twitterTitle": "Questia — App de quêtes quotidiennes IRL",
     "twitterDescriptionWeb": "Une quête par jour dans ta vraie vie — sur le web.",
     "keywords": [

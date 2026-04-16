@@ -110,7 +110,7 @@ function applyOptimisticRerollDecrement(q: DailyQuest): DailyQuest {
   return q;
 }
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+import { API_BASE_URL, apiFetch } from '../../lib/api';
 
 /** Interprète les séquences littérales \uXXXX (ex. chaîne API mal sérialisée) pour l'affichage. */
 function normalizeDisplayText(text: string): string {
@@ -118,19 +118,6 @@ function normalizeDisplayText(text: string): string {
   return text.replace(/\\u([0-9a-fA-F]{4})/gi, (_, hex) =>
     String.fromCharCode(parseInt(hex, 16)),
   );
-}
-
-async function apiFetch(
-  url: string,
-  token: string | null,
-  options?: RequestInit,
-): Promise<Response> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options?.headers as Record<string, string>),
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return fetch(url, { ...options, headers });
 }
 
 function SafetySheet({ quest, onConfirm, onClose }: {
@@ -377,10 +364,13 @@ export default function DashboardScreen() {
     prevCalendarDayRef.current = calendarDay;
     const urlPast = questDateFromRoute != null && questDateFromRoute < calendarDay;
     if (urlPast) router.replace('/home');
+    let cancelled = false;
     void (async () => {
       const ok = await loadQuest(undefined, undefined, { silent: true, ignoreUrlQuestDate: urlPast });
-      if (ok) await enrichQuestWithLocation({ ignoreUrlQuestDate: urlPast });
+      if (cancelled || !ok) return;
+      await enrichQuestWithLocation({ ignoreUrlQuestDate: urlPast });
     })();
+    return () => { cancelled = true; };
   }, [authLoaded, calendarDay, questDateFromRoute, router, loadQuest, enrichQuestWithLocation]);
 
   useEffect(() => {

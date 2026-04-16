@@ -4,41 +4,11 @@ import {
   getPhaseForDay,
   shouldDowngrade,
   getEffectivePhase,
-  computeProfileUpdate,
+  shouldUpscale,
   DAILY_FREE_REROLLS,
   MAX_REROLLS_PER_DAY,
 } from './escalation';
-import type { QuestLog, UserProfile } from '../types';
-
-const baseProfile: UserProfile = {
-  id: 'p1',
-  quadrant: { explorerAxis: 'explorer', riskAxis: 'cautious' },
-  declaredPersonality: {
-    openness: 0.5,
-    conscientiousness: 0.5,
-    extraversion: 0.5,
-    agreeableness: 0.5,
-    emotionalStability: 0.5,
-    thrillSeeking: 0.5,
-    boredomSusceptibility: 0.5,
-  },
-  exhibitedPersonality: {
-    openness: 0.5,
-    conscientiousness: 0.5,
-    extraversion: 0.5,
-    agreeableness: 0.5,
-    emotionalStability: 0.5,
-    thrillSeeking: 0.5,
-    boredomSusceptibility: 0.5,
-  },
-  currentDay: 1,
-  currentPhase: 'calibration',
-  congruenceDelta: 0,
-  streakCount: 0,
-  rerollsRemaining: 1,
-  createdAt: '',
-  updatedAt: '',
-};
+import type { QuestLog } from '../types';
 
 describe('PHASE_BOUNDARIES', () => {
   it('expose des bornes cohérentes', () => {
@@ -108,16 +78,30 @@ describe('getEffectivePhase', () => {
   });
 });
 
-describe('computeProfileUpdate', () => {
-  it('incrémente le jour et la série si complété', () => {
-    const u = computeProfileUpdate(baseProfile, true);
-    expect(u.currentDay).toBe(2);
-    expect(u.streakCount).toBe(1);
-    expect(u.currentPhase).toBe('calibration');
-    expect(u.updatedAt).toBeDefined();
+describe('shouldUpscale', () => {
+  it('false si déjà en rupture', () => {
+    const logs: QuestLog[] = [
+      { ...minimalLog(), status: 'completed' },
+      { ...minimalLog(), status: 'completed' },
+      { ...minimalLog(), status: 'completed' },
+    ];
+    expect(shouldUpscale('rupture', logs)).toBe(false);
   });
-  it('remet la série à 0 si non complété', () => {
-    const u = computeProfileUpdate({ ...baseProfile, streakCount: 5 }, false);
-    expect(u.streakCount).toBe(0);
+  it('true en calibration avec 3+ complétions consécutives', () => {
+    const logs: QuestLog[] = [
+      { ...minimalLog(), status: 'completed' },
+      { ...minimalLog(), status: 'completed' },
+      { ...minimalLog(), status: 'completed' },
+    ];
+    expect(shouldUpscale('calibration', logs)).toBe(true);
+  });
+  it('false si série de complétions cassée par un rejet', () => {
+    const logs: QuestLog[] = [
+      { ...minimalLog(), status: 'completed' },
+      { ...minimalLog(), status: 'rejected' },
+      { ...minimalLog(), status: 'completed' },
+      { ...minimalLog(), status: 'completed' },
+    ];
+    expect(shouldUpscale('calibration', logs)).toBe(false);
   });
 });

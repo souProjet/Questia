@@ -30,7 +30,8 @@ import { hapticLight } from '../../lib/haptics';
 import { getProfileScreenStrings } from '../../lib/profileScreenStrings';
 import { elevationAndroidSafe } from '../../lib/elevationAndroid';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+import { API_BASE_URL, apiFetch } from '../../lib/api';
+
 const SITE_PUBLIC = process.env.EXPO_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
 
 const LEGAL_PATHS = [
@@ -40,19 +41,6 @@ const LEGAL_PATHS = [
   { key: 'sales' as const, icon: '\u{1F4B3}', path: '/legal/cgv' },
   { key: 'wellbeing' as const, icon: '\u{1F49A}', path: '/legal/bien-etre' },
 ];
-
-async function apiFetch(
-  url: string,
-  token: string | null,
-  options?: RequestInit,
-): Promise<Response> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options?.headers as Record<string, string>),
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return fetch(url, { ...options, headers });
-}
 
 type ProfilePayload = {
   explorerAxis: ExplorerAxis;

@@ -19,38 +19,52 @@ function emptyVector(): PersonalityVector {
 /**
  * Computes the exhibited personality vector p_ex from quest history.
  *
- * p_ex = normalize( sum_j( weight(j) * C[category(j)] ) )
+ * p_ex = normalize( sum_j( recency(j) * statusWeight(j) * C[category(j)] ) )
  *
- * where weight(j) is:
+ * Status weights:
  *  +1.0 for completed quests
  *  +0.3 for accepted but not completed
  *  -0.5 for rejected quests
+ *
+ * Recency: exponential decay — the first log (most recent) has weight 1,
+ * each subsequent log is multiplied by RECENCY_DECAY (0.88).
+ * This ensures recent behaviour outweighs old habits.
+ *
+ * Logs are expected in reverse chronological order (newest first).
  */
+const RECENCY_DECAY = 0.88;
+
 export function computeExhibitedPersonality(logs: QuestLog[], taxonomy: QuestModel[]): PersonalityVector {
   const pEx = emptyVector();
   let totalWeight = 0;
 
-  for (const log of logs) {
-    const quest = taxonomy.find((q) => q.id === log.questId);
+  const questById = new Map(taxonomy.map((q) => [q.id, q]));
+
+  for (let i = 0; i < logs.length; i++) {
+    const log = logs[i];
+    const quest = questById.get(log.questId);
     if (!quest) continue;
 
-    const weight =
+    const statusWeight =
       log.status === 'completed' ? 1.0 :
       log.status === 'accepted'  ? 0.3 :
       log.status === 'rejected'  ? -0.5 :
       log.status === 'abandoned' ? 0 :
       0;
 
-    if (weight === 0) continue;
+    if (statusWeight === 0) continue;
+
+    const recency = RECENCY_DECAY ** i;
+    const w = statusWeight * recency;
 
     const correlation = ACTIVITY_PERSONALITY_CORRELATION[quest.category];
     if (!correlation) continue;
 
     for (const key of PERSONALITY_KEYS) {
       const c = correlation[key] ?? 0;
-      pEx[key] += weight * c;
+      pEx[key] += w * c;
     }
-    totalWeight += Math.abs(weight);
+    totalWeight += Math.abs(w);
   }
 
   if (totalWeight > 0) {
@@ -98,11 +112,17 @@ export function getTargetDelta(phase: 'calibration' | 'expansion' | 'rupture'): 
 /**
  * Scores a quest candidate based on how well its expected delta
  * matches the target delta for the current phase.
+ *
+ * The expected delta measures how far the user's *scoring personality*
+ * would shift if they completed this quest category.  We blend the
+ * category correlation with the user's current vector so the result
+ * genuinely depends on who the user is (not just on the category).
+ *
  * Lower score = better fit.
  */
 export function scoreQuestFit(
   quest: QuestModel,
-  declared: PersonalityVector,
+  scoringVector: PersonalityVector,
   targetDelta: { min: number; max: number },
 ): number {
   const correlation = ACTIVITY_PERSONALITY_CORRELATION[quest.category];
@@ -111,11 +131,14 @@ export function scoreQuestFit(
   let sumSquared = 0;
   let dims = 0;
   for (const key of PERSONALITY_KEYS) {
-    const traitCorrelation = correlation[key] ?? 0;
-    const expectedExhibited = Math.max(0, Math.min(1,
-      declared[key] + traitCorrelation * 0.5
-    ));
-    const diff = declared[key] - expectedExhibited;
+    const corr = correlation[key] ?? 0;
+    const current = scoringVector[key] ?? 0.5;
+    // Where this trait would land after doing this activity type.
+    // Shift is proportional to correlation *and* room to move.
+    const room = corr >= 0 ? 1 - current : current;
+    const shift = corr * 0.5 * room;
+    const expectedExhibited = Math.max(0, Math.min(1, current + shift));
+    const diff = current - expectedExhibited;
     sumSquared += diff * diff;
     dims++;
   }
@@ -188,7 +211,11 @@ type SelectQuestOptions = {
   congruenceDelta?: number;
   selectionSeed?: string;
   diversityWindow?: number;
-  /** Augmente le score (moins bon) par catégorie — ex. relances pour éviter le même « thème ». */
+  /**
+   * Unified per-category score adjustment.
+   * **Positive = penalty (higher score = less likely to be selected).**
+   * Merge all penalty sources (reroll, recent-history, etc.) before passing.
+   */
   categoryScorePenalty?: Partial<Record<PsychologicalCategory, number>>;
 };
 
@@ -211,14 +238,24 @@ export function selectQuest(
 ): QuestModel | null {
   const targetDelta = getTargetDelta(phase);
   const scoringVector = mixPersonality(declared, options?.exhibited, options?.congruenceDelta, phase);
+  const recentSet = new Set(recentQuestIds);
   const candidates = taxonomy
-    .filter((q) => !recentQuestIds.includes(q.id))
+    .filter((q) => !recentSet.has(q.id))
     .filter((q) => allowOutdoor || !q.requiresOutdoor)
     .filter((q) => !instantOnly || q.questPace === 'instant');
 
   if (candidates.length === 0) return null;
 
-  const bias = categoryBias ?? {};
+  // Convert refinement bias to the unified convention (positive = penalty).
+  // categoryBias: positive = favours → negate to get a penalty.
+  const biasPenalty: Partial<Record<PsychologicalCategory, number>> = {};
+  if (categoryBias) {
+    for (const k of Object.keys(categoryBias) as PsychologicalCategory[]) {
+      const v = categoryBias[k];
+      if (v !== undefined) biasPenalty[k] = -v;
+    }
+  }
+
   const catPen = options?.categoryScorePenalty;
   const gentle = computeGentleness(scoringVector);
 
@@ -226,7 +263,6 @@ export function selectQuest(
     .map((q) => {
       let score = scoreQuestFit(q, scoringVector, targetDelta);
 
-      // Pénalité de confort : un profil doux est pénalisé pour les quêtes intenses.
       const comfort = COMFORT_NUMERIC[q.comfortLevel] ?? 2;
       const naturalComfort = 1 + (1 - gentle) * 2.5;
       const comfortExcess = Math.max(0, comfort - naturalComfort);
@@ -236,20 +272,18 @@ export function selectQuest(
         0.03;
       score += comfortExcess * phaseComfortMult * gentle;
 
-      // Pénalité de durée : les profils doux préfèrent les actions courtes en début de parcours.
       if (gentle > 0.4 && phase !== 'rupture') {
         const durationExcess = Math.max(0, q.minimumDurationMinutes - 60);
         score += durationExcess * 0.0006 * gentle * (phase === 'calibration' ? 2 : 1);
       }
 
-      // Bonus social négatif : un profil très peu extraverti en calibration
-      // est pénalisé pour les quêtes qui exigent du social.
       if (q.requiresSocial && gentle > 0.55 && phase === 'calibration') {
         score += 0.12 * gentle;
       }
 
-      const b = bias[q.category];
-      if (b !== undefined) score -= b;
+      // All category adjustments: positive = penalty (unified convention).
+      const bp = biasPenalty[q.category];
+      if (bp !== undefined) score += bp;
       const p = catPen?.[q.category];
       if (p !== undefined) score += p;
       return { quest: q, score };

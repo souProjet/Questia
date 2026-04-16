@@ -11,7 +11,7 @@ import { useAuth } from '@clerk/expo';
 import { useSegments } from 'expo-router';
 import { getThemePalette, themeUsesLightStatusBar, type ThemePalette } from '@questia/ui';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+import { API_BASE_URL } from '../lib/api';
 
 export type AppThemeContextValue = {
   palette: ThemePalette;
@@ -34,7 +34,7 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const token = await getToken();
-      const res = await fetch(`${API_BASE}/api/profile`, {
+      const res = await fetch(`${API_BASE_URL}/api/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',

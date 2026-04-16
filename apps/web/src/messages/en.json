@@ -1,9 +1,16 @@
 {
+  "ErrorPage": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. You can retry or go back to the homepage.",
+    "retry": "Retry",
+    "home": "Home"
+  },
   "RootLayout": {
     "titleDefault": "Questia — Daily real-life quests app",
     "description": "Questia gives you one IRL quest per day: motivation, outings, and challenges tailored to your profile and pace. Start free.",
     "ogTitle": "Questia — Daily real-life quests",
     "ogDescription": "Turn your everyday life into a light adventure: short, concrete missions—without guilt-tripping yourself.",
+    "ogImageAlt": "Questia — Daily real-life quests",
     "twitterTitle": "Questia — Daily IRL quests",
     "twitterDescriptionStoresBoth": "One quest a day in your real life. iOS, Android, and web.",
     "twitterDescriptionStoresAndroid": "One quest a day in your real life. Android and web.",
@@ -112,6 +119,7 @@
     "titleWeb": "Questia — Daily IRL quests on the web",
     "descriptionWeb": "Questia: daily real-life quests in your browser. Motivation, IRL challenges, and small wins tailored to your profile and pace. Start free.",
     "ogTitle": "Questia — Daily real-life quests",
+    "ogImageAlt": "Questia — Daily real-life quests",
     "twitterTitle": "Questia — Daily IRL quests",
     "twitterDescriptionWeb": "One quest a day in your real life — on the web.",
     "keywords": [
@@ -442,8 +450,8 @@
     "deleteBodyText": "Permanently deletes your profile, history (quests, shop), and authentication account.",
     "deleteBodyStrong": "This cannot be undone.",
     "deleteTypeLabel": "Type {word} to confirm",
-    "deleteWord": "SUPPRIMER",
-    "deletePlaceholder": "SUPPRIMER",
+    "deleteWord": "DELETE",
+    "deletePlaceholder": "DELETE",
     "deleteCta": "Delete permanently",
     "deleteDeleting": "Deleting…",
     "deleteConfirmWrong": "Type SUPPRIMER exactly to confirm.",

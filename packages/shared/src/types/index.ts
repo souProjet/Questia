@@ -93,6 +93,8 @@ export interface QuestLog {
   userId: string;
   questId: number;
   assignedAt: string;
+  /** YYYY-MM-DD calendar date of the quest (used for recency filtering). */
+  questDate?: string;
   status: 'pending' | 'accepted' | 'completed' | 'rejected' | 'replaced' | 'abandoned';
   completedAt?: string;
   congruenceDeltaAtAssignment: number;

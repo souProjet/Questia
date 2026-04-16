@@ -1,12 +1,14 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { QuestiaLogo } from '@/components/QuestiaLogo';
 
 type AppErrorViewProps = {
   reset: () => void;
   title?: string;
   description?: string;
+  retryLabel?: string;
+  homeLabel?: string;
 };
 
 /**
@@ -16,6 +18,8 @@ export function AppErrorView({
   reset,
   title = 'Un problème est survenu',
   description = "Quelque chose s'est mal passé. Tu peux réessayer ou retourner à l'accueil.",
+  retryLabel = 'Réessayer',
+  homeLabel = 'Accueil',
 }: AppErrorViewProps) {
   return (
     <main className="flex min-h-[100dvh] flex-col items-center justify-center px-4 py-12">
@@ -31,10 +35,10 @@ export function AppErrorView({
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button type="button" onClick={() => reset()} className="btn btn-primary btn-md w-full font-black sm:w-auto">
-            Réessayer
+            {retryLabel}
           </button>
           <Link href="/" className="btn btn-ghost btn-md w-full text-center font-semibold sm:w-auto">
-            Accueil
+            {homeLabel}
           </Link>
         </div>
       </div>

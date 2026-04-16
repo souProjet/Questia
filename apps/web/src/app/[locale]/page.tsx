@@ -44,7 +44,7 @@ export async function generateMetadata({
           url: '/og/questia-open-graph.png',
           width: 1200,
           height: 630,
-          alt: 'Questia — Quêtes du quotidien dans la vraie vie',
+          alt: t('ogImageAlt'),
         },
       ],
     },

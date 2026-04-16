@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { registerForExpoPushTokenAsync } from './pushNotifications';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+import { API_BASE_URL } from './api';
 const PUSH_TOKEN_STORAGE_KEY = 'questia_expo_push_token';
 
 function deviceTimeZoneIana(): string | null {

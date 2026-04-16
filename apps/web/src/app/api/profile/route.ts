@@ -171,8 +171,15 @@ export async function POST(request: NextRequest) {
     explorerAxis?: ExplorerAxis;
     riskAxis?: RiskAxis;
   };
-  const explorerAxis: ExplorerAxis = body.explorerAxis ?? 'explorer';
-  const riskAxis: RiskAxis = body.riskAxis ?? 'risktaker';
+  const VALID_EXPLORER: ExplorerAxis[] = ['homebody', 'explorer'];
+  const VALID_RISK: RiskAxis[] = ['cautious', 'risktaker'];
+
+  const explorerAxis: ExplorerAxis = VALID_EXPLORER.includes(body.explorerAxis as ExplorerAxis)
+    ? body.explorerAxis!
+    : 'explorer';
+  const riskAxis: RiskAxis = VALID_RISK.includes(body.riskAxis as RiskAxis)
+    ? body.riskAxis!
+    : 'risktaker';
 
   const key = `${explorerAxis}_${riskAxis}` as keyof typeof QUADRANT_DEFAULTS;
   const declaredPersonality = QUADRANT_DEFAULTS[key];

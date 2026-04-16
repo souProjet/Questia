@@ -530,7 +530,7 @@ export function evaluateNewBadges(
   // Phases & parcours (jour = compteur de parcours côté profil)
   tryUnlock('phase_calibration_fin', d >= 3);
   tryUnlock('phase_expansion', d >= 4);
-  tryUnlock('phase_rupture', d >= 11 || ph === 'rupture');
+  tryUnlock('phase_rupture', ph === 'rupture');
   tryUnlock('parcours_jour_21', d >= 21);
   tryUnlock('parcours_jour_30', d >= 30);
   tryUnlock('parcours_jour_60', d >= 60);

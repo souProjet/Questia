@@ -295,15 +295,9 @@ function pickFallbackHook(
   locale: AppLocale,
   salt?: string,
 ): string {
-  let h = 0;
-  const source = `${questDateIso}|${salt ?? ''}`;
-  for (let i = 0; i < source.length; i++) {
-    h = (Math.imul(31, h) + source.charCodeAt(i)) | 0;
-  }
-  h = (h + archetypeId * 17) | 0;
   const hooks = locale === 'en' ? FALLBACK_HOOKS_EN : FALLBACK_HOOKS;
-  const idx = Math.abs(h) % hooks.length;
-  return hooks[idx]!;
+  const seed = `${questDateIso}|${archetypeId}|${salt ?? ''}`;
+  return hooks[promptSeedIndex(seed, 'fallback-hook', hooks.length)]!;
 }
 
 const CREATIVE_ANGLES_FR: readonly string[] = [
@@ -715,6 +709,7 @@ NO NAMED PLACES (required):
 - Use generics: “a café you haven't tried”, “a park near you”, “at home”, “somewhere quiet near you”.
 `
       : '';
+    const contextBlocks = [rerollBlock, deferInstantBlock, paceBlock, repairBlock].filter(Boolean).join('');
     return `Generate one unique daily quest for today.
 
 VARIATION (avoid repetition): ${variationSalt}
@@ -722,8 +717,7 @@ CREATIVE DRAW ID (unique per API call): ${stochasticNonce}
 ATTEMPT: ${attemptIndex + 1} of ${DAILY_QUEST_MAX_ATTEMPTS}
 CREATIVE PIVOT (obey the intent; do not paste this block verbatim):
 ${missionPivotLine}
-
-${rerollBlock}${deferInstantBlock}${paceBlock}${repairBlock}
+${contextBlocks}
 DATE: ${profile.questDateIso}
 - "hook": one line, max 24 words — a beat of voice-over or wink to the reader; DIFFERENT from other days.
 - Avoid empty platitudes.
@@ -832,6 +826,7 @@ PAS DE LIEU NOMMÉ (obligatoire) :
 `
     : '';
 
+  const contextBlocksFr = [rerollBlock, deferInstantBlock, paceBlock, repairBlock].filter(Boolean).join('');
   return `Génère une quête quotidienne unique pour aujourd'hui.
 
 VARIATION (évite la copie) : ${variationSalt}
@@ -839,8 +834,7 @@ ID TIRAGE (unique à chaque appel API) : ${stochasticNonce}
 TENTATIVE : ${attemptIndex + 1} / ${DAILY_QUEST_MAX_ATTEMPTS}
 PIVOT CRÉATIF (respecte l'intention ; ne colle pas ce bloc tel quel) :
 ${missionPivotLine}
-
-${rerollBlock}${deferInstantBlock}${paceBlock}${repairBlock}
+${contextBlocksFr}
 DATE DU JOUR : ${profile.questDateIso}
 - Le champ "hook" : une ligne, max 24 mots — petit souffle de voix off ou clin d'œil au lecteur ; DIFFÉRENTE d'un jour à l'autre.
 - Évite les formules creuses (« Sois toi-même », « Crois en tes rêves »).

@@ -83,7 +83,7 @@ export default async function SharedQuestPage({
     <main className="min-h-screen bg-adventure px-4 py-16 sm:px-6">
       <div className="mx-auto max-w-xl rounded-3xl border border-orange-200/60 bg-white/95 p-6 shadow-[0_24px_50px_-20px_rgba(15,23,42,0.35)] sm:p-8">
         <p className="mb-2 text-center text-xs font-black uppercase tracking-[0.22em] text-slate-500">
-          {isEn ? 'Shared Quest' : 'Quete partagee'}
+          {isEn ? 'Shared Quest' : 'Quête partagée'}
         </p>
         <h1 className="text-center font-display text-2xl font-black text-slate-900 sm:text-3xl">
           <span className="mr-2 align-[-2px]">{displayEmoji}</span>

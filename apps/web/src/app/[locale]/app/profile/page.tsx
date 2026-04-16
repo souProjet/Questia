@@ -93,7 +93,8 @@ export default function ProfilePage() {
 
   const handleDeleteAccount = useCallback(async () => {
     setDeleteError(null);
-    if (deleteConfirm !== 'SUPPRIMER') {
+    const expectedWord = t('deleteWord');
+    if (deleteConfirm !== expectedWord) {
       setDeleteError(t('deleteConfirmWrong'));
       return;
     }
@@ -103,7 +104,7 @@ export default function ProfilePage() {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmation: 'SUPPRIMER' }),
+        body: JSON.stringify({ confirmation: expectedWord }),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
       if (!res.ok) {
@@ -348,7 +349,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => void handleDeleteAccount()}
-                  disabled={deleting || deleteConfirm !== 'SUPPRIMER'}
+                  disabled={deleting || deleteConfirm !== t('deleteWord')}
                   className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {deleting ? t('deleteDeleting') : t('deleteCta')}

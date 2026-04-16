@@ -20,20 +20,7 @@ export type RefinementQuestionUi = {
   options: Option[];
 };
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
-
-async function apiFetch(
-  url: string,
-  token: string | null,
-  options?: RequestInit,
-): Promise<Response> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options?.headers as Record<string, string>),
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return fetch(url, { ...options, headers });
-}
+import { API_BASE_URL, apiFetch } from '../lib/api';
 
 function makeStyles(p: ThemePalette) {
   return StyleSheet.create({
@@ -325,7 +312,7 @@ function RefinementSheet({
     setErr(null);
     try {
       const token = await getToken();
-      const res = await apiFetch(`${API_BASE}/api/profile/refinement`, token, {
+      const res = await apiFetch(`${API_BASE_URL}/api/profile/refinement`, token, {
         method: 'POST',
         body: JSON.stringify({ answers, consent: true }),
       });
@@ -345,11 +332,17 @@ function RefinementSheet({
     setErr(null);
     try {
       const token = await getToken();
-      await apiFetch(`${API_BASE}/api/profile/refinement`, token, {
+      const res = await apiFetch(`${API_BASE_URL}/api/profile/refinement`, token, {
         method: 'POST',
         body: JSON.stringify({ skip: true }),
       });
+      if (!res.ok) {
+        setErr('Impossible de reporter. Réessaie.');
+        return;
+      }
       onDone();
+    } catch {
+      setErr('Erreur réseau. Réessaie.');
     } finally {
       setBusy(false);
     }

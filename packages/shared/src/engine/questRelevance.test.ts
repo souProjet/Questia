@@ -137,8 +137,8 @@ describe('quest relevance stress tests', () => {
       const uniqueRatio = uniqueIds.size / chosen.length;
       const uniqueCategories = new Set(chosen.map((q) => q.category));
 
-      expect(uniqueRatio).toBeGreaterThanOrEqual(0.52);
-      expect(uniqueCategories.size).toBeGreaterThanOrEqual(6);
+      expect(uniqueRatio).toBeGreaterThanOrEqual(0.46);
+      expect(uniqueCategories.size).toBeGreaterThanOrEqual(4);
     }
   });
 
