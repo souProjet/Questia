@@ -19,6 +19,8 @@ import {
   isValidReportDeferredDate,
   isValidQuestDateIso,
   getQuestCalendarDateNow,
+  softUpdateDeclaredPersonality,
+  ACTIVITY_PERSONALITY_CORRELATION,
 } from '@questia/shared';
 import type {
   AppLocale,
@@ -66,14 +68,43 @@ function mergeRerollExcludedArchetypeIds(
   return Array.from(new Set([...parseRerollExcludedArchetypeIds(profile), archetypeId]));
 }
 
+/**
+ * Tries to soft-update declaredPersonality during the first few days.
+ * Resolves the quest category from the taxonomy, computes the shift,
+ * and persists it if meaningful. Fire-and-forget — errors are swallowed.
+ */
+async function trySoftUpdateDeclared(
+  profileId: string,
+  declared: PersonalityVector,
+  currentDay: number,
+  archetypeId: number,
+  reaction: 'accepted' | 'completed' | 'rejected' | 'abandoned',
+  taxMap: Map<number, QuestModel>,
+): Promise<void> {
+  try {
+    const archetype = taxMap.get(archetypeId);
+    if (!archetype) return;
+    const updated = softUpdateDeclaredPersonality(declared, archetype.category, reaction, currentDay);
+    if (!updated) return;
+    await prisma.profile.update({
+      where: { id: profileId },
+      data: { declaredPersonality: updated as unknown as Record<string, number> },
+    });
+  } catch { /* non-blocking */ }
+}
+
+function buildTaxonomyMap(taxonomy: QuestModel[]): Map<number, QuestModel> {
+  return new Map(taxonomy.map((q) => [q.id, q]));
+}
+
 /** Moins on retombe sur le même « thème » (catégorie psychologique) après plusieurs relances. */
 function buildCategoryPenaltyFromExcludedIds(
-  taxonomy: QuestModel[],
+  taxMap: Map<number, QuestModel>,
   excludedIds: number[],
 ): Partial<Record<PsychologicalCategory, number>> {
   const penalty: Partial<Record<PsychologicalCategory, number>> = {};
   for (const id of excludedIds) {
-    const q = taxonomy.find((x) => x.id === id);
+    const q = taxMap.get(id);
     if (!q) continue;
     penalty[q.category] = (penalty[q.category] ?? 0) + 0.18;
   }
@@ -82,13 +113,13 @@ function buildCategoryPenaltyFromExcludedIds(
 
 /** Pénalise les catégories déjà servies récemment pour diversifier le « type » de quête. */
 function buildCategoryPenaltyFromRecentArchetypeIds(
-  taxonomy: QuestModel[],
+  taxMap: Map<number, QuestModel>,
   archetypeIds: number[],
   weightPerOccurrence = 0.065,
 ): Partial<Record<PsychologicalCategory, number>> {
   const penalty: Partial<Record<PsychologicalCategory, number>> = {};
   for (const id of archetypeIds) {
-    const q = taxonomy.find((x) => x.id === id);
+    const q = taxMap.get(id);
     if (!q) continue;
     penalty[q.category] = Math.min(0.48, (penalty[q.category] ?? 0) + weightPerOccurrence);
   }
@@ -232,6 +263,7 @@ export async function GET(request: NextRequest) {
   );
 
   const today = getQuestCalendarDateNow();
+  const cachedTax = await getQuestTaxonomy();
 
   // ── Quête d'un autre jour (ex. carte partage / deeplink) ────────────────────
   if (requestedQuestDate && requestedQuestDate !== today) {
@@ -251,7 +283,7 @@ export async function GET(request: NextRequest) {
           }
         : undefined;
     return NextResponse.json({
-      ...(await toQuestResponse(historical, profile)),
+      ...(await toQuestResponse(historical, profile, cachedTax)),
       fromCache: true,
       day: profile.currentDay,
       streak: profile.streakCount,
@@ -271,7 +303,7 @@ export async function GET(request: NextRequest) {
 
   if (existing) {
     return NextResponse.json({
-      ...(await toQuestResponse(existing, profile)),
+      ...(await toQuestResponse(existing, profile, cachedTax)),
       fromCache: true,
       day: profile.currentDay,
       streak: profile.streakCount,
@@ -290,7 +322,7 @@ export async function GET(request: NextRequest) {
   /** Sans GPS : pas d'archétype extérieur ni de lieu nommé / carte */
   const allowOutdoorQuests = context.isOutdoorFriendly && context.hasUserLocation;
 
-  const taxonomy = await getQuestTaxonomy();
+  const taxonomy = cachedTax;
   const fallbackDefault = await getDefaultFallbackArchetypeId();
   if (taxonomy.length === 0) {
     return NextResponse.json(
@@ -338,9 +370,10 @@ export async function GET(request: NextRequest) {
   const extraExclude =
     lastQuestDateStr === today ? parseRerollExcludedArchetypeIds(profile) : [];
   const recentIdsForSelect = Array.from(new Set([...recentIds, ...extraExclude]));
-  const categoryRerollPenalty = buildCategoryPenaltyFromExcludedIds(taxonomy, extraExclude);
+  const taxMap = buildTaxonomyMap(taxonomy);
+  const categoryRerollPenalty = buildCategoryPenaltyFromExcludedIds(taxMap, extraExclude);
   const categoryRecentPenalty = buildCategoryPenaltyFromRecentArchetypeIds(
-    taxonomy,
+    taxMap,
     recentLogRows.slice(0, 10).map((r) => r.archetypeId),
   );
   const categoryScorePenaltyMerged = mergeCategoryScorePenalties(
@@ -379,7 +412,7 @@ export async function GET(request: NextRequest) {
       exhibited,
       congruenceDelta,
       selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${regenTier}`,
-      diversityWindow: 5,
+      diversityWindow: 7,
       categoryScorePenalty: categoryScorePenaltyMerged,
     },
   );
@@ -507,7 +540,7 @@ export async function GET(request: NextRequest) {
         locationCity:       context.hasUserLocation ? context.city : null,
         weatherDescription: context.weatherDescription,
         weatherTemp:        context.temp,
-        phaseAtAssignment:  profile.currentPhase as EscalationPhase,
+        phaseAtAssignment:  effectivePhase,
         congruenceDeltaAtTime: congruenceDelta,
         wasRerolled:        assignAfterReroll,
         wasFallback:        wasWeatherFallback,
@@ -572,6 +605,9 @@ export async function POST(request: NextRequest) {
   if (!profile) return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
 
   const today = body.questDate ?? getQuestCalendarDateNow();
+  const postTaxonomy = await getQuestTaxonomy();
+  const postTaxMap = buildTaxonomyMap(postTaxonomy);
+  const declared = profile.declaredPersonality as unknown as PersonalityVector;
 
   // ── Report: relance + quête instantanée + date de reprise (consomme une relance) ──
   if (body.action === 'report') {
@@ -693,6 +729,8 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
+    void trySoftUpdateDeclared(profile.id, declared, profile.currentDay, updated.archetypeId, 'abandoned', postTaxMap);
+
     const profileAfter = await prisma.profile.findUnique({ where: { id: profile.id } });
     const p = profileAfter ?? profile;
 
@@ -726,6 +764,7 @@ export async function POST(request: NextRequest) {
     }
 
     const excludeArchetypeId = existing.archetypeId;
+    void trySoftUpdateDeclared(profile.id, declared, profile.currentDay, excludeArchetypeId, 'rejected', postTaxMap);
     const mergedExclude = mergeRerollExcludedArchetypeIds(profile, excludeArchetypeId);
 
     const updatedProfile =
@@ -784,12 +823,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const completedBefore = await prisma.questLog.count({
-      where: { profileId: profile.id, status: 'completed' },
-    });
-    const outdoorBefore = await prisma.questLog.count({
-      where: { profileId: profile.id, status: 'completed', isOutdoor: true },
-    });
+    const [completedBefore, outdoorBefore] = await Promise.all([
+      prisma.questLog.count({
+        where: { profileId: profile.id, status: 'completed' },
+      }),
+      prisma.questLog.count({
+        where: { profileId: profile.id, status: 'completed', isOutdoor: true },
+      }),
+    ]);
 
     const { total: xpGained, breakdown } = computeCompletionXp({
       phaseAtAssignment: existing.phaseAtAssignment as EscalationPhase,
@@ -835,6 +876,8 @@ export async function POST(request: NextRequest) {
     ];
 
     const newTotalXp = (profile.totalXp ?? 0) + totalXpGained;
+
+    void trySoftUpdateDeclared(profile.id, declared, profile.currentDay, existing.archetypeId, 'completed', postTaxMap);
 
     const [updated, profileAfter] = await prisma.$transaction([
       prisma.questLog.update({
@@ -908,6 +951,8 @@ export async function POST(request: NextRequest) {
       safetyConsentGiven: safetyConsentGiven ?? false,
     },
   });
+
+  void trySoftUpdateDeclared(profile.id, declared, profile.currentDay, updated.archetypeId, 'accepted', postTaxMap);
 
   return NextResponse.json({
     ...(await toQuestResponse(updated, profile)),

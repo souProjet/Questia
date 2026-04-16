@@ -1,4 +1,4 @@
-import type { PersonalityVector, OperationalQuadrant, PsychologicalCategory } from '../types';
+import type { PersonalityVector, OperationalQuadrant, PsychologicalCategory, SociabilityLevel } from '../types';
 
 /**
  * Default personality vectors for each operational quadrant.
@@ -77,3 +77,92 @@ export const PERSONALITY_KEYS: (keyof PersonalityVector)[] = [
   'thrillSeeking',
   'boredomSusceptibility',
 ];
+
+// ── Sociability adjustment (3rd onboarding question) ────────────────────────
+
+const SOCIABILITY_DELTA: Record<SociabilityLevel, Partial<PersonalityVector>> = {
+  solitary: {
+    extraversion: -0.15,
+    agreeableness: -0.08,
+    boredomSusceptibility: -0.06,
+  },
+  balanced: {},
+  social: {
+    extraversion: 0.12,
+    agreeableness: 0.10,
+    boredomSusceptibility: 0.05,
+  },
+};
+
+const VALID_SOCIABILITY: SociabilityLevel[] = ['solitary', 'balanced', 'social'];
+
+export function isValidSociabilityLevel(v: unknown): v is SociabilityLevel {
+  return typeof v === 'string' && VALID_SOCIABILITY.includes(v as SociabilityLevel);
+}
+
+/**
+ * Applies the sociability adjustment to a base quadrant vector.
+ * Each adjusted trait is clamped to [0, 1].
+ * If level is 'balanced' or undefined, the base vector is returned unchanged.
+ */
+export function applySociabilityAdjustment(
+  base: PersonalityVector,
+  level: SociabilityLevel | undefined | null,
+): PersonalityVector {
+  if (!level || level === 'balanced') return base;
+  const delta = SOCIABILITY_DELTA[level];
+  if (!delta) return base;
+  const out = { ...base };
+  for (const key of PERSONALITY_KEYS) {
+    const d = delta[key];
+    if (d !== undefined) {
+      out[key] = Math.max(0, Math.min(1, base[key] + d));
+    }
+  }
+  return out;
+}
+
+// ── Soft update of declared personality (first 5 days) ──────────────────────
+
+const SOFT_UPDATE_MAX_DAY = 5;
+const SOFT_UPDATE_ACCEPT_WEIGHT = 0.03;
+const SOFT_UPDATE_REJECT_WEIGHT = -0.05;
+
+/**
+ * Gently adjusts `declaredPersonality` based on the user's reaction to a quest
+ * during the first days of use. This lets the profile converge toward the
+ * "real" personality faster than waiting for the refinement questionnaire.
+ *
+ * - accept/complete: small positive shift toward the quest's category correlation
+ * - reject/abandon: small negative shift away from the category correlation
+ *
+ * Returns null if no update should be applied (day too high, unknown category, etc.).
+ */
+export function softUpdateDeclaredPersonality(
+  declared: PersonalityVector,
+  category: PsychologicalCategory,
+  reaction: 'accepted' | 'completed' | 'rejected' | 'abandoned',
+  currentDay: number,
+): PersonalityVector | null {
+  if (currentDay > SOFT_UPDATE_MAX_DAY) return null;
+
+  const correlation = ACTIVITY_PERSONALITY_CORRELATION[category];
+  if (!correlation) return null;
+
+  const weight =
+    reaction === 'accepted' || reaction === 'completed'
+      ? SOFT_UPDATE_ACCEPT_WEIGHT
+      : SOFT_UPDATE_REJECT_WEIGHT;
+
+  const out = { ...declared };
+  let changed = false;
+  for (const key of PERSONALITY_KEYS) {
+    const c = correlation[key];
+    if (c === undefined) continue;
+    const shift = weight * c;
+    const prev = out[key];
+    out[key] = Math.max(0, Math.min(1, prev + shift));
+    if (out[key] !== prev) changed = true;
+  }
+  return changed ? out : null;
+}

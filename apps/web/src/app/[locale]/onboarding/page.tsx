@@ -6,7 +6,7 @@ import { trackAnalyticsEvent } from '@/lib/analytics/track';
 import { Link, useRouter } from '@/i18n/navigation';
 import { Icon } from '@/components/Icons';
 import { QuestiaLogo } from '@/components/QuestiaLogo';
-import type { ExplorerAxis, RiskAxis } from '@questia/shared';
+import type { ExplorerAxis, RiskAxis, SociabilityLevel } from '@questia/shared';
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
@@ -40,6 +40,27 @@ const Q2_OPTIONS = [
   },
 ];
 
+const Q3_OPTIONS = [
+  {
+    id: 'solitary' as SociabilityLevel,
+    icon: 'Moon' as const,
+    title: 'Plutôt solo.',
+    desc: 'Mon énergie, je la garde pour moi.',
+  },
+  {
+    id: 'balanced' as SociabilityLevel,
+    icon: 'Users' as const,
+    title: 'Ça dépend.',
+    desc: 'Un mélange des deux, selon le moment.',
+  },
+  {
+    id: 'social' as SociabilityLevel,
+    icon: 'MessageCircle' as const,
+    title: 'Très sociable.',
+    desc: 'Parler, échanger, ça me booste.',
+  },
+];
+
 const PROFILE_RESULTS: Record<string, { icon: string; label: string; desc: string }> = {
   explorer_risktaker: { icon: 'Zap', label: "L'Aventurier", desc: 'Quêtes nerveuses, souvent dehors.' },
   explorer_cautious: { icon: 'Compass', label: "L'Explorateur cool", desc: 'Belles sorties, zéro chaos.' },
@@ -51,9 +72,10 @@ const PROFILE_RESULTS: Record<string, { icon: string; label: string; desc: strin
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [explorer, setExplorer] = useState<ExplorerAxis | null>(null);
   const [risk, setRisk] = useState<RiskAxis | null>(null);
+  const [sociability, setSociability] = useState<SociabilityLevel | null>(null);
   const [saving, setSaving] = useState(false);
 
   const profileKey = explorer && risk ? `${explorer}_${risk}` : null;
@@ -79,6 +101,18 @@ export default function OnboardingPage() {
       step_index: 1,
     });
   };
+  const handleQ3 = (v: SociabilityLevel) => {
+    setSociability(v);
+    setStep(3);
+    trackAnalyticsEvent(AnalyticsEvent.onboardingStepCompleted, {
+      step_name: 'sociability',
+      step_index: 2,
+    });
+  };
+  const skipQ3 = () => {
+    setSociability(null);
+    setStep(3);
+  };
 
   const handleFinish = () => {
     if (!explorer || !risk) return;
@@ -86,12 +120,13 @@ export default function OnboardingPage() {
     trackAnalyticsEvent(AnalyticsEvent.onboardingCompleted, {
       explorer_axis: explorer,
       risk_axis: risk,
+      sociability: sociability ?? 'skipped',
     });
     if (typeof window !== 'undefined') {
       localStorage.setItem('questia_explorer', explorer);
       localStorage.setItem('questia_risk', risk);
+      if (sociability) localStorage.setItem('questia_sociability', sociability);
     }
-    // Court délai pour laisser PostHog / dataLayer envoyer avant la navigation client.
     window.setTimeout(() => {
       router.push('/sign-up');
     }, 50);
@@ -118,16 +153,16 @@ export default function OnboardingPage() {
         <div className="mb-10 flex flex-col items-center gap-3">
           <QuestiaLogo variant="onboarding" priority />
           <span className="font-display font-black text-2xl tracking-tight text-[var(--text)]">QUESTIA</span>
-          {step < 2 && (
+          {step < 3 && (
             <span className="text-xs font-bold uppercase tracking-wider text-[var(--link-on-bg)]">
-              🎲 2 choix — des quêtes à ta sauce
+              🎲 3 choix — des quêtes à ta sauce
             </span>
           )}
         </div>
 
         {/* Progress — 1 barre par question, pleine = répondue */}
         <div className="flex items-center gap-2.5 mb-10">
-          {[0, 1].map((i) => {
+          {[0, 1, 2].map((i) => {
             const filled = step > i;
             return (
               <div
@@ -151,7 +186,7 @@ export default function OnboardingPage() {
         {step === 0 && (
           <div className="motion-safe:animate-onboarding-step motion-reduce:animate-none">
             <div className="mb-8 text-center">
-              <p className="label mb-3">1 / 2 — Ton rythme</p>
+              <p className="label mb-3">1 / 3 — Ton rythme</p>
               <h1 className="font-display font-black text-3xl text-[var(--text)] leading-tight">
                 Dimanche libre,<br />
                 <span className="text-gradient">tu fais quoi ?</span>
@@ -186,7 +221,7 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="motion-safe:animate-onboarding-step motion-reduce:animate-none">
             <div className="mb-8 text-center">
-              <p className="label mb-3">2 / 2 — L&apos;imprévu</p>
+              <p className="label mb-3">2 / 3 — L&apos;imprévu</p>
               <h1 className="font-display font-black text-3xl text-[var(--text)] leading-tight">
                 Plan foiré,<br />
                 <span className="text-gradient">tu réagis comment ?</span>
@@ -224,8 +259,57 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── Step 2: Recap ── */}
-        {step === 2 && profile && (
+        {/* ── Step 2: Sociabilité (optionnelle) ── */}
+        {step === 2 && (
+          <div className="motion-safe:animate-onboarding-step motion-reduce:animate-none">
+            <div className="mb-8 text-center">
+              <p className="label mb-3">3 / 3 — Ton énergie sociale</p>
+              <h1 className="font-display font-black text-3xl text-[var(--text)] leading-tight">
+                En soirée,<br />
+                <span className="text-gradient">t&apos;es comment ?</span>
+              </h1>
+              <p className="text-sm text-[var(--text)]/70 mt-3">Optionnel — passe si tu veux 🤷</p>
+            </div>
+            <div className="space-y-3">
+              {Q3_OPTIONS.map((o, idx) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => handleQ3(o.id)}
+                  className="w-full text-left card card-hover rounded-2xl p-5 flex items-start gap-4 group transition-[transform,box-shadow,border-color,background] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+                >
+                  <div className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{
+                      color: idx === 0 ? '#6b21a8' : idx === 1 ? '#0e7490' : '#c2410c',
+                      background: idx === 0 ? 'rgba(147,51,234,.18)' : idx === 1 ? 'rgba(34,211,238,.18)' : 'rgba(249,115,22,.18)',
+                      border: idx === 0 ? '1px solid rgba(107,33,168,.38)' : idx === 1 ? '1px solid rgba(14,116,144,.38)' : '1px solid rgba(194,65,12,.38)',
+                    }}><Icon name={o.icon} size="xl" /></div>
+                  <div>
+                    <p className="font-bold text-[var(--text)] mb-1 group-hover:text-cyan-900 transition-colors duration-200">{o.title}</p>
+                    <p className="text-sm text-[var(--text)]/75 leading-relaxed">{o.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={skipQ3}
+              className="w-full text-center text-sm font-semibold text-[var(--link-on-bg)] hover:text-[var(--text)] underline decoration-[color:color-mix(in_srgb,var(--link-on-bg)_35%,transparent)] underline-offset-[0.2em] transition-colors duration-200 mt-5"
+            >
+              Passer →
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="w-full text-center text-sm font-semibold text-[var(--text)]/50 hover:text-[var(--text)] transition-colors duration-200 mt-2"
+            >
+              ← Revenir
+            </button>
+          </div>
+        )}
+
+        {/* ── Step 3: Recap ── */}
+        {step === 3 && profile && (
           <div
             className="motion-safe:animate-onboarding-step motion-reduce:animate-none text-center"
             role="region"
@@ -279,7 +363,7 @@ export default function OnboardingPage() {
 
             <button
               type="button"
-              onClick={() => setStep(1)}
+              onClick={() => setStep(2)}
               className="w-full text-center text-sm font-semibold text-[var(--link-on-bg)] hover:text-[var(--text)] underline decoration-[color:color-mix(in_srgb,var(--link-on-bg)_35%,transparent)] underline-offset-[0.2em] transition-colors duration-200 mt-4"
             >
               ← Modifier mes réponses

@@ -13,10 +13,13 @@ import { findArchetypeById } from '@/lib/quest-taxonomy/map-prisma';
 
 export interface AssignQuestInput {
   declaredPersonality: PersonalityVector;
+  /** Logs in **reverse chronological** order (newest first) — matches `computeExhibitedPersonality` expectations. */
   questLogs: QuestLog[];
   currentDay: number;
   lat?: number;
   lon?: number;
+  todayIso?: string;
+  selectionSeed?: string;
 }
 
 export interface AssignQuestResult {
@@ -28,16 +31,16 @@ export interface AssignQuestResult {
 }
 
 export async function assignDailyQuest(input: AssignQuestInput): Promise<AssignQuestResult> {
-  const { declaredPersonality, questLogs, currentDay, lat, lon } = input;
+  const { declaredPersonality, questLogs, currentDay, lat, lon, todayIso, selectionSeed } = input;
 
   const taxonomy = await getQuestTaxonomy();
   const fallbackDefault = await getDefaultFallbackArchetypeId();
 
   const exhibited = computeExhibitedPersonality(questLogs, taxonomy);
   const delta = computeCongruenceDelta(declaredPersonality, exhibited);
-  const recentLogs = questLogs.slice(-3);
-  const phase = getEffectivePhase(currentDay, recentLogs);
-  const recentQuestIds = questLogs.slice(-5).map((l) => l.questId);
+  const recentLogs = questLogs.slice(0, 5);
+  const phase = getEffectivePhase(currentDay, recentLogs, todayIso);
+  const recentQuestIds = recentLogs.map((l) => l.questId);
 
   let weatherSafe = true;
   if (lat !== undefined && lon !== undefined) {
@@ -53,7 +56,12 @@ export async function assignDailyQuest(input: AssignQuestInput): Promise<AssignQ
     weatherSafe,
     undefined,
     undefined,
-    { exhibited, congruenceDelta: delta },
+    {
+      exhibited,
+      congruenceDelta: delta,
+      selectionSeed,
+      diversityWindow: selectionSeed ? 5 : undefined,
+    },
   );
 
   let wasFallback = false;

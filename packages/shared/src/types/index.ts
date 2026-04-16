@@ -20,6 +20,9 @@ export interface PersonalityVector extends BigFiveVector, SensationSeekingVector
 export type ExplorerAxis = 'homebody' | 'explorer'; // Casanier vs Explorateur
 export type RiskAxis = 'cautious' | 'risktaker';     // Prudence vs Risque
 
+/** 3rd optional onboarding question — refines extraversion & agreeableness. */
+export type SociabilityLevel = 'solitary' | 'balanced' | 'social';
+
 export interface OperationalQuadrant {
   explorerAxis: ExplorerAxis;
   riskAxis: RiskAxis;

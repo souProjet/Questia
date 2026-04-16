@@ -136,7 +136,7 @@ export function scoreQuestFit(
     // Where this trait would land after doing this activity type.
     // Shift is proportional to correlation *and* room to move.
     const room = corr >= 0 ? 1 - current : current;
-    const shift = corr * 0.5 * room;
+    const shift = corr * 0.5 * Math.max(room, 0.08);
     const expectedExhibited = Math.max(0, Math.min(1, current + shift));
     const diff = current - expectedExhibited;
     sumSquared += diff * diff;
@@ -160,6 +160,14 @@ const COMFORT_NUMERIC: Record<string, number> = {
  * (peu extraverti, peu chercheur de sensations, ouverture modérée, stable).
  * Sert à doser le confort acceptable d'une quête.
  */
+/**
+ * Returns true when the exhibited vector carries meaningful signal
+ * (at least one dimension above a small epsilon).
+ */
+function hasExhibitedSignal(exhibited: PersonalityVector): boolean {
+  return PERSONALITY_KEYS.some((k) => (exhibited[k] ?? 0) > 0.02);
+}
+
 export function computeGentleness(p: PersonalityVector): number {
   return (
     (1 - (p.extraversion ?? 0.5)) * 0.30 +
@@ -180,7 +188,7 @@ function mixPersonality(
   congruenceDelta: number | undefined,
   phase: 'calibration' | 'expansion' | 'rupture',
 ): PersonalityVector {
-  if (!exhibited) return declared;
+  if (!exhibited || !hasExhibitedSignal(exhibited)) return declared;
   const delta = congruenceDelta ?? 0.22;
   let w = Math.min(0.45, Math.max(0.12, delta));
   if (phase === 'calibration') {
@@ -222,7 +230,8 @@ type SelectQuestOptions = {
 /**
  * Picks the best quest for the user given their profile and phase.
  * Filters out recently assigned quests and respects outdoor/weather constraints.
- * @param categoryBias — optionnel : valeurs positives réduisent le score (favorisent la catégorie), ex. questionnaire de raffinement.
+ * @param categoryBias — Convention **positive = favorise** (inversée en interne).
+ *   Ne pas confondre avec `options.categoryScorePenalty` (positive = pénalise).
  * @param instantOnly — si true, uniquement des archétypes « instant » (après report + relance).
  * @param taxonomy — liste d’archétypes (ex. chargée depuis la base).
  */

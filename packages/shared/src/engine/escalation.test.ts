@@ -33,24 +33,7 @@ describe('getPhaseForDay', () => {
   });
 });
 
-describe('shouldDowngrade', () => {
-  it('false hors rupture', () => {
-    expect(shouldDowngrade('calibration', [])).toBe(false);
-  });
-  it('false en rupture sans assez de rejets', () => {
-    const logs: QuestLog[] = [{ ...minimalLog(), status: 'rejected' }];
-    expect(shouldDowngrade('rupture', logs)).toBe(false);
-  });
-  it('true en rupture avec 2+ rejets récents', () => {
-    const logs: QuestLog[] = [
-      { ...minimalLog(), status: 'rejected' },
-      { ...minimalLog(), status: 'rejected' },
-    ];
-    expect(shouldDowngrade('rupture', logs)).toBe(true);
-  });
-});
-
-function minimalLog(): QuestLog {
+function minimalLog(overrides?: Partial<QuestLog>): QuestLog {
   return {
     id: '',
     userId: '',
@@ -62,46 +45,114 @@ function minimalLog(): QuestLog {
     wasRerolled: false,
     wasFallback: false,
     safetyConsentGiven: false,
+    ...overrides,
   };
 }
+
+describe('shouldDowngrade', () => {
+  it('false en calibration (déjà au minimum)', () => {
+    expect(shouldDowngrade('calibration', [])).toBe(false);
+  });
+
+  it('false en rupture sans assez de rejets', () => {
+    const logs: QuestLog[] = [minimalLog({ status: 'rejected' })];
+    expect(shouldDowngrade('rupture', logs)).toBe(false);
+  });
+
+  it('true en rupture avec 2+ rejets récents', () => {
+    const logs: QuestLog[] = [
+      minimalLog({ status: 'rejected' }),
+      minimalLog({ status: 'rejected' }),
+    ];
+    expect(shouldDowngrade('rupture', logs)).toBe(true);
+  });
+
+  it('true en expansion avec 3+ rejets récents', () => {
+    const logs: QuestLog[] = [
+      minimalLog({ status: 'rejected' }),
+      minimalLog({ status: 'rejected' }),
+      minimalLog({ status: 'rejected' }),
+    ];
+    expect(shouldDowngrade('expansion', logs)).toBe(true);
+  });
+
+  it('false en expansion avec seulement 2 rejets', () => {
+    const logs: QuestLog[] = [
+      minimalLog({ status: 'rejected' }),
+      minimalLog({ status: 'rejected' }),
+    ];
+    expect(shouldDowngrade('expansion', logs)).toBe(false);
+  });
+
+  it('filtre par fenêtre temporelle quand todayIso est fourni', () => {
+    const logs: QuestLog[] = [
+      minimalLog({ status: 'rejected', questDate: '2026-04-16' }),
+      minimalLog({ status: 'rejected', questDate: '2026-04-10' }),
+    ];
+    expect(shouldDowngrade('rupture', logs, '2026-04-16')).toBe(false);
+    expect(shouldDowngrade('rupture', logs)).toBe(true);
+  });
+});
 
 describe('getEffectivePhase', () => {
   it("retourne la phase naturelle en l'absence de downgrade", () => {
     expect(getEffectivePhase(5, [])).toBe('expansion');
   });
+
   it('passe en expansion si downgrade en rupture', () => {
     const logs: QuestLog[] = [
-      { ...minimalLog(), status: 'rejected' },
-      { ...minimalLog(), status: 'rejected' },
+      minimalLog({ status: 'rejected' }),
+      minimalLog({ status: 'rejected' }),
     ];
     expect(getEffectivePhase(12, logs)).toBe('expansion');
+  });
+
+  it('passe en calibration si downgrade en expansion', () => {
+    const logs: QuestLog[] = [
+      minimalLog({ status: 'rejected' }),
+      minimalLog({ status: 'rejected' }),
+      minimalLog({ status: 'rejected' }),
+    ];
+    expect(getEffectivePhase(6, logs)).toBe('calibration');
   });
 });
 
 describe('shouldUpscale', () => {
   it('false si déjà en rupture', () => {
     const logs: QuestLog[] = [
-      { ...minimalLog(), status: 'completed' },
-      { ...minimalLog(), status: 'completed' },
-      { ...minimalLog(), status: 'completed' },
+      minimalLog({ status: 'completed' }),
+      minimalLog({ status: 'completed' }),
+      minimalLog({ status: 'completed' }),
     ];
     expect(shouldUpscale('rupture', logs)).toBe(false);
   });
+
   it('true en calibration avec 3+ complétions consécutives', () => {
     const logs: QuestLog[] = [
-      { ...minimalLog(), status: 'completed' },
-      { ...minimalLog(), status: 'completed' },
-      { ...minimalLog(), status: 'completed' },
+      minimalLog({ status: 'completed' }),
+      minimalLog({ status: 'completed' }),
+      minimalLog({ status: 'completed' }),
     ];
     expect(shouldUpscale('calibration', logs)).toBe(true);
   });
+
   it('false si série de complétions cassée par un rejet', () => {
     const logs: QuestLog[] = [
-      { ...minimalLog(), status: 'completed' },
-      { ...minimalLog(), status: 'rejected' },
-      { ...minimalLog(), status: 'completed' },
-      { ...minimalLog(), status: 'completed' },
+      minimalLog({ status: 'completed' }),
+      minimalLog({ status: 'rejected' }),
+      minimalLog({ status: 'completed' }),
+      minimalLog({ status: 'completed' }),
     ];
     expect(shouldUpscale('calibration', logs)).toBe(false);
+  });
+
+  it('false si complétions hors fenêtre temporelle (7 jours)', () => {
+    const logs: QuestLog[] = [
+      minimalLog({ status: 'completed', questDate: '2026-03-01' }),
+      minimalLog({ status: 'completed', questDate: '2026-03-02' }),
+      minimalLog({ status: 'completed', questDate: '2026-03-03' }),
+    ];
+    expect(shouldUpscale('calibration', logs, '2026-04-16')).toBe(false);
+    expect(shouldUpscale('calibration', logs)).toBe(true);
   });
 });

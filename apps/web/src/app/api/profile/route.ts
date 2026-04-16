@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
-import { QUADRANT_DEFAULTS, getBadgeCatalogForUi, getThemeIds, TITLE_IDS } from '@questia/shared';
-import type { ExplorerAxis, RiskAxis } from '@questia/shared';
+import { QUADRANT_DEFAULTS, applySociabilityAdjustment, isValidSociabilityLevel, getBadgeCatalogForUi, getThemeIds, TITLE_IDS } from '@questia/shared';
+import type { ExplorerAxis, RiskAxis, SociabilityLevel } from '@questia/shared';
 import { parseAppLocaleFromRequest } from '@/lib/requestLocale';
 import { progressionFields, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
@@ -171,6 +171,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({})) as {
     explorerAxis?: ExplorerAxis;
     riskAxis?: RiskAxis;
+    sociability?: SociabilityLevel;
   };
   const VALID_EXPLORER: ExplorerAxis[] = ['homebody', 'explorer'];
   const VALID_RISK: RiskAxis[] = ['cautious', 'risktaker'];
@@ -181,15 +182,19 @@ export async function POST(request: NextRequest) {
   const riskAxis: RiskAxis = VALID_RISK.includes(body.riskAxis as RiskAxis)
     ? body.riskAxis!
     : 'risktaker';
+  const sociability: SociabilityLevel | null =
+    isValidSociabilityLevel(body.sociability) ? body.sociability : null;
 
   const key = `${explorerAxis}_${riskAxis}` as keyof typeof QUADRANT_DEFAULTS;
-  const declaredPersonality = QUADRANT_DEFAULTS[key];
+  const basePersonality = QUADRANT_DEFAULTS[key];
+  const declaredPersonality = applySociabilityAdjustment(basePersonality, sociability);
 
   const profile = await prisma.profile.create({
     data: {
       clerkId: userId,
       explorerAxis,
       riskAxis,
+      ...(sociability && { sociability }),
       declaredPersonality: declaredPersonality as unknown as Record<string, number>,
     },
   });

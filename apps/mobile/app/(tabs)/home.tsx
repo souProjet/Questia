@@ -237,11 +237,13 @@ export default function DashboardScreen() {
       if (res.status !== 404) return { ok: false, error: homeUi.errHttp(res.status) };
       const explorer = await AsyncStorage.getItem('questia_explorer');
       const risk = await AsyncStorage.getItem('questia_risk');
+      const soc = await AsyncStorage.getItem('questia_sociability');
       const createRes = await apiFetch(`${API_BASE_URL}/api/profile`, token, {
         method: 'POST',
         body: JSON.stringify({
           explorerAxis: explorer === 'homebody' || explorer === 'explorer' ? explorer : undefined,
           riskAxis: risk === 'cautious' || risk === 'risktaker' ? risk : undefined,
+          ...(soc === 'solitary' || soc === 'balanced' || soc === 'social' ? { sociability: soc } : {}),
         }),
       });
       if (createRes.ok || createRes.status === 201) return { ok: true };

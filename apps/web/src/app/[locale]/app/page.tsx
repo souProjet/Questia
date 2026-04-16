@@ -287,12 +287,16 @@ function AppPageContent() {
       if (res.status !== 404) return false;
       const explorer = typeof window !== 'undefined' ? localStorage.getItem('questia_explorer') : null;
       const risk = typeof window !== 'undefined' ? localStorage.getItem('questia_risk') : null;
+      const sociability = typeof window !== 'undefined' ? localStorage.getItem('questia_sociability') : null;
       const createRes = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           explorerAxis: explorer === 'homebody' || explorer === 'explorer' ? explorer : undefined,
           riskAxis: risk === 'cautious' || risk === 'risktaker' ? risk : undefined,
+          ...(sociability === 'solitary' || sociability === 'balanced' || sociability === 'social'
+            ? { sociability }
+            : {}),
         }),
       });
       return createRes.ok || createRes.status === 201;

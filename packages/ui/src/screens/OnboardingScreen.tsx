@@ -3,20 +3,21 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'solito/navigation';
-import type { ExplorerAxis, RiskAxis, OperationalQuadrant } from '@questia/shared';
+import type { ExplorerAxis, RiskAxis, SociabilityLevel, OperationalQuadrant } from '@questia/shared';
 import { QUADRANT_DEFAULTS } from '@questia/shared';
 import { PersonalityQuadrantPicker } from '../components/PersonalityQuadrantPicker';
 import { DA } from '../theme';
 
-type OnboardingStep = 'welcome' | 'question1' | 'question2' | 'complete';
+type OnboardingStep = 'welcome' | 'question1' | 'question2' | 'question3' | 'complete';
 
-const STEP_INDEX: Record<OnboardingStep, number> = { welcome: 0, question1: 1, question2: 2, complete: 3 };
+const STEP_INDEX: Record<OnboardingStep, number> = { welcome: 0, question1: 1, question2: 2, question3: 3, complete: 4 };
 
 export function OnboardingScreen() {
   const router = useRouter();
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [explorerAxis, setExplorerAxis] = useState<ExplorerAxis | null>(null);
   const [riskAxis, setRiskAxis] = useState<RiskAxis | null>(null);
+  const [sociability, setSociability] = useState<SociabilityLevel | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const goTo = (next: OnboardingStep) => {
@@ -43,7 +44,7 @@ export function OnboardingScreen() {
       {/* Progress dots */}
       {step !== 'welcome' && step !== 'complete' && (
         <View style={styles.progressRow}>
-          {[1, 2].map((i) => (
+          {[1, 2, 3].map((i) => (
             <View
               key={i}
               style={[styles.dot, currentStepIndex >= i && styles.dotActive]}
@@ -70,7 +71,7 @@ export function OnboardingScreen() {
 
         {step === 'question1' && (
           <>
-            <Text style={styles.questionStep}>1 / 2 — Ton rythme</Text>
+            <Text style={styles.questionStep}>1 / 3 — Ton rythme</Text>
             <Text style={styles.questionTitle}>Un dimanche libre, tu fais quoi ?</Text>
             <Text style={styles.questionText}>Un clic, celui qui te parle le plus.</Text>
             <PersonalityQuadrantPicker
@@ -89,7 +90,7 @@ export function OnboardingScreen() {
 
         {step === 'question2' && (
           <>
-            <Text style={styles.questionStep}>2 / 2 — L'imprévu</Text>
+            <Text style={styles.questionStep}>2 / 3 — L'imprévu</Text>
             <Text style={styles.questionTitle}>Quand un plan tombe à l'eau…</Text>
             <Text style={styles.questionText}>Dernier clic, même règle : fun &gt; perfection.</Text>
             <PersonalityQuadrantPicker
@@ -100,9 +101,32 @@ export function OnboardingScreen() {
               selected={riskAxis}
               onSelect={(val) => {
                 setRiskAxis(val as RiskAxis);
+                setTimeout(() => goTo('question3'), 200);
+              }}
+            />
+          </>
+        )}
+
+        {step === 'question3' && (
+          <>
+            <Text style={styles.questionStep}>3 / 3 — Ton énergie sociale</Text>
+            <Text style={styles.questionTitle}>En soirée, t&apos;es comment ?</Text>
+            <Text style={styles.questionText}>Optionnel — passe si tu veux.</Text>
+            <PersonalityQuadrantPicker
+              options={[
+                { value: 'solitary', label: '🌙  Plutôt solo', description: 'Mon énergie, je la garde pour moi.' },
+                { value: 'balanced', label: '👥  Ça dépend', description: 'Un mélange des deux, selon le moment.' },
+                { value: 'social', label: '💬  Très sociable', description: 'Parler, échanger, ça me booste.' },
+              ]}
+              selected={sociability}
+              onSelect={(val) => {
+                setSociability(val as SociabilityLevel);
                 setTimeout(() => goTo('complete'), 200);
               }}
             />
+            <Pressable style={styles.primaryButton} onPress={() => goTo('complete')}>
+              <Text style={styles.primaryButtonText}>Passer →</Text>
+            </Pressable>
           </>
         )}
 

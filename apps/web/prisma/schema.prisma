@@ -102,6 +102,8 @@ model Profile {
   role                  UserRole        @default(user) @map("role")
   explorerAxis          ExplorerAxis    @map("explorer_axis")
   riskAxis              RiskAxis        @map("risk_axis")
+  /** 3e question onboarding (optionnelle) — null si skippée */
+  sociability           String?         @map("sociability")
   declaredPersonality   Json            @map("declared_personality")
   exhibitedPersonality  Json            @default("{}") @map("exhibited_personality")
   currentDay            Int             @default(1) @map("current_day")

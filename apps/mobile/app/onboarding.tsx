@@ -3,12 +3,12 @@ import { View, Text, Pressable, StyleSheet, Animated, ScrollView, useWindowDimen
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { ExplorerAxis, RiskAxis } from '@questia/shared';
+import type { ExplorerAxis, RiskAxis, SociabilityLevel } from '@questia/shared';
 import { AnalyticsEvent } from '@questia/shared';
 import { DA } from '@questia/ui';
 import { trackMobileEvent } from '../lib/analytics/track';
 
-type Step = 'welcome' | 'q1' | 'q2' | 'done';
+type Step = 'welcome' | 'q1' | 'q2' | 'q3' | 'done';
 
 const C = {
   bg: DA.bg,
@@ -28,6 +28,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>('welcome');
   const [explorer, setExplorer] = useState<ExplorerAxis | null>(null);
   const [risk, setRisk] = useState<RiskAxis | null>(null);
+  const [sociability, setSociability] = useState<SociabilityLevel | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -54,12 +55,19 @@ export default function OnboardingPage() {
     } catch {}
   };
 
+  const persistSociability = async (value: SociabilityLevel) => {
+    try {
+      await AsyncStorage.setItem('questia_sociability', value);
+    } catch {}
+  };
+
   const finish = async () => {
     if (!explorer || !risk) return;
     trackMobileEvent(AnalyticsEvent.onboardingCompleted);
     try {
       await AsyncStorage.setItem('questia_explorer', explorer);
       await AsyncStorage.setItem('questia_risk', risk);
+      if (sociability) await AsyncStorage.setItem('questia_sociability', sociability);
     } catch {}
     router.replace('/(auth)?flow=signup' as never);
   };
@@ -124,7 +132,7 @@ export default function OnboardingPage() {
             </View>
             <Text style={[s.title, compact && s.titleCompact]}>Questia</Text>
             <Text style={[s.subtitle, compact && s.subtitleCompact]}>Une aventure quotidienne,{'\n'}rien que pour toi.</Text>
-            <Text style={s.body}>2 questions fun, zéro piège — on calibre tes quêtes.</Text>
+            <Text style={s.body}>3 questions fun, zéro piège — on calibre tes quêtes.</Text>
             <Pressable style={s.btn} onPress={() => goTo('q1')}>
               <Text style={s.btnText}>C&apos;est parti →</Text>
             </Pressable>
@@ -135,7 +143,7 @@ export default function OnboardingPage() {
         {/* ── Q1 ── */}
         {step === 'q1' && (
           <>
-            <Text style={s.stepLabel}>1 / 2 — Ton rythme</Text>
+            <Text style={s.stepLabel}>1 / 3 — Ton rythme</Text>
             <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Dimanche libre,{'\n'}tu fais quoi ?</Text>
             <Text style={s.questionHint}>Le tap qui te parle ✨</Text>
             {[
@@ -169,7 +177,7 @@ export default function OnboardingPage() {
         {/* ── Q2 ── */}
         {step === 'q2' && (
           <>
-            <Text style={s.stepLabel}>2 / 2 — L'imprévu</Text>
+            <Text style={s.stepLabel}>2 / 3 — L'imprévu</Text>
             <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>Plan foiré,{'\n'}tu réagis comment ?</Text>
             <Text style={s.questionHint}>Dernier tap 🎯</Text>
             {[
@@ -186,7 +194,7 @@ export default function OnboardingPage() {
                     step_name: 'risk_axis',
                     step_index: 1,
                   });
-                  goTo('done');
+                  goTo('q3');
                 }}
               >
                 <Text style={s.optionIcon}>{o.icon}</Text>
@@ -197,6 +205,47 @@ export default function OnboardingPage() {
               </Pressable>
             ))}
             <Pressable onPress={() => goTo('q1')} style={s.backBtn}>
+              <Text style={s.backText}>← Retour</Text>
+            </Pressable>
+            {renderLoginFooter(true)}
+          </>
+        )}
+
+        {/* ── Q3 (sociabilité, optionnelle) ── */}
+        {step === 'q3' && (
+          <>
+            <Text style={s.stepLabel}>3 / 3 — Ton énergie sociale</Text>
+            <Text style={[s.questionTitle, compact && s.questionTitleCompact]}>En soirée,{'\n'}t&apos;es comment ?</Text>
+            <Text style={s.questionHint}>Optionnel — passe si tu veux 🤷</Text>
+            {([
+              { id: 'solitary' as SociabilityLevel, icon: '🌙', title: 'Plutôt solo.', desc: 'Mon énergie, je la garde pour moi.' },
+              { id: 'balanced' as SociabilityLevel, icon: '👥', title: 'Ça dépend.', desc: 'Un mélange des deux, selon le moment.' },
+              { id: 'social' as SociabilityLevel, icon: '💬', title: 'Très sociable.', desc: 'Parler, échanger, ça me booste.' },
+            ]).map((o) => (
+              <Pressable
+                key={o.id}
+                style={s.optionCard}
+                onPress={() => {
+                  setSociability(o.id);
+                  void persistSociability(o.id);
+                  trackMobileEvent(AnalyticsEvent.onboardingStepCompleted, {
+                    step_name: 'sociability',
+                    step_index: 2,
+                  });
+                  goTo('done');
+                }}
+              >
+                <Text style={s.optionIcon}>{o.icon}</Text>
+                <View style={s.optionText}>
+                  <Text style={s.optionTitle}>{o.title}</Text>
+                  <Text style={s.optionDesc}>{o.desc}</Text>
+                </View>
+              </Pressable>
+            ))}
+            <Pressable onPress={() => goTo('done')} style={s.backBtn}>
+              <Text style={s.backText}>Passer →</Text>
+            </Pressable>
+            <Pressable onPress={() => goTo('q2')} style={s.backBtn}>
               <Text style={s.backText}>← Retour</Text>
             </Pressable>
             {renderLoginFooter(true)}
@@ -226,7 +275,7 @@ export default function OnboardingPage() {
             <Pressable style={s.btn} onPress={finish} accessibilityLabel="Créer mon compte pour sauvegarder mon profil">
               <Text style={s.btnText}>Créer mon compte →</Text>
             </Pressable>
-            <Pressable onPress={() => goTo('q2')} style={s.backBtn}>
+            <Pressable onPress={() => goTo('q3')} style={s.backBtn}>
               <Text style={s.backText}>← Modifier mes réponses</Text>
             </Pressable>
             {renderLoginFooter(true)}

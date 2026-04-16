@@ -2,22 +2,25 @@
 
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '../db';
-import { QUADRANT_DEFAULTS } from '@questia/shared';
-import type { ExplorerAxis, RiskAxis, PersonalityVector } from '@questia/shared';
+import { QUADRANT_DEFAULTS, applySociabilityAdjustment } from '@questia/shared';
+import type { ExplorerAxis, RiskAxis, SociabilityLevel, PersonalityVector } from '@questia/shared';
 
 export async function createProfile(
   clerkId: string,
   explorerAxis: ExplorerAxis,
   riskAxis: RiskAxis,
+  sociability?: SociabilityLevel | null,
 ) {
   const key = `${explorerAxis}_${riskAxis}` as keyof typeof QUADRANT_DEFAULTS;
-  const declaredPersonality = QUADRANT_DEFAULTS[key];
+  const basePersonality = QUADRANT_DEFAULTS[key];
+  const declaredPersonality = applySociabilityAdjustment(basePersonality, sociability);
 
   return prisma.profile.create({
     data: {
       clerkId,
       explorerAxis,
       riskAxis,
+      ...(sociability && { sociability }),
       declaredPersonality: declaredPersonality as unknown as Record<string, number>,
     },
   });
