@@ -20,7 +20,6 @@ import {
   isValidQuestDateIso,
   getQuestCalendarDateNow,
   softUpdateDeclaredPersonality,
-  ACTIVITY_PERSONALITY_CORRELATION,
 } from '@questia/shared';
 import type {
   AppLocale,
