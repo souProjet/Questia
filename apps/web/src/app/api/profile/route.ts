@@ -7,6 +7,7 @@ import { parseAppLocaleFromRequest } from '@/lib/requestLocale';
 import { progressionFields, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
 import { isValidIanaTimeZone } from '@/lib/reminders/time';
+import { notifyAdminNewUser } from '@/lib/admin/notifyNewUser';
 
 function shopPayload(profile: {
   rerollsRemaining: number;
@@ -192,6 +193,8 @@ export async function POST(request: NextRequest) {
       declaredPersonality: declaredPersonality as unknown as Record<string, number>,
     },
   });
+
+  void notifyAdminNewUser(profile.id, explorerAxis, riskAxis).catch(() => {});
 
   return NextResponse.json(profile, { status: 201 });
 }

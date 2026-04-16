@@ -40,7 +40,7 @@ foreach ($a in $args) {
   [void]$gradleArgs.Add($a)
 }
 if ($gradleArgs.Count -eq 0) {
-  [void]$gradleArgs.Add("assembleRelease")
+  [void]$gradleArgs.Add("bundleRelease")
 }
 
 # Réduit les chemins CMake/Ninja (souvent armeabi-v7a dépasse MAX_PATH avec Desktop\...\node_modules).
