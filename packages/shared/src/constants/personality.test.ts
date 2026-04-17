@@ -32,6 +32,44 @@ describe('applySociabilityAdjustment', () => {
     expect(result.agreeableness).toBeGreaterThan(base.agreeableness);
   });
 
+  it('shifts openness / emotionalStability / boredomSusceptibility coherently', () => {
+    // Base neutre pour éviter les clamps aux extrêmes.
+    const mid: PersonalityVector = {
+      openness: 0.5,
+      conscientiousness: 0.5,
+      extraversion: 0.5,
+      agreeableness: 0.5,
+      emotionalStability: 0.5,
+      thrillSeeking: 0.5,
+      boredomSusceptibility: 0.5,
+    };
+    const solo = applySociabilityAdjustment(mid, 'solitary');
+    expect(solo.openness).toBeLessThan(mid.openness);
+    expect(solo.emotionalStability).toBeGreaterThan(mid.emotionalStability);
+    expect(solo.boredomSusceptibility).toBeLessThan(mid.boredomSusceptibility);
+
+    const soc = applySociabilityAdjustment(mid, 'social');
+    expect(soc.openness).toBeGreaterThan(mid.openness);
+    expect(soc.thrillSeeking).toBeGreaterThan(mid.thrillSeeking);
+    expect(soc.boredomSusceptibility).toBeGreaterThan(mid.boredomSusceptibility);
+  });
+
+  it('"solitary" moves extraversion more than ±0.15 (stronger signal)', () => {
+    const mid: PersonalityVector = {
+      openness: 0.5,
+      conscientiousness: 0.5,
+      extraversion: 0.5,
+      agreeableness: 0.5,
+      emotionalStability: 0.5,
+      thrillSeeking: 0.5,
+      boredomSusceptibility: 0.5,
+    };
+    const solo = applySociabilityAdjustment(mid, 'solitary');
+    expect(Math.abs(solo.extraversion - mid.extraversion)).toBeGreaterThan(0.15);
+    const soc = applySociabilityAdjustment(mid, 'social');
+    expect(Math.abs(soc.extraversion - mid.extraversion)).toBeGreaterThan(0.15);
+  });
+
   it('clamps all traits between 0 and 1', () => {
     const extreme: PersonalityVector = {
       openness: 0.02,

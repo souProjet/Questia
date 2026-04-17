@@ -735,6 +735,7 @@ const styles = StyleSheet.create({
   },
   inlineSecondaryActions: {
     marginTop: 10,
+    marginBottom: 12,
     gap: 10,
     width: '100%',
     paddingHorizontal: 20,

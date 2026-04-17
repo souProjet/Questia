@@ -6,7 +6,6 @@ import {
   computeExhibitedPersonality,
   computeCongruenceDelta,
   getEffectivePhase,
-  getPhaseForDay,
   computeCompletionXp,
   evaluateNewBadges,
   levelFromTotalXp,
@@ -19,7 +18,14 @@ import {
   isValidReportDeferredDate,
   isValidQuestDateIso,
   getQuestCalendarDateNow,
+  getPreviousQuestCalendarDate,
+  subtractCalendarDays,
   softUpdateDeclaredPersonality,
+  DAILY_FREE_REROLLS,
+  RECENT_EXCLUSION_WINDOW_DAYS,
+  ANTI_REPEAT_RECENT_LOGS,
+  CATEGORY_RECENT_WINDOW_LOGS,
+  ENGINE_HISTORY_LOGS,
 } from '@questia/shared';
 import type {
   AppLocale,
@@ -337,7 +343,7 @@ export async function GET(request: NextRequest) {
     take: 20,
     select: { archetypeId: true, status: true, questDate: true, generatedMission: true, generatedTitle: true },
   });
-  const recentLogs = recentLogRows.slice(0, 14).map((r) => ({
+  const recentLogs = recentLogRows.slice(0, ENGINE_HISTORY_LOGS).map((r) => ({
     archetypeId: r.archetypeId,
     status: r.status,
     questDate: r.questDate,
@@ -361,7 +367,14 @@ export async function GET(request: NextRequest) {
   const exhibited = computeExhibitedPersonality(engineLogs, taxonomy);
   const congruenceDelta = computeCongruenceDelta(declaredPersonality, exhibited);
   const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs, today);
-  const recentIds = recentLogs.slice(0, 7).map((r) => r.archetypeId);
+  // Exclusion des archétypes proposés dans les N derniers **jours calendaires**
+  // (plus stable qu'un slice(0, 7) sur les logs : l'utilisateur n'est pas pénalisé
+  // pour une absence de plusieurs semaines, et l'exclusion reste cohérente s'il fait
+  // plusieurs quêtes dans la même journée, bonus, etc.).
+  const exclusionCutoffDate = subtractCalendarDays(today, RECENT_EXCLUSION_WINDOW_DAYS);
+  const recentIds = recentLogs
+    .filter((r) => r.questDate >= exclusionCutoffDate)
+    .map((r) => r.archetypeId);
   /** Après relance/report, les archétypes déjà proposés aujourd'hui ne sont plus dans l'historique BDD — on les cumule ici. */
   const lastQuestDateStr =
     profile.lastQuestDate == null ? null : String(profile.lastQuestDate).slice(0, 10);
@@ -373,14 +386,14 @@ export async function GET(request: NextRequest) {
   const categoryRerollPenalty = buildCategoryPenaltyFromExcludedIds(taxMap, extraExclude);
   const categoryRecentPenalty = buildCategoryPenaltyFromRecentArchetypeIds(
     taxMap,
-    recentLogRows.slice(0, 10).map((r) => r.archetypeId),
+    recentLogRows.slice(0, CATEGORY_RECENT_WINDOW_LOGS).map((r) => r.archetypeId),
   );
   const categoryScorePenaltyMerged = mergeCategoryScorePenalties(
     categoryRerollPenalty,
     categoryRecentPenalty,
   );
   const recentMissionsAntiRepeat = buildRecentMissionsAntiRepeatBlock(
-    recentLogRows.slice(0, 8),
+    recentLogRows.slice(0, ANTI_REPEAT_RECENT_LOGS),
     questLocale,
   );
 
@@ -500,9 +513,9 @@ export async function GET(request: NextRequest) {
 
   // Compute updated day and phase progression
   const lastDate = profile.lastQuestDate;
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  // ⚠ Important : on calcule « hier » dans le même fuseau que `today`
+  // (Europe/Paris) sinon la série se casse autour de minuit UTC vs minuit Paris.
+  const yesterdayStr = getPreviousQuestCalendarDate(today);
 
   const isSameDayRegen = lastDate === today;
   const isConsecutive = lastDate === yesterdayStr;
@@ -512,12 +525,16 @@ export async function GET(request: NextRequest) {
       ? profile.streakCount + 1
       : 1;
   const newDay = profile.currentDay + (lastDate !== today ? 1 : 0);
-  const newPhase: EscalationPhase = getPhaseForDay(newDay);
+  // On persiste la phase *effective* (avec downgrade/upscale appliqués) pour que
+  // l'UI, les prompts AI et les badges voient la même vérité. La « phase naturelle »
+  // reste dérivable à volonté depuis `currentDay` via `getPhaseForDay(newDay)`.
+  const newPhase: EscalationPhase = getEffectivePhase(newDay, engineLogs, today);
 
   const assignAfterReroll = profile.flagNextQuestAfterReroll;
 
-  // Après relance/report, le POST a déjà décrémenté les relances — ne pas remettre 1 ici (sinon l'UI reste bloquée à 1/2).
-  const rerollsAfterQuestCreate = assignAfterReroll ? profile.rerollsRemaining : 1;
+  // Après relance/report, le POST a déjà décrémenté les relances — ne pas remettre
+  // DAILY_FREE_REROLLS ici (sinon l'UI reste bloquée à 1/2).
+  const rerollsAfterQuestCreate = assignAfterReroll ? profile.rerollsRemaining : DAILY_FREE_REROLLS;
 
   // Save quest log + update profile atomically
   const [questLog, updatedProfile] = await prisma.$transaction([
@@ -653,6 +670,17 @@ export async function POST(request: NextRequest) {
     }
 
     const excludeArchetypeId = existing.archetypeId;
+    // Symétrie avec `reroll` : reporter une quête planifiée est aussi un signal
+    // « pas pour moi maintenant ». On soft-update le profil déclaré côté début de
+    // parcours (fire-and-forget, même garde interne que pour reroll).
+    void trySoftUpdateDeclared(
+      profile.id,
+      declared,
+      profile.currentDay,
+      excludeArchetypeId,
+      'rejected',
+      postTaxMap,
+    );
     const mergedExclude = mergeRerollExcludedArchetypeIds(profile, excludeArchetypeId);
 
     const updatedProfile =

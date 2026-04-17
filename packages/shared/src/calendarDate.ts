@@ -21,3 +21,25 @@ export function getQuestCalendarDateForInstant(date: Date): string {
 export function getQuestCalendarDateNow(): string {
   return getQuestCalendarDateForInstant(new Date());
 }
+
+/**
+ * Retourne la date civile (YYYY-MM-DD) obtenue en soustrayant `days` jours à
+ * une date calendaire donnée, dans le fuseau quête (Europe/Paris). Les calculs
+ * naïfs avec `toISOString()` peuvent dériver de ±1 jour au passage de minuit
+ * Paris (UTC+1 / +2) — cette helper reste cohérente avec `getQuestCalendarDateNow`.
+ */
+export function subtractCalendarDays(dateIso: string, days: number): string {
+  // Parse YYYY-MM-DD comme une date « midi UTC » pour éviter les décalages de fuseau
+  // lors de la soustraction, puis reformatte dans le fuseau quête.
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateIso);
+  if (!m) throw new Error(`subtractCalendarDays: invalid date '${dateIso}'`);
+  const [, y, mo, d] = m;
+  const utcMidday = new Date(Date.UTC(Number(y), Number(mo) - 1, Number(d), 12, 0, 0));
+  utcMidday.setUTCDate(utcMidday.getUTCDate() - days);
+  return calendarDateInTimeZone(utcMidday, QUEST_CALENDAR_TIMEZONE);
+}
+
+/** Alias pratique pour la quête d'hier (utilisé par le calcul de streak). */
+export function getPreviousQuestCalendarDate(dateIso: string): string {
+  return subtractCalendarDays(dateIso, 1);
+}

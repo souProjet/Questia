@@ -4,10 +4,10 @@ import type { PersonalityVector, OperationalQuadrant, PsychologicalCategory, Soc
  * Default personality vectors for each operational quadrant.
  * Derived from TIPI/SSS mapping to Big Five + Sensation Seeking.
  */
-export const QUADRANT_DEFAULTS: Record<
+export const QUADRANT_DEFAULTS: Readonly<Record<
   `${OperationalQuadrant['explorerAxis']}_${OperationalQuadrant['riskAxis']}`,
-  PersonalityVector
-> = {
+  Readonly<PersonalityVector>
+>> = Object.freeze({
   homebody_cautious: {
     openness: 0.25,
     conscientiousness: 0.7,
@@ -44,7 +44,7 @@ export const QUADRANT_DEFAULTS: Record<
     thrillSeeking: 0.9,
     boredomSusceptibility: 0.85,
   },
-};
+});
 
 /**
  * Correlation matrix C mapping activity categories to personality traits.
@@ -52,7 +52,7 @@ export const QUADRANT_DEFAULTS: Record<
  * Values from -1 to 1 indicate how strongly completing that activity type
  * suggests the corresponding personality trait.
  */
-export const ACTIVITY_PERSONALITY_CORRELATION: Record<PsychologicalCategory, Partial<PersonalityVector>> = {
+export const ACTIVITY_PERSONALITY_CORRELATION: Readonly<Record<PsychologicalCategory, Readonly<Partial<PersonalityVector>>>> = Object.freeze({
   spatial_adventure:        { openness: 0.9,  conscientiousness: 0.2,  extraversion: 0.5,  agreeableness: 0.15, emotionalStability: 0.6,  thrillSeeking: 0.95, boredomSusceptibility: 0.6  },
   public_introspection:     { openness: 0.6,  conscientiousness: 0.3,  extraversion: -0.2, agreeableness: 0.3,  emotionalStability: 0.7,  thrillSeeking: -0.1, boredomSusceptibility: -0.2 },
   sensory_deprivation:      { openness: 0.5,  conscientiousness: 0.4,  extraversion: -0.4, agreeableness: 0.2,  emotionalStability: 0.5,  thrillSeeking: -0.2, boredomSusceptibility: -0.4 },
@@ -66,7 +66,7 @@ export const ACTIVITY_PERSONALITY_CORRELATION: Record<PsychologicalCategory, Par
   spontaneous_altruism:     { openness: 0.3,  conscientiousness: 0.35, extraversion: 0.82, agreeableness: 0.7,  emotionalStability: 0.4,  thrillSeeking: 0.15, boredomSusceptibility: 0.1  },
   relational_vulnerability: { openness: 0.45, conscientiousness: 0.35, extraversion: 0.3,  agreeableness: 0.7,  emotionalStability: 0.5,  thrillSeeking: 0.1,  boredomSusceptibility: -0.1 },
   unconditional_service:    { openness: 0.25, conscientiousness: 0.6,  extraversion: 0.1,  agreeableness: 0.8,  emotionalStability: 0.45, thrillSeeking: -0.1, boredomSusceptibility: -0.2 },
-};
+});
 
 export const PERSONALITY_KEYS: (keyof PersonalityVector)[] = [
   'openness',
@@ -80,17 +80,36 @@ export const PERSONALITY_KEYS: (keyof PersonalityVector)[] = [
 
 // ── Sociability adjustment (3rd onboarding question) ────────────────────────
 
+/**
+ * Décalages appliqués au vecteur de base (quadrant) après la 3ᵉ question d'onboarding.
+ *
+ * Intention : tirer la sélection vers des catégories d'archétypes cohérentes dès le
+ * jour 1, sans attendre la phase d'expansion ni le questionnaire de refinement.
+ *
+ * Cartographie pensée (voir `ACTIVITY_PERSONALITY_CORRELATION`) :
+ *  - `solitary`  → favorise `sensory_deprivation`, `dopamine_detox`,
+ *                  `public_introspection`, `temporal_projection`
+ *    (extraversion ↓↓, boredomSusceptibility ↓, emotionalStability ↑, openness ↓, agreeableness ↓)
+ *  - `social`    → favorise `exploratory_sociability`, `active_empathy`,
+ *                  `spontaneous_altruism`, `hostile_immersion`
+ *    (extraversion ↑↑, agreeableness ↑, boredomSusceptibility ↑, thrillSeeking ↑, openness ↑)
+ *  - `balanced`  → neutre (aucun décalage)
+ */
 const SOCIABILITY_DELTA: Record<SociabilityLevel, Partial<PersonalityVector>> = {
   solitary: {
-    extraversion: -0.15,
-    agreeableness: -0.08,
-    boredomSusceptibility: -0.06,
+    extraversion: -0.22,
+    agreeableness: -0.06,
+    openness: -0.05,
+    emotionalStability: 0.05,
+    boredomSusceptibility: -0.10,
   },
   balanced: {},
   social: {
-    extraversion: 0.12,
-    agreeableness: 0.10,
-    boredomSusceptibility: 0.05,
+    extraversion: 0.20,
+    agreeableness: 0.12,
+    openness: 0.04,
+    thrillSeeking: 0.05,
+    boredomSusceptibility: 0.06,
   },
 };
 

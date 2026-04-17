@@ -20,9 +20,12 @@ const uniform = (v: number): PersonalityVector => ({
 });
 
 describe('computeExhibitedPersonality', () => {
-  it('retourne un vecteur nul sans historique', () => {
+  it('retourne la baseline neutre (0.5) sans historique (comparable avec declared)', () => {
     const p = computeExhibitedPersonality([], TEST_QUEST_TAXONOMY);
-    expect(p.openness).toBe(0);
+    // Toutes les dimensions doivent être centrées sur 0.5 (pas de signal).
+    for (const k of Object.keys(p) as (keyof typeof p)[]) {
+      expect(p[k]).toBe(0.5);
+    }
   });
 
   it('ignore les quêtes inconnues et les statuts sans poids', () => {
@@ -53,7 +56,32 @@ describe('computeExhibitedPersonality', () => {
       },
     ];
     const p = computeExhibitedPersonality(logs, TEST_QUEST_TAXONOMY);
-    expect(p.openness).toBe(0);
+    // Aucun log avec poids non nul → baseline neutre.
+    expect(p.openness).toBe(0.5);
+  });
+
+  it('un reject d\'une quête introspective ne rend pas "extrêmement introverti" tous les traits non corrélés', () => {
+    // Cherche une quête introspective (negative correlation on extraversion) dans la taxonomie
+    const introspective = TEST_QUEST_TAXONOMY.find((q) => q.category === 'public_introspection');
+    if (!introspective) return; // skip si pas dans le fixture
+    const logs: QuestLog[] = [
+      {
+        id: 'r',
+        userId: 'u',
+        questId: introspective.id,
+        assignedAt: '',
+        status: 'rejected',
+        congruenceDeltaAtAssignment: 0,
+        phaseAtAssignment: 'calibration',
+        wasRerolled: false,
+        wasFallback: false,
+        safetyConsentGiven: false,
+      },
+    ];
+    const p = computeExhibitedPersonality(logs, TEST_QUEST_TAXONOMY);
+    // Les traits avec corrélation ≈ 0 restent près de 0.5, pas à 0.
+    expect(p.conscientiousness).toBeGreaterThan(0.2);
+    expect(p.conscientiousness).toBeLessThan(0.8);
   });
 
   it('agrège completed / accepted / rejected', () => {

@@ -58,10 +58,30 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [pendingVerification, setPendingVerification] = useState(false);
+  /**
+   * Clerk Client Trust (avril 2026) : après `signIn.create()` depuis un nouvel
+   * appareil, Clerk peut renvoyer `status: 'needs_client_trust'`. Il faut alors
+   * challenger un second facteur (ici : code email) avant `setActive`.
+   *
+   * Quand ce flag est vrai, on affiche un écran de saisie du code identique au
+   * sign-up mais branché sur `signIn.attemptFirstFactor`.
+   */
+  const [pendingClientTrust, setPendingClientTrust] = useState(false);
+  /** Email vers lequel le code client trust a été envoyé (affiché dans l'écran de saisie). */
+  const [clientTrustDestination, setClientTrustDestination] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
   const [onboardingReady, setOnboardingReady] = useState<boolean | null>(null);
+
+  const resetAuthUi = useCallback(() => {
+    setPendingVerification(false);
+    setPendingClientTrust(false);
+    setClientTrustDestination(null);
+    setCode('');
+    setError('');
+  }, []);
 
   useEffect(() => {
     void hasOnboardingAnswers().then(setOnboardingReady);
@@ -85,6 +105,11 @@ export default function AuthScreen() {
       });
       if (createdSessionId) {
         await (setActiveSSO ?? setActive)({ session: createdSessionId });
+      } else {
+        // Avec Client Trust, Clerk peut exiger une vérification dans le navigateur
+        // hébergé ; si on revient ici sans session, c'est soit un abandon, soit
+        // un état en attente. On donne un retour explicite plutôt qu'un écran figé.
+        setError('Connexion Google non finalisée. Réessaie ou utilise ton email.');
       }
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
@@ -94,6 +119,33 @@ export default function AuthScreen() {
     }
   }, [startSSOFlow, setActive]);
 
+  /**
+   * Envoie / renvoie le code email exigé par Clerk Client Trust.
+   * Appelé après un `signIn.create()` qui renvoie `needs_client_trust`, et
+   * depuis le bouton « Renvoyer le code » de l'écran de saisie.
+   */
+  const prepareClientTrustChallenge = useCallback(async (): Promise<boolean> => {
+    if (!signInLoaded || !signIn) return false;
+    const factors: Array<{
+      strategy?: string;
+      emailAddressId?: string;
+      safeIdentifier?: string;
+    }> = signIn.supportedFirstFactors ?? [];
+    const emailFactor = factors.find((f) => f.strategy === 'email_code');
+    if (!emailFactor?.emailAddressId) {
+      setError(
+        "On n'arrive pas à préparer la vérification par email. Contacte le support si le problème persiste.",
+      );
+      return false;
+    }
+    await signIn.prepareFirstFactor({
+      strategy: 'email_code',
+      emailAddressId: emailFactor.emailAddressId,
+    });
+    setClientTrustDestination(emailFactor.safeIdentifier ?? email);
+    return true;
+  }, [signInLoaded, signIn, email]);
+
   const handleSignIn = useCallback(async () => {
     if (!signInLoaded) return;
     setLoading(true);
@@ -102,14 +154,66 @@ export default function AuthScreen() {
       const result = await signIn.create({ identifier: email, password });
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
+        return;
       }
+      if (result.status === 'needs_client_trust') {
+        const ok = await prepareClientTrustChallenge();
+        if (ok) {
+          setCode('');
+          setPendingClientTrust(true);
+        }
+        return;
+      }
+      if (result.status === 'needs_first_factor' || result.status === 'needs_second_factor') {
+        // Cas rare : MFA configuré. Même traitement que client trust.
+        const ok = await prepareClientTrustChallenge();
+        if (ok) {
+          setCode('');
+          setPendingClientTrust(true);
+        }
+        return;
+      }
+      setError(`Étape de connexion non prise en charge (${String(result.status)}).`);
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
       setError(err.errors?.[0]?.message ?? 'Email ou mot de passe incorrect');
     } finally {
       setLoading(false);
     }
-  }, [signInLoaded, signIn, email, password, setActive]);
+  }, [signInLoaded, signIn, email, password, setActive, prepareClientTrustChallenge]);
+
+  /** Soumet le code reçu par email pour valider un nouveau client (Client Trust). */
+  const handleVerifyClientTrust = useCallback(async () => {
+    if (!signInLoaded) return;
+    setLoading(true);
+    setError('');
+    try {
+      const result = await signIn.attemptFirstFactor({ strategy: 'email_code', code });
+      if (result.status === 'complete') {
+        await setActive({ session: result.createdSessionId });
+        return;
+      }
+      setError(`Vérification incomplète (${String(result.status)}). Réessaie ou redemande un code.`);
+    } catch (e: unknown) {
+      const err = e as { errors?: { message: string }[] };
+      setError(err.errors?.[0]?.message ?? 'Code invalide ou expiré.');
+    } finally {
+      setLoading(false);
+    }
+  }, [signInLoaded, signIn, code, setActive]);
+
+  const handleResendClientTrust = useCallback(async () => {
+    setResending(true);
+    setError('');
+    try {
+      await prepareClientTrustChallenge();
+    } catch (e: unknown) {
+      const err = e as { errors?: { message: string }[] };
+      setError(err.errors?.[0]?.message ?? "Impossible d'envoyer un nouveau code.");
+    } finally {
+      setResending(false);
+    }
+  }, [prepareClientTrustChallenge]);
 
   const handleSignUp = useCallback(async () => {
     if (!signUpLoaded) return;
@@ -135,7 +239,11 @@ export default function AuthScreen() {
       const result = await signUp.attemptEmailAddressVerification({ code });
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
+        return;
       }
+      // Au cas où Clerk ajouterait un statut transitoire après vérification,
+      // on informe clairement l'utilisateur plutôt que de laisser l'écran figé.
+      setError(`Inscription incomplète (${String(result.status)}). Réessaie.`);
     } catch (e: unknown) {
       const err = e as { errors?: { message: string }[] };
       setError(err.errors?.[0]?.message ?? 'Code invalide');
@@ -143,6 +251,68 @@ export default function AuthScreen() {
       setLoading(false);
     }
   }, [signUpLoaded, signUp, code, setActive]);
+
+  if (pendingClientTrust) {
+    return (
+      <KeyboardAvoidingView
+        style={s.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={s.verifyInner}>
+          <View style={s.verifyIconBox}>
+            <Text style={s.verifyIconText}>🛡️</Text>
+          </View>
+          <Text style={s.verifyTitle}>Confirmer cet appareil</Text>
+          <Text style={s.verifySubtitle}>
+            On ne te reconnaît pas sur ce téléphone. Un code a été envoyé à{' '}
+            <Text style={s.emailHighlight}>{clientTrustDestination ?? email}</Text>.
+          </Text>
+          <TextInput
+            style={s.input}
+            placeholder="Code à 6 chiffres"
+            placeholderTextColor="#94a3b8"
+            value={code}
+            onChangeText={setCode}
+            keyboardType="number-pad"
+            autoFocus
+            accessibilityLabel="Code de vérification reçu par email"
+          />
+          {error ? <Text style={s.errorText}>{error}</Text> : null}
+          <Pressable
+            style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
+            onPress={handleVerifyClientTrust}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Valider le code et terminer la connexion"
+          >
+            {loading
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={s.primaryButtonText}>Confirmer le code</Text>
+            }
+          </Pressable>
+          <Pressable
+            onPress={handleResendClientTrust}
+            disabled={resending}
+            style={s.linkBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Renvoyer un code"
+          >
+            <Text style={s.linkText}>
+              {resending ? 'Envoi…' : 'Renvoyer un code'}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={resetAuthUi}
+            style={s.linkBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Revenir à l'écran de connexion"
+          >
+            <Text style={s.linkTextMuted}>Revenir en arrière</Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
 
   if (pendingVerification) {
     return (
@@ -294,7 +464,10 @@ export default function AuthScreen() {
         </View>
 
         <Pressable
-          onPress={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); }}
+          onPress={() => {
+            setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
+            resetAuthUi();
+          }}
           style={s.switchBtn}
         >
           <Text style={s.switchText}>
@@ -575,5 +748,20 @@ const s = StyleSheet.create({
   emailHighlight: {
     color: '#0e7490',
     fontWeight: '700',
+  },
+
+  linkBtn: {
+    paddingVertical: 10,
+    alignSelf: 'center',
+  },
+  linkText: {
+    color: '#0e7490',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  linkTextMuted: {
+    color: DA.muted,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

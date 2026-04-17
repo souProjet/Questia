@@ -262,7 +262,7 @@ export default function OnboardingPage() {
             <Text style={s.profileLabel}>Ta vibe</Text>
             <Text style={s.profileName}>{profile.label}</Text>
             <Text style={s.profileDesc}>{profile.desc}</Text>
-            <Text style={s.recapHeading}>Ton duo</Text>
+            <Text style={s.recapHeading}>{sociability ? 'Ton trio' : 'Ton duo'}</Text>
             <View style={s.recapCard} accessibilityLabel="Résumé de tes réponses, non interactif">
               <Text style={s.recapItem}>
                 {explorer === 'explorer' ? '🌍  Tu aimes explorer' : '🏠  Tu aimes ta routine'}
@@ -271,6 +271,18 @@ export default function OnboardingPage() {
               <Text style={s.recapItem}>
                 {risk === 'risktaker' ? '🎲  Tu fonces dans l\'inconnu' : '📋  Tu préfères planifier'}
               </Text>
+              {sociability && (
+                <>
+                  <View style={s.recapDivider} />
+                  <Text style={s.recapItem}>
+                    {sociability === 'solitary'
+                      ? '🌙  Tu recharges mieux en solo'
+                      : sociability === 'social'
+                        ? '💬  Tu te nourris du contact'
+                        : '👥  Tu alternes solo et social'}
+                  </Text>
+                </>
+              )}
             </View>
             <Pressable style={s.btn} onPress={finish} accessibilityLabel="Créer mon compte pour sauvegarder mon profil">
               <Text style={s.btnText}>Créer mon compte →</Text>

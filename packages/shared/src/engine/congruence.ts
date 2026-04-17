@@ -1,10 +1,48 @@
 import type { PersonalityVector, PsychologicalCategory, QuestLog, QuestModel } from '../types';
 import { ACTIVITY_PERSONALITY_CORRELATION, PERSONALITY_KEYS } from '../constants/personality';
+import {
+  CATEGORY_TOTAL_PENALTY_CAP,
+  COMFORT_NUMERIC,
+  COMFORT_PHASE_MULTIPLIER,
+  DEFAULT_DIVERSITY_WINDOW,
+  DURATION_EXCESS_PENALTY_PER_MIN,
+  DURATION_SOFT_CAP_MIN,
+  EXHIBITED_BASELINE,
+  EXHIBITED_MAX_SHIFT,
+  EXHIBITED_SIGNAL_EPSILON,
+  FIT_MIN_ROOM,
+  FIT_SHIFT_GAIN,
+  GENTLENESS_WEIGHTS,
+  GENTLE_SOCIAL_PENALTY,
+  GENTLE_SOCIAL_PENALTY_THRESHOLD,
+  JITTER_ABSOLUTE_CAP,
+  JITTER_INDEX_STEP,
+  JITTER_MIN_AMPLITUDE,
+  JITTER_SPREAD_FRACTION,
+  MIX_DEFAULT_DELTA,
+  MIX_PHASE_CAP,
+  MIX_PHASE_MULTIPLIER,
+  MIX_RUPTURE_BONUS,
+  MIX_WEIGHT_MAX,
+  MIX_WEIGHT_MIN,
+  RECENCY_DECAY,
+  STATUS_WEIGHT,
+} from './engineParams';
 
-/**
- * Creates a zero-initialized personality vector.
- */
-function emptyVector(): PersonalityVector {
+/** Neutral baseline vector (0.5 on every dimension), comparable directly with declared. */
+export function neutralExhibitedVector(): PersonalityVector {
+  return {
+    openness: EXHIBITED_BASELINE,
+    conscientiousness: EXHIBITED_BASELINE,
+    extraversion: EXHIBITED_BASELINE,
+    agreeableness: EXHIBITED_BASELINE,
+    emotionalStability: EXHIBITED_BASELINE,
+    thrillSeeking: EXHIBITED_BASELINE,
+    boredomSusceptibility: EXHIBITED_BASELINE,
+  };
+}
+
+function zeroVector(): PersonalityVector {
   return {
     openness: 0,
     conscientiousness: 0,
@@ -17,25 +55,26 @@ function emptyVector(): PersonalityVector {
 }
 
 /**
- * Computes the exhibited personality vector p_ex from quest history.
+ * Computes the exhibited personality vector p_ex from quest history, in the
+ * same [0,1] space as `declared`.
  *
- * p_ex = normalize( sum_j( recency(j) * statusWeight(j) * C[category(j)] ) )
+ *   p_ex[k] = clamp01( 0.5 + EXHIBITED_MAX_SHIFT * (Σ w_i * c_i) / Σ |w_i| )
  *
- * Status weights:
- *  +1.0 for completed quests
- *  +0.3 for accepted but not completed
- *  -0.5 for rejected quests
+ * Key difference with the old implementation : we no longer clamp the raw
+ * weighted sum to [0, 1]. Clamping the raw sum produced a **different space**
+ * from `declared` (negative correlations were folded to 0, making an
+ * introspective profile read as "maximally introverted" on *all* dimensions
+ * it didn't reinforce). Here we center on 0.5 so both vectors can be compared
+ * directly by `computeCongruenceDelta` and mixed in `mixPersonality`.
  *
- * Recency: exponential decay — the first log (most recent) has weight 1,
- * each subsequent log is multiplied by RECENCY_DECAY (0.88).
- * This ensures recent behaviour outweighs old habits.
- *
+ * Status weights and recency decay live in `engineParams.ts`.
  * Logs are expected in reverse chronological order (newest first).
  */
-const RECENCY_DECAY = 0.88;
-
-export function computeExhibitedPersonality(logs: QuestLog[], taxonomy: QuestModel[]): PersonalityVector {
-  const pEx = emptyVector();
+export function computeExhibitedPersonality(
+  logs: QuestLog[],
+  taxonomy: QuestModel[],
+): PersonalityVector {
+  const acc = zeroVector();
   let totalWeight = 0;
 
   const questById = new Map(taxonomy.map((q) => [q.id, q]));
@@ -45,13 +84,7 @@ export function computeExhibitedPersonality(logs: QuestLog[], taxonomy: QuestMod
     const quest = questById.get(log.questId);
     if (!quest) continue;
 
-    const statusWeight =
-      log.status === 'completed' ? 1.0 :
-      log.status === 'accepted'  ? 0.3 :
-      log.status === 'rejected'  ? -0.5 :
-      log.status === 'abandoned' ? 0 :
-      0;
-
+    const statusWeight = STATUS_WEIGHT[log.status] ?? 0;
     if (statusWeight === 0) continue;
 
     const recency = RECENCY_DECAY ** i;
@@ -62,23 +95,25 @@ export function computeExhibitedPersonality(logs: QuestLog[], taxonomy: QuestMod
 
     for (const key of PERSONALITY_KEYS) {
       const c = correlation[key] ?? 0;
-      pEx[key] += w * c;
+      acc[key] += w * c;
     }
     totalWeight += Math.abs(w);
   }
 
-  if (totalWeight > 0) {
-    for (const key of PERSONALITY_KEYS) {
-      pEx[key] = Math.max(0, Math.min(1, pEx[key] / totalWeight));
-    }
-  }
+  if (totalWeight <= 0) return neutralExhibitedVector();
 
-  return pEx;
+  const out = zeroVector();
+  for (const key of PERSONALITY_KEYS) {
+    const signed = acc[key] / totalWeight; // in [-1, 1]
+    const value = EXHIBITED_BASELINE + EXHIBITED_MAX_SHIFT * signed;
+    out[key] = Math.max(0, Math.min(1, value));
+  }
+  return out;
 }
 
 /**
  * Calculates the Congruence Delta: Δ_cong = ‖p_r − p_ex‖
- * Uses Euclidean distance normalized by the number of dimensions.
+ * Euclidean distance normalized by the number of dimensions (both vectors in [0,1]).
  */
 export function computeCongruenceDelta(
   declared: PersonalityVector,
@@ -110,15 +145,13 @@ export function getTargetDelta(phase: 'calibration' | 'expansion' | 'rupture'): 
 }
 
 /**
- * Scores a quest candidate based on how well its expected delta
- * matches the target delta for the current phase.
+ * Scores a quest candidate based on how well its expected delta matches the
+ * *range* prescribed by the current phase (not just its midpoint).
  *
- * The expected delta measures how far the user's *scoring personality*
- * would shift if they completed this quest category.  We blend the
- * category correlation with the user's current vector so the result
- * genuinely depends on who the user is (not just on the category).
+ * Inside the band : score 0 (perfect fit).
+ * Outside : distance to the closest bound.
  *
- * Lower score = better fit.
+ * Lower = better.
  */
 export function scoreQuestFit(
   quest: QuestModel,
@@ -132,11 +165,9 @@ export function scoreQuestFit(
   let dims = 0;
   for (const key of PERSONALITY_KEYS) {
     const corr = correlation[key] ?? 0;
-    const current = scoringVector[key] ?? 0.5;
-    // Where this trait would land after doing this activity type.
-    // Shift is proportional to correlation *and* room to move.
+    const current = scoringVector[key] ?? EXHIBITED_BASELINE;
     const room = corr >= 0 ? 1 - current : current;
-    const shift = corr * 0.5 * Math.max(room, 0.08);
+    const shift = corr * FIT_SHIFT_GAIN * Math.max(room, FIT_MIN_ROOM);
     const expectedExhibited = Math.max(0, Math.min(1, current + shift));
     const diff = current - expectedExhibited;
     sumSquared += diff * diff;
@@ -144,43 +175,40 @@ export function scoreQuestFit(
   }
 
   const expectedDelta = Math.sqrt(sumSquared / dims);
-  const targetMid = (targetDelta.min + targetDelta.max) / 2;
-  return Math.abs(expectedDelta - targetMid);
+  if (expectedDelta < targetDelta.min) return targetDelta.min - expectedDelta;
+  if (expectedDelta > targetDelta.max) return expectedDelta - targetDelta.max;
+  return 0;
 }
-
-const COMFORT_NUMERIC: Record<string, number> = {
-  low: 1,
-  moderate: 2,
-  high: 3,
-  extreme: 4,
-};
 
 /**
  * Score 0-1 : plus il est haut, plus le profil est « doux »
  * (peu extraverti, peu chercheur de sensations, ouverture modérée, stable).
- * Sert à doser le confort acceptable d'une quête.
  */
-/**
- * Returns true when the exhibited vector carries meaningful signal
- * (at least one dimension above a small epsilon).
- */
-function hasExhibitedSignal(exhibited: PersonalityVector): boolean {
-  return PERSONALITY_KEYS.some((k) => (exhibited[k] ?? 0) > 0.02);
-}
-
 export function computeGentleness(p: PersonalityVector): number {
   return (
-    (1 - (p.extraversion ?? 0.5)) * 0.30 +
-    (1 - (p.thrillSeeking ?? 0.5)) * 0.25 +
-    (1 - (p.openness ?? 0.5)) * 0.20 +
-    (p.emotionalStability ?? 0.5) * 0.10 +
-    (1 - (p.boredomSusceptibility ?? 0.5)) * 0.15
+    (1 - (p.extraversion ?? 0.5)) * GENTLENESS_WEIGHTS.extraversion +
+    (1 - (p.thrillSeeking ?? 0.5)) * GENTLENESS_WEIGHTS.thrillSeeking +
+    (1 - (p.openness ?? 0.5)) * GENTLENESS_WEIGHTS.openness +
+    (p.emotionalStability ?? 0.5) * GENTLENESS_WEIGHTS.emotionalStability +
+    (1 - (p.boredomSusceptibility ?? 0.5)) * GENTLENESS_WEIGHTS.boredomSusceptibility
   );
 }
 
 /**
- * Mélange déclaré / observé pour noter les quêtes : plus la phase avance et plus Δ est haut,
- * plus le comportement récent doit peser (sans écraser l’identité déclarée).
+ * Returns true when the exhibited vector carries meaningful signal
+ * (at least one dimension drifted far enough from the neutral baseline).
+ */
+export function hasExhibitedSignal(exhibited: PersonalityVector | undefined): boolean {
+  if (!exhibited) return false;
+  return PERSONALITY_KEYS.some(
+    (k) => Math.abs((exhibited[k] ?? EXHIBITED_BASELINE) - EXHIBITED_BASELINE) > EXHIBITED_SIGNAL_EPSILON,
+  );
+}
+
+/**
+ * Mélange déclaré / observé pour noter les quêtes : plus la phase avance et
+ * plus Δ est haut, plus le comportement récent doit peser (sans écraser
+ * l'identité déclarée).
  */
 function mixPersonality(
   declared: PersonalityVector,
@@ -188,19 +216,16 @@ function mixPersonality(
   congruenceDelta: number | undefined,
   phase: 'calibration' | 'expansion' | 'rupture',
 ): PersonalityVector {
-  if (!exhibited || !hasExhibitedSignal(exhibited)) return declared;
-  const delta = congruenceDelta ?? 0.22;
-  let w = Math.min(0.45, Math.max(0.12, delta));
-  if (phase === 'calibration') {
-    w *= 0.78;
-  } else if (phase === 'expansion') {
-    w = Math.min(0.48, w * 1.05);
-  } else {
-    w = Math.min(0.54, w * 1.14 + 0.035);
-  }
-  const out = emptyVector();
+  if (!hasExhibitedSignal(exhibited)) return declared;
+  const delta = congruenceDelta ?? MIX_DEFAULT_DELTA;
+  let w = Math.min(MIX_WEIGHT_MAX, Math.max(MIX_WEIGHT_MIN, delta));
+  w *= MIX_PHASE_MULTIPLIER[phase];
+  if (phase === 'rupture') w += MIX_RUPTURE_BONUS;
+  w = Math.min(MIX_PHASE_CAP[phase], w);
+
+  const out = zeroVector();
   for (const key of PERSONALITY_KEYS) {
-    out[key] = declared[key] * (1 - w) + exhibited[key] * w;
+    out[key] = declared[key] * (1 - w) + (exhibited as PersonalityVector)[key] * w;
   }
   return out;
 }
@@ -233,7 +258,7 @@ type SelectQuestOptions = {
  * @param categoryBias — Convention **positive = favorise** (inversée en interne).
  *   Ne pas confondre avec `options.categoryScorePenalty` (positive = pénalise).
  * @param instantOnly — si true, uniquement des archétypes « instant » (après report + relance).
- * @param taxonomy — liste d’archétypes (ex. chargée depuis la base).
+ * @param taxonomy — liste d'archétypes (ex. chargée depuis la base).
  */
 export function selectQuest(
   taxonomy: QuestModel[],
@@ -255,8 +280,7 @@ export function selectQuest(
 
   if (candidates.length === 0) return null;
 
-  // Convert refinement bias to the unified convention (positive = penalty).
-  // categoryBias: positive = favours → negate to get a penalty.
+  // categoryBias: positive = favours → negate to unify with "positive = penalty".
   const biasPenalty: Partial<Record<PsychologicalCategory, number>> = {};
   if (categoryBias) {
     for (const k of Object.keys(categoryBias) as PsychologicalCategory[]) {
@@ -272,29 +296,32 @@ export function selectQuest(
     .map((q) => {
       let score = scoreQuestFit(q, scoringVector, targetDelta);
 
-      const comfort = COMFORT_NUMERIC[q.comfortLevel] ?? 2;
+      const comfort = (COMFORT_NUMERIC as Record<string, number>)[q.comfortLevel] ?? 2;
       const naturalComfort = 1 + (1 - gentle) * 2.5;
       const comfortExcess = Math.max(0, comfort - naturalComfort);
-      const phaseComfortMult =
-        phase === 'calibration' ? 0.22 :
-        phase === 'expansion'  ? 0.10 :
-        0.03;
-      score += comfortExcess * phaseComfortMult * gentle;
+      score += comfortExcess * COMFORT_PHASE_MULTIPLIER[phase] * gentle;
 
       if (gentle > 0.4 && phase !== 'rupture') {
-        const durationExcess = Math.max(0, q.minimumDurationMinutes - 60);
-        score += durationExcess * 0.0006 * gentle * (phase === 'calibration' ? 2 : 1);
+        const durationExcess = Math.max(0, q.minimumDurationMinutes - DURATION_SOFT_CAP_MIN);
+        score +=
+          durationExcess *
+          DURATION_EXCESS_PENALTY_PER_MIN *
+          gentle *
+          (phase === 'calibration' ? 2 : 1);
       }
 
-      if (q.requiresSocial && gentle > 0.55 && phase === 'calibration') {
-        score += 0.12 * gentle;
+      if (q.requiresSocial && gentle > GENTLE_SOCIAL_PENALTY_THRESHOLD && phase === 'calibration') {
+        score += GENTLE_SOCIAL_PENALTY * gentle;
       }
 
-      // All category adjustments: positive = penalty (unified convention).
-      const bp = biasPenalty[q.category];
-      if (bp !== undefined) score += bp;
-      const p = catPen?.[q.category];
-      if (p !== undefined) score += p;
+      // Unified category adjustments: positive = penalty, capped globally.
+      const rawBias = biasPenalty[q.category] ?? 0;
+      const rawPen = catPen?.[q.category] ?? 0;
+      const totalCatPenalty = Math.max(
+        -CATEGORY_TOTAL_PENALTY_CAP,
+        Math.min(CATEGORY_TOTAL_PENALTY_CAP, rawBias + rawPen),
+      );
+      score += totalCatPenalty;
       return { quest: q, score };
     })
     .sort((a, b) => a.score - b.score);
@@ -303,16 +330,26 @@ export function selectQuest(
 
   const window = Math.max(
     1,
-    Math.min(scored.length, options.diversityWindow ?? 4),
+    Math.min(scored.length, options.diversityWindow ?? DEFAULT_DIVERSITY_WINDOW),
   );
-  const seeded = scored
-    .slice(0, window)
+  const slice = scored.slice(0, window);
+
+  // Jitter échelonné selon le "spread" réel de la fenêtre → ne peut jamais
+  // écraser un vrai écart de score, tout en apportant de la diversité quand
+  // les scores sont quasi ex-aequo (cas fréquent quand plusieurs archétypes
+  // tombent dans la plage cible `targetDelta`).
+  const spread = slice[slice.length - 1].score - slice[0].score;
+  const jitterAmplitude = Math.min(
+    JITTER_ABSOLUTE_CAP,
+    Math.max(JITTER_MIN_AMPLITUDE, spread * JITTER_SPREAD_FRACTION),
+  );
+
+  const seeded = slice
     .map((entry, idx) => {
-      // Jitter léger et stable : varie entre utilisateurs/jours sans casser le fit.
-      const jitter = (hashToUnit(`${options.selectionSeed}:${entry.quest.id}`) - 0.5) * 0.24;
+      const jitter = (hashToUnit(`${options.selectionSeed}:${entry.quest.id}`) - 0.5) * 2 * jitterAmplitude;
       return {
         quest: entry.quest,
-        score: entry.score + idx * 0.012 + jitter,
+        score: entry.score + idx * JITTER_INDEX_STEP + jitter,
       };
     })
     .sort((a, b) => a.score - b.score);

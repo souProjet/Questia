@@ -17,7 +17,6 @@ export {
   homeScreenBackdropOrbTints,
   type ThemePalette,
 } from './theme';
-export { OnboardingScreen } from './screens/OnboardingScreen';
 export { QuestDashboard } from './screens/QuestDashboard';
 export { QuestDetailScreen } from './screens/QuestDetailScreen';
 export { SafetyConsentModal } from './components/SafetyConsentModal';

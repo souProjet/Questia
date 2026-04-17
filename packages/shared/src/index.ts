@@ -5,6 +5,7 @@ export * from './questShareBackgrounds';
 export * from './formatQuestDateFr';
 export * from './constants/quests';
 export * from './constants/personality';
+export * from './engine/engineParams';
 export * from './engine/congruence';
 export * from './engine/promptSeed';
 export * from './engine/escalation';

@@ -6,8 +6,10 @@ import type {
   QuestModel,
 } from '@questia/shared';
 import {
+  EXHIBITED_BASELINE,
   QUEST_CATEGORY_LABEL_EN,
   QUEST_CATEGORY_LABEL_FR,
+  hasExhibitedSignal,
   promptSeedIndex,
 } from '@questia/shared';
 
@@ -67,7 +69,7 @@ export function buildPersonalityPromptBlock(
     for (const k of BIG_KEYS) {
       lines.push(`- ${traitLabel(k)}: ${band(declared[k] ?? 0.5, 'en')}`);
     }
-    const hasHistory = BIG_KEYS.some((k) => (exhibited[k] ?? 0) > 0.02);
+    const hasHistory = hasExhibitedSignal(exhibited);
     if (!hasHistory) {
       lines.push(
         'QUEST HISTORY: little data \u2014 lean on the declared profile and the quest family below.',
@@ -75,12 +77,12 @@ export function buildPersonalityPromptBlock(
     } else {
       lines.push('OBSERVED TENDENCIES (recent behavior from completed/accepted quests):');
       for (const k of BIG_KEYS) {
-        lines.push(`- ${traitLabel(k)}: ${band(exhibited[k] ?? 0, 'en')}`);
+        lines.push(`- ${traitLabel(k)}: ${band(exhibited[k] ?? EXHIBITED_BASELINE, 'en')}`);
       }
       const gaps: string[] = [];
       for (const k of BIG_KEYS) {
         const d = declared[k] ?? 0.5;
-        const e = exhibited[k] ?? 0;
+        const e = exhibited[k] ?? EXHIBITED_BASELINE;
         if (Math.abs(d - e) > 0.15) {
           if (d > e)
             gaps.push(
@@ -115,7 +117,7 @@ export function buildPersonalityPromptBlock(
     lines.push(`- ${traitLabel(k)} : ${band(declared[k] ?? 0.5, 'fr')}`);
   }
 
-  const hasHistory = BIG_KEYS.some((k) => (exhibited[k] ?? 0) > 0.02);
+  const hasHistory = hasExhibitedSignal(exhibited);
   if (!hasHistory) {
     lines.push(
       'HISTORIQUE DE QU\u00caTES : peu de donn\u00e9es \u2014 mets l\u2019accent sur le profil d\u00e9clar\u00e9 et la famille de qu\u00eate ci-dessous.',
@@ -123,12 +125,12 @@ export function buildPersonalityPromptBlock(
   } else {
     lines.push('TENDANCES OBSERV\u00c9ES (comportements r\u00e9cents via qu\u00eates compl\u00e9t\u00e9es / accept\u00e9es) :');
     for (const k of BIG_KEYS) {
-      lines.push(`- ${traitLabel(k)} : ${band(exhibited[k] ?? 0, 'fr')}`);
+      lines.push(`- ${traitLabel(k)} : ${band(exhibited[k] ?? EXHIBITED_BASELINE, 'fr')}`);
     }
     const gaps: string[] = [];
     for (const k of BIG_KEYS) {
       const d = declared[k] ?? 0.5;
-      const e = exhibited[k] ?? 0;
+      const e = exhibited[k] ?? EXHIBITED_BASELINE;
       if (Math.abs(d - e) > 0.15) {
         if (d > e)
           gaps.push(
@@ -167,10 +169,10 @@ export function buildPersonalityMissionHints(
   exhibited: PersonalityVector,
   locale: AppLocale = 'fr',
 ): string {
-  const hasHistory = BIG_KEYS.some((k) => (exhibited[k] ?? 0) > 0.02);
+  const hasHistory = hasExhibitedSignal(exhibited);
   const m = (k: keyof PersonalityVector) =>
     hasHistory
-      ? (declared[k] ?? 0.5) * 0.55 + (exhibited[k] ?? 0) * 0.45
+      ? (declared[k] ?? 0.5) * 0.55 + (exhibited[k] ?? EXHIBITED_BASELINE) * 0.45
       : declared[k] ?? 0.5;
 
   const gentle =

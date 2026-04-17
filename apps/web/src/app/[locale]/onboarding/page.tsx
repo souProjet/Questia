@@ -343,6 +343,25 @@ export default function OnboardingPage() {
                   {risk === 'risktaker' ? 'Tu fonces dans l\'inconnu' : 'Tu préfères ce qui est rassurant'}
                 </span>
               </div>
+              {sociability && (
+                <>
+                  <div className="divider" />
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      name={sociability === 'solitary' ? 'Moon' : sociability === 'social' ? 'MessageCircle' : 'Users'}
+                      size="lg"
+                      className="text-purple-800 flex-shrink-0"
+                    />
+                    <span className="text-sm text-[var(--text)]/85 leading-snug">
+                      {sociability === 'solitary'
+                        ? 'Tu recharges mieux en solo'
+                        : sociability === 'social'
+                          ? 'Tu te nourris du contact'
+                          : 'Tu alternes solo et social'}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="rounded-2xl px-4 py-3 mb-5 border border-[color:color-mix(in_srgb,var(--cyan)_28%,var(--border-ui))] border-l-[3px] border-l-cyan-700/75 bg-[color:color-mix(in_srgb,var(--card)_70%,rgba(224,242,254,.95))] shadow-[inset_0_1px_0_rgba(255,255,255,.65)]">

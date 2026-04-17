@@ -18,13 +18,24 @@ const base = (): PersonalityVector => ({
   boredomSusceptibility: 0.5,
 });
 
+// Depuis le fix du moteur (sémantique [0,1] centrée sur 0.5), l'absence
+// d'historique est représentée par un vecteur `exhibited` uniformément à 0.5
+// (la même baseline que `declared`). Un vecteur à 0 signifie au contraire un
+// signal fort (« extrêmement bas partout »).
+const neutralExhibited = (): PersonalityVector => ({
+  openness: 0.5,
+  conscientiousness: 0.5,
+  extraversion: 0.5,
+  agreeableness: 0.5,
+  emotionalStability: 0.5,
+  thrillSeeking: 0.5,
+  boredomSusceptibility: 0.5,
+});
+
 describe('questGenerationPrompt', () => {
   it("buildPersonalityPromptBlock inclut déclaré, delta et mention peu d'historique", () => {
     const declared = base();
-    const exhibited = base();
-    for (const k of Object.keys(exhibited) as (keyof PersonalityVector)[]) {
-      exhibited[k] = 0;
-    }
+    const exhibited = neutralExhibited();
     const block = buildPersonalityPromptBlock(declared, exhibited, 0.12);
     expect(block).toMatch(/TENDANCES DÉCLARÉES/);
     expect(block).toMatch(/INDICATEUR DE COHÉRENCE/);
@@ -35,11 +46,10 @@ describe('questGenerationPrompt', () => {
   it('buildPersonalityPromptBlock FR avec historique et écarts', () => {
     const declared = base();
     declared.openness = 0.85;
-    const exhibited = base();
+    // Exhibited signale une tendance réelle : ouverture basse et extraversion basse.
+    const exhibited = neutralExhibited();
     exhibited.openness = 0.1;
-    for (const k of ['conscientiousness', 'extraversion', 'agreeableness', 'emotionalStability'] as const) {
-      exhibited[k] = 0;
-    }
+    exhibited.extraversion = 0.15;
     const block = buildPersonalityPromptBlock(declared, exhibited, 0.4);
     expect(block).toMatch(/TENDANCES OBSERVÉES/);
     expect(block).toMatch(/ÉCARTS POSSIBLES/);
@@ -48,10 +58,7 @@ describe('questGenerationPrompt', () => {
 
   it('buildPersonalityPromptBlock EN sans historique et seuils de cohérence', () => {
     const declared = base();
-    const exhibited = base();
-    for (const k of Object.keys(exhibited) as (keyof PersonalityVector)[]) {
-      exhibited[k] = 0;
-    }
+    const exhibited = neutralExhibited();
     const small = buildPersonalityPromptBlock(declared, exhibited, 0.1, 'en');
     expect(small).toMatch(/DECLARED TENDENCIES/);
     expect(small).toMatch(/small —/);
@@ -66,10 +73,7 @@ describe('questGenerationPrompt', () => {
   it('buildPersonalityPromptBlock EN avec historique, gaps et extraversion', () => {
     const declared = base();
     declared.extraversion = 0.85;
-    const exhibited = base();
-    for (const k of Object.keys(exhibited) as (keyof PersonalityVector)[]) {
-      exhibited[k] = 0;
-    }
+    const exhibited = neutralExhibited();
     exhibited.extraversion = 0.1;
     exhibited.openness = 0.1;
     const block = buildPersonalityPromptBlock(declared, exhibited, 0.2, 'en');
@@ -83,10 +87,7 @@ describe('questGenerationPrompt', () => {
     declared.openness = 0.2;
     declared.conscientiousness = 0.5;
     declared.extraversion = 0.8;
-    const exhibited = base();
-    for (const k of Object.keys(exhibited) as (keyof PersonalityVector)[]) {
-      exhibited[k] = 0;
-    }
+    const exhibited = neutralExhibited();
     const block = buildPersonalityPromptBlock(declared, exhibited, 0.1, 'en');
     expect(block).toMatch(/rather low/);
     expect(block).toMatch(/moderate/);
