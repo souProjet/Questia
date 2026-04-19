@@ -2,7 +2,19 @@
 
 import type { WeatherCheck } from '@questia/shared';
 import { logStructured, logStructuredError } from '../observability';
-import type { QuestContext } from './ai';
+
+/** Contexte météo+lieu utilisé par la pipeline de génération de quête. */
+export interface QuestContext {
+  city: string;
+  country: string;
+  weatherDescription: string;
+  /** Nom d'icône Lucide (Sun, CloudRain, Cloud, …). */
+  weatherIcon: string;
+  temp: number;
+  isOutdoorFriendly: boolean;
+  /** True quand le client a fourni des coordonnées GPS valides. */
+  hasUserLocation: boolean;
+}
 
 const KEY = process.env.OPENWEATHER_API_KEY ?? '';
 const BASE = 'https://api.openweathermap.org/data/2.5';

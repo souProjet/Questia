@@ -12,8 +12,9 @@ vi.mock('@/lib/quest-taxonomy/cache', () => ({
 
 import { GET, POST } from './route';
 
-vi.mock('@/lib/actions/ai', () => ({
+vi.mock('@/lib/quest-gen/generateQuest', () => ({
   generateDailyQuest: vi.fn().mockResolvedValue({
+    archetypeId: 1,
     icon: 'Target',
     title: 'Titre',
     mission: 'Mission',
@@ -21,9 +22,11 @@ vi.mock('@/lib/actions/ai', () => ({
     duration: '1h',
     isOutdoor: false,
     safetyNote: null,
-    archetype: 'A',
     destinationLabel: null,
     destinationQuery: null,
+    selectionReason: 'top candidate',
+    selfFitScore: 80,
+    wasFallback: false,
   }),
 }));
 

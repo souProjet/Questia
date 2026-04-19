@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
 import {
-  selectQuest,
   computeExhibitedPersonality,
   computeCongruenceDelta,
   getEffectivePhase,
@@ -19,13 +18,11 @@ import {
   isValidQuestDateIso,
   getQuestCalendarDateNow,
   getPreviousQuestCalendarDate,
-  subtractCalendarDays,
   softUpdateDeclaredPersonality,
   DAILY_FREE_REROLLS,
-  RECENT_EXCLUSION_WINDOW_DAYS,
-  ANTI_REPEAT_RECENT_LOGS,
-  CATEGORY_RECENT_WINDOW_LOGS,
-  ENGINE_HISTORY_LOGS,
+  DEFAULT_RECENT_EXCLUSION_DAYS,
+  selectCandidates,
+  isValidSociabilityLevel,
 } from '@questia/shared';
 import type {
   AppLocale,
@@ -33,11 +30,14 @@ import type {
   ExplorerAxis,
   RiskAxis,
   PersonalityVector,
-  PsychologicalCategory,
+  ProfileSnapshot,
   QuestLog,
   QuestModel,
+  ScoringQuestLog,
+  SociabilityLevel,
 } from '@questia/shared';
-import { generateDailyQuest } from '@/lib/actions/ai';
+import { generateDailyQuest } from '@/lib/quest-gen/generateQuest';
+import type { GenerationHistoryItem } from '@/lib/quest-gen/types';
 import { getQuestContext } from '@/lib/actions/weather';
 import { geocodeNominatim, shortenDisplayName } from '@/lib/geocode';
 import { Prisma } from '@prisma/client';
@@ -53,7 +53,14 @@ import { findArchetypeById } from '@/lib/quest-taxonomy/map-prisma';
 
 export const dynamic = 'force-dynamic';
 
-/** Relances successives : cumul des archétypes déjà proposés (JSON + ancienne colonne seule). */
+/** Fenêtre d'historique injectée au moteur (sélection + résumé pour le LLM). */
+const HISTORY_WINDOW_LOGS = 14;
+/** Profondeur d'historique narrée au LLM (pour la variété stylistique). */
+const HISTORY_BRIEF_DEPTH = 5;
+
+// ── Helpers profil ───────────────────────────────────────────────────────────
+
+/** Relances successives : cumul des archétypes déjà proposés (JSON + ancienne colonne). */
 function parseRerollExcludedArchetypeIds(profile: {
   rerollExcludeArchetypeId: number | null;
   rerollExcludeArchetypeIds?: Prisma.JsonValue | null;
@@ -73,11 +80,7 @@ function mergeRerollExcludedArchetypeIds(
   return Array.from(new Set([...parseRerollExcludedArchetypeIds(profile), archetypeId]));
 }
 
-/**
- * Tries to soft-update declaredPersonality during the first few days.
- * Resolves the quest category from the taxonomy, computes the shift,
- * and persists it if meaningful. Fire-and-forget — errors are swallowed.
- */
+/** Soft-update du profil déclaré durant les premiers jours (fire-and-forget). */
 async function trySoftUpdateDeclared(
   profileId: string,
   declared: PersonalityVector,
@@ -102,69 +105,7 @@ function buildTaxonomyMap(taxonomy: QuestModel[]): Map<number, QuestModel> {
   return new Map(taxonomy.map((q) => [q.id, q]));
 }
 
-/** Moins on retombe sur le même « thème » (catégorie psychologique) après plusieurs relances. */
-function buildCategoryPenaltyFromExcludedIds(
-  taxMap: Map<number, QuestModel>,
-  excludedIds: number[],
-): Partial<Record<PsychologicalCategory, number>> {
-  const penalty: Partial<Record<PsychologicalCategory, number>> = {};
-  for (const id of excludedIds) {
-    const q = taxMap.get(id);
-    if (!q) continue;
-    penalty[q.category] = (penalty[q.category] ?? 0) + 0.18;
-  }
-  return penalty;
-}
-
-/** Pénalise les catégories déjà servies récemment pour diversifier le « type » de quête. */
-function buildCategoryPenaltyFromRecentArchetypeIds(
-  taxMap: Map<number, QuestModel>,
-  archetypeIds: number[],
-  weightPerOccurrence = 0.065,
-): Partial<Record<PsychologicalCategory, number>> {
-  const penalty: Partial<Record<PsychologicalCategory, number>> = {};
-  for (const id of archetypeIds) {
-    const q = taxMap.get(id);
-    if (!q) continue;
-    penalty[q.category] = Math.min(0.48, (penalty[q.category] ?? 0) + weightPerOccurrence);
-  }
-  return penalty;
-}
-
-function mergeCategoryScorePenalties(
-  a: Partial<Record<PsychologicalCategory, number>>,
-  b: Partial<Record<PsychologicalCategory, number>>,
-): Partial<Record<PsychologicalCategory, number>> {
-  const out: Partial<Record<PsychologicalCategory, number>> = { ...a };
-  for (const key of Object.keys(b) as PsychologicalCategory[]) {
-    const v = b[key];
-    if (v === undefined) continue;
-    out[key] = (out[key] ?? 0) + v;
-  }
-  return out;
-}
-
-/** Snippets des dernières missions pour le prompt (anti-copie sémantique). */
-function buildRecentMissionsAntiRepeatBlock(
-  rows: { generatedMission: string; generatedTitle: string }[],
-  locale: AppLocale,
-): string | null {
-  const bullets: string[] = [];
-  for (const r of rows) {
-    const m = (r.generatedMission || '').trim();
-    const t = (r.generatedTitle || '').trim();
-    if (!m || m.includes('Mission simulée')) continue;
-    const snip = m.length > 220 ? `${m.slice(0, 220)}…` : m;
-    bullets.push(t ? `- (${t}) ${snip}` : `- ${snip}`);
-    if (bullets.length >= 5) break;
-  }
-  if (bullets.length === 0) return null;
-  const body = bullets.join('\n');
-  if (locale === 'en') {
-    return `RECENT QUESTS FOR THIS USER (do **not** reuse the same beat, gimmick, object-in-a-book, or scene; change the gesture, medium, constraint, or setting):\n${body}`;
-  }
-  return `QUÊTES RÉCENTES DE CET UTILISATEUR (**ne pas** réutiliser le même ressort, la même scène ou le même gimmick — ex. lettre + « dans 5 ans » + livre / carnet si c’est déjà là ; change de geste, de support, de contrainte ou de lieu) :\n${body}`;
-}
+// ── Helpers génération ───────────────────────────────────────────────────────
 
 /** Libellés génériques renvoyés par le modèle ou des prompts — à ignorer au profit du géocodage. */
 function isPlaceholderDestinationLabel(s: string): boolean {
@@ -176,7 +117,6 @@ function isPlaceholderDestinationLabel(s: string): boolean {
   return false;
 }
 
-/** Évite d'afficher « null » / « undefined » (JSON ou bugs modèle). */
 function sanitizeDestinationLabelForStorage(s: string | null | undefined): string | null {
   if (s == null) return null;
   const t = s.trim();
@@ -184,10 +124,7 @@ function sanitizeDestinationLabelForStorage(s: string | null | undefined): strin
   return t;
 }
 
-/**
- * Mission qui évoque un déplacement large ou une autre zone : recherche géo moins contrainte
- * (viewbox plus large ; le fallback sans viewbox reste possible).
- */
+/** Mission qui évoque un déplacement large : recherche géo moins contrainte. */
 function inferWideDestinationSearch(mission: string): boolean {
   const m = mission.toLowerCase();
   return (
@@ -197,7 +134,8 @@ function inferWideDestinationSearch(mission: string): boolean {
   );
 }
 
-/** Champs boutique / relances pour le client (thème, packs, crédits) */
+// ── Helpers réponse ──────────────────────────────────────────────────────────
+
 function shopClientPayload(profile: {
   rerollsRemaining: number;
   bonusRerollCredits: number;
@@ -233,7 +171,7 @@ function progressionPayload(profile: { totalXp: number; badgesEarned: unknown },
   };
 }
 
-// ── Route ─────────────────────────────────────────────────────────────────────
+// ── Route GET ────────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
@@ -251,9 +189,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Get profile
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
-  if (!profile) return NextResponse.json({ error: 'Profil introuvable. Complète l\'onboarding.' }, { status: 404 });
+  if (!profile) {
+    return NextResponse.json(
+      { error: 'Profil introuvable. Complète l\'onboarding.' },
+      { status: 404 },
+    );
+  }
 
   const completedQuestCount = await prisma.questLog.count({
     where: { profileId: profile.id, status: 'completed' },
@@ -270,7 +212,7 @@ export async function GET(request: NextRequest) {
   const today = getQuestCalendarDateNow();
   const cachedTax = await getQuestTaxonomy();
 
-  // ── Quête d'un autre jour (ex. carte partage / deeplink) ────────────────────
+  // ── Quête historique (deeplink / partage) ──────────────────────────────────
   if (requestedQuestDate && requestedQuestDate !== today) {
     const historical = await prisma.questLog.findUnique({
       where: { profileId_questDate: { profileId: profile.id, questDate: requestedQuestDate } },
@@ -301,7 +243,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // ── Check if quest already generated today ──────────────────────────────────
+  // ── Cache : quête déjà générée aujourd'hui ─────────────────────────────────
   const existing = await prisma.questLog.findUnique({
     where: { profileId_questDate: { profileId: profile.id, questDate: today } },
   });
@@ -320,15 +262,9 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // ── Generate a new quest ────────────────────────────────────────────────────
-
-  // Get weather + location context
+  // ── Génération nouvelle quête ──────────────────────────────────────────────
   const context = await getQuestContext(lat, lon);
-  /** Sans GPS : pas d'archétype extérieur ni de lieu nommé / carte */
-  const allowOutdoorQuests = context.isOutdoorFriendly && context.hasUserLocation;
-
   const taxonomy = cachedTax;
-  const fallbackDefault = await getDefaultFallbackArchetypeId();
   if (taxonomy.length === 0) {
     return NextResponse.json(
       { error: 'Aucun archétype publié en base. Exécute npm run db:seed-archetypes (apps/web).' },
@@ -336,20 +272,43 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Historique récent : moteur (14) + textes anti-répétition + pénalité de catégorie (10)
+  const taxMap = buildTaxonomyMap(taxonomy);
+  const fallbackDefault = await getDefaultFallbackArchetypeId();
+
+  // Historique récent : pour le moteur (fenêtre courte) et pour le brief LLM (5 logs détaillés)
   const recentLogRows = await prisma.questLog.findMany({
     where: { profileId: profile.id },
     orderBy: { assignedAt: 'desc' },
-    take: 20,
-    select: { archetypeId: true, status: true, questDate: true, generatedMission: true, generatedTitle: true },
+    take: HISTORY_WINDOW_LOGS,
+    select: {
+      archetypeId: true,
+      status: true,
+      questDate: true,
+      generatedTitle: true,
+      generatedMission: true,
+    },
   });
-  const recentLogs = recentLogRows.slice(0, ENGINE_HISTORY_LOGS).map((r) => ({
-    archetypeId: r.archetypeId,
-    status: r.status,
-    questDate: r.questDate,
-  }));
 
-  const engineLogs: QuestLog[] = recentLogs.map((r) => ({
+  const declaredPersonality = profile.declaredPersonality as unknown as PersonalityVector;
+  const exhibitedPersonality = computeExhibitedPersonality(
+    recentLogRows.map((r) => ({
+      id: '',
+      userId: profile.clerkId,
+      questId: r.archetypeId,
+      assignedAt: '',
+      questDate: r.questDate,
+      status: r.status as QuestLog['status'],
+      congruenceDeltaAtAssignment: 0,
+      phaseAtAssignment: profile.currentPhase as EscalationPhase,
+      wasRerolled: false,
+      wasFallback: false,
+      safetyConsentGiven: false,
+    })),
+    taxonomy,
+  );
+  const congruenceDelta = computeCongruenceDelta(declaredPersonality, exhibitedPersonality);
+
+  const phaseLogs: QuestLog[] = recentLogRows.map((r) => ({
     id: '',
     userId: profile.clerkId,
     questId: r.archetypeId,
@@ -362,128 +321,125 @@ export async function GET(request: NextRequest) {
     wasFallback: false,
     safetyConsentGiven: false,
   }));
+  const effectivePhase = getEffectivePhase(profile.currentDay, phaseLogs, today);
 
-  const declaredPersonality = profile.declaredPersonality as unknown as PersonalityVector;
-  const exhibited = computeExhibitedPersonality(engineLogs, taxonomy);
-  const congruenceDelta = computeCongruenceDelta(declaredPersonality, exhibited);
-  const effectivePhase = getEffectivePhase(profile.currentDay, engineLogs, today);
-  // Exclusion des archétypes proposés dans les N derniers **jours calendaires**
-  // (plus stable qu'un slice(0, 7) sur les logs : l'utilisateur n'est pas pénalisé
-  // pour une absence de plusieurs semaines, et l'exclusion reste cohérente s'il fait
-  // plusieurs quêtes dans la même journée, bonus, etc.).
-  const exclusionCutoffDate = subtractCalendarDays(today, RECENT_EXCLUSION_WINDOW_DAYS);
-  const recentIds = recentLogs
-    .filter((r) => r.questDate >= exclusionCutoffDate)
-    .map((r) => r.archetypeId);
-  /** Après relance/report, les archétypes déjà proposés aujourd'hui ne sont plus dans l'historique BDD — on les cumule ici. */
-  const lastQuestDateStr =
-    profile.lastQuestDate == null ? null : String(profile.lastQuestDate).slice(0, 10);
-  /** Hors « même jour calendaire », ignorer la liste (sinon exclusions d'hier fausseraient le tirage du matin). */
-  const extraExclude =
-    lastQuestDateStr === today ? parseRerollExcludedArchetypeIds(profile) : [];
-  const recentIdsForSelect = Array.from(new Set([...recentIds, ...extraExclude]));
-  const taxMap = buildTaxonomyMap(taxonomy);
-  const categoryRerollPenalty = buildCategoryPenaltyFromExcludedIds(taxMap, extraExclude);
-  const categoryRecentPenalty = buildCategoryPenaltyFromRecentArchetypeIds(
-    taxMap,
-    recentLogRows.slice(0, CATEGORY_RECENT_WINDOW_LOGS).map((r) => r.archetypeId),
-  );
-  const categoryScorePenaltyMerged = mergeCategoryScorePenalties(
-    categoryRerollPenalty,
-    categoryRecentPenalty,
-  );
-  const recentMissionsAntiRepeat = buildRecentMissionsAntiRepeatBlock(
-    recentLogRows.slice(0, ANTI_REPEAT_RECENT_LOGS),
-    questLocale,
-  );
-
+  // Préférences raffinement → biais catégoriel + texte pour le LLM
   const storedRefinementAnswers =
     (profile.refinementSchemaVersion ?? 0) >= REFINEMENT_SCHEMA_VERSION
       ? parseValidRefinementAnswers(profile.refinementAnswers)
       : null;
-  const categoryBias = refinementAnswersToCategoryBias(storedRefinementAnswers);
+  const refinementBias = refinementAnswersToCategoryBias(storedRefinementAnswers);
   const refinementContext = buildRefinementContextForPrompt(storedRefinementAnswers);
 
+  // Exclusions cumulées (relances du jour)
+  const lastQuestDateStr =
+    profile.lastQuestDate == null ? null : String(profile.lastQuestDate).slice(0, 10);
+  const extraExclude =
+    lastQuestDateStr === today ? parseRerollExcludedArchetypeIds(profile) : [];
+
   const instantOnly = profile.flagNextQuestInstantOnly === true;
-  /** Chaque relance a une graine distincte (liste d'archétypes exclus cumulés). */
-  const regenTier =
-    profile.flagNextQuestAfterReroll === true
-      ? `reroll:${extraExclude.slice().sort((a, b) => a - b).join(',')}`
-      : 'first';
+  const isReroll = profile.flagNextQuestAfterReroll === true;
+  const sociability: SociabilityLevel | null = isValidSociabilityLevel(profile.sociability)
+    ? profile.sociability
+    : null;
 
-  // Select archetype via moteur Delta de congruence (+ biais questionnaire)
-  let archetype = selectQuest(
-    taxonomy,
+  // Snapshot pour le moteur
+  const scoringLogs: ScoringQuestLog[] = recentLogRows.map((r) => ({
+    archetypeId: r.archetypeId,
+    status: r.status as QuestLog['status'],
+    questDate: r.questDate,
+  }));
+
+  const snapshot: ProfileSnapshot = {
     declaredPersonality,
-    effectivePhase,
-    recentIdsForSelect,
-    allowOutdoorQuests,
-    categoryBias,
+    exhibitedPersonality,
+    congruenceDelta,
+    phase: effectivePhase,
+    day: profile.currentDay,
+    sociability,
+    refinementBias,
+    recentLogs: scoringLogs,
+    hasUserLocation: context.hasUserLocation,
+    isOutdoorFriendly: context.isOutdoorFriendly,
     instantOnly,
-    {
-      exhibited,
-      congruenceDelta,
-      selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${regenTier}`,
-      diversityWindow: 7,
-      categoryScorePenalty: categoryScorePenaltyMerged,
-    },
-  );
+    excludeArchetypeIds: extraExclude,
+  };
 
-  if (!archetype && instantOnly) {
-    const pool = taxonomy.filter(
-      (q) =>
-        q.questPace === 'instant' &&
-        !recentIdsForSelect.includes(q.id) &&
-        (allowOutdoorQuests || !q.requiresOutdoor),
-    );
-    archetype =
-      pool[0] ??
+  const selection = selectCandidates(taxonomy, snapshot, {
+    poolSize: 5,
+    recentExclusionDays: DEFAULT_RECENT_EXCLUSION_DAYS,
+    selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${isReroll ? 'reroll' : 'first'}`,
+    todayIso: today,
+  });
+
+  // Filet de sécurité : si tous les filtres durs ont vidé la liste, on se rabat sur le fallback ou le top global.
+  if (selection.candidates.length === 0) {
+    const fb =
       findArchetypeById(taxonomy, fallbackDefault) ??
-      taxonomy[0] ??
-      null;
+      taxonomy[0];
+    if (!fb) {
+      return NextResponse.json(
+        { error: 'Aucun archétype éligible aujourd\'hui. Réessaie plus tard.' },
+        { status: 503 },
+      );
+    }
+    selection.candidates.push({
+      archetype: fb,
+      score: { affinity: 0.5, phaseFit: 0.5, freshness: 1, refinement: 0.5, total: 0.5 },
+      reason: 'last-resort fallback',
+    });
   }
 
-  // Fallback météo si quête extérieure non recommandée
-  let wasWeatherFallback = false;
-  if (archetype?.requiresOutdoor && !context.isOutdoorFriendly) {
-    wasWeatherFallback = true;
-    const fbId = archetype!.fallbackQuestId ?? fallbackDefault;
-    archetype = findArchetypeById(taxonomy, fbId) ?? archetype;
-  }
-  if (!archetype) {
-    archetype = findArchetypeById(taxonomy, fallbackDefault) ?? taxonomy[0]!;
-  }
+  // Brief historique pour le LLM (5 dernières quêtes, statut + texte)
+  const historyBrief: GenerationHistoryItem[] = recentLogRows
+    .slice(0, HISTORY_BRIEF_DEPTH)
+    .map((r) => ({
+      archetypeId: r.archetypeId,
+      archetypeTitle: taxMap.get(r.archetypeId)?.title ?? '',
+      category: taxMap.get(r.archetypeId)?.category ?? '',
+      status: r.status as GenerationHistoryItem['status'],
+      generatedTitle: r.generatedTitle,
+      generatedMission: r.generatedMission,
+      questDate: r.questDate,
+    }));
 
-  // Generate the quest via OpenAI (phase effective + delta calculés = alignés avec le choix d'archétype)
-  const generated = await generateDailyQuest(
-    {
+  const generated = await generateDailyQuest({
+    candidates: selection.candidates,
+    profile: {
+      declaredPersonality,
+      exhibitedPersonality,
+      congruenceDelta,
       phase: effectivePhase,
       day: profile.currentDay,
-      congruenceDelta,
       explorerAxis: profile.explorerAxis as ExplorerAxis,
       riskAxis: profile.riskAxis as RiskAxis,
-      questDateIso: today,
-      generationSeed: `${profile.id}:${today}:${effectivePhase}:${regenTier}`,
-      declaredPersonality,
-      exhibitedPersonality: exhibited,
-      isRerollGeneration: profile.flagNextQuestAfterReroll === true,
-      substitutedInstantAfterDefer: instantOnly,
+      sociability,
       refinementContext,
-      locale: questLocale,
-      recentMissionsAntiRepeat,
     },
-    archetype,
-    context,
-  );
+    context: {
+      questDateIso: today,
+      city: context.city,
+      country: context.country,
+      weatherDescription: context.weatherDescription,
+      weatherIcon: context.weatherIcon,
+      temp: context.temp,
+      isOutdoorFriendly: context.isOutdoorFriendly,
+      hasUserLocation: context.hasUserLocation,
+    },
+    history: historyBrief,
+    locale: questLocale,
+    generationSeed: `${profile.id}:${today}:${effectivePhase}:${isReroll ? 'reroll' : 'first'}`,
+    isReroll,
+    substitutedInstantAfterDefer: instantOnly,
+  });
 
+  // Géocodage pour les quêtes outdoor
   let destinationLabel: string | null = null;
   let destinationLat: number | null = null;
   let destinationLon: number | null = null;
   if (generated.isOutdoor && context.hasUserLocation) {
     let rawLabel = generated.destinationLabel?.trim() || null;
-    if (rawLabel && isPlaceholderDestinationLabel(rawLabel)) {
-      rawLabel = null;
-    }
+    if (rawLabel && isPlaceholderDestinationLabel(rawLabel)) rawLabel = null;
     rawLabel = sanitizeDestinationLabelForStorage(rawLabel);
     const area = [context.city, context.country].filter(Boolean).join(', ') || 'France';
     const searchQuery =
@@ -511,12 +467,9 @@ export async function GET(request: NextRequest) {
     destinationLabel = sanitizeDestinationLabelForStorage(destinationLabel) ?? 'Lieu suggéré';
   }
 
-  // Compute updated day and phase progression
+  // Progression : jour, phase, série
   const lastDate = profile.lastQuestDate;
-  // ⚠ Important : on calcule « hier » dans le même fuseau que `today`
-  // (Europe/Paris) sinon la série se casse autour de minuit UTC vs minuit Paris.
   const yesterdayStr = getPreviousQuestCalendarDate(today);
-
   const isSameDayRegen = lastDate === today;
   const isConsecutive = lastDate === yesterdayStr;
   const newStreak = isSameDayRegen
@@ -525,84 +478,81 @@ export async function GET(request: NextRequest) {
       ? profile.streakCount + 1
       : 1;
   const newDay = profile.currentDay + (lastDate !== today ? 1 : 0);
-  // On persiste la phase *effective* (avec downgrade/upscale appliqués) pour que
-  // l'UI, les prompts AI et les badges voient la même vérité. La « phase naturelle »
-  // reste dérivable à volonté depuis `currentDay` via `getPhaseForDay(newDay)`.
-  const newPhase: EscalationPhase = getEffectivePhase(newDay, engineLogs, today);
+  const newPhase: EscalationPhase = getEffectivePhase(newDay, phaseLogs, today);
 
-  const assignAfterReroll = profile.flagNextQuestAfterReroll;
+  const rerollsAfterQuestCreate = isReroll ? profile.rerollsRemaining : DAILY_FREE_REROLLS;
+  const wasWeatherFallback = generated.wasFallback;
+  const chosenArchetypeId = generated.archetypeId;
 
-  // Après relance/report, le POST a déjà décrémenté les relances — ne pas remettre
-  // DAILY_FREE_REROLLS ici (sinon l'UI reste bloquée à 1/2).
-  const rerollsAfterQuestCreate = assignAfterReroll ? profile.rerollsRemaining : DAILY_FREE_REROLLS;
-
-  // Save quest log + update profile atomically
   const [questLog, updatedProfile] = await prisma.$transaction([
     prisma.questLog.create({
       data: {
-        profileId:          profile.id,
-        questDate:          today,
-        archetypeId:        archetype.id,
-        generatedEmoji:     generated.icon,
-        generatedTitle:     generated.title,
-        generatedMission:   generated.mission,
-        generatedHook:      generated.hook,
-        generatedDuration:  generated.duration,
+        profileId: profile.id,
+        questDate: today,
+        archetypeId: chosenArchetypeId,
+        generatedEmoji: generated.icon,
+        generatedTitle: generated.title,
+        generatedMission: generated.mission,
+        generatedHook: generated.hook,
+        generatedDuration: generated.duration,
         generatedSafetyNote: generated.safetyNote ?? undefined,
-        isOutdoor:          generated.isOutdoor,
+        isOutdoor: generated.isOutdoor,
         destinationLabel,
         destinationLat,
         destinationLon,
-        locationCity:       context.hasUserLocation ? context.city : null,
+        locationCity: context.hasUserLocation ? context.city : null,
         weatherDescription: context.weatherDescription,
-        weatherTemp:        context.temp,
-        phaseAtAssignment:  effectivePhase,
+        weatherTemp: context.temp,
+        phaseAtAssignment: effectivePhase,
         congruenceDeltaAtTime: congruenceDelta,
-        wasRerolled:        assignAfterReroll,
-        wasFallback:        wasWeatherFallback,
+        wasRerolled: isReroll,
+        wasFallback: wasWeatherFallback,
       },
     }),
     prisma.profile.update({
       where: { id: profile.id },
       data: {
-        currentDay:       newDay,
-        currentPhase:     newPhase,
-        streakCount:      newStreak,
-        lastQuestDate:    today,
+        currentDay: newDay,
+        currentPhase: newPhase,
+        streakCount: newStreak,
+        lastQuestDate: today,
         rerollsRemaining: rerollsAfterQuestCreate,
-        congruenceDelta:  congruenceDelta,
+        congruenceDelta,
         flagNextQuestAfterReroll: false,
         flagNextQuestInstantOnly: false,
         rerollExcludeArchetypeId: null,
-        rerollExcludeArchetypeIds: Array.from(new Set([...extraExclude, archetype.id])),
+        rerollExcludeArchetypeIds: Array.from(new Set([...extraExclude, chosenArchetypeId])),
       },
     }),
   ]);
 
   const p = updatedProfile;
 
-  return NextResponse.json({
-    ...(await toQuestResponse(questLog, p, taxonomy)),
-    fromCache: false,
-    day: newDay,
-    streak: newStreak,
-    phase: newPhase,
-    deferredSocialUntil: p.deferredSocialUntil ?? null,
-    context,
-    ...shopClientPayload(p),
-    progression: progressionPayload(p, questLocale),
-    refinement: getRefinementSurveyPayload(
-      {
-        currentDay: newDay,
-        refinementSchemaVersion: p.refinementSchemaVersion ?? 0,
-        refinementSkippedAt: p.refinementSkippedAt ?? null,
-      },
-      completedQuestCount,
-    ),
-  }, { status: 201 });
+  return NextResponse.json(
+    {
+      ...(await toQuestResponse(questLog, p, taxonomy)),
+      fromCache: false,
+      day: newDay,
+      streak: newStreak,
+      phase: newPhase,
+      deferredSocialUntil: p.deferredSocialUntil ?? null,
+      context,
+      ...shopClientPayload(p),
+      progression: progressionPayload(p, questLocale),
+      refinement: getRefinementSurveyPayload(
+        {
+          currentDay: newDay,
+          refinementSchemaVersion: p.refinementSchemaVersion ?? 0,
+          refinementSkippedAt: p.refinementSkippedAt ?? null,
+        },
+        completedQuestCount,
+      ),
+    },
+    { status: 201 },
+  );
 }
 
-// ── POST: accept the quest OR reroll ───────────────────────────────────────────
+// ── POST: accept / reroll / replace / complete / abandon / report ────────────
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
@@ -610,7 +560,7 @@ export async function POST(request: NextRequest) {
 
   const questLocale = parseAppLocaleFromRequest(request);
 
-  const body = await request.json().catch(() => ({})) as {
+  const body = (await request.json().catch(() => ({}))) as {
     questDate?: string;
     safetyConsentGiven?: boolean;
     action?: 'reroll' | 'replace' | 'complete' | 'abandon' | 'report';
@@ -625,7 +575,7 @@ export async function POST(request: NextRequest) {
   const postTaxMap = buildTaxonomyMap(postTaxonomy);
   const declared = profile.declaredPersonality as unknown as PersonalityVector;
 
-  // ── Report: relance + quête instantanée + date de reprise (consomme une relance) ──
+  // ── Report ────────────────────────────────────────────────────────────────
   if (body.action === 'report') {
     const deferredUntil = typeof body.deferredUntil === 'string' ? body.deferredUntil.trim() : '';
     if (!isValidReportDeferredDate(deferredUntil, today)) {
@@ -647,8 +597,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const taxReport = await getQuestTaxonomy();
-    const reportArchetype = findArchetypeById(taxReport, existing.archetypeId);
+    const reportArchetype = findArchetypeById(postTaxonomy, existing.archetypeId);
     if (!reportArchetype || reportArchetype.questPace === 'instant') {
       return NextResponse.json(
         {
@@ -670,9 +619,6 @@ export async function POST(request: NextRequest) {
     }
 
     const excludeArchetypeId = existing.archetypeId;
-    // Symétrie avec `reroll` : reporter une quête planifiée est aussi un signal
-    // « pas pour moi maintenant ». On soft-update le profil déclaré côté début de
-    // parcours (fire-and-forget, même garde interne que pour reroll).
     void trySoftUpdateDeclared(
       profile.id,
       declared,
@@ -727,7 +673,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // ── Abandon: sans pénalité XP — série remise à zéro ────────────────────────
+  // ── Abandon ───────────────────────────────────────────────────────────────
   if (body.action === 'abandon') {
     const existing = await prisma.questLog.findUnique({
       where: { profileId_questDate: { profileId: profile.id, questDate: today } },
@@ -756,7 +702,14 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    void trySoftUpdateDeclared(profile.id, declared, profile.currentDay, updated.archetypeId, 'abandoned', postTaxMap);
+    void trySoftUpdateDeclared(
+      profile.id,
+      declared,
+      profile.currentDay,
+      updated.archetypeId,
+      'abandoned',
+      postTaxMap,
+    );
 
     const profileAfter = await prisma.profile.findUnique({ where: { id: profile.id } });
     const p = profileAfter ?? profile;
@@ -771,7 +724,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // ── Reroll: relance quotidienne ou crédit bonus (boutique) ──────────────────
+  // ── Reroll / Replace ──────────────────────────────────────────────────────
   if (body.action === 'reroll' || body.action === 'replace') {
     const existing = await prisma.questLog.findUnique({
       where: { profileId_questDate: { profileId: profile.id, questDate: today } },
@@ -791,7 +744,14 @@ export async function POST(request: NextRequest) {
     }
 
     const excludeArchetypeId = existing.archetypeId;
-    void trySoftUpdateDeclared(profile.id, declared, profile.currentDay, excludeArchetypeId, 'rejected', postTaxMap);
+    void trySoftUpdateDeclared(
+      profile.id,
+      declared,
+      profile.currentDay,
+      excludeArchetypeId,
+      'rejected',
+      postTaxMap,
+    );
     const mergedExclude = mergeRerollExcludedArchetypeIds(profile, excludeArchetypeId);
 
     const updatedProfile =
@@ -832,7 +792,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // ── Complete: quête faite aujourd'hui (après acceptation) ───────────────────
+  // ── Complete ──────────────────────────────────────────────────────────────
   if (body.action === 'complete') {
     const existing = await prisma.questLog.findUnique({
       where: { profileId_questDate: { profileId: profile.id, questDate: today } },
@@ -904,7 +864,14 @@ export async function POST(request: NextRequest) {
 
     const newTotalXp = (profile.totalXp ?? 0) + totalXpGained;
 
-    void trySoftUpdateDeclared(profile.id, declared, profile.currentDay, existing.archetypeId, 'completed', postTaxMap);
+    void trySoftUpdateDeclared(
+      profile.id,
+      declared,
+      profile.currentDay,
+      existing.archetypeId,
+      'completed',
+      postTaxMap,
+    );
 
     const [updated, profileAfter] = await prisma.$transaction([
       prisma.questLog.update({
@@ -947,7 +914,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // ── Accept: mark as accepted ─────────────────────────────────────────────────
+  // ── Accept ────────────────────────────────────────────────────────────────
   const logForAccept = await prisma.questLog.findUnique({
     where: { profileId_questDate: { profileId: profile.id, questDate: today } },
   });
@@ -979,7 +946,14 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  void trySoftUpdateDeclared(profile.id, declared, profile.currentDay, updated.archetypeId, 'accepted', postTaxMap);
+  void trySoftUpdateDeclared(
+    profile.id,
+    declared,
+    profile.currentDay,
+    updated.archetypeId,
+    'accepted',
+    postTaxMap,
+  );
 
   return NextResponse.json({
     ...(await toQuestResponse(updated, profile)),
@@ -987,7 +961,7 @@ export async function POST(request: NextRequest) {
   });
 }
 
-// ── Helper: shape the response ─────────────────────────────────────────────────
+// ── Helper response shape ────────────────────────────────────────────────────
 
 async function toQuestResponse(
   log: {
@@ -1014,7 +988,7 @@ async function toQuestResponse(
   profile?: { deferredSocialUntil?: string | null } | null,
   cachedTaxonomy?: QuestModel[],
 ) {
-  const taxonomy = cachedTaxonomy ?? await getQuestTaxonomy();
+  const taxonomy = cachedTaxonomy ?? (await getQuestTaxonomy());
   const archetype = findArchetypeById(taxonomy, log.archetypeId);
   const hasCoords =
     log.destinationLat != null &&

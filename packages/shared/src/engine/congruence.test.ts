@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
-  computeExhibitedPersonality,
   computeCongruenceDelta,
-  getTargetDelta,
-  scoreQuestFit,
-  selectQuest,
+  computeExhibitedPersonality,
+  computeGentleness,
+  hasExhibitedSignal,
+  neutralExhibitedVector,
 } from './congruence';
-import { TEST_FALLBACK_QUEST_ID, TEST_QUEST_TAXONOMY } from '../test-fixtures/testTaxonomy';
-import type { PersonalityVector, QuestLog, QuestModel } from '../types';
+import { TEST_QUEST_TAXONOMY } from '../test-fixtures/testTaxonomy';
+import type { PersonalityVector, QuestLog } from '../types';
 
 const uniform = (v: number): PersonalityVector => ({
   openness: v,
@@ -20,9 +20,8 @@ const uniform = (v: number): PersonalityVector => ({
 });
 
 describe('computeExhibitedPersonality', () => {
-  it('retourne la baseline neutre (0.5) sans historique (comparable avec declared)', () => {
+  it('retourne la baseline neutre (0.5) sans historique', () => {
     const p = computeExhibitedPersonality([], TEST_QUEST_TAXONOMY);
-    // Toutes les dimensions doivent être centrées sur 0.5 (pas de signal).
     for (const k of Object.keys(p) as (keyof typeof p)[]) {
       expect(p[k]).toBe(0.5);
     }
@@ -56,14 +55,12 @@ describe('computeExhibitedPersonality', () => {
       },
     ];
     const p = computeExhibitedPersonality(logs, TEST_QUEST_TAXONOMY);
-    // Aucun log avec poids non nul → baseline neutre.
     expect(p.openness).toBe(0.5);
   });
 
-  it('un reject d\'une quête introspective ne rend pas "extrêmement introverti" tous les traits non corrélés', () => {
-    // Cherche une quête introspective (negative correlation on extraversion) dans la taxonomie
+  it('un reject d\'une quête introspective ne rend pas tous les traits non corrélés extrêmes', () => {
     const introspective = TEST_QUEST_TAXONOMY.find((q) => q.category === 'public_introspection');
-    if (!introspective) return; // skip si pas dans le fixture
+    if (!introspective) return;
     const logs: QuestLog[] = [
       {
         id: 'r',
@@ -79,58 +76,31 @@ describe('computeExhibitedPersonality', () => {
       },
     ];
     const p = computeExhibitedPersonality(logs, TEST_QUEST_TAXONOMY);
-    // Les traits avec corrélation ≈ 0 restent près de 0.5, pas à 0.
     expect(p.conscientiousness).toBeGreaterThan(0.2);
     expect(p.conscientiousness).toBeLessThan(0.8);
   });
 
-  it('agrège completed / accepted / rejected', () => {
+  it('agrège completed / accepted / rejected dans [0, 1]', () => {
     const q = TEST_QUEST_TAXONOMY[0]!;
-    const logs: QuestLog[] = [
-      {
-        id: 'a',
-        userId: 'u',
-        questId: q.id,
-        assignedAt: '',
-        status: 'completed',
-        congruenceDeltaAtAssignment: 0,
-        phaseAtAssignment: 'calibration',
-        wasRerolled: false,
-        wasFallback: false,
-        safetyConsentGiven: false,
-      },
-      {
-        id: 'b',
-        userId: 'u',
-        questId: q.id,
-        assignedAt: '',
-        status: 'accepted',
-        congruenceDeltaAtAssignment: 0,
-        phaseAtAssignment: 'calibration',
-        wasRerolled: false,
-        wasFallback: false,
-        safetyConsentGiven: false,
-      },
-      {
-        id: 'c',
-        userId: 'u',
-        questId: q.id,
-        assignedAt: '',
-        status: 'rejected',
-        congruenceDeltaAtAssignment: 0,
-        phaseAtAssignment: 'calibration',
-        wasRerolled: false,
-        wasFallback: false,
-        safetyConsentGiven: false,
-      },
-    ];
+    const logs: QuestLog[] = ['completed', 'accepted', 'rejected'].map((status, idx) => ({
+      id: String(idx),
+      userId: 'u',
+      questId: q.id,
+      assignedAt: '',
+      status: status as QuestLog['status'],
+      congruenceDeltaAtAssignment: 0,
+      phaseAtAssignment: 'calibration',
+      wasRerolled: false,
+      wasFallback: false,
+      safetyConsentGiven: false,
+    }));
     const p = computeExhibitedPersonality(logs, TEST_QUEST_TAXONOMY);
     expect(Object.values(p).every((x) => x >= 0 && x <= 1)).toBe(true);
   });
 });
 
 describe('computeCongruenceDelta', () => {
-  it('retourne 0 pour deux vecteurs identiques', () => {
+  it('vaut 0 pour deux vecteurs identiques', () => {
     const v = uniform(0.5);
     expect(computeCongruenceDelta(v, v)).toBe(0);
   });
@@ -142,105 +112,41 @@ describe('computeCongruenceDelta', () => {
   });
 });
 
-describe('getTargetDelta', () => {
-  it('couvre les trois phases', () => {
-    expect(getTargetDelta('calibration')).toEqual({ min: 0, max: 0.1 });
-    expect(getTargetDelta('expansion').max).toBeGreaterThan(getTargetDelta('expansion').min);
-    expect(getTargetDelta('rupture').min).toBeGreaterThanOrEqual(0.4);
+describe('hasExhibitedSignal', () => {
+  it('false pour le vecteur neutre', () => {
+    expect(hasExhibitedSignal(neutralExhibitedVector())).toBe(false);
+  });
+
+  it('true dès qu\'un trait s\'écarte sensiblement de 0.5', () => {
+    const v = neutralExhibitedVector();
+    v.extraversion = 0.7;
+    expect(hasExhibitedSignal(v)).toBe(true);
   });
 });
 
-describe('scoreQuestFit', () => {
-  it('retourne Infinity si pas de corrélation (catégorie absente)', () => {
-    const quest = {
-      ...TEST_QUEST_TAXONOMY[0]!,
-      category: '__no_corr__',
-    } as unknown as QuestModel;
-    const score = scoreQuestFit(quest, uniform(0.5), { min: 0, max: 0.5 });
-    expect(score).toBe(Infinity);
+describe('computeGentleness', () => {
+  it('renvoie une valeur dans [0, 1] pour un profil typique', () => {
+    const v = uniform(0.5);
+    const g = computeGentleness(v);
+    expect(g).toBeGreaterThanOrEqual(0);
+    expect(g).toBeLessThanOrEqual(1);
   });
 
-  it('score fini pour une quête valide', () => {
-    const q = TEST_QUEST_TAXONOMY[0]!;
-    const s = scoreQuestFit(q, uniform(0.5), { min: 0, max: 0.5 });
-    expect(Number.isFinite(s)).toBe(true);
-  });
-});
+  it('un profil très extraverti et chercheur de sensations est moins doux', () => {
+    const calm = uniform(0.5);
+    calm.extraversion = 0.1;
+    calm.thrillSeeking = 0.1;
+    calm.openness = 0.3;
+    calm.emotionalStability = 0.8;
+    calm.boredomSusceptibility = 0.2;
 
-describe('selectQuest', () => {
-  it('retourne null si aucun candidat', () => {
-    const allIds = TEST_QUEST_TAXONOMY.map((q) => q.id);
-    const r = selectQuest(TEST_QUEST_TAXONOMY, uniform(0.5), 'calibration', allIds, true);
-    expect(r).toBeNull();
-  });
+    const fiery = uniform(0.5);
+    fiery.extraversion = 0.9;
+    fiery.thrillSeeking = 0.9;
+    fiery.openness = 0.9;
+    fiery.emotionalStability = 0.2;
+    fiery.boredomSusceptibility = 0.9;
 
-  it('respecte allowOutdoor (intérieur uniquement)', () => {
-    const indoor = TEST_QUEST_TAXONOMY.filter((q) => !q.requiresOutdoor);
-    expect(indoor.length).toBeGreaterThan(0);
-    const r = selectQuest(TEST_QUEST_TAXONOMY, uniform(0.5), 'calibration', [], false);
-    expect(r).not.toBeNull();
-    expect(r!.requiresOutdoor).toBe(false);
-  });
-
-  it('retourne une quête en phase expansion', () => {
-    const r = selectQuest(TEST_QUEST_TAXONOMY, uniform(0.3), 'expansion', [], true);
-    expect(r).not.toBeNull();
-  });
-
-  it('utilise le fallback canonique si présent', () => {
-    const fb = TEST_QUEST_TAXONOMY.find((q) => q.id === TEST_FALLBACK_QUEST_ID);
-    expect(fb).toBeDefined();
-  });
-
-  it('instantOnly exclut les archétypes planifiés', () => {
-    const allIds: number[] = [];
-    const r = selectQuest(
-      TEST_QUEST_TAXONOMY,
-      uniform(0.5),
-      'calibration',
-      allIds,
-      true,
-      undefined,
-      true,
-    );
-    expect(r).not.toBeNull();
-    expect(r!.questPace).toBe('instant');
-  });
-
-  it('avec selectionSeed, reste deterministe pour un meme seed', () => {
-    const a = selectQuest(TEST_QUEST_TAXONOMY, uniform(0.5), 'expansion', [], true, undefined, false, {
-      selectionSeed: 'userA:2026-03-28',
-    });
-    const b = selectQuest(TEST_QUEST_TAXONOMY, uniform(0.5), 'expansion', [], true, undefined, false, {
-      selectionSeed: 'userA:2026-03-28',
-    });
-    expect(a?.id).toBe(b?.id);
-  });
-
-  it('peut varier entre seeds differents a score proche', () => {
-    const a = selectQuest(TEST_QUEST_TAXONOMY, uniform(0.5), 'expansion', [], true, undefined, false, {
-      selectionSeed: 'userA:2026-03-28',
-    });
-    const b = selectQuest(TEST_QUEST_TAXONOMY, uniform(0.5), 'expansion', [], true, undefined, false, {
-      selectionSeed: 'userB:2026-03-28',
-    });
-    expect(a).not.toBeNull();
-    expect(b).not.toBeNull();
-  });
-
-  it('categoryScorePenalty dépriorise fortement une catégorie', () => {
-    const base = selectQuest(TEST_QUEST_TAXONOMY, uniform(0.5), 'expansion', [], true, undefined, false, {
-      selectionSeed: 'fixed-seed-penalty-test',
-      diversityWindow: 30,
-    });
-    expect(base).not.toBeNull();
-    const cat = base!.category;
-    const penalized = selectQuest(TEST_QUEST_TAXONOMY, uniform(0.5), 'expansion', [], true, undefined, false, {
-      selectionSeed: 'fixed-seed-penalty-test',
-      diversityWindow: 30,
-      categoryScorePenalty: { [cat]: 8 },
-    });
-    expect(penalized).not.toBeNull();
-    expect(penalized!.category).not.toBe(cat);
+    expect(computeGentleness(calm)).toBeGreaterThan(computeGentleness(fiery));
   });
 });
