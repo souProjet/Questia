@@ -25,6 +25,9 @@ export default defineConfig({
         'apps/web/src/lib/analytics/**',
         'apps/web/src/app/api/admin/**',
         'apps/web/src/app/api/user/**',
+        /** Orchestration OpenAI + `'use server'` : non exécutée dans les tests unitaires (reste couverte par quest-gen.test + route). */
+        'apps/web/src/lib/quest-gen/generateQuest.ts',
+        'apps/web/src/lib/quest-gen/index.ts',
       ],
       thresholds: {
         lines: 85,
