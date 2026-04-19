@@ -23,6 +23,8 @@ import {
   REPORT_DEFER_MAX_DAYS,
   QUEST_LOADER_DAY_STORAGE_KEY,
   getQuestCalendarDateNow,
+  formatQuestDateForLocale,
+  QUESTIA_SHOP_GRANTS_UPDATED,
 } from '@questia/shared';
 import { AnalyticsEvent } from '@/lib/analytics/events';
 import { questAnalyticsId, trackAnalyticsEvent } from '@/lib/analytics/track';
@@ -386,6 +388,19 @@ function AppPageContent() {
     [ensureProfile, questDateFromUrl, appLocale, t],
   );
 
+  /** Après achat boutique (relances bonus, etc.) : resynchroniser les compteurs sur la carte quête. */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onShopGrants = () => {
+      void loadQuest(userPosition?.lat, userPosition?.lon, {
+        silent: true,
+        questDate: questDateFromUrl ?? undefined,
+      });
+    };
+    window.addEventListener(QUESTIA_SHOP_GRANTS_UPDATED, onShopGrants);
+    return () => window.removeEventListener(QUESTIA_SHOP_GRANTS_UPDATED, onShopGrants);
+  }, [loadQuest, userPosition?.lat, userPosition?.lon, questDateFromUrl]);
+
   useEffect(() => {
     if (!isLoaded) return;
     let cancelled = false;
@@ -601,7 +616,7 @@ function AppPageContent() {
   const confirmReroll = useCallback(() => {
     if (!quest || rerolling) return;
     if (quest.status === 'accepted' || quest.status === 'completed' || quest.status === 'abandoned') return;
-    const daily = quest.rerollsRemaining ?? 1;
+    const daily = quest.rerollsRemaining ?? 0;
     const bonus = quest.bonusRerollCredits ?? 0;
     if (daily + bonus <= 0) return;
     setShowRerollConfirm(true);
@@ -656,6 +671,7 @@ function AppPageContent() {
     reportInFlightRef.current = true;
     setBannerError(null);
     setShowReportModal(false);
+    setRerolling(true);
     setQuest((prev) => (prev && prev.questDate === qd ? applyOptimisticRerollDecrement(prev) : prev));
     try {
       const res = await fetch('/api/quest/daily', {
@@ -687,6 +703,7 @@ function AppPageContent() {
       setBannerError(t('bannerReportFailed'));
     } finally {
       reportInFlightRef.current = false;
+      setRerolling(false);
     }
   };
 
@@ -738,7 +755,7 @@ function AppPageContent() {
     }
   };
 
-  const rerollDaily = quest?.rerollsRemaining ?? 1;
+  const rerollDaily = quest?.rerollsRemaining ?? 0;
   const rerollBonus = quest?.bonusRerollCredits ?? 0;
   const rerollParts: string[] = [];
   if (rerollDaily > 0) rerollParts.push(t('rerollDaily', { n: rerollDaily }));
@@ -1152,7 +1169,7 @@ function AppPageContent() {
           </div>
         )}
 
-        <div className="flex w-full flex-1 flex-col items-center justify-center gap-4 py-4 sm:min-h-[min(560px,calc(100dvh-11rem))]">
+        <div className="flex w-full flex-1 flex-col items-center justify-start gap-4 py-2 sm:justify-center sm:py-4 sm:min-h-[min(560px,calc(100dvh-11rem))]">
         {quest ? (
           <div className="relative w-full max-w-[480px]">
             {/* Halo doux sous la carte (pas de « 2e carte » vide façon Tinder : il n'y a pas de profil suivant ici) */}
@@ -1196,15 +1213,15 @@ function AppPageContent() {
               </div>
             ) : (
               <>
-                <div className="relative z-0 flex flex-col px-5 pb-1 pt-7 sm:px-6">
+                <div className="relative z-0 flex flex-col px-5 pb-1 pt-5 sm:px-6">
                   <div className="flex flex-col items-center text-center">
-                    <span className="mb-3 text-[52px] leading-none select-none" aria-hidden>
-                      {questDisplayEmoji(quest.emoji)}
-                    </span>
-                    <h2 className="font-display max-w-[22ch] px-1 text-xl font-black leading-snug text-[var(--text)] sm:text-[22px]">
-                      {quest.title}
+                    <h2 className="font-display flex max-w-[24ch] items-baseline justify-center gap-2 px-1 text-xl font-black leading-snug text-[var(--text)] sm:text-[22px]">
+                      <span className="text-[22px] leading-none select-none sm:text-[24px]" aria-hidden>
+                        {questDisplayEmoji(quest.emoji)}
+                      </span>
+                      <span>{quest.title}</span>
                     </h2>
-                    <p className="mt-3 max-w-md text-[13px] leading-snug text-[var(--muted)]">
+                    <p className="mt-2 max-w-md text-[13px] leading-snug text-[var(--muted)]">
                       {[
                         quest.archetypeCategory ? questFamilyLabel(quest.archetypeCategory, appLocale) : null,
                         isPlannedQuest ? t('questCardMetaPacePlanned') : t('questCardMetaPaceToday'),
@@ -1214,50 +1231,51 @@ function AppPageContent() {
                         .join(' · ')}
                     </p>
                     {quest.hook?.trim() ? (
-                      <p className="mt-4 w-full max-w-md border-l-[3px] border-[var(--orange)]/45 pl-3 text-left text-sm italic leading-relaxed text-[var(--text)]/90 line-clamp-3">
+                      <p className="mt-3 w-full max-w-md border-l-[3px] border-[var(--orange)]/45 pl-3 text-left text-sm italic leading-relaxed text-[var(--text)]/90 line-clamp-2">
                         {quest.hook.trim()}
                       </p>
                     ) : null}
                   </div>
 
-                  <div className="mt-6 w-full border-t border-[var(--border-ui)]/35 pt-5 text-left">
+                  <div className="mt-4 w-full border-t border-[var(--border-ui)]/35 pt-4 text-left" data-quest-card-scroll>
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
                       {t('questCardMissionEyebrow')}
                     </p>
-                    <div
-                      className="max-h-[min(22rem,52vh)] overflow-y-auto overscroll-y-contain pr-1"
-                      data-quest-card-scroll
-                    >
-                      <p className="text-[15px] leading-relaxed text-[var(--text)]">{quest.mission}</p>
-                      <p className="mt-4 text-xs font-semibold tabular-nums text-[var(--muted)]">{quest.duration}</p>
+                    <p className="text-[15px] leading-relaxed text-[var(--text)]">{quest.mission}</p>
+                    <p className="mt-3 text-xs font-semibold tabular-nums text-[var(--muted)]">{quest.duration}</p>
 
-                      {quest.deferredSocialUntil && isPending ? (
-                        <div className="mt-4 rounded-xl border border-[var(--link-on-bg)]/30 bg-[var(--link-on-bg)]/[0.08] px-3 py-3 text-sm font-semibold leading-snug text-[var(--link-on-bg)]">
-                          {t('reportHint')}
+                    {isPending && isPlannedQuest ? (
+                      <div className="mt-3 rounded-xl border border-[var(--link-on-bg)]/30 bg-[var(--link-on-bg)]/[0.08] px-3 py-2.5 text-sm font-semibold leading-snug text-[var(--link-on-bg)]">
+                        {canReroll ? t('reportPlannedHint') : t('reportNoRerollsHint')}
+                      </div>
+                    ) : isPending && !isPlannedQuest && quest.deferredSocialUntil ? (
+                      <div className="mt-3 rounded-xl border border-[var(--link-on-bg)]/30 bg-[var(--link-on-bg)]/[0.08] px-3 py-2.5 text-sm font-semibold leading-snug text-[var(--link-on-bg)]">
+                        {t('reportMilestoneReminder', {
+                          date: formatQuestDateForLocale(quest.deferredSocialUntil, appLocale),
+                        })}
+                      </div>
+                    ) : null}
+
+                    {quest.isOutdoor && quest.destination ? (
+                      <section className="mt-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">
+                          {t('mapHeading')}
+                        </p>
+                        <p className="mt-1 text-[11px] leading-snug text-[var(--muted)] sm:text-xs">{t('mapDescription')}</p>
+                        <div className="mt-2">
+                          <QuestDestinationMap destination={quest.destination} userPosition={userPosition} compact />
                         </div>
-                      ) : null}
+                      </section>
+                    ) : null}
 
-                      {quest.isOutdoor && quest.destination ? (
-                        <section className="mt-5">
-                          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">
-                            {t('mapHeading')}
-                          </p>
-                          <p className="mt-1 text-[11px] leading-snug text-[var(--muted)] sm:text-xs">{t('mapDescription')}</p>
-                          <div className="mt-3">
-                            <QuestDestinationMap destination={quest.destination} userPosition={userPosition} compact />
-                          </div>
-                        </section>
-                      ) : null}
-
-                      {quest.safetyNote && isPending ? (
-                        <section className="mt-5 rounded-xl border border-[var(--orange)]/30 bg-[var(--orange)]/[0.06] p-3 sm:p-4">
-                          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">
-                            {t('safetyTitle')}
-                          </p>
-                          <p className="mt-2 text-sm leading-relaxed text-[var(--text)]">{quest.safetyNote}</p>
-                        </section>
-                      ) : null}
-                    </div>
+                    {quest.safetyNote && isPending ? (
+                      <section className="mt-4 rounded-xl border border-[var(--orange)]/30 bg-[var(--orange)]/[0.06] p-3 sm:p-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)] sm:text-[11px]">
+                          {t('safetyTitle')}
+                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--text)]">{quest.safetyNote}</p>
+                      </section>
+                    ) : null}
                   </div>
                 </div>
 
@@ -1292,15 +1310,14 @@ function AppPageContent() {
 
                 {isPending && (
                   <div className="relative z-0 px-5 pb-5 space-y-2">
-                    {isPlannedQuest ? (
+                    {isPlannedQuest && canReroll ? (
                       <button
                         type="button"
                         onClick={() => {
                           setReportDeferredDate(calendarDay);
                           setShowReportModal(true);
                         }}
-                        disabled={!canReroll}
-                        className="w-full rounded-xl border border-[var(--link-on-bg)]/30 py-3 text-sm font-bold text-[var(--link-on-bg)] transition-colors hover:bg-[var(--link-on-bg)]/5 disabled:opacity-40"
+                        className="w-full rounded-xl border border-[var(--link-on-bg)]/30 py-3 text-sm font-bold text-[var(--link-on-bg)] transition-colors hover:bg-[var(--link-on-bg)]/5"
                       >
                         {t('reportShortQuest')}
                       </button>

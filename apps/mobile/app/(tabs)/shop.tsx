@@ -12,6 +12,7 @@ import {
   Alert,
   Animated,
   Easing,
+  DeviceEventEmitter,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -29,6 +30,7 @@ import {
   questCoinsPerEuro,
   catalogItemFullyOwned,
   buildCoinPurchasedSkuSet,
+  QUESTIA_SHOP_GRANTS_UPDATED,
   AnalyticsEvent,
   type ShopCatalogEntry,
   type ShopMarketingBadge,
@@ -43,6 +45,10 @@ import * as Linking from 'expo-linking';
 import { trackMobileEvent } from '../../lib/analytics/track';
 
 import { API_BASE_URL, apiFetch } from '../../lib/api';
+
+function notifyQuestScreenShopGrantsUpdated() {
+  DeviceEventEmitter.emit(QUESTIA_SHOP_GRANTS_UPDATED);
+}
 
 type ProfileShop = {
   coinBalance: number;
@@ -403,6 +409,7 @@ export default function ShopScreen() {
       await load({ silent: true });
       await new Promise((r) => setTimeout(r, 2000));
       await load({ silent: true });
+      notifyQuestScreenShopGrantsUpdated();
       runPurchaseCelebration(effectiveSku);
       hapticSuccess();
       setFlash({ message: s.flashPaymentOk, kind: 'success' });
@@ -483,6 +490,7 @@ export default function ShopScreen() {
       await load({ silent: true });
       await new Promise((r) => setTimeout(r, 2000));
       await load({ silent: true });
+      notifyQuestScreenShopGrantsUpdated();
       runPurchaseCelebration(effectiveSku);
       hapticSuccess();
       setFlash({ message: s.flashPaymentOk, kind: 'success' });
@@ -600,6 +608,7 @@ export default function ShopScreen() {
         payment_type: 'quest_coins',
       });
       await load({ silent: true });
+      notifyQuestScreenShopGrantsUpdated();
       runPurchaseCelebration(sku);
     } catch {
       hapticError();

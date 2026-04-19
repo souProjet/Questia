@@ -10,6 +10,7 @@ import {
   Easing,
   Modal,
   AppState,
+  DeviceEventEmitter,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +25,7 @@ import {
   QUEST_LOADER_DAY_STORAGE_KEY,
   AnalyticsEvent,
   questAnalyticsId,
+  QUESTIA_SHOP_GRANTS_UPDATED,
 } from '@questia/shared';
 import {
   colorWithAlpha,
@@ -203,7 +205,6 @@ export default function DashboardScreen() {
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);
   const [showSwipeOnboarding, setShowSwipeOnboarding] = useState(false);
   const [questCardSwapKey, setQuestCardSwapKey] = useState(0);
-  const [rerollsRemaining, setRerollsRemaining] = useState(1);
   const [reward, setReward] = useState<QuestRewardPayload | null>(null);
   const [showReward, setShowReward] = useState(false);
   const acceptFlashOp = useRef(new Animated.Value(0)).current;
@@ -300,7 +301,6 @@ export default function DashboardScreen() {
             quest_status: data.status,
           });
         }
-        setRerollsRemaining(data.rerollsRemaining ?? 1);
         if (data.refinement?.due && data.refinement.questions?.length) {
           setShowRefinement(true);
         } else {
@@ -338,6 +338,19 @@ export default function DashboardScreen() {
     },
     [loadQuest, questDateFromRoute],
   );
+
+  /** Boutique : après achat (relances bonus, etc.), resynchroniser la carte quête sans redémarrer l’app. */
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(QUESTIA_SHOP_GRANTS_UPDATED, () => {
+      void loadQuest(undefined, undefined, {
+        silent: true,
+        questDate: questDateFromRoute ?? undefined,
+      }).then((ok) => {
+        if (ok) void enrichQuestWithLocation();
+      });
+    });
+    return () => sub.remove();
+  }, [loadQuest, enrichQuestWithLocation, questDateFromRoute]);
 
   useEffect(() => {
     const syncDay = () => {
@@ -512,7 +525,7 @@ export default function DashboardScreen() {
   const isPending = qs === 'pending';
   const questPace = quest?.questPace ?? 'instant';
 
-  const rerollDaily = quest?.rerollsRemaining ?? rerollsRemaining;
+  const rerollDaily = quest?.rerollsRemaining ?? 0;
   const rerollBonus = quest?.bonusRerollCredits ?? 0;
   const canRerollQuest =
     !!quest &&
@@ -719,7 +732,9 @@ export default function DashboardScreen() {
     safetyLabel: homeUi.safetyLabel,
     reportCta: homeUi.reportCta,
     abandonCta: homeUi.abandonCta,
-    reportHint: homeUi.reportHint,
+    reportPlannedHint: homeUi.reportPlannedHint,
+    reportNoRerollsHint: homeUi.reportNoRerollsHint,
+    reportMilestoneReminder: homeUi.reportMilestoneReminder,
   }), [homeUi]);
 
   if (loading && !quest) {
@@ -828,7 +843,7 @@ export default function DashboardScreen() {
               onValidate={doComplete}
               onShare={openQuestShare}
               onReport={
-                questPace === 'planned'
+                questPace === 'planned' && canRerollQuest
                   ? () => {
                       setReportDeferredDate(calendarDay);
                       setShowReportModal(true);

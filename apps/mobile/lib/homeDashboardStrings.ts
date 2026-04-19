@@ -55,7 +55,12 @@ export type HomeDashboardStrings = {
   close: string;
   durationLabel: string;
   outdoorTag: string;
-  reportHint: string;
+  /** Quête « à caler » : reporter consomme une relance (affiché seulement si relances dispo). */
+  reportPlannedHint: string;
+  /** Quête « à caler » mais aucune relance. */
+  reportNoRerollsHint: string;
+  /** Après report : rappel de la date repère (quête courte du jour). */
+  reportMilestoneReminder: (date: string) => string;
 };
 
 function fr(): HomeDashboardStrings {
@@ -117,7 +122,12 @@ function fr(): HomeDashboardStrings {
     close: 'Fermer',
     durationLabel: 'Durée :',
     outdoorTag: 'Extérieur',
-    reportHint: 'Comme « Changer de quête », une relance est utilisée si tu reportes.',
+    reportPlannedHint:
+      "« Reporter » remplace cette quête « à caler » par une mission courte aujourd'hui et consomme une relance, comme « Changer de quête ».",
+    reportNoRerollsHint:
+      "Plus de relances : tu ne peux ni reporter ni changer cette quête aujourd'hui.",
+    reportMilestoneReminder: (date) =>
+      `Ta date repère est le ${date} (indicative uniquement). Ta mission d'aujourd'hui reste courte et faisable tout de suite.`,
   };
 }
 
@@ -180,7 +190,11 @@ function en(): HomeDashboardStrings {
     close: 'Close',
     durationLabel: 'Duration:',
     outdoorTag: 'Outdoor',
-    reportHint: 'Like "Change quest," deferring uses a reroll — you get a short quest for today.',
+    reportPlannedHint:
+      '“Defer” swaps this multi-day quest for a short quest today and uses a reroll, same as “Change quest.”',
+    reportNoRerollsHint: "No rerolls left — you can't defer or change this quest today.",
+    reportMilestoneReminder: (date) =>
+      `Your optional target date is ${date}. Today's quest stays short and doable right now.`,
   };
 }
 

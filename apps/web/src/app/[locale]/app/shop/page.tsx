@@ -16,6 +16,7 @@ import {
   questCoinsPerEuro,
   catalogItemFullyOwned,
   buildCoinPurchasedSkuSet,
+  QUESTIA_SHOP_GRANTS_UPDATED,
   type ShopCatalogEntry,
   type CoinPackEntry,
   type ShopMarketingBadge,
@@ -23,6 +24,12 @@ import {
 import { AnalyticsEvent } from '@/lib/analytics/events';
 import { trackAnalyticsEvent } from '@/lib/analytics/track';
 import { trackMetaPixelEvent } from '@/lib/analytics/trackMeta';
+
+function notifyQuestScreenShopGrantsUpdated() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(QUESTIA_SHOP_GRANTS_UPDATED));
+  }
+}
 
 function RechargeModalContent({
   coinPacksSorted,
@@ -372,8 +379,10 @@ function ShopPageInner() {
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
-    if (success === '1') void load();
     if (success === '1') {
+      void load().then(() => {
+        notifyQuestScreenShopGrantsUpdated();
+      });
       let skipDup = false;
       try {
         skipDup = sessionStorage.getItem('questia_stripe_purchase_done') === '1';
@@ -495,6 +504,7 @@ function ShopPageInner() {
         content_type: 'product',
       });
       await load();
+      notifyQuestScreenShopGrantsUpdated();
       runPurchaseCelebration(sku);
     } catch {
       setFlash({ message: t('errPurchase'), kind: 'error' });

@@ -20,7 +20,12 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { questDisplayEmoji, questFamilyLabel, type AppLocale } from '@questia/shared';
+import {
+  questDisplayEmoji,
+  questFamilyLabel,
+  formatQuestDateForLocale,
+  type AppLocale,
+} from '@questia/shared';
 import { colorWithAlpha, questCardFaceGradient, type ThemePalette } from '@questia/ui';
 import { hapticSuccess, hapticWarning } from '../lib/haptics';
 
@@ -83,7 +88,9 @@ interface Props {
     safetyLabel: string;
     reportCta: string;
     abandonCta: string;
-    reportHint: string;
+    reportPlannedHint: string;
+    reportNoRerollsHint: string;
+    reportMilestoneReminder: (date: string) => string;
   };
   /** Relance en cours : voile aligné sur la carte (même cadre que le swipe). */
   rerolling?: boolean;
@@ -128,6 +135,17 @@ export function QuestSwipeCard({
   const isAccepted = quest.status === 'accepted';
   const isCompleted = quest.status === 'completed';
   const isAbandoned = quest.status === 'abandoned';
+  const isPlannedQuest = quest.questPace === 'planned';
+  const reportContextMessage =
+    isPending && isPlannedQuest
+      ? canReroll
+        ? s.reportPlannedHint
+        : s.reportNoRerollsHint
+      : isPending && !isPlannedQuest && quest.deferredSocialUntil
+        ? s.reportMilestoneReminder(
+            formatQuestDateForLocale(quest.deferredSocialUntil, locale),
+          )
+        : null;
 
   const triggerAccept = useCallback(() => {
     hapticSuccess();
@@ -329,9 +347,9 @@ export function QuestSwipeCard({
           <Text style={[styles.duration, { color: p.muted }]}>{quest.duration}</Text>
         </View>
 
-        {quest.deferredSocialUntil && isPending ? (
+        {reportContextMessage ? (
           <View style={[styles.infoBox, { borderColor: `${p.linkOnBg}33`, backgroundColor: `${p.linkOnBg}08` }]}>
-            <Text style={[styles.infoBoxText, { color: p.linkOnBg }]}>{s.reportHint}</Text>
+            <Text style={[styles.infoBoxText, { color: p.linkOnBg }]}>{reportContextMessage}</Text>
           </View>
         ) : null}
 
@@ -363,11 +381,10 @@ export function QuestSwipeCard({
   const pendingSecondaryRow =
     isPending ? (
       <View style={styles.inlineSecondaryActions}>
-        {quest.questPace === 'planned' && onReport ? (
+        {quest.questPace === 'planned' && onReport && canReroll ? (
           <Pressable
             style={[styles.secondaryBtn, { borderColor: `${p.linkOnBg}33` }]}
             onPress={onReport}
-            disabled={!canReroll}
             accessibilityRole="button"
             accessibilityLabel={s.reportCta}
           >
