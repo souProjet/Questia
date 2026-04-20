@@ -48,9 +48,11 @@ function writeKeystorePropertiesFromCredentials(androidRoot) {
 /** Recrée `local.properties` après `prebuild --clean` (Gradle a besoin de sdk.dir). */
 function writeAndroidLocalProperties(androidRoot) {
   const home = process.env.HOME || process.env.USERPROFILE;
+  const localAppData = process.env.LOCALAPPDATA;
   const candidates = [
     process.env.ANDROID_HOME,
     process.env.ANDROID_SDK_ROOT,
+    localAppData && path.join(localAppData, 'Android', 'Sdk'),
     home && path.join(home, 'Android', 'Sdk'),
     home && path.join(home, 'Library', 'Android', 'sdk'),
   ].filter(Boolean);

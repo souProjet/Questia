@@ -62,7 +62,13 @@ export interface QuestModel {
   titleEn: string;
   descriptionEn: string;
   category: PsychologicalCategory;
-  targetTraits: Partial<BigFiveVector>;
+  /**
+   * Cibles explicites par trait (0..1) qui affinent le score d'affinité au-delà de la
+   * corrélation catégorielle. Inclut volontairement `thrillSeeking` et `boredomSusceptibility`
+   * (Sensation Seeking) : ce sont souvent les discriminants les plus forts pour différencier
+   * des archétypes d'une même catégorie (ex. une aventure « douce » vs « extrême »).
+   */
+  targetTraits: Partial<PersonalityVector>;
   comfortLevel: ComfortLevel;
   requiresOutdoor: boolean;
   requiresSocial: boolean;

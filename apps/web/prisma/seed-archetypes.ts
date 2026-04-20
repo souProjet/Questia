@@ -1,26 +1,30 @@
 /**
- * Importe la taxonomie depuis prisma/data/quest-archetypes.json (upsert par id).
- * Usage (apps/web) : npm run db:seed-archetypes
+ * Seed d'amorçage de la taxonomie des archétypes de quête.
+ *
+ * Usage (depuis `apps/web`) : `npm run db:seed-archetypes`.
+ *
+ * IMPORTANT :
+ *  - La source unique des archétypes est `@questia/shared` (`QUEST_ARCHETYPES_SEED`).
+ *    Aucun JSON n'est plus maintenu en parallèle — la BDD est canonique après le
+ *    premier run.
+ *  - Une fois l'environnement amorcé, toute modification de taxonomie se fait via
+ *    l'UI admin (`/admin/quests`) ou l'API `POST|PATCH /api/admin/quest-archetypes`.
+ *  - Ce script fait des `upsert` par id : relancer est sûr, mais cela ÉCRASE les
+ *    champs connus. Ne pas le relancer en prod une fois la taxonomie éditée via
+ *    l'admin sans accord explicite.
  */
-import { readFileSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
 import { PrismaClient } from '@prisma/client';
+import {
+  QUEST_ARCHETYPES_SEED,
+  QUEST_ARCHETYPES_SEED_FALLBACK_ID,
+} from '@questia/shared';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const prisma = new PrismaClient();
 
-const jsonPath = join(__dirname, 'data/quest-archetypes.json');
-
-function mapQuestPace(p) {
-  return p === 'planned' ? 'planned' : 'instant';
-}
-
-async function main() {
-  const raw = readFileSync(jsonPath, 'utf8');
-  const items = JSON.parse(raw);
+async function main(): Promise<void> {
+  const items = QUEST_ARCHETYPES_SEED;
   if (!Array.isArray(items) || items.length === 0) {
-    throw new Error(`Invalid JSON: ${jsonPath}`);
+    throw new Error('QUEST_ARCHETYPES_SEED vide ou invalide — rien à seed.');
   }
 
   for (const q of items) {
@@ -39,7 +43,7 @@ async function main() {
         requiresSocial: q.requiresSocial,
         minimumDurationMinutes: q.minimumDurationMinutes,
         fallbackQuestId: q.fallbackQuestId ?? null,
-        questPace: mapQuestPace(q.questPace),
+        questPace: q.questPace === 'planned' ? 'planned' : 'instant',
         published: true,
       },
       update: {
@@ -54,22 +58,27 @@ async function main() {
         requiresSocial: q.requiresSocial,
         minimumDurationMinutes: q.minimumDurationMinutes,
         fallbackQuestId: q.fallbackQuestId ?? null,
-        questPace: mapQuestPace(q.questPace),
+        questPace: q.questPace === 'planned' ? 'planned' : 'instant',
       },
     });
   }
 
   await prisma.appSetting.upsert({
     where: { key: 'default_fallback_archetype_id' },
-    create: { key: 'default_fallback_archetype_id', value: '9' },
+    create: {
+      key: 'default_fallback_archetype_id',
+      value: String(QUEST_ARCHETYPES_SEED_FALLBACK_ID),
+    },
     update: {},
   });
 
-  console.log(`OK — ${items.length} archétypes upsertés, fallback id = 9.`);
+  console.log(
+    `OK — ${items.length} archétypes upsertés, fallback id = ${QUEST_ARCHETYPES_SEED_FALLBACK_ID}.`,
+  );
 }
 
 main()
-  .catch((e) => {
+  .catch((e: unknown) => {
     console.error(e);
     process.exit(1);
   })

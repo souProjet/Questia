@@ -16,7 +16,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "node prisma/seed.mjs",
-    "db:seed-archetypes": "node prisma/seed-archetypes.mjs",
+    "db:seed-archetypes": "tsx prisma/seed-archetypes.ts",
     "db:generate": "prisma generate",
     "postinstall": "prisma generate"
   },
