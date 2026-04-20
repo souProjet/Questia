@@ -53,6 +53,7 @@ const prismaMock = vi.hoisted(() => ({
   },
   questLog: {
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -139,7 +140,9 @@ describe('/api/quest/daily', () => {
     vi.mocked(auth).mockReset();
     prismaMock.profile.findUnique.mockReset();
     prismaMock.questLog.findUnique.mockReset();
+    prismaMock.questLog.findFirst.mockReset();
     prismaMock.questLog.findMany.mockReset();
+    prismaMock.questLog.findMany.mockResolvedValue([]); // rollover no-op par défaut
     prismaMock.questLog.count.mockReset();
     prismaMock.questLog.count.mockResolvedValue(0);
     prismaMock.$transaction.mockReset();
@@ -345,6 +348,218 @@ describe('/api/quest/daily', () => {
     const json = await res.json();
     expect(json.reported).toBe(true);
     expect(json.deferredUntil).toBe('2026-03-30');
+  });
+
+  // ── Rollover : carry-over conditionnel (quête planned acceptée hier) ───────
+
+  it('GET rollover : quête planned acceptée hier → carry-over actif, pas de génération', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({ ...profileRow, streakCount: 2 });
+    const staleLog = {
+      ...logRow,
+      id: 'yesterday-log',
+      questDate: '2026-03-23',
+      archetypeId: 1, // planned (cf. seed)
+      status: 'accepted' as const,
+      graceDeadline: null,
+      phaseAtAssignment: 'calibration' as const,
+    };
+    prismaMock.questLog.findMany.mockResolvedValue([staleLog]);
+    prismaMock.questLog.update.mockResolvedValue({});
+
+    const res = await GET(new NextRequest('http://localhost/api/quest/daily'));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.isCarryover).toBe(true);
+    expect(json.fromCache).toBe(true);
+    expect(json.graceDeadline).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(json.streak).toBe(2); // inchangé
+    // La quête devrait porter l'id/date d'hier, pas une nouvelle
+    expect(json.questDate).toBe('2026-03-23');
+    expect(prismaMock.questLog.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ graceDeadline: expect.any(Date) }) }),
+    );
+    // PAS de nouvelle quête créée
+    expect(prismaMock.questLog.create).not.toHaveBeenCalled();
+  });
+
+  it('GET rollover : quête instant acceptée hier → abandon + streak 0', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique
+      .mockResolvedValueOnce({ ...profileRow, streakCount: 5 })
+      .mockResolvedValueOnce({ ...profileRow, streakCount: 0 });
+    const staleLog = {
+      ...logRow,
+      id: 'yesterday-log',
+      questDate: '2026-03-23',
+      archetypeId: 9, // instant (cf. seed)
+      status: 'accepted' as const,
+      graceDeadline: null,
+      phaseAtAssignment: 'calibration' as const,
+    };
+    prismaMock.questLog.findMany
+      .mockResolvedValueOnce([staleLog]) // rollover
+      .mockResolvedValueOnce([]); // phaseLogs
+    prismaMock.questLog.findUnique.mockResolvedValue(null); // pas de quête du jour
+    prismaMock.profile.update.mockResolvedValue({ ...profileRow, streakCount: 0 });
+    prismaMock.questLog.update.mockResolvedValue({});
+    prismaMock.$transaction.mockResolvedValue([
+      {
+        id: 'new-log',
+        questDate: '2026-03-24',
+        archetypeId: 1,
+        generatedEmoji: 'Target',
+        generatedTitle: 'Nouveau',
+        generatedMission: 'M',
+        generatedHook: 'H',
+        generatedDuration: '1h',
+        generatedSafetyNote: null,
+        isOutdoor: false,
+        destinationLabel: null,
+        destinationLat: null,
+        destinationLon: null,
+        locationCity: 'Paris',
+        weatherDescription: 'Beau',
+        weatherTemp: 20,
+        status: 'pending',
+        wasRerolled: false,
+        wasFallback: false,
+        phaseAtAssignment: 'calibration',
+        profileId: 'p1',
+      },
+      { ...profileRow, streakCount: 0 },
+    ]);
+
+    const res = await GET(new NextRequest('http://localhost/api/quest/daily'));
+    expect(res.status).toBe(201);
+    const json = await res.json();
+    expect(json.isCarryover).toBeFalsy();
+    // L'abandon silencieux a bien appelé un update status abandoned
+    expect(prismaMock.questLog.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: 'abandoned' } }),
+    );
+    // La streak a été reset à 0
+    expect(prismaMock.profile.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { streakCount: 0 } }),
+    );
+  });
+
+  it('GET rollover : quête pending hier → rejected silencieux, génération normale', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({ ...profileRow, streakCount: 3 });
+    const staleLog = {
+      ...logRow,
+      id: 'yesterday-log',
+      questDate: '2026-03-23',
+      archetypeId: 9,
+      status: 'pending' as const,
+      graceDeadline: null,
+    };
+    prismaMock.questLog.findMany
+      .mockResolvedValueOnce([staleLog])
+      .mockResolvedValueOnce([]);
+    prismaMock.questLog.findUnique.mockResolvedValue(null);
+    prismaMock.questLog.update.mockResolvedValue({});
+    prismaMock.$transaction.mockResolvedValue([
+      {
+        id: 'new-log',
+        questDate: '2026-03-24',
+        archetypeId: 1,
+        generatedEmoji: 'Target',
+        generatedTitle: 'Nouveau',
+        generatedMission: 'M',
+        generatedHook: 'H',
+        generatedDuration: '1h',
+        generatedSafetyNote: null,
+        isOutdoor: false,
+        destinationLabel: null,
+        destinationLat: null,
+        destinationLon: null,
+        locationCity: 'Paris',
+        weatherDescription: 'Beau',
+        weatherTemp: 20,
+        status: 'pending',
+        wasRerolled: false,
+        wasFallback: false,
+        phaseAtAssignment: 'calibration',
+        profileId: 'p1',
+      },
+      { ...profileRow, streakCount: 3 },
+    ]);
+
+    const res = await GET(new NextRequest('http://localhost/api/quest/daily'));
+    expect(res.status).toBe(201);
+    expect(prismaMock.questLog.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: 'rejected' } }),
+    );
+    // PAS de streak reset (pending ne casse pas la série)
+    expect(prismaMock.profile.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ streakCount: 0 }) }),
+    );
+  });
+
+  it('POST complete : streak +1 si quête d\'hier était complétée', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({
+      ...profileRow,
+      streakCount: 4,
+      currentDay: 5,
+      totalXp: 100,
+    });
+    prismaMock.questLog.findUnique.mockResolvedValue({
+      ...logRow,
+      questDate: '2026-03-24',
+      status: 'accepted',
+      phaseAtAssignment: 'expansion',
+    });
+    prismaMock.questLog.findFirst.mockResolvedValue({ questDate: '2026-03-23' }); // hier completed
+    prismaMock.questLog.count.mockResolvedValue(0);
+    prismaMock.$transaction.mockResolvedValue([
+      { id: 'log1' },
+      { ...profileRow, streakCount: 5, totalXp: 150 },
+    ]);
+
+    const res = await POST(
+      new NextRequest('http://localhost/api/quest/daily', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'complete', questDate: '2026-03-24' }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.streak).toBe(5);
+  });
+
+  it('POST complete : streak = 1 si gap (pas complété hier)', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({
+      ...profileRow,
+      streakCount: 4,
+      currentDay: 5,
+      totalXp: 100,
+    });
+    prismaMock.questLog.findUnique.mockResolvedValue({
+      ...logRow,
+      questDate: '2026-03-24',
+      status: 'accepted',
+      phaseAtAssignment: 'expansion',
+    });
+    prismaMock.questLog.findFirst.mockResolvedValue({ questDate: '2026-03-20' }); // il y a 4 jours
+    prismaMock.questLog.count.mockResolvedValue(0);
+    prismaMock.$transaction.mockResolvedValue([
+      { id: 'log1' },
+      { ...profileRow, streakCount: 1, totalXp: 150 },
+    ]);
+
+    const res = await POST(
+      new NextRequest('http://localhost/api/quest/daily', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'complete', questDate: '2026-03-24' }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.streak).toBe(1);
   });
 
   it('POST abandon met le statut abandoned et série à 0', async () => {

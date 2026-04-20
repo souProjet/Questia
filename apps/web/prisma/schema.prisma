@@ -253,6 +253,13 @@ model QuestLog {
   /** Identifiant public de partage (lien unique web/mobile). */
   shareId           String?         @unique @map("share_id")
   completedAt       DateTime?       @map("completed_at")
+  /**
+   * Échéance du carry-over : posée quand une quête `accepted` + `planned` traverse minuit
+   * sans être complétée. Pendant cette fenêtre (≤ 24 h), aucune nouvelle quête n'est générée.
+   * Passé `graceDeadline`, le log est forcé en `abandoned` au prochain appel (cf. rollover).
+   * `null` pour les logs qui n'ont pas déclenché de carry-over.
+   */
+  graceDeadline     DateTime?       @map("grace_deadline")
   safetyConsentGiven Boolean        @default(false) @map("safety_consent_given")
   wasRerolled       Boolean         @default(false) @map("was_rerolled")
   wasFallback       Boolean         @default(false) @map("was_fallback")

@@ -69,6 +69,10 @@ interface DailyQuest {
   questPace?: 'instant' | 'planned';
   /** Après report : date notée pour une quête plus ambitieuse (rappel) */
   deferredSocialUntil?: string | null;
+  /** La quête d'hier (planned + acceptée) a été prolongée sur aujourd'hui (cf. rollover). */
+  isCarryover?: boolean;
+  /** Échéance ISO du carry-over : passé ce délai, la quête sera automatiquement abandonnée. */
+  graceDeadline?: string | null;
   day: number;
   streak: number;
   phase: EscalationPhase;
@@ -106,6 +110,26 @@ interface DailyQuest {
 
 function cloneDailyQuestSnapshot(q: DailyQuest): DailyQuest {
   return JSON.parse(JSON.stringify(q)) as DailyQuest;
+}
+
+/**
+ * Formate une `graceDeadline` ISO pour l'UI du bandeau carry-over.
+ * Ex. « jeudi 23 avril à 21:00 » (fr) / « Thursday 23 April at 9:00 PM » (en).
+ */
+function formatCarryoverDeadline(iso: string, locale: AppLocale): string {
+  try {
+    const date = new Date(iso);
+    return new Intl.DateTimeFormat(locale === 'fr' ? 'fr-FR' : 'en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Paris',
+    }).format(date);
+  } catch {
+    return iso;
+  }
 }
 
 function applyOptimisticRerollDecrement(q: DailyQuest): DailyQuest {
@@ -1238,6 +1262,19 @@ function AppPageContent() {
                   </div>
 
                   <div className="mt-4 w-full border-t border-[var(--border-ui)]/35 pt-4 text-left" data-quest-card-scroll>
+                    {quest.isCarryover && quest.graceDeadline ? (
+                      <div className="mb-3 rounded-xl border border-[var(--orange)]/35 bg-[var(--orange)]/[0.08] px-3 py-2.5 text-sm leading-snug text-[var(--text)]">
+                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--orange)]">
+                          {t('carryoverBannerTitle')}
+                        </p>
+                        <p className="mt-1">
+                          {t('carryoverBannerBody', {
+                            deadline: formatCarryoverDeadline(quest.graceDeadline, appLocale),
+                          })}
+                        </p>
+                      </div>
+                    ) : null}
+
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
                       {t('questCardMissionEyebrow')}
                     </p>
