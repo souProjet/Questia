@@ -724,6 +724,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Abandon d'un carry-over (= on a choisi de « changer » au lieu de continuer la
+    // quête d'hier) : pas de pénalité de streak. L'user fait un choix actif au
+    // réveil, pas un échec d'engagement. La streak ne progressera pas non plus —
+    // elle est pilotée par les `completed` consécutifs au moment du complete.
+    const isCarryoverAbandon = existing.graceDeadline != null;
+
     const [updated] = await prisma.$transaction([
       prisma.questLog.update({
         where: { profileId_questDate: { profileId: profile.id, questDate: today } },
@@ -732,7 +738,7 @@ export async function POST(request: NextRequest) {
       prisma.profile.update({
         where: { id: profile.id },
         data: {
-          streakCount: 0,
+          ...(isCarryoverAbandon ? {} : { streakCount: 0 }),
           deferredSocialUntil: null,
         },
       }),

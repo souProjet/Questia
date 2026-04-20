@@ -569,6 +569,7 @@ describe('/api/quest/daily', () => {
       ...logRow,
       questDate: '2026-03-24',
       status: 'pending',
+      graceDeadline: null,
     });
     prismaMock.$transaction.mockResolvedValue([
       { ...logRow, status: 'abandoned' },
@@ -585,5 +586,70 @@ describe('/api/quest/daily', () => {
     const json = await res.json();
     expect(json.abandoned).toBe(true);
     expect(json.status).toBe('abandoned');
+  });
+
+  /** Retrouve le `profile.update` dédié à l'abandon (contient deferredSocialUntil: null). */
+  function findAbandonProfileUpdate(): { streakCount?: number; deferredSocialUntil?: string | null } | undefined {
+    for (const [arg] of prismaMock.profile.update.mock.calls) {
+      const data = (arg as { data?: Record<string, unknown> }).data;
+      if (data && 'deferredSocialUntil' in data && data.deferredSocialUntil === null) {
+        return data as { streakCount?: number; deferredSocialUntil?: string | null };
+      }
+    }
+    return undefined;
+  }
+
+  it('POST abandon sur un carry-over NE reset PAS la streak', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({ ...profileRow, streakCount: 5 });
+    prismaMock.questLog.findUnique.mockResolvedValue({
+      ...logRow,
+      questDate: '2026-03-23',
+      status: 'accepted',
+      graceDeadline: new Date('2026-03-25T09:00:00Z'),
+    });
+    prismaMock.$transaction.mockResolvedValue([
+      { ...logRow, status: 'abandoned' },
+      { ...profileRow, streakCount: 5, deferredSocialUntil: null },
+    ]);
+
+    const res = await POST(
+      new NextRequest('http://localhost/api/quest/daily', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'abandon', questDate: '2026-03-23' }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const abandonUpdate = findAbandonProfileUpdate();
+    expect(abandonUpdate).toBeDefined();
+    expect(abandonUpdate?.streakCount).toBeUndefined(); // pas de reset sur carry-over
+    const json = await res.json();
+    expect(json.abandoned).toBe(true);
+    expect(json.streak).toBe(5);
+  });
+
+  it('POST abandon classique (pas carry-over) reset bien la streak', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue({ ...profileRow, streakCount: 5 });
+    prismaMock.questLog.findUnique.mockResolvedValue({
+      ...logRow,
+      questDate: '2026-03-24',
+      status: 'accepted',
+      graceDeadline: null,
+    });
+    prismaMock.$transaction.mockResolvedValue([
+      { ...logRow, status: 'abandoned' },
+      { ...profileRow, streakCount: 0, deferredSocialUntil: null },
+    ]);
+
+    const res = await POST(
+      new NextRequest('http://localhost/api/quest/daily', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'abandon', questDate: '2026-03-24' }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const abandonUpdate = findAbandonProfileUpdate();
+    expect(abandonUpdate?.streakCount).toBe(0);
   });
 });
