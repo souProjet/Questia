@@ -50,7 +50,6 @@ import {
   getDefaultFallbackArchetypeId,
 } from '@/lib/quest-taxonomy/cache';
 import { findArchetypeById } from '@/lib/quest-taxonomy/map-prisma';
-import { rolloverStaleLogs } from '@/lib/quest-rollover/rollover';
 
 export const dynamic = 'force-dynamic';
 
@@ -190,9 +189,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // `profile` est réassigné après le rollover si la streak a été remise à 0
-  // (cf. `rolloverStaleLogs` plus bas) — on veut la version fraîche pour la suite.
-  let profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
+  const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
   if (!profile) {
     return NextResponse.json(
       { error: 'Profil introuvable. Complète l\'onboarding.' },
@@ -243,40 +240,6 @@ export async function GET(request: NextRequest) {
       progression: progressionPayload(profile, questLocale),
       refinement: refinementSurvey,
       ...(context ? { context } : {}),
-    });
-  }
-
-  // ── Rollover : quêtes d'hier non finalisées (carry-over planned / auto-abandon) ──
-  // Appelé AVANT la génération pour que la nouvelle quête n'écrase pas un carry-over
-  // légitime. Si un carry-over est actif, on renvoie la quête d'hier comme quête du
-  // jour ; sinon on laisse le flow normal décider.
-  const rollover = await rolloverStaleLogs({
-    profileId: profile.id,
-    today,
-    taxonomy: cachedTax,
-    now: new Date(),
-    prisma,
-  });
-
-  // Le rollover peut avoir modifié `streakCount` ; on récupère la valeur fraîche
-  // pour éviter toute réponse incohérente avec la suite du flow.
-  if (rollover.streakReset) {
-    profile = (await prisma.profile.findUnique({ where: { id: profile.id } })) ?? profile;
-  }
-
-  if (rollover.carryoverLog) {
-    return NextResponse.json({
-      ...(await toQuestResponse(rollover.carryoverLog, profile, cachedTax)),
-      fromCache: true,
-      isCarryover: true,
-      graceDeadline: rollover.carryoverLog.graceDeadline?.toISOString() ?? null,
-      day: profile.currentDay,
-      streak: profile.streakCount,
-      phase: profile.currentPhase,
-      deferredSocialUntil: profile.deferredSocialUntil ?? null,
-      ...shopClientPayload(profile),
-      progression: progressionPayload(profile, questLocale),
-      refinement: refinementSurvey,
     });
   }
 
@@ -505,14 +468,15 @@ export async function GET(request: NextRequest) {
   }
 
   // Progression : jour, phase, série
-  //
-  // /!\ NOTE DESIGN (2026-04) /!\
-  // La streak n'est plus incrémentée ici (à la génération). Elle reflète désormais
-  // uniquement les quêtes RÉELLEMENT complétées : +1 au `complete` si la précédente
-  // `completed` était hier, reset à 0 sur `abandon` (explicite ou via rollover).
-  // Voir POST action=complete ci-dessous pour le calcul.
   const lastDate = profile.lastQuestDate;
-  const newStreak = profile.streakCount; // inchangé par la seule génération
+  const yesterdayStr = getPreviousQuestCalendarDate(today);
+  const isSameDayRegen = lastDate === today;
+  const isConsecutive = lastDate === yesterdayStr;
+  const newStreak = isSameDayRegen
+    ? profile.streakCount
+    : isConsecutive
+      ? profile.streakCount + 1
+      : 1;
   const newDay = profile.currentDay + (lastDate !== today ? 1 : 0);
   const newPhase: EscalationPhase = getEffectivePhase(newDay, phaseLogs, today);
 
@@ -724,12 +688,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Abandon d'un carry-over (= on a choisi de « changer » au lieu de continuer la
-    // quête d'hier) : pas de pénalité de streak. L'user fait un choix actif au
-    // réveil, pas un échec d'engagement. La streak ne progressera pas non plus —
-    // elle est pilotée par les `completed` consécutifs au moment du complete.
-    const isCarryoverAbandon = existing.graceDeadline != null;
-
     const [updated] = await prisma.$transaction([
       prisma.questLog.update({
         where: { profileId_questDate: { profileId: profile.id, questDate: today } },
@@ -738,7 +696,7 @@ export async function POST(request: NextRequest) {
       prisma.profile.update({
         where: { id: profile.id },
         data: {
-          ...(isCarryoverAbandon ? {} : { streakCount: 0 }),
+          streakCount: 0,
           deferredSocialUntil: null,
         },
       }),
@@ -861,26 +819,9 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    // Calcul de la nouvelle streak : +1 si la dernière quête `completed` date
-    // d'hier (streak continue), sinon 1 (nouvelle streak depuis aujourd'hui).
-    // Note : on se base sur `questDate` du log complété le plus récent — robuste
-    // aux absences et au rollover.
-    const yesterdayStr = getPreviousQuestCalendarDate(today);
-    const lastCompleted = await prisma.questLog.findFirst({
-      where: {
-        profileId: profile.id,
-        status: 'completed',
-        questDate: { lt: today },
-      },
-      orderBy: { questDate: 'desc' },
-      select: { questDate: true },
-    });
-    const newStreakCount =
-      lastCompleted?.questDate === yesterdayStr ? profile.streakCount + 1 : 1;
-
     const { total: xpGained, breakdown } = computeCompletionXp({
       phaseAtAssignment: existing.phaseAtAssignment as EscalationPhase,
-      streakCount: newStreakCount,
+      streakCount: profile.streakCount,
       isOutdoor: existing.isOutdoor,
       explorerAxis: profile.explorerAxis as ExplorerAxis,
       riskAxis: profile.riskAxis as RiskAxis,
@@ -908,7 +849,7 @@ export async function POST(request: NextRequest) {
     const newBadges = evaluateNewBadges(existingBadgeIds, {
       totalCompletions,
       outdoorCompletions,
-      currentStreak: newStreakCount,
+      currentStreak: profile.streakCount,
       currentDay: profile.currentDay,
       currentPhase: profile.currentPhase as EscalationPhase,
       explorerAxis: profile.explorerAxis as ExplorerAxis,
@@ -946,7 +887,6 @@ export async function POST(request: NextRequest) {
         where: { id: profile.id },
         data: {
           totalXp: newTotalXp,
-          streakCount: newStreakCount,
           badgesEarned: mergedBadges as unknown as Prisma.InputJsonValue,
           xpBonusCharges: xpBonusChargesAfter,
           deferredSocialUntil: null,
@@ -963,7 +903,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ...(await toQuestResponse(updated, profileAfter)),
       progression: prog,
-      streak: newStreakCount,
       ...shopClientPayload(profileAfter),
       xpGain: {
         gained: totalXpGained,
