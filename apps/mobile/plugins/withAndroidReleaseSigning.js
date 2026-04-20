@@ -3,17 +3,36 @@ const path = require('path');
 const { withDangerousMod } = require('expo/config-plugins');
 
 /**
- * Signature release : si `credentials.json` (racine apps/mobile) contient `android.keystore`
- * (chemins type EAS), génère `android/keystore.properties` pour que `bundleRelease` utilise
- * `credentials/android/keystore.jks` au lieu du keystore debug.
+ * Signature release : si `credentials.json` contient `android.keystore` (format EAS),
+ * génère `android/keystore.properties` pour que `bundleRelease` utilise le bon .jks
+ * au lieu du keystore debug (sinon Play Console refuse l’AAB).
  *
- * Sinon, tu peux toujours créer `android/keystore.properties` à la main (voir
- * `android-keystore.properties.example`).
+ * Fichiers cherchés, dans l’ordre :
+ * - `apps/mobile/credentials.json`
+ * - racine du monorepo (`../../credentials.json` depuis apps/mobile), car `eas credentials`
+ *   télécharge souvent à la racine du dépôt courant.
+ *
+ * `keystorePath` dans le JSON est résolu par rapport au dossier qui contient `credentials.json`.
+ *
+ * Sinon, crée `android/keystore.properties` à la main (voir `android-keystore.properties.example`).
  */
+function resolveCredentialsJsonPath(mobileRoot) {
+  const candidates = [
+    path.join(mobileRoot, 'credentials.json'),
+    path.join(mobileRoot, '..', '..', 'credentials.json'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      return p;
+    }
+  }
+  return null;
+}
+
 function writeKeystorePropertiesFromCredentials(androidRoot) {
   const mobileRoot = path.join(androidRoot, '..');
-  const credPath = path.join(mobileRoot, 'credentials.json');
-  if (!fs.existsSync(credPath)) {
+  const credPath = resolveCredentialsJsonPath(mobileRoot);
+  if (!credPath) {
     return;
   }
   let cred;
@@ -27,14 +46,17 @@ function writeKeystorePropertiesFromCredentials(androidRoot) {
     return;
   }
   const rel = String(ks.keystorePath).replace(/\\/g, '/');
-  const jksAbs = path.join(mobileRoot, ...rel.split('/').filter(Boolean));
+  const credDir = path.dirname(credPath);
+  const jksAbs = path.join(credDir, ...rel.split('/').filter(Boolean));
   if (!fs.existsSync(jksAbs)) {
     console.warn(
-      `[withAndroidReleaseSigning] Fichier keystore introuvable (relatif à apps/mobile) : ${rel}`,
+      `[withAndroidReleaseSigning] Keystore introuvable (base: ${credDir}) : ${rel}`,
     );
     return;
   }
-  const storeFileFromAndroidDir = `../${rel}`;
+  const storeFileFromAndroidDir = path
+    .relative(androidRoot, jksAbs)
+    .replace(/\\/g, '/');
   const lines = [
     `storePassword=${ks.keystorePassword}`,
     `keyPassword=${ks.keyPassword}`,

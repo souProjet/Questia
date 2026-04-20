@@ -321,8 +321,12 @@ export function QuestSwipeCard({
   const questBody = (
     <View style={styles.cardInner}>
       <View style={styles.cardHeader}>
-        <Text style={styles.emoji}>{questDisplayEmoji(quest.emoji)}</Text>
-        <Text style={[styles.title, { color: p.text }]}>{quest.title}</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.emoji}>{questDisplayEmoji(quest.emoji)}</Text>
+          <Text style={[styles.title, { color: p.text }]} numberOfLines={3}>
+            {quest.title}
+          </Text>
+        </View>
         {metaLineParts.length > 0 ? (
           <Text style={[styles.metaLine, { color: p.muted }]} numberOfLines={2}>
             {metaLineParts.join(' · ')}
@@ -626,8 +630,8 @@ const styles = StyleSheet.create({
   cardInner: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 14,
+    paddingTop: 14,
+    paddingBottom: 10,
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     minHeight: 0,
@@ -642,43 +646,47 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   cardHeader: {
+    alignItems: 'stretch',
+    marginBottom: 2,
+  },
+  titleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     marginBottom: 4,
   },
   emoji: {
-    fontSize: 52,
-    marginBottom: 12,
+    fontSize: 28,
+    lineHeight: 32,
   },
   title: {
-    fontSize: 21,
+    flex: 1,
+    fontSize: 19,
     fontWeight: '900',
-    textAlign: 'center',
-    lineHeight: 27,
-    marginBottom: 8,
-    paddingHorizontal: 6,
+    textAlign: 'left',
+    lineHeight: 24,
   },
   metaLine: {
-    fontSize: 12,
-    lineHeight: 17,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-    marginBottom: 4,
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: 'left',
+    marginBottom: 2,
   },
   hookLine: {
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 13,
+    lineHeight: 19,
     fontStyle: 'italic',
     textAlign: 'left',
-    marginTop: 8,
-    marginBottom: 10,
-    paddingLeft: 12,
+    marginTop: 4,
+    marginBottom: 6,
+    paddingLeft: 10,
     paddingRight: 4,
     borderLeftWidth: 3,
     opacity: 0.92,
   },
   missionBlock: {
-    marginTop: 8,
-    paddingTop: 14,
+    marginTop: 4,
+    paddingTop: 10,
     borderTopWidth: 1,
     width: '100%',
   },
@@ -687,12 +695,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1.1,
     textTransform: 'uppercase',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'left',
   },
   missionFull: {
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: 16,
+    lineHeight: 24,
     textAlign: 'left',
   },
   duration: {
@@ -751,21 +759,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   inlineSecondaryActions: {
-    marginTop: 10,
-    marginBottom: 12,
-    gap: 10,
+    marginTop: 2,
+    marginBottom: 6,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 18,
     width: '100%',
     paddingHorizontal: 20,
   },
   secondaryBtn: {
-    paddingVertical: 12,
-    borderRadius: 14,
-    borderWidth: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
     alignItems: 'center',
   },
   secondaryBtnText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
+    textDecorationLine: 'underline',
+    opacity: 0.75,
   },
   /** Pas d'elevation ici : sur Android ça crée une couche ombrée / dégradés bizarres au-dessus du contenu. */
   rerollLoadingOverlay: {
@@ -791,11 +803,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 14,
   },
   fallbackBtn: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',

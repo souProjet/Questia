@@ -600,6 +600,7 @@ export default function DashboardScreen() {
     reportInFlightRef.current = true;
     setError(null);
     setShowReportModal(false);
+    setRerolling(true);
     setQuest((prev) => (prev && prev.questDate === qd ? applyOptimisticRerollDecrement(prev) : prev));
     try {
       const token = await getToken();
@@ -635,6 +636,7 @@ export default function DashboardScreen() {
       hapticError();
     } finally {
       reportInFlightRef.current = false;
+      setRerolling(false);
     }
   };
 
