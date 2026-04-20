@@ -1523,6 +1523,270 @@ export const QUEST_ARCHETYPES_SEED: QuestModel[] = [
     fallbackQuestId: 9,
     questPace: 'instant',
   },
+
+  // ── Ajouts 2026-04 : quêtes insolites / singulières ────────────────────────
+  // Série de 12 archétypes conçus pour marquer : chacun porte un dispositif
+  // précis (contrainte inhabituelle, rituel physique, retournement de rôle)
+  // qui le rend mémorable et identifiable. Les `targetTraits` sont volontairement
+  // contrastés entre voisins de même catégorie pour discriminer les profils.
+  {
+    id: 75,
+    title: 'Le Troc Sauvage',
+    description:
+      "Prendre un objet de chez toi que tu ne regretteras pas (livre, vêtement, ustensile) et te rendre dans un marché, un vide-grenier ou un quartier marchand pour proposer un troc — pas un paiement — à trois vendeurs. Rentrer avec quelque chose que tu n'aurais jamais acheté.",
+    titleEn: 'The Wild Barter',
+    descriptionEn:
+      "Take an item from home you won't miss (a book, a piece of clothing, a utensil) and head to a market, flea market or shopping street to propose a barter — not a payment — to three vendors. Come back with something you would never have bought.",
+    category: 'exploratory_sociability',
+    targetTraits: {
+      openness: 0.78,
+      extraversion: 0.65,
+      thrillSeeking: 0.6,
+      agreeableness: 0.5,
+    },
+    comfortLevel: 'high',
+    requiresOutdoor: true,
+    requiresSocial: true,
+    minimumDurationMinutes: 120,
+    fallbackQuestId: 66,
+    questPace: 'planned',
+  },
+  {
+    id: 76,
+    title: 'Le Dîner Aveugle',
+    description:
+      "Préparer un vrai repas (deux plats) puis te bander les yeux ou éteindre toute lumière pour le manger entièrement à l'aveugle. Pas de musique, pas de téléphone. Goûter chaque bouchée comme si tu ignorais ce qu'elle contient.",
+    titleEn: 'The Blind Dinner',
+    descriptionEn:
+      "Cook a real meal (two dishes) then blindfold yourself or switch off all lights to eat it entirely in the dark. No music, no phone. Taste each bite as if you didn't know what it contained.",
+    category: 'sensory_deprivation',
+    targetTraits: {
+      openness: 0.75,
+      conscientiousness: 0.62,
+      emotionalStability: 0.65,
+      boredomSusceptibility: 0.3,
+    },
+    comfortLevel: 'high',
+    requiresOutdoor: false,
+    requiresSocial: false,
+    minimumDurationMinutes: 60,
+    fallbackQuestId: 52,
+    questPace: 'planned',
+  },
+  {
+    id: 77,
+    title: 'Le Repas des Cinq Couleurs',
+    description:
+      'Composer un repas qui contient cinq couleurs naturelles distinctes (blanc et noir ne comptent pas). Chercher, acheter, cuisiner — puis photographier le résultat avant la première bouchée et le manger lentement.',
+    titleEn: 'The Five-Color Meal',
+    descriptionEn:
+      'Assemble a meal with five distinct natural colors (white and black do not count). Shop, prep, cook — then photograph the result before the first bite and eat it slowly.',
+    category: 'physical_existential',
+    targetTraits: {
+      openness: 0.68,
+      conscientiousness: 0.58,
+      agreeableness: 0.5,
+    },
+    comfortLevel: 'low',
+    requiresOutdoor: false,
+    requiresSocial: false,
+    minimumDurationMinutes: 45,
+    fallbackQuestId: 9,
+    questPace: 'instant',
+  },
+  {
+    id: 78,
+    title: 'La Lettre aux Dix Ans',
+    description:
+      "Écrire à toi-même dans dix ans exactement : qui tu veux être, ce que tu espères avoir fait, ce que tu as peur de devenir. Trois pages minimum, manuscrit. Puis programmer son envoi via un service de lettre future (futureme.org) pour l'ouvrir à la date exacte.",
+    titleEn: 'The Ten-Year Letter',
+    descriptionEn:
+      "Write to yourself ten years from now exactly: who you want to be, what you hope to have done, what you fear becoming. Three pages minimum, handwritten. Then schedule its delivery via a future-letter service (futureme.org) to open on the exact date.",
+    category: 'temporal_projection',
+    targetTraits: {
+      openness: 0.72,
+      conscientiousness: 0.7,
+      emotionalStability: 0.6,
+      boredomSusceptibility: 0.25,
+    },
+    comfortLevel: 'extreme',
+    requiresOutdoor: false,
+    requiresSocial: false,
+    minimumDurationMinutes: 180,
+    fallbackQuestId: 9,
+    questPace: 'planned',
+  },
+  {
+    id: 79,
+    title: 'Le Trajet du Troisième Bus',
+    description:
+      "Aller à un arrêt de bus près de chez toi. Laisser passer deux bus, quels qu'ils soient. Monter dans le troisième. Descendre à un arrêt choisi d'avance par un chiffre aléatoire (par exemple le 5ᵉ après le tien). Explorer 30 minutes autour à pied, puis revenir.",
+    titleEn: 'The Third Bus',
+    descriptionEn:
+      "Go to a bus stop near home. Let two buses pass, whichever they are. Board the third one. Get off at a stop chosen beforehand by a random number (say, the 5th after yours). Explore on foot for 30 minutes around, then come back.",
+    category: 'spatial_adventure',
+    targetTraits: {
+      openness: 0.82,
+      thrillSeeking: 0.72,
+      boredomSusceptibility: 0.65,
+    },
+    comfortLevel: 'moderate',
+    requiresOutdoor: true,
+    requiresSocial: false,
+    minimumDurationMinutes: 90,
+    fallbackQuestId: 37,
+    questPace: 'instant',
+  },
+  {
+    id: 80,
+    title: 'La Journée en Langue Étrangère',
+    description:
+      "Passer une journée entière à ne consommer que du contenu dans une langue que tu ne maîtrises pas : musique, podcasts, films sans sous-titres, articles dans la langue d'origine. Écrire à la fin de la journée cinq mots que tu auras compris ou retenus.",
+    titleEn: 'The Foreign-Language Day',
+    descriptionEn:
+      "Spend an entire day consuming only content in a language you don't master: music, podcasts, films with no subtitles, articles in the original language. At the end of the day, write down five words you caught or remembered.",
+    category: 'dopamine_detox',
+    targetTraits: {
+      openness: 0.85,
+      conscientiousness: 0.75,
+      boredomSusceptibility: 0.7,
+    },
+    comfortLevel: 'high',
+    requiresOutdoor: false,
+    requiresSocial: false,
+    minimumDurationMinutes: 480,
+    fallbackQuestId: 15,
+    questPace: 'planned',
+  },
+  {
+    id: 81,
+    title: 'Le Miroir des Proches',
+    description:
+      "Contacter trois personnes proches (amis, famille, partenaire) et leur demander individuellement : « quelle est ma pire habitude selon toi ? ». Écouter sans commenter ni te défendre. Noter textuellement leurs mots. Ne répondre à aucune avant le lendemain.",
+    titleEn: 'The Mirror of Loved Ones',
+    descriptionEn:
+      "Reach out to three people close to you (friends, family, partner) and ask each separately: 'what's my worst habit in your eyes?'. Listen without commenting or defending. Write down their exact words. Don't reply to any of them before the next day.",
+    category: 'relational_vulnerability',
+    targetTraits: {
+      emotionalStability: 0.72,
+      openness: 0.7,
+      agreeableness: 0.65,
+    },
+    comfortLevel: 'high',
+    requiresOutdoor: false,
+    requiresSocial: true,
+    minimumDurationMinutes: 60,
+    fallbackQuestId: 70,
+    questPace: 'planned',
+  },
+  {
+    id: 82,
+    title: "Le Pseudonyme d'un Soir",
+    description:
+      "Lors d'une soirée, un meetup ou un événement public où tu ne connais personne, te présenter sous un autre prénom et un autre métier pendant deux heures. Observer comment les autres te perçoivent — et comment toi-même tu te perçois autrement. Révéler avant de partir si tu veux (ou pas).",
+    titleEn: "The Alias for an Evening",
+    descriptionEn:
+      "At a party, meetup or public event where you know no one, introduce yourself under a different first name and a different job for two hours. Watch how others perceive you — and how you perceive yourself. Reveal before leaving if you want (or not).",
+    category: 'hostile_immersion',
+    targetTraits: {
+      extraversion: 0.72,
+      thrillSeeking: 0.68,
+      openness: 0.65,
+      agreeableness: 0.45,
+    },
+    comfortLevel: 'high',
+    requiresOutdoor: true,
+    requiresSocial: true,
+    minimumDurationMinutes: 120,
+    fallbackQuestId: 72,
+    questPace: 'planned',
+  },
+  {
+    id: 83,
+    title: "Le Cahier de l'Étranger",
+    description:
+      "Aborder un inconnu (parc, café, transport long) et lui proposer de l'interviewer 15 minutes sur sa vie, sans prendre la parole sauf pour poser des questions. Noter ses mots exacts dans un cahier. À la fin, relire à voix haute une courte synthèse de ses mots — les siens, pas les tiens — avant de partir.",
+    titleEn: "The Stranger's Notebook",
+    descriptionEn:
+      "Approach a stranger (park, café, long-distance commute) and offer to interview them for 15 minutes about their life, speaking only to ask questions. Write down their exact words in a notebook. At the end, read aloud a short synthesis of their own words — theirs, not yours — before leaving.",
+    category: 'active_empathy',
+    targetTraits: {
+      agreeableness: 0.78,
+      openness: 0.75,
+      conscientiousness: 0.65,
+    },
+    comfortLevel: 'high',
+    requiresOutdoor: true,
+    requiresSocial: true,
+    minimumDurationMinutes: 45,
+    fallbackQuestId: 31,
+    questPace: 'planned',
+  },
+  {
+    id: 84,
+    title: 'La Photo Unique',
+    description:
+      "Ne prendre qu'UNE SEULE photo de toute la journée. Choisir consciemment le moment — attendre, rater des occasions, résister. Le reste du temps, regarder à l'œil nu, sans capture. Le soir, écrire en une phrase pourquoi ce moment-là précisément.",
+    titleEn: 'The Single Photo',
+    descriptionEn:
+      "Take only ONE photo the entire day. Choose the moment consciously — wait, miss opportunities, resist. The rest of the day, look with your eyes only, no capture. At night, write a single sentence on why that moment, precisely.",
+    category: 'dopamine_detox',
+    targetTraits: {
+      conscientiousness: 0.7,
+      emotionalStability: 0.55,
+      boredomSusceptibility: 0.3,
+      openness: 0.55,
+    },
+    comfortLevel: 'low',
+    requiresOutdoor: false,
+    requiresSocial: false,
+    minimumDurationMinutes: 30,
+    fallbackQuestId: 9,
+    questPace: 'instant',
+  },
+  {
+    id: 85,
+    title: 'La Lettre aux Six Mois',
+    description:
+      "Écrire à la main (pas au clavier) une lettre à toi-même datée de six mois dans le futur. La sceller dans une enveloppe avec la date d'ouverture écrite dessus. La déposer chez un ami de confiance ou dans un lieu caché (boîte verrouillée, livre rangé) que tu t'engages à revisiter à cette date précise.",
+    titleEn: 'The Six-Month Letter',
+    descriptionEn:
+      "Handwrite (not type) a letter to yourself dated six months in the future. Seal it in an envelope with the opening date written on it. Drop it at a trusted friend's or in a hidden place (locked box, shelved book) you commit to revisit on that exact date.",
+    category: 'temporal_projection',
+    targetTraits: {
+      conscientiousness: 0.65,
+      openness: 0.62,
+      emotionalStability: 0.55,
+    },
+    comfortLevel: 'moderate',
+    requiresOutdoor: false,
+    requiresSocial: false,
+    minimumDurationMinutes: 40,
+    fallbackQuestId: 9,
+    questPace: 'instant',
+  },
+  {
+    id: 86,
+    title: 'La Règle des Trois Non',
+    description:
+      "Durant une journée, refuser explicitement trois demandes ou sollicitations (pro, sociales, familiales) que tu aurais normalement acceptées par réflexe. Dire « non » sans t'excuser, sans argumenter longuement. Noter tes réactions intérieures et celles des autres.",
+    titleEn: 'The Rule of Three Nos',
+    descriptionEn:
+      "Over one day, explicitly refuse three requests (work, social, family) you would normally say yes to by reflex. Say 'no' without apologizing, without long arguments. Write down your inner reactions and the others'.",
+    category: 'async_discipline',
+    targetTraits: {
+      conscientiousness: 0.72,
+      emotionalStability: 0.62,
+      agreeableness: 0.35,
+      boredomSusceptibility: 0.25,
+    },
+    comfortLevel: 'moderate',
+    requiresOutdoor: false,
+    requiresSocial: false,
+    minimumDurationMinutes: 30,
+    fallbackQuestId: 19,
+    questPace: 'instant',
+  },
 ];
 
 if (process.env.NODE_ENV !== 'production') {
