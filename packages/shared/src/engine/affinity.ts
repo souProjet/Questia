@@ -53,24 +53,32 @@ export function computeAffinityScore(
     totalWeight += weight;
   }
 
-  // Bonus / malus targetTraits : alignement explicite renforce ou pénalise
+  // Bonus / malus targetTraits : alignement explicite renforce ou pénalise.
+  //
+  // Budget total normalisé : on alloue un poids global `TARGET_TRAITS_BUDGET` réparti
+  // entre tous les traits ciblés. Sans ça, un archétype qui cible 3 traits (poids 3×1.5=4.5)
+  // écrase un archétype qui n'en cible qu'un (poids 1.5) pour un même profil — et l'algo
+  // finit par ne proposer que les archétypes « larges » (audit du 2026-04 : #21 et #32
+  // étaient top-1 dans > 45 % des simulations).
   const targetTraits = archetype.targetTraits;
-  if (targetTraits) {
-    for (const [key, target] of Object.entries(targetTraits)) {
-      if (typeof target !== 'number') continue;
-      const k = key as keyof PersonalityVector;
+  const targetEntries = targetTraits
+    ? (Object.entries(targetTraits).filter(([, v]) => typeof v === 'number') as [
+        keyof PersonalityVector,
+        number,
+      ][])
+    : [];
+  if (targetEntries.length > 0) {
+    const perTraitWeight = TARGET_TRAITS_BUDGET / targetEntries.length;
+    for (const [k, target] of targetEntries) {
       const declared = profile[k] ?? 0.5;
       const observed = exhibited?.[k];
       const blended =
         observed === undefined
           ? declared
           : declared * (1 - exhibitedWeight) + observed * exhibitedWeight;
-      // proximité au target en [0, 1]
       const proximity = 1 - Math.abs(blended - target);
-      // Poids plus fort que la corrélation moyenne (target = signal explicite)
-      const weight = 1.5;
-      weightedSum += proximity * weight;
-      totalWeight += weight;
+      weightedSum += proximity * perTraitWeight;
+      totalWeight += perTraitWeight;
     }
   }
 
@@ -78,3 +86,11 @@ export function computeAffinityScore(
   const raw = weightedSum / totalWeight;
   return Math.max(0, Math.min(1, raw));
 }
+
+/**
+ * Budget de poids total alloué aux `targetTraits` dans le calcul d'affinité.
+ * Équivaut à ~2 dimensions de corrélation catégorielle moyenne (|corr| moyen ≈ 0.4 × 2 = 0.8)
+ * amplifiées par un facteur 1.5 pour garder leur statut de signal explicite.
+ * Distribué équitablement entre les traits ciblés pour éviter la domination par le nombre.
+ */
+const TARGET_TRAITS_BUDGET = 2.4;

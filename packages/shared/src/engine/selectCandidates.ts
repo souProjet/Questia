@@ -127,11 +127,46 @@ export function selectCandidates(
     return a.archetype.id - b.archetype.id;
   });
 
+  // Diversité catégorielle : un pool de 5 ne doit pas contenir 4 archétypes de la
+  // même catégorie (sinon le LLM choisit dans un quasi-mono-choix et l'user sent
+  // la répétition). On autorise au plus `MAX_PER_CATEGORY` par catégorie dans le
+  // top-N, en basculant les suivants plus bas (sans les retirer).
+  const diversifiedPool = pickDiversePool(scored, poolSize, MAX_PER_CATEGORY);
+
   return {
-    candidates: scored.slice(0, poolSize),
+    candidates: diversifiedPool,
     allScored: scored,
     excludedReasons,
   };
+}
+
+/** Max d'archétypes d'une même catégorie dans le pool final (garantit diversité). */
+const MAX_PER_CATEGORY = 2;
+
+function pickDiversePool(
+  sortedScored: QuestCandidate[],
+  size: number,
+  maxPerCat: number,
+): QuestCandidate[] {
+  const picked: QuestCandidate[] = [];
+  const leftover: QuestCandidate[] = [];
+  const perCat = new Map<string, number>();
+  for (const c of sortedScored) {
+    const cat = c.archetype.category;
+    const count = perCat.get(cat) ?? 0;
+    if (picked.length < size && count < maxPerCat) {
+      picked.push(c);
+      perCat.set(cat, count + 1);
+    } else {
+      leftover.push(c);
+    }
+  }
+  // Si on n'a pas atteint `size` à cause du plafond (ex. pool très petit, une seule
+  // catégorie qui match), on complète avec les leftover pour garantir la taille.
+  while (picked.length < size && leftover.length) {
+    picked.push(leftover.shift()!);
+  }
+  return picked;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

@@ -57,7 +57,18 @@ export function computeFreshnessScore(
 }
 
 /**
- * Pénalité spécifique sur l'archétype lui-même (et non la catégorie) en cas de rejet/abandon récent.
+ * Pénalité spécifique sur l'archétype lui-même (et non la catégorie).
+ *
+ * Deux effets combinés :
+ *  1. Pénalité forte en cas de rejet/abandon récent (−0.4 × recency) : on évite
+ *     de rejouer le même archétype qui a été refusé.
+ *  2. Pénalité douce en cas de reprise récente d'un completed/accepted (−0.12 × recency) :
+ *     même si l'user a aimé la quête, on évite qu'elle revienne trop vite (cela cassait
+ *     la diversité longitudinale, l'algo bouclait sur ~6 archétypes dès que la fenêtre
+ *     d'exclusion dure de 5-7 jours était dépassée). La pénalité douce permet à des
+ *     quêtes proches de reprendre le dessus tout en laissant la quête favorite revenir
+ *     quand son score compense largement la pénalité.
+ *
  * Renvoie un facteur ∈ [0, 1] à multiplier au score final (1 = pas de pénalité, 0 = blocage doux).
  */
 export function computeArchetypeFeedbackPenalty(
@@ -67,9 +78,13 @@ export function computeArchetypeFeedbackPenalty(
   let penalty = 1;
   let i = 0;
   for (const log of recentLogs) {
-    if (log.archetypeId === archetypeId && (log.status === 'rejected' || log.status === 'abandoned')) {
+    if (log.archetypeId === archetypeId) {
       const recency = RECENCY_DECAY ** i;
-      penalty -= 0.4 * recency;
+      if (log.status === 'rejected' || log.status === 'abandoned') {
+        penalty -= 0.4 * recency;
+      } else if (log.status === 'completed' || log.status === 'accepted') {
+        penalty -= 0.12 * recency;
+      }
     }
     i++;
   }
