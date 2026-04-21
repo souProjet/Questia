@@ -742,7 +742,6 @@ export default function DashboardScreen() {
     abandonCta: homeUi.abandonCta,
     reportPlannedHint: homeUi.reportPlannedHint,
     reportNoRerollsHint: homeUi.reportNoRerollsHint,
-    reportMilestoneReminder: homeUi.reportMilestoneReminder,
     mapOpenInMaps: homeUi.mapOpenInMaps,
     mapOpenDirections: homeUi.mapOpenDirections,
     mapRouteFailed: homeUi.mapRouteFailed,

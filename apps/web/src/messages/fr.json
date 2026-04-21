@@ -406,7 +406,6 @@
     "reportShortQuest": "Reporter — quête courte",
     "reportPlannedHint": "« Reporter » remplace cette quête « à caler » par une mission courte aujourd'hui et consomme une relance, comme « Changer de quête ».",
     "reportNoRerollsHint": "Plus de relances : tu ne peux ni reporter ni changer cette quête aujourd'hui.",
-    "reportMilestoneReminder": "Ta date repère est le {date} (indicative uniquement). Ta mission d'aujourd'hui reste courte et faisable tout de suite.",
     "reportModalTitle": "Reporter avec une relance",
     "reportModalBody": "Comme « Changer de quête », cela consomme une relance du jour ou un crédit bonus. Tu recevras une mission courte, faisable aujourd'hui. Choisis une date repère (dans les {maxDays} prochains jours) pour un défi plus ambitieux ou social — sans obligation.",
     "reportDateLabel": "Date repère",

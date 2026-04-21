@@ -19,12 +19,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  questDisplayEmoji,
-  questFamilyLabel,
-  formatQuestDateForLocale,
-  type AppLocale,
-} from '@questia/shared';
+import { questDisplayEmoji, questFamilyLabel, type AppLocale } from '@questia/shared';
 import { colorWithAlpha, questCardFaceGradient, type ThemePalette } from '@questia/ui';
 import { hapticSuccess, hapticWarning } from '../lib/haptics';
 import { QuestDestinationMapWebView } from './QuestDestinationMapWebView';
@@ -90,7 +85,6 @@ interface Props {
     abandonCta: string;
     reportPlannedHint: string;
     reportNoRerollsHint: string;
-    reportMilestoneReminder: (date: string) => string;
     mapOpenInMaps: string;
     mapOpenDirections: string;
     mapRouteFailed: string;
@@ -147,15 +141,7 @@ export function QuestSwipeCard({
   const isAbandoned = quest.status === 'abandoned';
   const isPlannedQuest = quest.questPace === 'planned';
   const reportContextMessage =
-    isPending && isPlannedQuest
-      ? canReroll
-        ? s.reportPlannedHint
-        : s.reportNoRerollsHint
-      : isPending && !isPlannedQuest && quest.deferredSocialUntil
-        ? s.reportMilestoneReminder(
-            formatQuestDateForLocale(quest.deferredSocialUntil, locale),
-          )
-        : null;
+    isPending && isPlannedQuest ? (canReroll ? s.reportPlannedHint : s.reportNoRerollsHint) : null;
 
   const triggerAccept = useCallback(() => {
     hapticSuccess();

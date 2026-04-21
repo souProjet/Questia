@@ -59,8 +59,6 @@ export type HomeDashboardStrings = {
   reportPlannedHint: string;
   /** Quête « à caler » mais aucune relance. */
   reportNoRerollsHint: string;
-  /** Après report : rappel de la date repère (quête courte du jour). */
-  reportMilestoneReminder: (date: string) => string;
   /** Carte destination (WebView) + Google Maps */
   mapOpenInMaps: string;
   mapOpenDirections: string;
@@ -134,8 +132,6 @@ function fr(): HomeDashboardStrings {
       "« Reporter » remplace cette quête « à caler » par une mission courte aujourd'hui et consomme une relance, comme « Changer de quête ».",
     reportNoRerollsHint:
       "Plus de relances : tu ne peux ni reporter ni changer cette quête aujourd'hui.",
-    reportMilestoneReminder: (date) =>
-      `Ta date repère est le ${date} (indicative uniquement). Ta mission d'aujourd'hui reste courte et faisable tout de suite.`,
     mapOpenInMaps: 'Voir dans Google Maps',
     mapOpenDirections: 'Itinéraire dans Google Maps',
     mapRouteFailed:
@@ -210,8 +206,6 @@ function en(): HomeDashboardStrings {
     reportPlannedHint:
       '“Defer” swaps this multi-day quest for a short quest today and uses a reroll, same as “Change quest.”',
     reportNoRerollsHint: "No rerolls left — you can't defer or change this quest today.",
-    reportMilestoneReminder: (date) =>
-      `Your optional target date is ${date}. Today's quest stays short and doable right now.`,
     mapOpenInMaps: 'Open in Google Maps',
     mapOpenDirections: 'Directions in Google Maps',
     mapRouteFailed: "Walking directions couldn't be calculated. Use the button above.",

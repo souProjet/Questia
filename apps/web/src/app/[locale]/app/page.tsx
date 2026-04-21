@@ -23,7 +23,6 @@ import {
   REPORT_DEFER_MAX_DAYS,
   QUEST_LOADER_DAY_STORAGE_KEY,
   getQuestCalendarDateNow,
-  formatQuestDateForLocale,
   QUESTIA_SHOP_GRANTS_UPDATED,
 } from '@questia/shared';
 import { AnalyticsEvent } from '@/lib/analytics/events';
@@ -1247,12 +1246,6 @@ function AppPageContent() {
                     {isPending && isPlannedQuest ? (
                       <div className="mt-3 rounded-xl border border-[var(--link-on-bg)]/30 bg-[var(--link-on-bg)]/[0.08] px-3 py-2.5 text-sm font-semibold leading-snug text-[var(--link-on-bg)]">
                         {canReroll ? t('reportPlannedHint') : t('reportNoRerollsHint')}
-                      </div>
-                    ) : isPending && !isPlannedQuest && quest.deferredSocialUntil ? (
-                      <div className="mt-3 rounded-xl border border-[var(--link-on-bg)]/30 bg-[var(--link-on-bg)]/[0.08] px-3 py-2.5 text-sm font-semibold leading-snug text-[var(--link-on-bg)]">
-                        {t('reportMilestoneReminder', {
-                          date: formatQuestDateForLocale(quest.deferredSocialUntil, appLocale),
-                        })}
                       </div>
                     ) : null}
 
