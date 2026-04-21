@@ -7,6 +7,13 @@ import { parseAppLocaleFromRequest } from '@/lib/requestLocale';
 import { progressionFields, serializeBadges } from '@/lib/progression';
 import { parseStringArray } from '@/lib/shop/parse';
 import { isValidIanaTimeZone } from '@/lib/reminders/time';
+import {
+  REMINDER_CADENCES,
+  HEAVY_QUEST_PREFERENCES,
+  clampQuestDurationBounds,
+  type ReminderCadence,
+  type HeavyQuestPreference,
+} from '@questia/shared';
 import { notifyAdminNewUser } from '@/lib/admin/notifyNewUser';
 
 function shopPayload(profile: {
@@ -71,6 +78,10 @@ export async function PATCH(request: NextRequest) {
     reminderEmailEnabled?: boolean;
     reminderTimeMinutes?: number;
     reminderTimezone?: string;
+    reminderCadence?: string;
+    questDurationMinMinutes?: number;
+    questDurationMaxMinutes?: number;
+    heavyQuestPreference?: string;
   };
 
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
@@ -88,6 +99,10 @@ export async function PATCH(request: NextRequest) {
     reminderEmailEnabled?: boolean;
     reminderTimeMinutes?: number;
     reminderTimezone?: string;
+    reminderCadence?: ReminderCadence;
+    questDurationMinMinutes?: number;
+    questDurationMaxMinutes?: number;
+    heavyQuestPreference?: HeavyQuestPreference;
   } = {};
 
   if (body.activeThemeId !== undefined) {
@@ -135,6 +150,32 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Fuseau horaire invalide' }, { status: 400 });
     }
     data.reminderTimezone = tz;
+  }
+
+  if (body.reminderCadence !== undefined) {
+    const c = String(body.reminderCadence).trim().toLowerCase();
+    if (!(REMINDER_CADENCES as readonly string[]).includes(c)) {
+      return NextResponse.json({ error: 'Cadence de rappel invalide' }, { status: 400 });
+    }
+    data.reminderCadence = c as ReminderCadence;
+  }
+
+  if (body.heavyQuestPreference !== undefined) {
+    const h = String(body.heavyQuestPreference).trim().toLowerCase();
+    if (!(HEAVY_QUEST_PREFERENCES as readonly string[]).includes(h)) {
+      return NextResponse.json({ error: 'Préférence quêtes déplacement invalide' }, { status: 400 });
+    }
+    data.heavyQuestPreference = h as HeavyQuestPreference;
+  }
+
+  if (body.questDurationMinMinutes !== undefined || body.questDurationMaxMinutes !== undefined) {
+    const curLo = profile.questDurationMinMinutes ?? 5;
+    const curHi = profile.questDurationMaxMinutes ?? 1440;
+    const nextLo = body.questDurationMinMinutes !== undefined ? body.questDurationMinMinutes : curLo;
+    const nextHi = body.questDurationMaxMinutes !== undefined ? body.questDurationMaxMinutes : curHi;
+    const { questDurationMinMinutes, questDurationMaxMinutes } = clampQuestDurationBounds(nextLo, nextHi);
+    data.questDurationMinMinutes = questDurationMinMinutes;
+    data.questDurationMaxMinutes = questDurationMaxMinutes;
   }
 
   if (Object.keys(data).length === 0) {

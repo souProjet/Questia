@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Navbar } from '@/components/Navbar';
@@ -15,11 +15,18 @@ import {
 } from '@questia/shared';
 import type { SerializedBadge } from '@/lib/progression';
 
+const DURATION_MIN_PRESETS = [5, 10, 15, 20, 30, 45, 60, 90, 120] as const;
+const DURATION_MAX_PRESETS = [15, 30, 45, 60, 90, 120, 180, 240, 480, 720, 1440] as const;
+
 type ProfileRes = {
   explorerAxis: ExplorerAxis;
   riskAxis: RiskAxis;
   streakCount: number;
   currentDay: number;
+  reminderCadence?: string;
+  questDurationMinMinutes?: number;
+  questDurationMaxMinutes?: number;
+  heavyQuestPreference?: string;
   shop?: { activeThemeId: string };
   badgesEarned?: unknown;
   progression: {
@@ -44,6 +51,12 @@ export default function ProfilePage() {
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [prefsCadence, setPrefsCadence] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [prefsHeavyQuest, setPrefsHeavyQuest] = useState<'low' | 'balanced' | 'high'>('balanced');
+  const [prefsDurMin, setPrefsDurMin] = useState(5);
+  const [prefsDurMax, setPrefsDurMax] = useState(1440);
+  const [prefsSaving, setPrefsSaving] = useState(false);
+  const [prefsMsg, setPrefsMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -55,6 +68,16 @@ export default function ProfilePage() {
       }
       const json = (await res.json()) as ProfileRes & { totalXp?: number };
       setData(json);
+      const c = json.reminderCadence === 'weekly' || json.reminderCadence === 'monthly' ? json.reminderCadence : 'daily';
+      setPrefsCadence(c);
+      const h =
+        json.heavyQuestPreference === 'low' || json.heavyQuestPreference === 'high'
+          ? json.heavyQuestPreference
+          : 'balanced';
+      setPrefsHeavyQuest(h);
+      setPrefsDurMin(json.questDurationMinMinutes ?? 5);
+      setPrefsDurMax(json.questDurationMaxMinutes ?? 1440);
+      setPrefsMsg(null);
     } catch {
       setError(t('errLoad'));
     }
@@ -90,6 +113,35 @@ export default function ProfilePage() {
       setExporting(false);
     }
   }, [t]);
+
+  const handleSavePrefs = useCallback(async () => {
+    setPrefsSaving(true);
+    setPrefsMsg(null);
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reminderCadence: prefsCadence,
+          heavyQuestPreference: prefsHeavyQuest,
+          questDurationMinMinutes: prefsDurMin,
+          questDurationMaxMinutes: prefsDurMax,
+        }),
+      });
+      if (!res.ok) {
+        setPrefsMsg(t('prefsErr'));
+        return;
+      }
+      const json = (await res.json()) as ProfileRes;
+      setData((prev) => (prev ? { ...prev, ...json } : json));
+      setPrefsMsg(t('prefsSaved'));
+    } catch {
+      setPrefsMsg(t('prefsErr'));
+    } finally {
+      setPrefsSaving(false);
+    }
+  }, [prefsCadence, prefsHeavyQuest, prefsDurMin, prefsDurMax, t]);
 
   const handleDeleteAccount = useCallback(async () => {
     setDeleteError(null);
@@ -131,6 +183,15 @@ export default function ProfilePage() {
         data.riskAxis === 'risktaker' ? t('riskAudacious') : t('riskCautious')
       }`
     : '';
+
+  const minDurOptions = useMemo(
+    () => Array.from(new Set([...DURATION_MIN_PRESETS, prefsDurMin])).sort((a, b) => a - b),
+    [prefsDurMin],
+  );
+  const maxDurOptions = useMemo(
+    () => Array.from(new Set([...DURATION_MAX_PRESETS, prefsDurMax])).sort((a, b) => a - b),
+    [prefsDurMax],
+  );
 
   const prog = data?.progression;
   const pct =
@@ -278,6 +339,112 @@ export default function ProfilePage() {
                 </li>
               ))}
             </ul>
+
+            <section className="mt-12 rounded-2xl border border-[var(--border-ui)] bg-[var(--card)] p-5 sm:p-6 shadow-sm">
+              <h2 className="text-xs font-black uppercase tracking-widest text-[var(--muted)] mb-1">{t('prefsSection')}</h2>
+              <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted)] mb-3 mt-4">{t('prefsCadenceTitle')}</p>
+              <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label={t('prefsCadenceTitle')}>
+                {(
+                  [
+                    { id: 'daily' as const, label: t('prefsCadenceDaily') },
+                    { id: 'weekly' as const, label: t('prefsCadenceWeekly') },
+                    { id: 'monthly' as const, label: t('prefsCadenceMonthly') },
+                  ]
+                ).map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    onClick={() => setPrefsCadence(row.id)}
+                    className={`rounded-xl border px-3 py-2 text-sm font-bold transition-colors ${
+                      prefsCadence === row.id
+                        ? 'border-cyan-500 bg-cyan-50 text-cyan-950 ring-1 ring-cyan-400/40'
+                        : 'border-[var(--border-ui)] bg-[var(--surface)] text-[var(--text)] hover:border-cyan-400/45'
+                    }`}
+                  >
+                    {row.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted)] mb-2 mt-6">{t('prefsHeavyTitle')}</p>
+              <p className="text-sm text-[var(--muted)] mb-3 leading-relaxed">{t('prefsHeavyHint')}</p>
+              <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label={t('prefsHeavyTitle')}>
+                {(
+                  [
+                    { id: 'low' as const, label: t('prefsHeavyLow') },
+                    { id: 'balanced' as const, label: t('prefsHeavyBalanced') },
+                    { id: 'high' as const, label: t('prefsHeavyHigh') },
+                  ]
+                ).map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    onClick={() => setPrefsHeavyQuest(row.id)}
+                    className={`rounded-xl border px-3 py-2 text-sm font-bold transition-colors ${
+                      prefsHeavyQuest === row.id
+                        ? 'border-cyan-500 bg-cyan-50 text-cyan-950 ring-1 ring-cyan-400/40'
+                        : 'border-[var(--border-ui)] bg-[var(--surface)] text-[var(--text)] hover:border-cyan-400/45'
+                    }`}
+                  >
+                    {row.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted)] mb-2">{t('prefsDurationTitle')}</p>
+              <p className="text-sm text-[var(--muted)] mb-4 leading-relaxed">{t('prefsDurationHint')}</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="block text-xs font-bold text-[var(--muted)] mb-1.5">{t('prefsDurMin')}</span>
+                  <select
+                    value={prefsDurMin}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setPrefsDurMin(v);
+                      if (v > prefsDurMax) setPrefsDurMax(v);
+                    }}
+                    className="w-full rounded-xl border border-[var(--border-ui)] bg-[var(--surface)] px-3 py-2.5 text-sm font-semibold text-[var(--text)]"
+                  >
+                    {minDurOptions.map((m) => (
+                      <option key={m} value={m}>
+                        {m} min
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="block text-xs font-bold text-[var(--muted)] mb-1.5">{t('prefsDurMax')}</span>
+                  <select
+                    value={prefsDurMax}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setPrefsDurMax(v);
+                      if (v < prefsDurMin) setPrefsDurMin(v);
+                    }}
+                    className="w-full rounded-xl border border-[var(--border-ui)] bg-[var(--surface)] px-3 py-2.5 text-sm font-semibold text-[var(--text)]"
+                  >
+                    {maxDurOptions.map((m) => (
+                      <option key={m} value={m}>
+                        {m} min
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => void handleSavePrefs()}
+                  disabled={prefsSaving}
+                  className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/50 bg-cyan-50/70 px-4 py-2.5 text-sm font-bold text-cyan-900 hover:bg-cyan-100/80 disabled:opacity-50"
+                >
+                  {prefsSaving ? t('prefsSaving') : t('prefsSave')}
+                </button>
+                {prefsMsg ? (
+                  <span className={`text-sm font-semibold ${prefsMsg === t('prefsSaved') ? 'text-emerald-700' : 'text-red-700'}`}>
+                    {prefsMsg}
+                  </span>
+                ) : null}
+              </div>
+            </section>
 
             <section className="mt-12 space-y-6">
 

@@ -42,6 +42,9 @@ const LEGAL_PATHS = [
   { key: 'wellbeing' as const, icon: '\u{1F49A}', path: '/legal/bien-etre' },
 ];
 
+const DURATION_MIN_PRESETS = [5, 10, 15, 20, 30, 45, 60, 90, 120] as const;
+const DURATION_MAX_PRESETS = [15, 30, 45, 60, 90, 120, 180, 240, 480, 720, 1440] as const;
+
 type ProfilePayload = {
   explorerAxis: ExplorerAxis;
   riskAxis: RiskAxis;
@@ -49,6 +52,10 @@ type ProfilePayload = {
   streakCount: number;
   currentDay: number;
   badgesEarned: unknown;
+  reminderCadence?: string;
+  questDurationMinMinutes?: number;
+  questDurationMaxMinutes?: number;
+  heavyQuestPreference?: string;
 };
 
 export default function ProfileScreen() {
@@ -78,11 +85,19 @@ export default function ProfileScreen() {
     xpBonusCharges?: number;
   } | null>(null);
 
+  const [prefsCadence, setPrefsCadence] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [prefsHeavyQuest, setPrefsHeavyQuest] = useState<'low' | 'balanced' | 'high'>('balanced');
+  const [prefsDurMin, setPrefsDurMin] = useState(5);
+  const [prefsDurMax, setPrefsDurMax] = useState(1440);
+  const [prefsSaving, setPrefsSaving] = useState(false);
+  const [prefsMsg, setPrefsMsg] = useState<string | null>(null);
+
   const barAnim = useRef(new Animated.Value(0)).current;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setPrefsMsg(null);
     try {
       const token = await getTokenRef.current();
       const res = await apiFetch(`${API_BASE_URL}/api/profile?locale=${appLocale}`, token);
@@ -93,6 +108,18 @@ export default function ProfileScreen() {
       }
       const data = (await res.json()) as ProfilePayload;
       setProfile(data);
+      const c =
+        data.reminderCadence === 'weekly' || data.reminderCadence === 'monthly'
+          ? data.reminderCadence
+          : 'daily';
+      setPrefsCadence(c);
+      const h =
+        data.heavyQuestPreference === 'low' || data.heavyQuestPreference === 'high'
+          ? data.heavyQuestPreference
+          : 'balanced';
+      setPrefsHeavyQuest(h);
+      setPrefsDurMin(data.questDurationMinMinutes ?? 5);
+      setPrefsDurMax(data.questDurationMaxMinutes ?? 1440);
       barAnim.setValue(0);
       const j = levelFromTotalXp(data.totalXp ?? 0);
       Animated.timing(barAnim, {
@@ -131,6 +158,43 @@ export default function ProfileScreen() {
     void load();
     void loadToday();
   }, [load, loadToday]);
+
+  const minDurOptions = useMemo(
+    () => Array.from(new Set([...DURATION_MIN_PRESETS, prefsDurMin])).sort((a, b) => a - b),
+    [prefsDurMin],
+  );
+  const maxDurOptions = useMemo(
+    () => Array.from(new Set([...DURATION_MAX_PRESETS, prefsDurMax])).sort((a, b) => a - b),
+    [prefsDurMax],
+  );
+
+  const savePrefs = useCallback(async () => {
+    setPrefsSaving(true);
+    setPrefsMsg(null);
+    try {
+      const token = await getTokenRef.current();
+      const res = await apiFetch(`${API_BASE_URL}/api/profile`, token, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          reminderCadence: prefsCadence,
+          heavyQuestPreference: prefsHeavyQuest,
+          questDurationMinMinutes: prefsDurMin,
+          questDurationMaxMinutes: prefsDurMax,
+        }),
+      });
+      if (!res.ok) {
+        setPrefsMsg(s.prefsErr);
+        return;
+      }
+      const updated = (await res.json()) as ProfilePayload;
+      setProfile((prev) => (prev ? { ...prev, ...updated } : updated));
+      setPrefsMsg(s.prefsSaved);
+    } catch {
+      setPrefsMsg(s.prefsErr);
+    } finally {
+      setPrefsSaving(false);
+    }
+  }, [prefsCadence, prefsHeavyQuest, prefsDurMin, prefsDurMax, s]);
 
   const totalXp = profile?.totalXp ?? 0;
   const { level, xpIntoLevel, xpToNext, xpPerLevel } = levelFromTotalXp(totalXp);
@@ -315,6 +379,149 @@ export default function ProfileScreen() {
               </Text>
             </Pressable>
           </View>
+
+          <Text style={styles.section}>{s.prefsSection}</Text>
+          <Text style={styles.prefsSub}>{s.prefsCadenceTitle}</Text>
+          <View style={styles.localeRow}>
+            {(
+              [
+                { id: 'daily' as const, label: s.prefsCadenceDaily },
+                { id: 'weekly' as const, label: s.prefsCadenceWeekly },
+                { id: 'monthly' as const, label: s.prefsCadenceMonthly },
+              ]
+            ).map((row) => (
+              <Pressable
+                key={row.id}
+                onPress={() => {
+                  hapticLight();
+                  setPrefsCadence(row.id);
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: prefsCadence === row.id }}
+                style={({ pressed }) => [
+                  styles.localeChip,
+                  prefsCadence === row.id && styles.localeChipSelected,
+                  pressed && styles.localeChipPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.localeChipText,
+                    prefsCadence === row.id && styles.localeChipTextSelected,
+                  ]}
+                  numberOfLines={2}
+                >
+                  {row.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={[styles.prefsSub, { marginTop: 14 }]}>{s.prefsHeavyTitle}</Text>
+          <Text style={styles.hint}>{s.prefsHeavyHint}</Text>
+          <View style={styles.localeRow}>
+            {(
+              [
+                { id: 'low' as const, label: s.prefsHeavyLow },
+                { id: 'balanced' as const, label: s.prefsHeavyBalanced },
+                { id: 'high' as const, label: s.prefsHeavyHigh },
+              ]
+            ).map((row) => (
+              <Pressable
+                key={row.id}
+                onPress={() => {
+                  hapticLight();
+                  setPrefsHeavyQuest(row.id);
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: prefsHeavyQuest === row.id }}
+                style={({ pressed }) => [
+                  styles.localeChip,
+                  prefsHeavyQuest === row.id && styles.localeChipSelected,
+                  pressed && styles.localeChipPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.localeChipText,
+                    prefsHeavyQuest === row.id && styles.localeChipTextSelected,
+                  ]}
+                  numberOfLines={2}
+                >
+                  {row.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={styles.prefsSub}>{s.prefsDurationTitle}</Text>
+          <Text style={styles.hint}>{s.prefsDurationHint}</Text>
+          <Text style={styles.durLabel}>{s.prefsDurMin}</Text>
+          <View style={styles.durWrap}>
+            {minDurOptions.map((m) => (
+              <Pressable
+                key={`min-${m}`}
+                onPress={() => {
+                  hapticLight();
+                  setPrefsDurMin(m);
+                  if (m > prefsDurMax) setPrefsDurMax(m);
+                }}
+                style={({ pressed }) => [
+                  styles.durChip,
+                  prefsDurMin === m && styles.durChipSelected,
+                  pressed && styles.localeChipPressed,
+                ]}
+              >
+                <Text style={[styles.durChipText, prefsDurMin === m && styles.durChipTextSelected]}>{m}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text style={[styles.durLabel, { marginTop: 12 }]}>{s.prefsDurMax}</Text>
+          <View style={styles.durWrap}>
+            {maxDurOptions.map((m) => (
+              <Pressable
+                key={`max-${m}`}
+                onPress={() => {
+                  hapticLight();
+                  setPrefsDurMax(m);
+                  if (m < prefsDurMin) setPrefsDurMin(m);
+                }}
+                style={({ pressed }) => [
+                  styles.durChip,
+                  prefsDurMax === m && styles.durChipSelected,
+                  pressed && styles.localeChipPressed,
+                ]}
+              >
+                <Text style={[styles.durChipText, prefsDurMax === m && styles.durChipTextSelected]}>{m}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Pressable
+            onPress={() => {
+              hapticLight();
+              void savePrefs();
+            }}
+            disabled={prefsSaving}
+            style={({ pressed }) => [
+              styles.prefsSaveBtn,
+              pressed && styles.prefsSaveBtnPressed,
+              prefsSaving && { opacity: 0.65 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={s.prefsSave}
+          >
+            <Text style={styles.prefsSaveBtnText}>{prefsSaving ? s.prefsSaving : s.prefsSave}</Text>
+          </Pressable>
+          {prefsMsg ? (
+            <Text
+              style={[
+                styles.prefsMsg,
+                prefsMsg === s.prefsErr ? { color: '#f87171' } : { color: palette.green },
+              ]}
+            >
+              {prefsMsg}
+            </Text>
+          ) : null}
 
           <Text style={styles.section}>{s.badgesTitle}</Text>
           <Text style={styles.hint}>{s.badgesHint}</Text>
@@ -512,6 +719,41 @@ function createProfileStyles(p: ThemePalette) {
       marginBottom: 6, marginTop: 20, textTransform: 'uppercase',
     },
     hint: { fontSize: 12, color: C.muted, marginBottom: 14, fontWeight: '500', lineHeight: 18 },
+    prefsSub: {
+      fontSize: 11,
+      fontWeight: '800',
+      letterSpacing: 1,
+      color: C.muted,
+      marginBottom: 8,
+      marginTop: 4,
+      textTransform: 'uppercase',
+    },
+    durLabel: { fontSize: 12, fontWeight: '700', color: C.text, marginBottom: 8 },
+    durWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 6 },
+    durChip: {
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.card,
+    },
+    durChipSelected: {
+      borderColor: C.accent,
+      backgroundColor: colorWithAlpha(p.cyan, 0.12),
+    },
+    durChipText: { fontSize: 13, fontWeight: '800', color: C.muted },
+    durChipTextSelected: { color: C.text },
+    prefsSaveBtn: {
+      marginTop: 14,
+      paddingVertical: 14,
+      borderRadius: 14,
+      alignItems: 'center',
+      backgroundColor: C.accent,
+    },
+    prefsSaveBtnPressed: { opacity: 0.88 },
+    prefsSaveBtnText: { fontSize: 15, fontWeight: '900', color: '#fff' },
+    prefsMsg: { marginTop: 10, fontSize: 13, fontWeight: '700' },
 
     badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     badgeCard: { width: '47%', minWidth: 140, borderRadius: 18, padding: 14 },

@@ -1,5 +1,13 @@
 import type { AppLocale, PsychologicalCategory, QuestModel, QuestPace } from '../types';
 
+/**
+ * Quêtes impliquant typiquement un déplacement (extérieur) ou une organisation / prévision
+ * (rythme planifié : social ou longue durée dans la taxonomie).
+ */
+export function archetypeNeedsTravelOrPlanning(q: Pick<QuestModel, 'questPace' | 'requiresOutdoor'>): boolean {
+  return q.questPace === 'planned' || q.requiresOutdoor;
+}
+
 /** Fenêtre max pour reporter une quête « planifiée » (choix de date côté client + API). */
 export const REPORT_DEFER_MAX_DAYS = 14;
 

@@ -43,3 +43,17 @@ export function subtractCalendarDays(dateIso: string, days: number): string {
 export function getPreviousQuestCalendarDate(dateIso: string): string {
   return subtractCalendarDays(dateIso, 1);
 }
+
+/**
+ * Nombre de jours civils entre deux dates AAAA-MM-JJ (fin − début).
+ * Ex. `calendarDaysBetweenUtc('2026-05-25', '2026-06-01')` → 7.
+ * Retourne -1 si un format est invalide.
+ */
+export function calendarDaysBetweenUtc(fromIso: string, toIso: string): number {
+  const m1 = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fromIso.trim());
+  const m2 = /^(\d{4})-(\d{2})-(\d{2})$/.exec(toIso.trim());
+  if (!m1 || !m2) return -1;
+  const d1 = Date.UTC(Number(m1[1]), Number(m1[2]) - 1, Number(m1[3]));
+  const d2 = Date.UTC(Number(m2[1]), Number(m2[2]) - 1, Number(m2[3]));
+  return Math.floor((d2 - d1) / 86400000);
+}

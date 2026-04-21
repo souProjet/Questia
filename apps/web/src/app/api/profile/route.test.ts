@@ -35,6 +35,10 @@ const baseProfile = {
   ownedTitleIds: [],
   equippedTitleId: null,
   xpBonusCharges: 0,
+  reminderCadence: 'daily',
+  questDurationMinMinutes: 5,
+  questDurationMaxMinutes: 1440,
+  heavyQuestPreference: 'balanced',
 };
 
 describe('/api/profile', () => {
@@ -112,6 +116,82 @@ describe('/api/profile', () => {
       }),
     );
     expect(res.status).toBe(400);
+  });
+
+  it('PATCH 400 cadence invalide', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue(baseProfile);
+    const res = await PATCH(
+      new NextRequest('http://localhost/api/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({ reminderCadence: 'hourly' }),
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('PATCH 400 préférence quêtes lourdes invalide', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue(baseProfile);
+    const res = await PATCH(
+      new NextRequest('http://localhost/api/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({ heavyQuestPreference: 'mega' }),
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('PATCH 200 préférence quêtes déplacement', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue(baseProfile);
+    prismaMock.profile.update.mockResolvedValue({
+      ...baseProfile,
+      heavyQuestPreference: 'low',
+    });
+    const res = await PATCH(
+      new NextRequest('http://localhost/api/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({ heavyQuestPreference: 'low' }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(prismaMock.profile.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ heavyQuestPreference: 'low' }),
+      }),
+    );
+  });
+
+  it('PATCH 200 cadence et durées quête', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
+    prismaMock.profile.findUnique.mockResolvedValue(baseProfile);
+    prismaMock.profile.update.mockResolvedValue({
+      ...baseProfile,
+      reminderCadence: 'weekly',
+      questDurationMinMinutes: 15,
+      questDurationMaxMinutes: 120,
+    });
+    const res = await PATCH(
+      new NextRequest('http://localhost/api/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          reminderCadence: 'weekly',
+          questDurationMinMinutes: 15,
+          questDurationMaxMinutes: 120,
+        }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(prismaMock.profile.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          reminderCadence: 'weekly',
+          questDurationMinMinutes: 15,
+          questDurationMaxMinutes: 120,
+        }),
+      }),
+    );
   });
 
   it('PATCH 200 thème valide', async () => {

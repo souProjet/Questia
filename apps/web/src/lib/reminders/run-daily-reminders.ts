@@ -1,4 +1,8 @@
-import { getQuestCalendarDateForInstant } from '@questia/shared';
+import {
+  calendarDaysBetweenUtc,
+  getQuestCalendarDateForInstant,
+  parseReminderCadence,
+} from '@questia/shared';
 import { clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
 import {
@@ -40,6 +44,26 @@ function isReminderEligible(
 
 const TITLE = 'Quête du jour';
 const PUSH_BODY = "Ta quête t'attend sur Questia — ouvre l'app pour la découvrir.";
+
+/**
+ * True si un nouveau rappel est autorisé pour cette cadence (dernier envoi `lastSentDate` vs jour quête Paris).
+ */
+export function canSendReminderForCadence(
+  cadenceRaw: string | null | undefined,
+  lastSentDate: string | null | undefined,
+  todayQuestDate: string,
+): boolean {
+  const cadence = parseReminderCadence(cadenceRaw);
+  const last = lastSentDate?.trim() || null;
+  if (cadence === 'daily') {
+    return last !== todayQuestDate;
+  }
+  if (!last) return true;
+  const days = calendarDaysBetweenUtc(last, todayQuestDate);
+  if (days < 0) return true;
+  if (cadence === 'weekly') return days >= 7;
+  return days >= 28;
+}
 
 function buildEmailHtml(siteUrl: string): string {
   const base = siteUrl.replace(/\/$/, '');
@@ -103,8 +127,8 @@ export async function runDailyReminders(now: Date): Promise<{
     }
 
     if (profile.reminderPushEnabled && profile.pushDevices.length > 0) {
-      if (profile.lastReminderPushDate === questCalendarDay) {
-        /* déjà envoyé */
+      if (!canSendReminderForCadence(profile.reminderCadence, profile.lastReminderPushDate, questCalendarDay)) {
+        /* déjà couvert par la cadence */
       } else {
         const messages = profile.pushDevices.map((d) => ({
           to: d.expoPushToken,
@@ -124,8 +148,8 @@ export async function runDailyReminders(now: Date): Promise<{
     }
 
     if (profile.reminderEmailEnabled) {
-      if (profile.lastReminderEmailDate === questCalendarDay) {
-        /* déjà envoyé */
+      if (!canSendReminderForCadence(profile.reminderCadence, profile.lastReminderEmailDate, questCalendarDay)) {
+        /* déjà couvert par la cadence */
       } else {
         if (!process.env.RESEND_API_KEY) {
           skipped++;

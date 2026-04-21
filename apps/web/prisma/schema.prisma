@@ -145,10 +145,18 @@ model Profile {
   reminderTimeMinutes   Int             @default(540) @map("reminder_time_minutes")
   /** Fuseau IANA (ex. Europe/Paris) — horaire du rappel */
   reminderTimezone      String          @default("Europe/Paris") @map("reminder_timezone")
+  /** Fréquence des rappels : daily | weekly | monthly (push + e-mail) */
+  reminderCadence       String          @default("daily") @map("reminder_cadence")
   /** Dernière date (UTC YYYY-MM-DD) où un rappel push a été envoyé */
   lastReminderPushDate  String?         @map("last_reminder_push_date")
   /** Dernière date (UTC YYYY-MM-DD) où un rappel e-mail a été envoyé */
   lastReminderEmailDate String?         @map("last_reminder_email_date")
+  /** Durée minimale souhaitée (minutes) — filtre archétypes + consigne LLM */
+  questDurationMinMinutes Int           @default(5) @map("quest_duration_min_minutes")
+  /** Durée maximale souhaitée (minutes) — filtre archétypes + consigne LLM */
+  questDurationMaxMinutes Int           @default(1440) @map("quest_duration_max_minutes")
+  /** Fréquence des quêtes « déplacement / à organiser » : low | balanced | high */
+  heavyQuestPreference  String          @default("balanced") @map("heavy_quest_preference")
   /** Réponses questionnaire raffinement profil (ids question → id option) */
   refinementAnswers       Json          @default("{}") @map("refinement_answers")
   /** Dernière version du schéma de questionnaire complétée (0 = jamais) */

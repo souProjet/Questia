@@ -46,6 +46,26 @@ export function getProfileScreenStrings(locale: AppLocale) {
       localeSection: 'Language',
       localeFr: 'Français',
       localeEn: 'English',
+      prefsSection: 'Quests & reminders',
+      prefsCadenceTitle: 'Notification frequency (app and email)',
+      prefsCadenceDaily: 'Once a day',
+      prefsCadenceWeekly: 'Once a week',
+      prefsCadenceMonthly: 'Once a month (~28 d)',
+      prefsDurationTitle: 'Suggested quest duration',
+      prefsDurationHint:
+        'Filters archetypes by indicative duration and guides the generated “duration” line. If the range is very tight, other archetypes may still appear.',
+      prefsDurMin: 'Minimum (minutes)',
+      prefsDurMax: 'Maximum (minutes)',
+      prefsSave: 'Save preferences',
+      prefsSaving: 'Saving…',
+      prefsSaved: 'Saved.',
+      prefsErr: 'Could not save.',
+      prefsHeavyTitle: 'Travel & planning-heavy quests',
+      prefsHeavyHint:
+        'Outdoor trips or “schedule ahead” quests (social or long-form pace). Gently steers archetype selection and model hints.',
+      prefsHeavyLow: 'Rarely',
+      prefsHeavyBalanced: 'Balanced',
+      prefsHeavyHigh: 'Often',
     };
   }
   return {
@@ -89,6 +109,26 @@ export function getProfileScreenStrings(locale: AppLocale) {
     localeSection: 'Langue',
     localeFr: 'Français',
     localeEn: 'English',
+    prefsSection: 'Quêtes & rappels',
+    prefsCadenceTitle: 'Fréquence des notifications (app et e-mail)',
+    prefsCadenceDaily: '1× par jour',
+    prefsCadenceWeekly: '1× par semaine',
+    prefsCadenceMonthly: '1× par mois (~28 j)',
+    prefsDurationTitle: 'Durée des quêtes proposées',
+    prefsDurationHint:
+      'Filtre les archétypes selon leur durée indicative et guide la ligne « durée ». Si la plage est très serrée, d’autres archétypes peuvent quand même apparaître.',
+    prefsDurMin: 'Minimum (minutes)',
+    prefsDurMax: 'Maximum (minutes)',
+    prefsSave: 'Enregistrer les préférences',
+    prefsSaving: 'Enregistrement…',
+    prefsSaved: 'Enregistré.',
+    prefsErr: 'Échec de l’enregistrement.',
+    prefsHeavyTitle: 'Quêtes à déplacer ou à organiser',
+    prefsHeavyHint:
+      'Sorties / extérieur ou quêtes « à caler » (social ou longue durée). Module la sélection (en douceur) et les consignes au modèle.',
+    prefsHeavyLow: 'Rarement',
+    prefsHeavyBalanced: 'Équilibré',
+    prefsHeavyHigh: 'Souvent',
   };
 }
 

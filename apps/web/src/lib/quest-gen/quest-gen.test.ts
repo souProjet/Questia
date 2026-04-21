@@ -72,6 +72,8 @@ function buildInput(over: Partial<QuestGenInput> = {}): QuestGenInput {
       temp: 18,
       isOutdoorFriendly: true,
       hasUserLocation: true,
+      questDurationMinMinutes: 5,
+      questDurationMaxMinutes: 1440,
     },
     history: [],
     locale: 'fr',
@@ -116,6 +118,13 @@ describe('buildProfileBrief', () => {
       'fr',
     );
     expect(txt).toContain('préfère le calme');
+  });
+
+  it('mentionne la préférence quêtes déplacement / organisation', () => {
+    const frLow = buildProfileBrief(buildProfile({ heavyQuestPreference: 'low' }), 'fr');
+    expect(frLow).toMatch(/déplacement ou à organiser|RARES/i);
+    const enHigh = buildProfileBrief(buildProfile({ heavyQuestPreference: 'high' }), 'en');
+    expect(enHigh).toMatch(/Mobility|planning-heavy|OPEN/i);
   });
 });
 
@@ -191,6 +200,8 @@ describe('buildUserPrompt', () => {
         temp: 12,
         isOutdoorFriendly: false,
         hasUserLocation: false,
+        questDurationMinMinutes: 5,
+        questDurationMaxMinutes: 1440,
       },
     });
     const prompt = buildUserPrompt(input);
@@ -208,6 +219,26 @@ describe('buildUserPrompt', () => {
     const prompt = buildUserPrompt(input, 'mission too long');
     expect(prompt).toContain('CORRECTION DEMANDÉE');
     expect(prompt).toContain('mission too long');
+  });
+
+  it('inclut la plage de durée utilisateur', () => {
+    const input = buildInput({
+      context: {
+        questDateIso: '2025-04-19',
+        city: 'Lyon',
+        country: 'France',
+        weatherDescription: 'ciel dégagé',
+        weatherIcon: 'Sun',
+        temp: 18,
+        isOutdoorFriendly: true,
+        hasUserLocation: true,
+        questDurationMinMinutes: 20,
+        questDurationMaxMinutes: 90,
+      },
+    });
+    expect(buildUserPrompt(input)).toContain('20');
+    expect(buildUserPrompt(input)).toContain('90');
+    expect(buildUserPrompt(input)).toMatch(/DURÉE DE QUÊTE|QUEST DURATION/);
   });
 });
 

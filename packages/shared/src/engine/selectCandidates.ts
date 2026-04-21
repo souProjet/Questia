@@ -1,4 +1,5 @@
 import type { QuestModel } from '../types';
+import { archetypeNeedsTravelOrPlanning } from '../constants/quests';
 import { computeAffinityScore } from './affinity';
 import { computeArchetypeFeedbackPenalty, computeFreshnessScore } from './freshness';
 import { computePhaseFit } from './phaseFit';
@@ -12,6 +13,18 @@ import {
   type ScoreWeights,
   type ScoringQuestLog,
 } from './selectionTypes';
+import type { HeavyQuestPreference } from '../profilePreferences';
+
+function heavyQuestScoreMultiplier(
+  pref: HeavyQuestPreference | undefined,
+  archetype: QuestModel,
+): number {
+  if (!archetypeNeedsTravelOrPlanning(archetype)) return 1;
+  const p = pref ?? 'balanced';
+  if (p === 'low') return 0.48;
+  if (p === 'high') return 1.14;
+  return 1;
+}
 
 export interface SelectCandidatesOptions {
   /** Nombre max de candidats retenus (défaut : 5). */
@@ -104,7 +117,8 @@ export function selectCandidates(
       refinement * weights.refinement;
 
     const feedbackPenalty = computeArchetypeFeedbackPenalty(archetype.id, profile.recentLogs);
-    const total = baseTotal * feedbackPenalty;
+    const mobilityPlannerMul = heavyQuestScoreMultiplier(profile.heavyQuestPreference, archetype);
+    const total = baseTotal * feedbackPenalty * mobilityPlannerMul;
 
     const score: CandidateScore = { affinity, phaseFit, freshness, refinement, total };
     scored.push({

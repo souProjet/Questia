@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { canSendReminderForCadence } from './run-daily-reminders';
 
 const prismaMock = vi.hoisted(() => ({
   profile: {
@@ -32,6 +33,26 @@ vi.mock('@/lib/reminders/expo-push', () => ({
 vi.mock('@/lib/reminders/send-email', () => ({
   sendReminderEmail: vi.fn().mockResolvedValue({ ok: true }),
 }));
+
+describe('canSendReminderForCadence', () => {
+  it('daily : même jour civil que dernier envoi → false', () => {
+    expect(canSendReminderForCadence('daily', '2026-06-01', '2026-06-01')).toBe(false);
+    expect(canSendReminderForCadence('daily', null, '2026-06-01')).toBe(true);
+  });
+
+  it('weekly : strictement moins de 7 jours → false', () => {
+    expect(canSendReminderForCadence('weekly', '2026-05-26', '2026-06-01')).toBe(false);
+  });
+
+  it('weekly : au moins 7 jours → true', () => {
+    expect(canSendReminderForCadence('weekly', '2026-05-25', '2026-06-01')).toBe(true);
+  });
+
+  it('monthly : 27 jours → false, 28 → true', () => {
+    expect(canSendReminderForCadence('monthly', '2026-05-04', '2026-05-31')).toBe(false);
+    expect(canSendReminderForCadence('monthly', '2026-05-04', '2026-06-01')).toBe(true);
+  });
+});
 
 describe('runDailyReminders', () => {
   beforeEach(async () => {
@@ -165,6 +186,52 @@ describe('runDailyReminders', () => {
     expect(r.checked).toBe(1);
     expect(r.pushSent).toBe(1);
     expect(prismaMock.profile.update).toHaveBeenCalled();
+  });
+
+  it('push hebdomadaire : 6 jours depuis dernier → pas d’envoi', async () => {
+    prismaMock.profile.findMany.mockResolvedValue([
+      {
+        id: 'p1',
+        clerkId: 'c1',
+        reminderTimezone: 'UTC',
+        reminderTimeMinutes: 720,
+        reminderPushEnabled: true,
+        reminderEmailEnabled: false,
+        reminderCadence: 'weekly',
+        lastReminderPushDate: '2026-05-26',
+        pushDevices: [{ expoPushToken: 'ExponentPushToken[t]' }],
+      },
+    ]);
+    prismaMock.questLog.findUnique.mockResolvedValue(null);
+    const { sendExpoPushMessages } = await import('@/lib/reminders/expo-push');
+    const { runDailyReminders } = await import('./run-daily-reminders');
+    const r = await runDailyReminders(new Date('2026-06-01T12:05:00.000Z'));
+    expect(r.checked).toBe(1);
+    expect(r.pushSent).toBe(0);
+    expect(vi.mocked(sendExpoPushMessages)).not.toHaveBeenCalled();
+  });
+
+  it('push hebdomadaire : 7 jours depuis dernier → envoi', async () => {
+    prismaMock.profile.findMany.mockResolvedValue([
+      {
+        id: 'p1',
+        clerkId: 'c1',
+        reminderTimezone: 'UTC',
+        reminderTimeMinutes: 720,
+        reminderPushEnabled: true,
+        reminderEmailEnabled: false,
+        reminderCadence: 'weekly',
+        lastReminderPushDate: '2026-05-25',
+        pushDevices: [{ expoPushToken: 'ExponentPushToken[t]' }],
+      },
+    ]);
+    prismaMock.questLog.findUnique.mockResolvedValue(null);
+    prismaMock.profile.update.mockResolvedValue({});
+    const { sendExpoPushMessages } = await import('@/lib/reminders/expo-push');
+    vi.mocked(sendExpoPushMessages).mockResolvedValue({ ok: true });
+    const { runDailyReminders } = await import('./run-daily-reminders');
+    const r = await runDailyReminders(new Date('2026-06-01T12:05:00.000Z'));
+    expect(r.pushSent).toBe(1);
   });
 
   it("push déjà envoyé aujourd'hui → pas de nouvel envoi", async () => {

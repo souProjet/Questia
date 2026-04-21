@@ -61,6 +61,14 @@ export type HomeDashboardStrings = {
   reportNoRerollsHint: string;
   /** Après report : rappel de la date repère (quête courte du jour). */
   reportMilestoneReminder: (date: string) => string;
+  /** Carte destination (WebView) + Google Maps */
+  mapOpenInMaps: string;
+  mapOpenDirections: string;
+  mapRouteFailed: string;
+  mapNoGeocodeTitle: string;
+  mapNoGeocodeBody: string;
+  mapRendezvous: string;
+  mapUserHere: string;
 };
 
 function fr(): HomeDashboardStrings {
@@ -128,6 +136,15 @@ function fr(): HomeDashboardStrings {
       "Plus de relances : tu ne peux ni reporter ni changer cette quête aujourd'hui.",
     reportMilestoneReminder: (date) =>
       `Ta date repère est le ${date} (indicative uniquement). Ta mission d'aujourd'hui reste courte et faisable tout de suite.`,
+    mapOpenInMaps: 'Voir dans Google Maps',
+    mapOpenDirections: 'Itinéraire dans Google Maps',
+    mapRouteFailed:
+      "L'itinéraire à pied n'a pas pu être calculé. Utilise le bouton ci-dessus.",
+    mapNoGeocodeTitle: 'Lieu à préciser',
+    mapNoGeocodeBody:
+      "Le lieu n'a pas pu être placé sur la carte. Ouvre Google Maps pour t'orienter.",
+    mapRendezvous: 'Rendez-vous',
+    mapUserHere: 'Ta position (approx.)',
   };
 }
 
@@ -195,6 +212,13 @@ function en(): HomeDashboardStrings {
     reportNoRerollsHint: "No rerolls left — you can't defer or change this quest today.",
     reportMilestoneReminder: (date) =>
       `Your optional target date is ${date}. Today's quest stays short and doable right now.`,
+    mapOpenInMaps: 'Open in Google Maps',
+    mapOpenDirections: 'Directions in Google Maps',
+    mapRouteFailed: "Walking directions couldn't be calculated. Use the button above.",
+    mapNoGeocodeTitle: 'Location to refine',
+    mapNoGeocodeBody: "We couldn't place this on the map. Open Google Maps to find your way.",
+    mapRendezvous: 'Meet-up',
+    mapUserHere: 'Your position (approx.)',
   };
 }
 

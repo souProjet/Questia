@@ -227,6 +227,8 @@ export default function DashboardScreen() {
     new Date().toISOString().slice(0, 10),
   );
   const [showAbandonModal, setShowAbandonModal] = useState(false);
+  /** Dernière position GPS (affichage carte / itinéraire, aligné sur le site). */
+  const [userMapPosition, setUserMapPosition] = useState<{ lat: number; lon: number } | null>(null);
   const abandonInFlightRef = useRef(false);
   const reportInFlightRef = useRef(false);
 
@@ -323,10 +325,14 @@ export default function DashboardScreen() {
     async (opts?: { ignoreUrlQuestDate?: boolean }) => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
+        if (status !== 'granted') {
+          setUserMapPosition(null);
+          return;
+        }
         const loc = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
+        setUserMapPosition({ lat: loc.coords.latitude, lon: loc.coords.longitude });
         await loadQuest(loc.coords.latitude, loc.coords.longitude, {
           silent: true,
           questDate: opts?.ignoreUrlQuestDate ? undefined : questDateFromRoute ?? undefined,
@@ -737,6 +743,13 @@ export default function DashboardScreen() {
     reportPlannedHint: homeUi.reportPlannedHint,
     reportNoRerollsHint: homeUi.reportNoRerollsHint,
     reportMilestoneReminder: homeUi.reportMilestoneReminder,
+    mapOpenInMaps: homeUi.mapOpenInMaps,
+    mapOpenDirections: homeUi.mapOpenDirections,
+    mapRouteFailed: homeUi.mapRouteFailed,
+    mapNoGeocodeTitle: homeUi.mapNoGeocodeTitle,
+    mapNoGeocodeBody: homeUi.mapNoGeocodeBody,
+    mapRendezvous: homeUi.mapRendezvous,
+    mapUserHere: homeUi.mapUserHere,
   }), [homeUi]);
 
   if (loading && !quest) {
@@ -854,6 +867,7 @@ export default function DashboardScreen() {
               }
               onAbandon={() => setShowAbandonModal(true)}
               strings={swipeStrings}
+              userPosition={userMapPosition}
               rerolling={rerolling}
               rerollLoadingLabel={homeUi.rerollLoading}
             />

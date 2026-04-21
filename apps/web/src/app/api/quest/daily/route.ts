@@ -23,6 +23,8 @@ import {
   DEFAULT_RECENT_EXCLUSION_DAYS,
   selectCandidates,
   isValidSociabilityLevel,
+  clampQuestDurationBounds,
+  parseHeavyQuestPreference,
 } from '@questia/shared';
 import type {
   AppLocale,
@@ -362,6 +364,7 @@ export async function GET(request: NextRequest) {
     hasUserLocation: context.hasUserLocation,
     isOutdoorFriendly: context.isOutdoorFriendly,
     instantOnly,
+    heavyQuestPreference: parseHeavyQuestPreference(profile.heavyQuestPreference),
     excludeArchetypeIds: extraExclude,
   };
 
@@ -390,6 +393,18 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  const durationBounds = clampQuestDurationBounds(
+    profile.questDurationMinMinutes ?? 5,
+    profile.questDurationMaxMinutes ?? 1440,
+  );
+  const durationFiltered = selection.candidates.filter(
+    (c) =>
+      c.archetype.minimumDurationMinutes >= durationBounds.questDurationMinMinutes &&
+      c.archetype.minimumDurationMinutes <= durationBounds.questDurationMaxMinutes,
+  );
+  const candidatesForGen =
+    durationFiltered.length > 0 ? durationFiltered : selection.candidates;
+
   // Brief historique pour le LLM (5 dernières quêtes, statut + texte)
   const historyBrief: GenerationHistoryItem[] = recentLogRows
     .slice(0, HISTORY_BRIEF_DEPTH)
@@ -404,7 +419,7 @@ export async function GET(request: NextRequest) {
     }));
 
   const generated = await generateDailyQuest({
-    candidates: selection.candidates,
+    candidates: candidatesForGen,
     profile: {
       declaredPersonality,
       exhibitedPersonality,
@@ -415,6 +430,7 @@ export async function GET(request: NextRequest) {
       riskAxis: profile.riskAxis as RiskAxis,
       sociability,
       refinementContext,
+      heavyQuestPreference: parseHeavyQuestPreference(profile.heavyQuestPreference),
     },
     context: {
       questDateIso: today,
@@ -425,6 +441,8 @@ export async function GET(request: NextRequest) {
       temp: context.temp,
       isOutdoorFriendly: context.isOutdoorFriendly,
       hasUserLocation: context.hasUserLocation,
+      questDurationMinMinutes: durationBounds.questDurationMinMinutes,
+      questDurationMaxMinutes: durationBounds.questDurationMaxMinutes,
     },
     history: historyBrief,
     locale: questLocale,

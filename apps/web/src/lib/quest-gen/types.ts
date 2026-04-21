@@ -2,6 +2,7 @@ import type {
   AppLocale,
   EscalationPhase,
   ExplorerAxis,
+  HeavyQuestPreference,
   PersonalityVector,
   QuestCandidate,
   RiskAxis,
@@ -45,6 +46,8 @@ export interface GenerationProfile {
   sociability: SociabilityLevel | null;
   /** Texte libre issu du raffinement (préférences user) — null si non rempli. */
   refinementContext: string | null;
+  /** Fréquence souhaitée pour quêtes déplacement / à organiser (extérieur ou planifié). */
+  heavyQuestPreference?: HeavyQuestPreference;
 }
 
 export interface GenerationContext {
@@ -56,6 +59,9 @@ export interface GenerationContext {
   temp: number;
   isOutdoorFriendly: boolean;
   hasUserLocation: boolean;
+  /** Plage de durée souhaitée (minutes) — consigne pour le champ `duration` du JSON. */
+  questDurationMinMinutes: number;
+  questDurationMaxMinutes: number;
 }
 
 export interface GenerationHistoryItem {

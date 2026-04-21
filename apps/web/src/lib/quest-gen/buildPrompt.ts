@@ -79,6 +79,12 @@ export function buildUserPrompt(input: QuestGenInput, repairHint: string | null 
       : `\n⚠ CORRECTION DEMANDÉE — ton JSON précédent était invalide : ${repairHint}\nCorrige et réponds avec le JSON complet.\n`
     : '';
 
+  const { questDurationMinMinutes: dMin, questDurationMaxMinutes: dMax } = context;
+  const durationPrefs =
+    locale === 'en'
+      ? `\nQUEST DURATION: the "duration" field must describe a real-world time between ${dMin} and ${dMax} minutes (e.g. "25 min", "90 min", "1h30"). Stay inside this range.\n`
+      : `\nDURÉE DE QUÊTE : le champ "duration" doit correspondre à une durée réelle entre ${dMin} et ${dMax} minutes (ex. "25 min", "90 min", "1h30"). Reste dans cette plage.\n`;
+
   if (locale === 'en') {
     return `Generate today's quest.
 
@@ -86,7 +92,7 @@ DATE: ${context.questDateIso}
 SEED: ${generationSeed}
 ${cityLine}
 ${weatherLine}
-${rerollLine}${deferLine}${repairBlock}
+${durationPrefs}${rerollLine}${deferLine}${repairBlock}
 
 ${profileBrief}
 
@@ -131,7 +137,7 @@ DATE : ${context.questDateIso}
 SEED : ${generationSeed}
 ${cityLine}
 ${weatherLine}
-${rerollLine}${deferLine}${repairBlock}
+${durationPrefs}${rerollLine}${deferLine}${repairBlock}
 
 ${profileBrief}
 

@@ -221,6 +221,26 @@ describe('selectCandidates', () => {
     }
   });
 
+  it('heavyQuestPreference low pénalise les archétypes déplacement / à organiser', () => {
+    const tax = TEST_QUEST_TAXONOMY;
+    const seed = 'heavy-pref-test';
+    const balanced = selectCandidates(tax, buildProfile(), { poolSize: 30, selectionSeed: seed });
+    const lowPref = selectCandidates(tax, buildProfile({ heavyQuestPreference: 'low' }), {
+      poolSize: 30,
+      selectionSeed: seed,
+    });
+    const heavyId = 1;
+    const lightId = 9;
+    const tBalHeavy = balanced.allScored.find((c) => c.archetype.id === heavyId)?.score.total;
+    const tLowHeavy = lowPref.allScored.find((c) => c.archetype.id === heavyId)?.score.total;
+    const tBalLight = balanced.allScored.find((c) => c.archetype.id === lightId)?.score.total;
+    const tLowLight = lowPref.allScored.find((c) => c.archetype.id === lightId)?.score.total;
+    expect(tBalHeavy).toBeDefined();
+    expect(tLowHeavy).toBeDefined();
+    expect(tLowHeavy!).toBeLessThan(tBalHeavy!);
+    expect(tLowLight).toBeCloseTo(tBalLight!, 8);
+  });
+
   it('excludes planned archetypes in instantOnly mode', () => {
     const result = selectCandidates(
       TEST_QUEST_TAXONOMY,

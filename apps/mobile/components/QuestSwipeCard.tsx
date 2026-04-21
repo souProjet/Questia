@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   ScrollView,
   Pressable as RNPressable,
-  Linking,
 } from 'react-native';
 import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler';
 import Animated, {
@@ -28,6 +27,7 @@ import {
 } from '@questia/shared';
 import { colorWithAlpha, questCardFaceGradient, type ThemePalette } from '@questia/ui';
 import { hapticSuccess, hapticWarning } from '../lib/haptics';
+import { QuestDestinationMapWebView } from './QuestDestinationMapWebView';
 
 const SWIPE_THRESHOLD = 120;
 /** Au-delà de ce déplacement, on fige soit le swipe horizontal, soit le vertical (pas les deux). */
@@ -91,7 +91,16 @@ interface Props {
     reportPlannedHint: string;
     reportNoRerollsHint: string;
     reportMilestoneReminder: (date: string) => string;
+    mapOpenInMaps: string;
+    mapOpenDirections: string;
+    mapRouteFailed: string;
+    mapNoGeocodeTitle: string;
+    mapNoGeocodeBody: string;
+    mapRendezvous: string;
+    mapUserHere: string;
   };
+  /** Position GPS récente (même logique que le site : itinéraire OSRM + marqueur). */
+  userPosition?: { lat: number; lon: number } | null;
   /** Relance en cours : voile aligné sur la carte (même cadre que le swipe). */
   rerolling?: boolean;
   rerollLoadingLabel?: string;
@@ -111,6 +120,7 @@ export function QuestSwipeCard({
   onReport,
   onAbandon,
   strings: s,
+  userPosition = null,
   rerolling = false,
   rerollLoadingLabel,
   themeId = null,
@@ -303,12 +313,6 @@ export function QuestSwipeCard({
   const cardHeight = Math.min(screenHeight * 0.68, 580);
   const hookText = (quest.hook ?? '').trim();
   const safetyText = (quest.safetyNote ?? '').trim();
-  const openMap = () => {
-    if (!quest.destination?.lat || !quest.destination?.lon) return;
-    const url = `https://www.google.com/maps/search/?api=1&query=${quest.destination.lat},${quest.destination.lon}`;
-    void Linking.openURL(url);
-  };
-
   if (isAbandoned) {
     return (
       <View style={[styles.abandonedBox, { backgroundColor: p.card, borderColor: p.borderCyan }]}>
@@ -361,14 +365,25 @@ export function QuestSwipeCard({
           <View style={styles.extraSection}>
             <Text style={[styles.sectionLabel, { color: p.orange }]}>{s.destinationLabel}</Text>
             <Text style={[styles.helpText, { color: p.muted }]}>{s.destinationHint}</Text>
-            <Pressable
-              style={[styles.mapBtn, { borderColor: `${p.cyan}44` }]}
-              onPress={openMap}
-              accessibilityRole="button"
-              accessibilityLabel={quest.destination.label}
-            >
-              <Text style={[styles.mapBtnText, { color: p.linkOnBg }]}>{quest.destination.label}</Text>
-            </Pressable>
+            <View style={styles.mapBlock}>
+              <QuestDestinationMapWebView
+                destination={quest.destination}
+                userPosition={userPosition}
+                labels={{
+                  openInMaps: s.mapOpenInMaps,
+                  openDirections: s.mapOpenDirections,
+                  routeFailed: s.mapRouteFailed,
+                  noGeocodeTitle: s.mapNoGeocodeTitle,
+                  noGeocodeBody: s.mapNoGeocodeBody,
+                  rendezvous: s.mapRendezvous,
+                  userHere: s.mapUserHere,
+                }}
+                borderColor={`${p.cyan}44`}
+                cardBg={p.card}
+                mutedColor={p.muted}
+                linkColor={p.linkOnBg}
+              />
+            </View>
           </View>
         ) : null}
 
@@ -725,16 +740,9 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     marginBottom: 8,
   },
-  mapBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  mapBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+  mapBlock: {
+    marginTop: 4,
+    width: '100%',
   },
   safetyBox: {
     marginTop: 14,

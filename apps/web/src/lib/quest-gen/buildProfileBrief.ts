@@ -110,6 +110,29 @@ const SOCIABILITY_LABEL_EN: Record<string, string> = {
   social: 'enjoys real social contact and seeks it',
 };
 
+function heavyQuestPreferenceLine(
+  pref: GenerationProfile['heavyQuestPreference'] | undefined,
+  locale: AppLocale,
+): string {
+  const p = pref ?? 'balanced';
+  if (locale === 'en') {
+    if (p === 'low') {
+      return `- Mobility / planning-heavy quests (outings or advance scheduling): user prefers FEWER — prioritize same-day, low-logistics steps; do not push big trips or heavy setup unless the archetype already implies it.`;
+    }
+    if (p === 'high') {
+      return `- Mobility / planning-heavy quests: user is OPEN — richer outdoor or advance-planning missions are welcome when they fit the archetype and safety.`;
+    }
+    return `- Mobility / planning-heavy quests: BALANCED — mix quick wins with occasional outings or light scheduling when the fit is real.`;
+  }
+  if (p === 'low') {
+    return `- Quêtes « déplacement ou à organiser » (sortie, rythme à caler) : plutôt RARES — privilégie le faisable vite, peu de logistique ; pas de grande sortie imposée sauf si l'archétype le porte déjà.`;
+  }
+  if (p === 'high') {
+    return `- Quêtes « déplacement ou à organiser » : plutôt SOUVENT OK — sorties ou missions à prévoir quand l'archétype et la sécurité s'y prêtent.`;
+  }
+  return `- Quêtes « déplacement ou à organiser » : ÉQUILIBRÉ — alterne missions du jour et sorties ou léger calendrier quand le fit est net.`;
+}
+
 /**
  * Brief profil narratif pour le prompt LLM.
  * Format compact, lisible, sans jargon.
@@ -137,6 +160,7 @@ export function buildProfileBrief(profile: GenerationProfile, locale: AppLocale)
     if (sociabilityLabel) lines.push(`- Sociability: ${sociabilityLabel}.`);
     if (drift) lines.push(`- Identity ↔ behavior gap (cong=${profile.congruenceDelta.toFixed(2)}): ${drift}. Today's quest can gently help bridge this — never moralize.`);
     else lines.push(`- Identity ↔ behavior gap (cong=${profile.congruenceDelta.toFixed(2)}): coherent. Stay in their grain.`);
+    lines.push(heavyQuestPreferenceLine(profile.heavyQuestPreference, locale));
     if (profile.refinementContext) {
       lines.push(`- Stated preferences (do not cite the source): ${profile.refinementContext}`);
     }
@@ -152,6 +176,7 @@ export function buildProfileBrief(profile: GenerationProfile, locale: AppLocale)
   if (sociabilityLabel) lines.push(`- Sociabilité : ${sociabilityLabel}.`);
   if (drift) lines.push(`- Écart identité ↔ comportement (cong=${profile.congruenceDelta.toFixed(2)}) : ${drift}. La quête du jour peut aider à rapprocher en douceur — sans moraliser.`);
   else lines.push(`- Écart identité ↔ comportement (cong=${profile.congruenceDelta.toFixed(2)}) : cohérent. Reste dans son grain.`);
+  lines.push(heavyQuestPreferenceLine(profile.heavyQuestPreference, locale));
   if (profile.refinementContext) {
     lines.push(`- Préférences exprimées (ne pas citer la source) : ${profile.refinementContext}`);
   }

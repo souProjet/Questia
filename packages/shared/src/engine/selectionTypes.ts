@@ -6,6 +6,7 @@ import type {
   QuestModel,
   SociabilityLevel,
 } from '../types';
+import type { HeavyQuestPreference } from '../profilePreferences';
 
 /**
  * Snapshot d'un profil utilisateur tel que vu par le moteur de sélection.
@@ -37,6 +38,11 @@ export interface ProfileSnapshot {
   isOutdoorFriendly: boolean;
   /** Si > 0, on cherche uniquement des quêtes « instant » (après report). */
   instantOnly: boolean;
+  /**
+   * Fréquence souhaitée pour quêtes extérieures ou « à caler / organiser » (planifié).
+   * Surcharge douce du score — pas un filtre dur (évite de vider le pool).
+   */
+  heavyQuestPreference?: HeavyQuestPreference;
   /** Archétypes à exclure (proposés récemment, relances cumulées du jour). */
   excludeArchetypeIds: number[];
 }
