@@ -24,6 +24,7 @@ import { BlurView } from 'expo-blur';
 import { questDisplayEmoji, questFamilyLabel, type AppLocale } from '@questia/shared';
 import { colorWithAlpha, questCardFaceGradient, UiLucideIcon, type ThemePalette } from '@questia/ui';
 import { hapticSuccess, hapticWarning } from '../lib/haptics';
+import { useQuestCardDeviceTilt } from '../lib/useQuestCardDeviceTilt';
 import { QuestDestinationMapWebView } from './QuestDestinationMapWebView';
 
 const SWIPE_THRESHOLD = 120;
@@ -141,11 +142,19 @@ export function QuestSwipeCard({
   const panMode = useSharedValue(0);
   /** 1 = swipe gauche « relancer » autorisé — lu dans les worklets (pas la prop React seule). */
   const canRerollSV = useSharedValue(canReroll ? 1 : 0);
+  /** Inclinaison device (accéléromètre) — combinée dans `cardAnimStyle`, atténuée pendant le swipe. */
+  const gyroRotateXDeg = useSharedValue(0);
+  const gyroRotateYDeg = useSharedValue(0);
 
   const isPending = quest.status === 'pending';
   const isAccepted = quest.status === 'accepted';
   const isCompleted = quest.status === 'completed';
   const isAbandoned = quest.status === 'abandoned';
+  useQuestCardDeviceTilt({
+    enabled: Platform.OS !== 'web' && !isAbandoned,
+    rotateXDeg: gyroRotateXDeg,
+    rotateYDeg: gyroRotateYDeg,
+  });
   const isPlannedQuest = quest.questPace === 'planned';
   const reportContextMessage =
     isPending && isPlannedQuest ? (canReroll ? s.reportPlannedHint : s.reportNoRerollsHint) : null;
@@ -275,8 +284,15 @@ export function QuestSwipeCard({
       [-ROTATION_DEG, 0, ROTATION_DEG],
       Extrapolation.CLAMP,
     );
+    const dragPx = Math.max(Math.abs(translateX.value), Math.abs(translateY.value));
+    const tiltBlend = interpolate(dragPx, [0, 28], [1, 0], Extrapolation.CLAMP);
+    const tiltX = gyroRotateXDeg.value * tiltBlend;
+    const tiltY = gyroRotateYDeg.value * tiltBlend;
     return {
       transform: [
+        { perspective: 920 },
+        { rotateX: `${tiltX}deg` },
+        { rotateY: `${tiltY}deg` },
         { translateX: translateX.value },
         { translateY: translateY.value },
         { rotate: `${rotation}deg` },
@@ -436,7 +452,7 @@ export function QuestSwipeCard({
         {Platform.OS !== 'web' ? (
           <BlurView
             pointerEvents="none"
-            intensity={isDarkCard ? 42 : 36}
+            intensity={isDarkCard ? 52 : 46}
             tint={isDarkCard ? 'dark' : 'light'}
             style={styles.cardFaceGradient}
           />
@@ -454,21 +470,21 @@ export function QuestSwipeCard({
             style={[
               styles.cardBlob,
               styles.cardBlobTR,
-              { backgroundColor: colorWithAlpha(p.orange, isDarkCard ? 0.052 : 0.034) },
+              { backgroundColor: colorWithAlpha(p.orange, isDarkCard ? 0.032 : 0.022) },
             ]}
           />
           <View
             style={[
               styles.cardBlob,
               styles.cardBlobBL,
-              { backgroundColor: colorWithAlpha(p.cyan, isDarkCard ? 0.045 : 0.028) },
+              { backgroundColor: colorWithAlpha(p.cyan, isDarkCard ? 0.028 : 0.018) },
             ]}
           />
           <View
             style={[
               styles.cardBlob,
               styles.cardBlobMid,
-              { backgroundColor: colorWithAlpha(p.gold, isDarkCard ? 0.035 : 0.022) },
+              { backgroundColor: colorWithAlpha(p.gold, isDarkCard ? 0.022 : 0.014) },
             ]}
           />
         </View>

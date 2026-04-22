@@ -44,7 +44,7 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
           paddingBottom: bottom,
           paddingTop: 8,
           borderTopWidth: 2,
-          borderTopColor: colorWithAlpha(palette.cyan, 0.52),
+          borderTopColor: colorWithAlpha(palette.text, 0.12),
         },
         Platform.select({
           ios: {
@@ -65,7 +65,7 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
       ) : (
         <BlurView
           pointerEvents="none"
-          intensity={Platform.OS === 'ios' ? 96 : 72}
+          intensity={Platform.OS === 'ios' ? 118 : 88}
           tint="light"
           style={StyleSheet.absoluteFillObject}
         />
@@ -74,7 +74,7 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFillObject,
-          { backgroundColor: colorWithAlpha(palette.card, Platform.OS === 'ios' ? 0.42 : 0.62) },
+          { backgroundColor: colorWithAlpha(palette.card, Platform.OS === 'ios' ? 0.34 : 0.52) },
         ]}
       />
       {state.routes.map((route, index) => {

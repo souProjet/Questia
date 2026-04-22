@@ -363,7 +363,7 @@ function RefinementSheet({
             style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.card, 0.56) }]}
           />
           <LinearGradient
-            colors={['#134e4a', '#92400e', '#c2410c']}
+            colors={['#134e4a', '#1c3d38', '#0f7669']}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             style={styles.topBar}

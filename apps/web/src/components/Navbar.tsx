@@ -12,7 +12,7 @@ import { QuestiaLogo } from '@/components/QuestiaLogo';
 import { hasAnyStoreLink } from '@/config/marketing';
 
 const burgerBar =
-  'absolute left-0 w-[22px] h-0.5 rounded-full bg-gradient-to-r from-cyan-600 via-orange-500 to-amber-500 shadow-[0_1px_0_rgba(255,255,255,.35)]';
+  'absolute left-0 w-[22px] h-0.5 rounded-full bg-gradient-to-r from-stone-700 via-teal-900 to-stone-800 shadow-[0_1px_0_rgba(255,255,255,.28)]';
 
 function BurgerIcon({ open }: { open: boolean }) {
   return (
@@ -118,16 +118,32 @@ export function Navbar() {
   const marketingNavPillClass =
     'inline-flex shrink-0 items-center gap-1.5 xl:gap-2 whitespace-nowrap px-2 md:px-2.5 xl:px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all text-sm';
 
-  /** Accès secondaire à la page « génération des quêtes » — à droite avec la langue pour éviter le chevauchement sur largeurs moyennes. */
+  /** Style du lien « génération des quêtes » (desktop : rangée centrale avec les ancres marketing). */
   const questGenDiscreteClass =
     'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-700 hover:bg-white/45 hover:border-slate-200/60 transition-all motion-reduce:transition-none';
 
   const marketingDesktop = (
     <div className="inline-flex w-max min-w-0 max-w-none flex-nowrap items-center gap-1 md:gap-1.5 lg:gap-2 xl:gap-2.5">
+      {/*
+        « Sous le capot » dans la zone centrale (md+) : évite le chevauchement avec la FAQ,
+        qui passait sous la colonne droite quand ce lien était à droite avec la langue.
+      */}
+      <Link
+        href="/generation-quetes"
+        className={`${questGenDiscreteClass} hidden md:inline-flex`}
+        title={t('navQuestGen')}
+      >
+        <Sparkles className="hidden h-3.5 w-3.5 shrink-0 opacity-55 lg:inline" strokeWidth={2.25} aria-hidden />
+        <span>{t('navQuestGenShort')}</span>
+      </Link>
+      <span
+        className="hidden md:block w-px h-5 shrink-0 self-center rounded-full bg-slate-300/55"
+        aria-hidden
+      />
       {marketingMenu.map(({ href, label, Icon }) => (
         <a key={href} href={href} className={marketingNavPillClass}>
           <span>{label}</span>
-          {/* Icônes masquées sous xl : gagne de la place par lien et évite que le dernier (FAQ) passe sous la colonne droite. */}
+          {/* Icônes masquées sous xl : gagne de la place par lien. */}
           <Icon
             className="hidden h-4 w-4 shrink-0 opacity-90 xl:block"
             aria-hidden
@@ -167,22 +183,12 @@ export function Navbar() {
         </Link>
 
         {showMarketingNav && (
-          <div className="hidden min-w-0 w-full max-w-full justify-self-stretch md:flex md:min-w-0 md:min-h-0 md:items-center md:justify-start xl:justify-center md:overflow-x-auto md:overflow-y-clip md:px-1 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden">
+          <div className="relative z-[2] hidden min-w-0 w-full max-w-full justify-self-stretch md:flex md:min-w-0 md:min-h-0 md:items-center md:justify-start xl:justify-center md:overflow-x-auto md:overflow-y-clip md:px-1 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden">
             {marketingDesktop}
           </div>
         )}
 
-        <div className="flex min-w-0 shrink-0 items-center justify-end justify-self-end gap-1.5 sm:gap-2 md:gap-2.5 md:pl-1 lg:gap-3 lg:pl-2">
-          {showMarketingNav ? (
-            <Link
-              href="/generation-quetes"
-              className={`${questGenDiscreteClass} hidden md:inline-flex`}
-              title={t('navQuestGen')}
-            >
-              <Sparkles className="hidden h-3.5 w-3.5 shrink-0 opacity-55 lg:inline" strokeWidth={2.25} aria-hidden />
-              <span>{t('navQuestGenShort')}</span>
-            </Link>
-          ) : null}
+        <div className="relative z-[1] flex min-w-0 shrink-0 items-center justify-end justify-self-end gap-1.5 sm:gap-2 md:gap-2.5 md:pl-1 lg:gap-3 lg:pl-2">
           {/* Sur mobile, la langue est dans le menu burger (évite la barre surchargée). */}
           {showLocaleSwitcher ? (
             <div className="hidden md:flex md:shrink-0 md:items-center">
@@ -281,7 +287,7 @@ export function Navbar() {
             aria-labelledby={`${panelId}-title`}
           >
             <div
-              className="h-1 w-full shrink-0 bg-gradient-to-r from-cyan-400 via-orange-400 to-emerald-500"
+              className="h-1 w-full shrink-0 bg-gradient-to-r from-teal-800/90 via-stone-600 to-teal-900/85"
               aria-hidden
             />
             <div className="navbar-mobile-drawer-header flex shrink-0 items-center justify-between gap-3 px-4 py-3.5">
@@ -314,7 +320,7 @@ export function Navbar() {
                       onClick={closeMobile}
                       className="group flex items-center gap-3 rounded-2xl px-3 py-3.5 text-[15px] font-bold text-[var(--text)] border-2 border-transparent hover:border-[color:color-mix(in_srgb,var(--orange)_35%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--card)_85%,transparent)] hover:shadow-[0_4px_0_rgba(234,88,12,.08)] active:scale-[0.99] transition-all"
                     >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-100/90 to-orange-100/80 text-cyan-900 ring-1 ring-orange-200/50 group-hover:ring-cyan-400/45 shadow-[inset_0_1px_0_rgba(255,255,255,.7)]">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-stone-100/95 to-stone-200/80 text-stone-800 ring-1 ring-stone-300/70 group-hover:ring-teal-800/25 shadow-[inset_0_1px_0_rgba(255,255,255,.75)]">
                         <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1">{label}</span>

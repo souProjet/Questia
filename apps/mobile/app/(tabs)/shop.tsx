@@ -124,7 +124,7 @@ function SelectSheet({
       <View style={styles.modalRoot}>
         <GlassScrim
           overlayColor={palette.overlay}
-          intensity={52}
+          intensity={62}
           tint="dark"
           onPress={onClose}
           accessibilityLabel={closeA11y}
@@ -132,7 +132,7 @@ function SelectSheet({
         <View pointerEvents="box-none" style={styles.modalSheetWrap}>
           <View style={[styles.modalSheet, styles.selectSheetSheet, { paddingBottom: 28 + insets.bottom }]}>
             {Platform.OS !== 'web' ? (
-              <BlurView intensity={48} tint="light" style={StyleSheet.absoluteFillObject} />
+              <BlurView intensity={58} tint="light" style={StyleSheet.absoluteFillObject} />
             ) : null}
             <View
               pointerEvents="none"
@@ -1140,7 +1140,7 @@ export default function ShopScreen() {
           <View style={styles.modalRoot}>
             <GlassScrim
               overlayColor={palette.overlay}
-              intensity={52}
+              intensity={62}
               tint="dark"
               onPress={() => setRechargeModalVisible(false)}
               accessibilityLabel={s.closeA11y}
@@ -1148,7 +1148,7 @@ export default function ShopScreen() {
             <View pointerEvents="box-none" style={styles.modalSheetWrap}>
               <View style={[styles.modalSheet, styles.rechargeModalSheet]}>
                 {Platform.OS !== 'web' ? (
-                  <BlurView intensity={50} tint="light" style={StyleSheet.absoluteFillObject} />
+                  <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFillObject} />
                 ) : null}
                 <View
                   pointerEvents="none"

@@ -33,7 +33,7 @@ const QuestDestinationMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-56 animate-pulse rounded-2xl bg-gradient-to-br from-cyan-100/40 to-orange-50/50" />
+      <div className="h-56 animate-pulse rounded-2xl bg-gradient-to-br from-stone-200/35 to-stone-100/50" />
     ),
   },
 );

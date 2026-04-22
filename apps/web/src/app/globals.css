@@ -28,16 +28,16 @@
     --on-cream-subtle: #78716c;
     --link-on-bg: #115e59;
     /**
-     * Glassmorphisme sobre : flou maîtrisé, saturation ≤ ~1.06 (lisibilité).
+     * Glassmorphisme : flou un peu plus marqué, saturation modérée (lisibilité).
      * Utilisé par navbar, cartes, modales, panneaux app.
      */
-    --glass-blur: 22px;
-    --glass-blur-soft: 16px;
-    --glass-blur-heavy: 28px;
-    --glass-blur-tint: 12px;
-    --glass-sat: 1.06;
-    --glass-sat-subtle: 1.04;
-    --glass-sat-nav: 1.05;
+    --glass-blur: 28px;
+    --glass-blur-soft: 20px;
+    --glass-blur-heavy: 36px;
+    --glass-blur-tint: 14px;
+    --glass-sat: 1.05;
+    --glass-sat-subtle: 1.03;
+    --glass-sat-nav: 1.04;
   }
 
   /* Thèmes boutique (data-theme sur <html>) */
@@ -58,13 +58,13 @@
     --gold: #fcd34d;
     --green: #4ade80;
     --link-on-bg: #5eead4;
-    --glass-blur: 26px;
-    --glass-blur-soft: 20px;
-    --glass-blur-heavy: 34px;
-    --glass-blur-tint: 14px;
-    --glass-sat: 1.04;
-    --glass-sat-subtle: 1.03;
-    --glass-sat-nav: 1.04;
+    --glass-blur: 32px;
+    --glass-blur-soft: 24px;
+    --glass-blur-heavy: 40px;
+    --glass-blur-tint: 16px;
+    --glass-sat: 1.03;
+    --glass-sat-subtle: 1.02;
+    --glass-sat-nav: 1.03;
   }
 
   html[data-theme="aurora"] {
@@ -84,13 +84,13 @@
     --orange: #9a3412;
     --gold: #854d0e;
     --green: #166534;
-    --glass-blur: 22px;
-    --glass-blur-soft: 16px;
-    --glass-blur-heavy: 28px;
-    --glass-blur-tint: 12px;
-    --glass-sat: 1.06;
-    --glass-sat-subtle: 1.04;
-    --glass-sat-nav: 1.05;
+    --glass-blur: 28px;
+    --glass-blur-soft: 20px;
+    --glass-blur-heavy: 36px;
+    --glass-blur-tint: 14px;
+    --glass-sat: 1.05;
+    --glass-sat-subtle: 1.03;
+    --glass-sat-nav: 1.04;
   }
 
   html[data-theme="parchment"] {
@@ -110,13 +110,13 @@
     --orange: #9a3412;
     --gold: #854d0e;
     --green: #15803d;
-    --glass-blur: 22px;
-    --glass-blur-soft: 16px;
-    --glass-blur-heavy: 28px;
-    --glass-blur-tint: 12px;
-    --glass-sat: 1.06;
-    --glass-sat-subtle: 1.04;
-    --glass-sat-nav: 1.05;
+    --glass-blur: 28px;
+    --glass-blur-soft: 20px;
+    --glass-blur-heavy: 36px;
+    --glass-blur-tint: 14px;
+    --glass-sat: 1.05;
+    --glass-sat-subtle: 1.03;
+    --glass-sat-nav: 1.04;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -131,10 +131,18 @@
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    /* Fond discret : léger dégradé vertical, pas de halos ni motifs type « landing IA » */
+    /**
+     * Fond en profondeur : léger dégradé + halos très doux (teintes du thème).
+     * Sans variation derrière les panneaux, `backdrop-filter` est presque invisible — on croit qu’il n’y a pas de verre.
+     */
     background-color: var(--bg);
-    background-image: linear-gradient(180deg, var(--surface) 0%, var(--bg) 38%, var(--bg) 100%);
-    background-attachment: fixed;
+    background-image:
+      radial-gradient(ellipse 110% 58% at 8% -6%, color-mix(in srgb, var(--violet) 22%, transparent) 0%, transparent 52%),
+      radial-gradient(ellipse 90% 52% at 96% 14%, color-mix(in srgb, var(--orange) 16%, transparent) 0%, transparent 48%),
+      radial-gradient(ellipse 72% 42% at 48% 102%, color-mix(in srgb, var(--gold) 12%, transparent) 0%, transparent 44%),
+      linear-gradient(180deg, var(--surface) 0%, var(--bg) 38%, var(--bg) 100%);
+    /* Pas de `background-attachment: fixed` ici : avec `backdrop-filter` sur la navbar / cartes,
+       Chrome et Firefox peuvent ne plus composer le flou correctement (fond « mort »). */
   }
   ::selection {
     background: color-mix(in srgb, var(--orange) 28%, transparent);
@@ -199,30 +207,33 @@
    * Navbar : verre clair — bordure plus lisible sur fond sombre (ex. thème Nuit boréale).
    */
   .navbar-shell {
+    /* Translucidité un peu plus forte = le flou du fond se lit enfin comme du verre */
     background: linear-gradient(
       160deg,
-      color-mix(in srgb, var(--card) 82%, transparent),
-      color-mix(in srgb, var(--surface) 58%, transparent)
+      color-mix(in srgb, var(--card) 34%, transparent),
+      color-mix(in srgb, var(--surface) 22%, transparent)
     );
-    border: 1px solid color-mix(in srgb, var(--violet) 14%, var(--border-ui-strong));
+    border: 1px solid color-mix(in srgb, var(--violet) 18%, var(--border-ui-strong));
     box-shadow:
-      0 10px 28px color-mix(in srgb, var(--text) 8%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.45);
-    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-nav));
-    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-nav));
+      0 12px 36px color-mix(in srgb, var(--text) 10%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.58);
+    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-nav));
+    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-nav));
+    transform: translateZ(0);
   }
   html[data-theme="midnight"] .navbar-shell {
     background: linear-gradient(
       160deg,
-      color-mix(in srgb, var(--card) 78%, transparent),
-      color-mix(in srgb, var(--surface) 55%, transparent)
+      color-mix(in srgb, var(--card) 38%, transparent),
+      color-mix(in srgb, var(--surface) 26%, transparent)
     );
     border-color: color-mix(in srgb, var(--violet) 22%, var(--border-ui-strong));
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
+      0 14px 40px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-subtle));
+    transform: translateZ(0);
   }
 
   /**
@@ -295,51 +306,90 @@
     @apply bg-adventure;
   }
 
-  /* Landing — jeu / aventure (DA) : cyan · orange · vert */
+  /* Landing / shell app : mêmes halos que `body` pour que le verre (navbar, cartes) ait du grain à flouter */
   .bg-adventure {
     background-color: var(--bg);
-    background-image: linear-gradient(180deg, var(--surface) 0%, var(--bg) 42%, var(--bg) 100%);
+    background-image:
+      radial-gradient(ellipse 110% 58% at 8% -6%, color-mix(in srgb, var(--violet) 22%, transparent) 0%, transparent 52%),
+      radial-gradient(ellipse 90% 52% at 96% 14%, color-mix(in srgb, var(--orange) 16%, transparent) 0%, transparent 48%),
+      radial-gradient(ellipse 72% 42% at 48% 102%, color-mix(in srgb, var(--gold) 12%, transparent) 0%, transparent 44%),
+      linear-gradient(180deg, var(--surface) 0%, var(--bg) 42%, var(--bg) 100%);
   }
 
-  /* Bandes de section pour rythme visuel (jeu) */
+  /* Bandes de section : tons neutres + léger flou (moins « palette arc-en-ciel »). */
   .section-band-how {
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--violet) 7%, transparent) 0%,
-      transparent 45%,
-      color-mix(in srgb, var(--green) 6%, transparent) 100%
+      color-mix(in srgb, var(--text) 4%, transparent) 0%,
+      transparent 48%,
+      color-mix(in srgb, var(--text) 3%, transparent) 100%
     );
+    backdrop-filter: blur(var(--glass-blur-tint)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-tint)) saturate(var(--glass-sat-subtle));
   }
   .section-band-social {
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--orange) 6%, transparent) 0%,
-      transparent 50%,
-      color-mix(in srgb, var(--violet) 5%, transparent) 100%
+      color-mix(in srgb, var(--surface) 50%, transparent) 0%,
+      transparent 52%,
+      color-mix(in srgb, var(--text) 3.5%, transparent) 100%
     );
+    backdrop-filter: blur(var(--glass-blur-tint)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-tint)) saturate(var(--glass-sat-subtle));
   }
 
   /* CTA final — même famille que .quest-slider-embedded (carte quête / plateau) */
   .section-band-cta {
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--violet) 5%, transparent) 0%,
-      color-mix(in srgb, var(--card) 55%, transparent) 42%,
-      color-mix(in srgb, var(--orange) 5%, transparent) 100%
+      color-mix(in srgb, var(--card) 38%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 22%, transparent) 45%,
+      color-mix(in srgb, var(--text) 3%, transparent) 100%
     );
+    backdrop-filter: blur(var(--glass-blur-tint)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-tint)) saturate(var(--glass-sat-subtle));
+  }
+
+  /** Pleine largeur : voile givré derrière le contenu (landing). */
+  .landing-section-frost {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--card) 22%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 12%, transparent) 55%,
+      color-mix(in srgb, var(--bg) 8%, transparent) 100%
+    );
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
+  }
+
+  /** Cartes témoignages / encarts : verre lisible, bordure unique. */
+  .landing-glass-card {
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--card) 34%, transparent),
+      color-mix(in srgb, var(--surface) 22%, transparent)
+    );
+    border: 1px solid color-mix(in srgb, var(--text) 9%, var(--border-ui-strong));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.52),
+      0 16px 44px -20px color-mix(in srgb, var(--text) 14%, transparent);
+    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat));
   }
   .landing-cta-panel {
     background: linear-gradient(
       168deg,
-      color-mix(in srgb, var(--card) 86%, transparent),
-      color-mix(in srgb, var(--surface) 70%, transparent)
+      color-mix(in srgb, var(--card) 38%, transparent),
+      color-mix(in srgb, var(--surface) 24%, transparent)
     );
     border: 1px solid color-mix(in srgb, var(--violet) 10%, var(--border-ui-strong));
     box-shadow:
-      0 14px 36px color-mix(in srgb, var(--text) 9%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.42);
-    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
-    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+      0 18px 44px -12px color-mix(in srgb, var(--text) 11%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat));
     border-radius: 20px;
   }
   @media (min-width: 768px) {
@@ -358,15 +408,15 @@
     overflow: hidden;
     background: linear-gradient(
       168deg,
-      color-mix(in srgb, var(--card) 88%, transparent),
-      color-mix(in srgb, var(--surface) 68%, transparent)
+      color-mix(in srgb, var(--card) 36%, transparent),
+      color-mix(in srgb, var(--surface) 22%, transparent)
     );
-    border: 1px solid color-mix(in srgb, var(--violet) 12%, var(--border-ui-strong));
+    border: 1px solid color-mix(in srgb, var(--violet) 10%, var(--border-ui-strong));
     box-shadow:
-      0 16px 40px color-mix(in srgb, var(--text) 8%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.48);
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+      0 20px 48px -16px color-mix(in srgb, var(--text) 10%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat));
     border-radius: 18px;
   }
   .landing-hero-panel::before {
@@ -375,9 +425,14 @@
     left: 0;
     right: 0;
     top: 0;
-    height: 2px;
+    height: 1px;
     z-index: 0;
-    background: var(--violet);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--violet) 45%, transparent),
+      transparent
+    );
     pointer-events: none;
   }
   @media (min-width: 640px) {
@@ -407,15 +462,15 @@
     background-color: transparent;
     background-image: linear-gradient(
       155deg,
-      color-mix(in srgb, var(--surface) 38%, transparent) 0%,
-      color-mix(in srgb, var(--card) 58%, transparent) 42%,
-      color-mix(in srgb, var(--bg) 28%, transparent) 100%
+      color-mix(in srgb, var(--surface) 18%, transparent) 0%,
+      color-mix(in srgb, var(--card) 32%, transparent) 42%,
+      color-mix(in srgb, var(--bg) 14%, transparent) 100%
     );
     box-shadow:
       inset 0 1px 0 color-mix(in srgb, #fff 52%, transparent),
       0 10px 32px -14px color-mix(in srgb, var(--text) 16%, transparent);
-    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
-    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
   }
 
   /** Messages flash boutique — alignés sur les variables de thème (pas de vert « admin » figé) */
@@ -767,16 +822,16 @@
     isolation: isolate;
     background: linear-gradient(
       175deg,
-      color-mix(in srgb, var(--card) 76%, transparent),
-      color-mix(in srgb, var(--surface) 58%, transparent)
+      color-mix(in srgb, var(--card) 36%, transparent),
+      color-mix(in srgb, var(--surface) 24%, transparent)
     );
     border: 1px solid color-mix(in srgb, var(--violet) 8%, var(--border-ui));
     border-radius: 16px;
     box-shadow:
       0 4px 16px color-mix(in srgb, var(--text) 6%, transparent),
       inset 0 1px 0 rgba(255, 255, 255, 0.42);
-    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
-    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   }
   .card-hover {
     transition: border-color .2s, background .2s, transform .2s, box-shadow .2s;
@@ -795,8 +850,8 @@
     isolation: isolate;
     background: linear-gradient(
       165deg,
-      color-mix(in srgb, var(--card) 70%, transparent),
-      color-mix(in srgb, var(--surface) 52%, transparent)
+      color-mix(in srgb, var(--card) 32%, transparent),
+      color-mix(in srgb, var(--surface) 20%, transparent)
     );
     border: 1px solid color-mix(in srgb, var(--violet) 10%, var(--border-ui));
     box-shadow:
@@ -816,8 +871,8 @@
     border: 1px solid color-mix(in srgb, var(--violet) 14%, rgba(255, 255, 255, 0.45));
     background: linear-gradient(
       168deg,
-      color-mix(in srgb, var(--card) 52%, transparent),
-      color-mix(in srgb, var(--surface) 38%, transparent)
+      color-mix(in srgb, var(--card) 36%, transparent),
+      color-mix(in srgb, var(--surface) 22%, transparent)
     );
     box-shadow:
       0 16px 48px -12px color-mix(in srgb, var(--text) 14%, transparent),
@@ -829,8 +884,8 @@
     border-color: color-mix(in srgb, var(--violet) 28%, rgba(255, 255, 255, 0.12));
     background: linear-gradient(
       168deg,
-      color-mix(in srgb, var(--card) 58%, transparent),
-      color-mix(in srgb, var(--surface) 48%, transparent)
+      color-mix(in srgb, var(--card) 40%, transparent),
+      color-mix(in srgb, var(--surface) 30%, transparent)
     );
     box-shadow:
       0 20px 56px -14px rgba(0, 0, 0, 0.55),
@@ -892,7 +947,7 @@
   .text-gradient-pop {
     color: var(--violet);
     display: inline-block;
-    background: linear-gradient(118deg, #134e4a 0%, #0f766e 55%, #1c1917 100%);
+    background: linear-gradient(105deg, #115e59 0%, #1c1917 92%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -1599,15 +1654,22 @@
   .divider { height: 1px; background: var(--border); }
   .divider-glow {
     height: 1px;
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--violet) 45%, transparent), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--text) 18%, transparent),
+      transparent
+    );
   }
 
-  /* ── Section label (lisible sur fond clair) ── */
-  .label { @apply text-xs font-black tracking-widest uppercase text-orange-800; }
+  /* ── Section label (lisible sur fond clair) — sobre, pas orange systématique ── */
+  .label {
+    @apply text-xs font-bold tracking-widest uppercase text-stone-600;
+  }
 
   /* Alias : même rendu que .label */
   .label-on-dark {
-    @apply text-xs font-black tracking-widest uppercase text-orange-800;
+    @apply text-xs font-bold tracking-widest uppercase text-stone-600;
   }
 
   /**
@@ -1807,48 +1869,11 @@
     border: 1px solid color-mix(in srgb, var(--orange) 32%, transparent);
   }
 
-  /** Réduit le flou pour accessibilité (sensibilité au mouvement / vestibulaire). */
-  @media (prefers-reduced-motion: reduce) {
-    .navbar-shell,
-    html[data-theme="midnight"] .navbar-shell,
-    .navbar-mobile-drawer,
-    html[data-theme="midnight"] .navbar-mobile-drawer,
-    .landing-cta-panel,
-    .landing-hero-panel,
-    .quest-modal-backdrop,
-    .quest-modal-panel,
-    .quest-modal-sheet,
-    .card,
-    .glass,
-    .auth-glass-panel,
-    .shop-elevated-surface,
-    .app-quest-xp-strip,
-    .quest-mission-panel,
-    .quest-map-panel,
-    .hist-tabs,
-    html[data-theme="midnight"] .hist-tabs,
-    .hist-filters-panel,
-    .hist-quest-card,
-    .hist-mission,
-    .hist-hook,
-    .quest-board,
-    .app-quest-surface,
-    .app-hook-quote,
-    .quest-hook-card,
-    .quest-slider-embedded,
-    .quest-slider-landing,
-    .quest-map-leaflet .leaflet-control-attribution,
-    .app-app-hero-band,
-    .app-shop-balance-card,
-    .app-shop-featured-card,
-    .app-profile-level-card,
-    .app-profile-badge-unlocked,
-    .app-quest-day-strip {
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-    }
-  }
-
+  /**
+   * Transparence réduite (OS / navigateur) : on coupe le flou — le site ressemble alors à du « mat ».
+   * Windows : Paramètres → Accessibilité → Effets visuels → Effets de transparence.
+   * macOS : Réglages → Accessibilité → Affichage → Réduire la transparence.
+   */
   @media (prefers-reduced-transparency: reduce) {
     .navbar-shell,
     html[data-theme="midnight"] .navbar-shell,
@@ -1856,6 +1881,11 @@
     html[data-theme="midnight"] .navbar-mobile-drawer,
     .landing-cta-panel,
     .landing-hero-panel,
+    .landing-section-frost,
+    .landing-glass-card,
+    .section-band-how,
+    .section-band-social,
+    .section-band-cta,
     .quest-modal-backdrop,
     .quest-modal-panel,
     .quest-modal-sheet,

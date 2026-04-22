@@ -232,7 +232,7 @@ export function questCardFaceGradient(
   p: ThemePalette,
 ): [string, string, string, string] {
   if (!themeId || themeId === 'default') {
-    return [p.card, colorWithAlpha(p.gold, 0.08), colorWithAlpha(p.cyan, 0.12), p.surface];
+    return [p.card, colorWithAlpha(p.gold, 0.05), colorWithAlpha(p.cyan, 0.07), p.surface];
   }
   if (themeId === 'midnight') {
     return [
@@ -268,45 +268,45 @@ export function homeScreenBackdropGradient(
 ): [string, string, string, string, string] {
   if (!themeId || themeId === 'default') {
     return [
-      colorWithAlpha(p.cyan, 0.14),
+      colorWithAlpha(p.cyan, 0.07),
       p.surface,
-      colorWithAlpha(p.orange, 0.06),
+      colorWithAlpha(p.gold, 0.04),
       p.bg,
-      colorWithAlpha(p.card, 0.5),
+      colorWithAlpha(p.card, 0.45),
     ];
   }
   if (themeId === 'midnight') {
     return [
       '#060a12',
-      colorWithAlpha(p.cyan, 0.12),
+      colorWithAlpha(p.cyan, 0.08),
       p.bg,
-      colorWithAlpha(p.orange, 0.07),
+      colorWithAlpha(p.orange, 0.045),
       '#04060c',
     ];
   }
   if (themeId === 'aurora') {
     return [
-      colorWithAlpha(p.cyan, 0.14),
-      p.surface,
-      colorWithAlpha(p.gold, 0.1),
-      p.bg,
       colorWithAlpha(p.cyan, 0.08),
+      p.surface,
+      colorWithAlpha(p.gold, 0.06),
+      p.bg,
+      colorWithAlpha(p.cyan, 0.05),
     ];
   }
   if (themeId === 'parchment') {
     return [
       '#faf6ee',
       p.bg,
-      colorWithAlpha(p.cyan, 0.1),
-      colorWithAlpha(p.orange, 0.07),
+      colorWithAlpha(p.cyan, 0.06),
+      colorWithAlpha(p.gold, 0.05),
       '#ebe4d6',
     ];
   }
   return [
     p.surface,
-    colorWithAlpha(p.cyan, 0.12),
+    colorWithAlpha(p.cyan, 0.08),
     p.bg,
-    colorWithAlpha(p.orange, 0.06),
+    colorWithAlpha(p.gold, 0.05),
     p.surface,
   ];
 }
@@ -318,35 +318,35 @@ export function homeScreenBackdropOrbTints(
 ): { tr: string; bl: string; tl: string } {
   if (!themeId || themeId === 'default') {
     return {
-      tr: colorWithAlpha(p.orange, 0.2),
-      bl: colorWithAlpha(p.cyan, 0.22),
-      tl: colorWithAlpha(p.cyan, 0.12),
+      tr: colorWithAlpha(p.gold, 0.1),
+      bl: colorWithAlpha(p.cyan, 0.11),
+      tl: colorWithAlpha(p.text, 0.05),
     };
   }
   if (themeId === 'midnight') {
     return {
-      tr: colorWithAlpha(p.orange, 0.16),
-      bl: colorWithAlpha(p.cyan, 0.24),
-      tl: colorWithAlpha(p.cyan, 0.1),
+      tr: colorWithAlpha(p.orange, 0.1),
+      bl: colorWithAlpha(p.cyan, 0.14),
+      tl: colorWithAlpha(p.cyan, 0.07),
     };
   }
   if (themeId === 'aurora') {
     return {
-      tr: colorWithAlpha(p.orange, 0.16),
-      bl: colorWithAlpha(p.cyan, 0.2),
-      tl: colorWithAlpha(p.cyan, 0.14),
+      tr: colorWithAlpha(p.gold, 0.1),
+      bl: colorWithAlpha(p.cyan, 0.12),
+      tl: colorWithAlpha(p.cyan, 0.08),
     };
   }
   if (themeId === 'parchment') {
     return {
-      tr: colorWithAlpha(p.orange, 0.14),
-      bl: colorWithAlpha(p.cyan, 0.16),
-      tl: colorWithAlpha(p.gold, 0.12),
+      tr: colorWithAlpha(p.gold, 0.09),
+      bl: colorWithAlpha(p.cyan, 0.1),
+      tl: colorWithAlpha(p.gold, 0.08),
     };
   }
   return {
-    tr: colorWithAlpha(p.orange, 0.16),
-    bl: colorWithAlpha(p.cyan, 0.18),
-    tl: colorWithAlpha(p.cyan, 0.12),
+    tr: colorWithAlpha(p.gold, 0.1),
+    bl: colorWithAlpha(p.cyan, 0.12),
+    tl: colorWithAlpha(p.cyan, 0.08),
   };
 }

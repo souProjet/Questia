@@ -27,7 +27,7 @@ export type GlassScrimProps = {
  */
 export function GlassScrim({
   overlayColor,
-  intensity = 50,
+  intensity = 58,
   tint = 'dark',
   onPress,
   accessibilityLabel,

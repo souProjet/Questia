@@ -80,7 +80,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <div className="min-h-screen bg-adventure relative overflow-x-hidden">
       <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden>
-        <div className="absolute -top-24 left-1/2 w-[min(112rem,220%)] max-w-none -translate-x-1/2 h-[min(42vh,28rem)] rounded-[100%] bg-gradient-to-b from-cyan-200/30 via-orange-100/8 to-transparent blur-3xl motion-safe:animate-glow-soft opacity-[0.65] motion-reduce:animate-none motion-reduce:opacity-40" />
+        <div className="absolute -top-28 left-1/2 w-[min(100rem,200%)] max-w-none -translate-x-1/2 h-[min(38vh,24rem)] rounded-[100%] bg-gradient-to-b from-stone-200/35 via-amber-100/12 to-transparent blur-[2.75rem] motion-safe:animate-glow-soft opacity-50 motion-reduce:animate-none motion-reduce:opacity-35" />
       </div>
 
       <div className="relative z-10">
@@ -93,14 +93,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           aria-labelledby="hero-heading"
         >
           <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-            <div className="absolute top-16 sm:top-24 left-[4%] sm:left-[8%] flex items-center justify-center opacity-20 sm:opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none">
-              <Icon name="Compass" className="h-10 w-10 sm:h-14 sm:w-14 text-cyan-900/35" />
-            </div>
-            <div className="absolute top-20 sm:top-28 right-[6%] sm:right-[10%] flex items-center justify-center opacity-20 sm:opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none [animation-delay:2s]">
-              <Icon name="Backpack" className="h-9 w-9 sm:h-12 sm:w-12 text-orange-900/30" />
-            </div>
-            <div className="absolute bottom-16 sm:bottom-20 left-[40%] sm:left-[45%] flex items-center justify-center opacity-20 sm:opacity-25 select-none motion-safe:animate-float-delayed motion-reduce:animate-none">
-              <Icon name="Dices" className="h-9 w-9 sm:h-12 sm:w-12 text-slate-800/25" />
+            <div className="absolute top-20 sm:top-28 right-[8%] sm:right-[12%] flex items-center justify-center opacity-[0.11] sm:opacity-[0.14] select-none motion-safe:animate-float motion-reduce:animate-none [animation-delay:1.2s]">
+              <Icon name="Compass" className="h-9 w-9 sm:h-11 sm:w-11 text-stone-700" aria-hidden />
             </div>
           </div>
 
@@ -119,7 +113,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <br />
               <span className="inline-flex items-center gap-2 flex-wrap">
                 {t('hero.line2')}{' '}
-                <Icon name="Map" className="inline-block h-[1.1em] w-[1.1em] shrink-0 translate-y-[0.06em] text-cyan-800/90" aria-hidden />
+                <Icon name="Map" className="inline-block h-[1.1em] w-[1.1em] shrink-0 translate-y-[0.06em] text-teal-900/85" aria-hidden />
               </span>
             </h1>
 
@@ -188,8 +182,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <LandingReveal>
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10 sm:mb-14 md:mb-20 space-y-4 sm:space-y-5">
-            <p className="label flex items-center justify-center gap-2 text-emerald-900">
-              <Icon name="Zap" size="sm" className="text-emerald-800/90 shrink-0" aria-hidden />
+            <p className="label flex items-center justify-center gap-2 text-stone-600">
+              <Icon name="Zap" size="sm" className="text-stone-500 shrink-0" aria-hidden />
               {t('how.label')}
             </p>
             <h2 id="how-heading" className="font-display font-black text-2xl sm:text-3xl md:text-5xl text-slate-900 leading-tight [overflow-wrap:anywhere] px-1">
@@ -204,13 +198,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             {STEPS.map((s, i) => (
               <div
                 key={i}
-                className={`card card-hover rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-9 flex flex-col items-start gap-4 sm:gap-5 border-2 border-slate-900/10 shadow-[0_6px_0_rgba(15,23,42,.06)] ${
-                  i === 1 ? 'md:-rotate-1' : i === 2 ? 'md:rotate-1' : ''
-                }`}
+                className="card card-hover rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-9 flex flex-col items-start gap-4 sm:gap-5 border border-stone-400/25 shadow-[0_8px_28px_-12px_rgba(28,25,23,0.12)]"
               >
-                <Icon name={s.icon} size="2xl" className="text-orange-700 shrink-0" aria-hidden />
+                <Icon name={s.icon} size="2xl" className="text-stone-700 shrink-0" aria-hidden />
                 <div className="space-y-3">
-                  <p className="text-xs font-black text-orange-800 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-stone-500 uppercase tracking-wider">
                     {t('how.stepLabel')} {i + 1}
                   </p>
                   <h3 className="font-display font-bold text-slate-900 text-xl leading-snug">{s.title}</h3>
@@ -225,13 +217,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       <section
         id="telecharger"
-        className="min-h-[100dvh] flex flex-col justify-center py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-y-2 border-cyan-300/25 bg-gradient-to-b from-white/40 to-cyan-50/30"
+        className="landing-section-frost min-h-[100dvh] flex flex-col justify-center py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-y border-stone-400/20"
         aria-labelledby="download-heading"
       >
         <LandingReveal delayMs={40}>
         <div className="max-w-3xl mx-auto text-center space-y-5 sm:space-y-6 px-1">
-          <p className="label flex items-center justify-center gap-2 text-cyan-900">
-            <Icon name="Smartphone" size="sm" className="text-cyan-900/90 shrink-0" aria-hidden />
+          <p className="label flex items-center justify-center gap-2 text-stone-600">
+            <Icon name="Smartphone" size="sm" className="text-stone-500 shrink-0" aria-hidden />
             {t(storesReady ? 'download.label' : 'download.labelWeb')}
           </p>
           <h2 id="download-heading" className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
@@ -256,8 +248,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <LandingReveal delayMs={40}>
         <div className="max-w-5xl mx-auto relative">
           <div className="text-center mb-10 sm:mb-12 md:mb-16 space-y-3 sm:space-y-4 px-1">
-            <p className="label flex items-center justify-center gap-2 text-orange-900">
-              <Icon name="MessageCircle" size="sm" className="text-orange-900/90 shrink-0" aria-hidden />
+            <p className="label flex items-center justify-center gap-2 text-stone-600">
+              <Icon name="MessageCircle" size="sm" className="text-stone-500 shrink-0" aria-hidden />
               {t('testimonials.label')}
             </p>
             <h2 id="testimonials-heading" className="font-display font-black text-2xl sm:text-3xl md:text-5xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
@@ -269,14 +261,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
-            {testimonialQuotes.map((row, i) => (
+            {testimonialQuotes.map((row) => (
               <article
                 key={row.name}
-                className="rounded-2xl sm:rounded-3xl p-6 sm:p-7 md:p-8 border-[3px] bg-white/90 backdrop-blur-sm transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 motion-reduce:hover:translate-y-0"
-                style={{
-                  borderColor: i === 0 ? 'rgba(249,115,22,.45)' : i === 1 ? 'rgba(34,211,238,.5)' : 'rgba(16,185,129,.45)',
-                  boxShadow: i === 0 ? '0 10px 0 rgba(234,88,12,.12), 0 20px 40px rgba(249,115,22,.12)' : i === 1 ? '0 10px 0 rgba(8,145,178,.1), 0 20px 40px rgba(34,211,238,.12)' : '0 10px 0 rgba(5,150,105,.1), 0 20px 40px rgba(16,185,129,.12)',
-                }}
+                className="landing-glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-7 md:p-8 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
               >
                 <blockquote className="text-slate-900 text-[15px] sm:text-base leading-relaxed font-semibold mb-5 sm:mb-6 [overflow-wrap:anywhere]">
                   « {row.quote} »
@@ -293,11 +281,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </LandingReveal>
       </section>
 
-      <section id="faq" className="min-h-[100dvh] py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 bg-white/30" aria-labelledby="faq-heading">
+      <section
+        id="faq"
+        className="landing-section-frost min-h-[100dvh] py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24"
+        aria-labelledby="faq-heading"
+      >
         <LandingReveal delayMs={40}>
         <div className="max-w-2xl mx-auto min-w-0">
           <div className="text-center mb-8 sm:mb-10 md:mb-12 space-y-2 sm:space-y-3 px-1">
-            <p className="label text-emerald-900">{t('faq.label')}</p>
+            <p className="label text-stone-600">{t('faq.label')}</p>
             <h2 id="faq-heading" className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
               {t('faq.title')}
             </h2>
@@ -305,15 +297,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               {t(landingStoreSuffix ? `faq.subtitleStores${landingStoreSuffix}` : 'faq.subtitleWeb')}
             </p>
           </div>
-          <div
-            className="rounded-2xl sm:rounded-3xl border-2 border-slate-900/[0.08] bg-white/95 shadow-[0_1px_0_rgba(15,23,42,.06),0_12px_40px_-12px_rgba(15,23,42,.12)] overflow-hidden divide-y divide-slate-200/80"
-          >
+          <div className="glass rounded-2xl sm:rounded-3xl overflow-hidden divide-y divide-stone-300/40 border border-stone-400/20">
             {LANDING_FAQ.map((item) => (
               <details key={item.question} className="group">
-                <summary className="cursor-pointer list-none min-h-[3rem] sm:min-h-0 px-4 sm:px-6 py-4 sm:py-5 font-bold text-slate-900 flex items-start justify-between gap-3 sm:gap-4 text-left select-none touch-manipulation [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:bg-slate-50/80">
+                <summary className="cursor-pointer list-none min-h-[3rem] sm:min-h-0 px-4 sm:px-6 py-4 sm:py-5 font-bold text-slate-900 flex items-start justify-between gap-3 sm:gap-4 text-left select-none touch-manipulation [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent active:bg-stone-100/40">
                   <span className="leading-snug text-[14px] sm:text-[15px] md:text-base pt-0.5 [overflow-wrap:anywhere]">{item.question}</span>
                   <span
-                    className="shrink-0 mt-0.5 inline-flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 group-open:bg-cyan-50 group-open:text-cyan-800 transition-colors"
+                    className="shrink-0 mt-0.5 inline-flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-stone-100/90 text-stone-500 group-open:bg-stone-200/80 group-open:text-stone-800 transition-colors"
                     aria-hidden
                   >
                     <svg
@@ -329,7 +319,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   </span>
                 </summary>
                 <div className="px-4 sm:px-6 pb-4 sm:pb-5 -mt-1">
-                  <p className="text-slate-600 text-sm md:text-[15px] leading-relaxed border-l-2 border-cyan-200/90 pl-3 sm:pl-4 [overflow-wrap:anywhere]">
+                  <p className="text-slate-600 text-sm md:text-[15px] leading-relaxed border-l-2 border-stone-300/80 pl-3 sm:pl-4 [overflow-wrap:anywhere]">
                     {item.answer}
                   </p>
                 </div>
@@ -342,14 +332,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       <section
         id="cta"
-        className="section-band-cta min-h-[100dvh] flex flex-col justify-center py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-t-2 border-orange-200/40"
+        className="section-band-cta min-h-[100dvh] flex flex-col justify-center py-12 sm:py-16 md:py-20 lg:py-24 px-3 sm:px-4 sm:px-6 scroll-mt-20 sm:scroll-mt-24 border-t border-stone-400/25"
         aria-labelledby="cta-heading"
       >
         <LandingReveal delayMs={40}>
           <div className="max-w-4xl mx-auto min-w-0">
             <div className="landing-cta-panel px-4 py-8 sm:px-10 sm:py-11 md:px-12 md:py-12 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 motion-reduce:transition-none">
               <div className="text-center space-y-2">
-                <p className="label text-orange-900">{t('cta.label')}</p>
+                <p className="label text-stone-600">{t('cta.label')}</p>
                 <h2
                   id="cta-heading"
                   className="font-display font-black text-[clamp(1.25rem,3.5vw+0.6rem,1.85rem)] sm:text-3xl md:text-[2.15rem] text-slate-900 leading-tight tracking-tight [overflow-wrap:anywhere] px-0.5"
@@ -378,7 +368,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   <AppStoreButtons className="justify-center w-full" />
                   <div className="flex items-center gap-3 w-full max-w-md mx-auto">
                     <div className="flex-1 h-px divider-glow opacity-80" aria-hidden />
-                    <span className="text-[11px] font-black uppercase tracking-widest text-orange-800/80 shrink-0">
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-stone-500 shrink-0">
                       {t('cta.or')}
                     </span>
                     <div className="flex-1 h-px divider-glow opacity-80" aria-hidden />
