@@ -18,6 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/expo';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { elevationAndroidSafe } from '../../lib/elevationAndroid';
 import {
   SHOP_CATALOG,
@@ -35,7 +36,7 @@ import {
   type ShopCatalogEntry,
   type ShopMarketingBadge,
 } from '@questia/shared';
-import { colorWithAlpha, shopBalanceGradient, type ThemePalette } from '@questia/ui';
+import { colorWithAlpha, shopBalanceGradient, UiLucideIcon, type ThemePalette } from '@questia/ui';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { getShopScreenStrings } from '../../lib/shopScreenStrings';
@@ -43,6 +44,7 @@ import { hapticError, hapticLight, hapticSuccess } from '../../lib/haptics';
 import { isExpoWebBrowserNativeAvailable, maybeCompleteAuthSession } from '../../lib/webBrowser';
 import * as Linking from 'expo-linking';
 import { trackMobileEvent } from '../../lib/analytics/track';
+import { GlassScrim } from '../../components/GlassScrim';
 
 import { API_BASE_URL, apiFetch } from '../../lib/api';
 
@@ -79,11 +81,10 @@ const TITLE_NONE = '__title_none__';
 
 function kindOrder(kind: ShopCatalogEntry['kind']): number {
   const order: Record<ShopCatalogEntry['kind'], number> = {
-    theme_pack: 0,
-    title: 1,
-    xp_booster: 2,
-    reroll_pack: 3,
-    bundle: 4,
+    title: 0,
+    xp_booster: 1,
+    reroll_pack: 2,
+    bundle: 3,
   };
   return order[kind] ?? 9;
 }
@@ -121,14 +122,22 @@ function SelectSheet({
       onRequestClose={onClose}
     >
       <View style={styles.modalRoot}>
-        <Pressable
-          style={styles.modalBackdrop}
+        <GlassScrim
+          overlayColor={palette.overlay}
+          intensity={52}
+          tint="dark"
           onPress={onClose}
-          accessibilityRole="button"
           accessibilityLabel={closeA11y}
         />
         <View pointerEvents="box-none" style={styles.modalSheetWrap}>
           <View style={[styles.modalSheet, styles.selectSheetSheet, { paddingBottom: 28 + insets.bottom }]}>
+            {Platform.OS !== 'web' ? (
+              <BlurView intensity={48} tint="light" style={StyleSheet.absoluteFillObject} />
+            ) : null}
+            <View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.card, 0.62) }]}
+            />
             <View style={styles.selectSheetHandle} accessibilityRole="none" />
             <Text style={styles.selectSheetTitle}>{title}</Text>
             <ScrollView
@@ -213,13 +222,12 @@ export default function ShopScreen() {
   );
   const coinPackReference = coinPacksSorted[0];
 
-  const { featuredBundle, xpItems, themeItems, titleItems, rerollItems } = useMemo(() => {
+  const { featuredBundle, xpItems, titleItems, rerollItems } = useMemo(() => {
     const bundle = items.find((i) => i.kind === 'bundle');
     const rest = items.filter((i) => i.kind !== 'bundle');
     return {
       featuredBundle: bundle,
       xpItems: rest.filter((i) => i.kind === 'xp_booster'),
-      themeItems: rest.filter((i) => i.kind === 'theme_pack'),
       titleItems: rest.filter((i) => i.kind === 'title'),
       rerollItems: rest.filter((i) => i.kind === 'reroll_pack'),
     };
@@ -315,7 +323,7 @@ export default function ShopScreen() {
     const rows: SelectOpt[] = [{ value: TITLE_NONE, label: s.noTitle }];
     for (const id of shop.ownedTitleIds ?? []) {
       const def = getTitleDefinition(id);
-      rows.push({ value: id, label: def ? `${def.emoji} ${def.label}` : id });
+      rows.push({ value: id, label: def ? def.label : id });
     }
     return rows;
   }, [shop, s]);
@@ -324,7 +332,7 @@ export default function ShopScreen() {
     const id = profileShop.equippedTitleId;
     if (!id) return s.noTitle;
     const def = getTitleDefinition(id);
-    return def ? `${def.emoji} ${def.label}` : id;
+    return def ? def.label : id;
   };
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
@@ -653,7 +661,9 @@ export default function ShopScreen() {
     const card = (
       <View style={[styles.card, highlight && styles.cardHighlight]}>
         <View style={styles.cardTop}>
-          <Text style={styles.cardEmoji}>{item.emoji}</Text>
+          <View style={styles.cardIconWrap}>
+            <UiLucideIcon name={item.icon} size={28} color={palette.orange} />
+          </View>
           <View style={styles.cardBadges}>
             {m?.badge ? <MarketingBadgeRN badge={m.badge} label={s.marketingBadge(m.badge)} /> : null}
             <Text style={styles.kindLbl}>{s.kindLabel(item.kind)}</Text>
@@ -933,7 +943,9 @@ export default function ShopScreen() {
                   ]}
                 >
                   <View style={styles.featuredHead}>
-                    <Text style={styles.featuredEmoji}>{featuredBundle.emoji}</Text>
+                    <View style={styles.featuredIconWrap}>
+                      <UiLucideIcon name={featuredBundle.icon} size={36} color={palette.orange} />
+                    </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
                       {featuredBundle.marketing?.badge ? (
                         <MarketingBadgeRN
@@ -1024,8 +1036,6 @@ export default function ShopScreen() {
 
             <View style={styles.section}>
               <Text style={styles.h2}>{s.sectionLook}</Text>
-              <Text style={styles.h3}>{s.sectionThemes}</Text>
-              {themeItems.map(renderCatalogCard)}
               <Text style={styles.h3}>{s.sectionTitles}</Text>
               {titleItems.map(renderCatalogCard)}
             </View>
@@ -1128,14 +1138,22 @@ export default function ShopScreen() {
           onRequestClose={() => setRechargeModalVisible(false)}
         >
           <View style={styles.modalRoot}>
-            <Pressable
-              style={styles.modalBackdrop}
+            <GlassScrim
+              overlayColor={palette.overlay}
+              intensity={52}
+              tint="dark"
               onPress={() => setRechargeModalVisible(false)}
-              accessibilityRole="button"
               accessibilityLabel={s.closeA11y}
             />
             <View pointerEvents="box-none" style={styles.modalSheetWrap}>
               <View style={[styles.modalSheet, styles.rechargeModalSheet]}>
+                {Platform.OS !== 'web' ? (
+                  <BlurView intensity={50} tint="light" style={StyleSheet.absoluteFillObject} />
+                ) : null}
+                <View
+                  pointerEvents="none"
+                  style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.card, 0.64) }]}
+                />
                 <View style={styles.rechargeModalHeader}>
                   <View style={styles.rechargeModalHeaderTop}>
                     <View style={styles.rechargeModalHeaderText}>
@@ -1149,6 +1167,7 @@ export default function ShopScreen() {
                           </Text>
                         </View>
                         <View style={styles.rechargeTrustPill}>
+                          <UiLucideIcon name="Lock" size={14} color={palette.green} strokeWidth={2.2} />
                           <Text style={styles.rechargeTrustPillTxt}>{s.securePayment}</Text>
                         </View>
                       </View>
@@ -1184,7 +1203,9 @@ export default function ShopScreen() {
                     return (
                       <View key={pack.sku} style={[styles.rechargePackCard, isBest && styles.rechargePackCardBest]}>
                         <View style={styles.rechargePackTop}>
-                          <Text style={styles.rechargePackEmoji}>{pack.emoji}</Text>
+                          <View style={styles.rechargePackIconWrap}>
+                            <UiLucideIcon name={pack.icon} size={30} color={palette.orange} />
+                          </View>
                           <View style={styles.cardBadges}>
                             {pack.marketing?.badge ? (
                               <MarketingBadgeRN
@@ -1412,7 +1433,16 @@ function createShopStyles(p: ThemePalette) {
     backgroundColor: p.card,
   },
   featuredHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 10 },
-  featuredEmoji: { fontSize: 40 },
+  featuredIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorWithAlpha(p.orange, 0.12),
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.orange, 0.25),
+  },
   featuredName: { fontSize: 18, fontWeight: '900', color: C.text, marginTop: 6 },
   featuredDesc: { fontSize: 13, color: C.muted, fontWeight: '600', lineHeight: 20, marginBottom: 8 },
   featuredHook: { fontSize: 13, fontWeight: '700', color: p.linkOnBg, marginBottom: 8 },
@@ -1466,7 +1496,16 @@ function createShopStyles(p: ThemePalette) {
     borderWidth: 2,
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  cardEmoji: { fontSize: 28 },
+  cardIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorWithAlpha(p.orange, 0.1),
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.orange, 0.22),
+  },
   cardBadges: { alignItems: 'flex-end', gap: 4 },
   kindLbl: { fontSize: 9, fontWeight: '900', color: p.subtle, letterSpacing: 1, textAlign: 'right' },
   infoDot: {
@@ -1684,17 +1723,15 @@ function createShopStyles(p: ThemePalette) {
   selectChevron: { fontSize: 10, color: p.linkOnBg, fontWeight: '900' },
   modalRoot: {
     flex: 1,
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: p.overlay,
+    position: 'relative',
   },
   modalSheetWrap: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: p.card,
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '78%',
@@ -1751,6 +1788,9 @@ function createShopStyles(p: ThemePalette) {
   rechargeBalancePillLbl: { fontSize: 10, fontWeight: '800', color: '#92400e' },
   rechargeBalancePillVal: { fontSize: 13, fontWeight: '900', color: C.text },
   rechargeTrustPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     borderRadius: 999,
     backgroundColor: colorWithAlpha(p.text, 0.06),
     paddingVertical: 6,
@@ -1781,7 +1821,16 @@ function createShopStyles(p: ThemePalette) {
     backgroundColor: colorWithAlpha(p.green, 0.12),
   },
   rechargePackTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  rechargePackEmoji: { fontSize: 28 },
+  rechargePackIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorWithAlpha(p.orange, 0.1),
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.orange, 0.2),
+  },
   rechargePackQc: { fontSize: 26, fontWeight: '900', color: '#065f46', marginTop: 8 },
   rechargePackQcUnit: { fontSize: 15, fontWeight: '900', color: '#047857' },
   rechargePackName: { fontSize: 12, fontWeight: '800', color: '#64748b', marginTop: 4 },

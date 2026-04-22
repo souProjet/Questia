@@ -31,7 +31,7 @@ export function AuthQuestShell({ badge, title, subtitle, children, footer }: Aut
       </div>
 
       <main id="main-content" tabIndex={-1} className="relative z-10 mx-auto w-full max-w-[440px] min-w-0 outline-none">
-        <div className="rounded-3xl border border-[rgba(19,33,45,0.1)] bg-white/92 shadow-[0_16px_48px_-12px_rgba(15,23,42,0.14),0_4px_0_rgba(15,23,42,0.04)] backdrop-blur-sm p-6 sm:p-8">
+        <div className="auth-glass-panel p-6 sm:p-8">
           <header className="mb-3 sm:mb-4 text-center">
             <Link
               href="/"

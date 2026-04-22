@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { questDisplayEmoji } from '@questia/shared';
+import { Icon } from '@/components/Icons';
 import { prisma } from '@/lib/db';
 import { alternatesForLocalePath, canonicalUrlFor } from '@/lib/seo/alternates';
 
@@ -37,8 +38,7 @@ export async function generateMetadata({
   if (!log || log.status !== 'completed') {
     return { title: 'Questia' };
   }
-  const displayEmoji = questDisplayEmoji(log.generatedEmoji);
-  const title = `${displayEmoji} ${log.generatedTitle} | Questia`;
+  const title = `${log.generatedTitle} | Questia`;
   const description =
     log.generatedMission.length > 155
       ? `${log.generatedMission.slice(0, 152)}…`
@@ -77,7 +77,7 @@ export default async function SharedQuestPage({
 
   if (!log || log.status !== 'completed') notFound();
 
-  const displayEmoji = questDisplayEmoji(log.generatedEmoji);
+  const questIcon = questDisplayEmoji(log.generatedEmoji);
 
   return (
     <main className="min-h-screen bg-adventure px-4 py-16 sm:px-6">
@@ -85,9 +85,9 @@ export default async function SharedQuestPage({
         <p className="mb-2 text-center text-xs font-black uppercase tracking-[0.22em] text-slate-500">
           {isEn ? 'Shared Quest' : 'Quête partagée'}
         </p>
-        <h1 className="text-center font-display text-2xl font-black text-slate-900 sm:text-3xl">
-          <span className="mr-2 align-[-2px]">{displayEmoji}</span>
-          {log.generatedTitle}
+        <h1 className="flex flex-wrap items-center justify-center gap-2 text-center font-display text-2xl font-black text-slate-900 sm:text-3xl">
+          <Icon name={questIcon} size="lg" className="shrink-0 text-orange-700" aria-hidden />
+          <span>{log.generatedTitle}</span>
         </h1>
         <p className="mt-2 text-center text-sm font-semibold text-slate-500">
           {new Date(`${log.questDate}T12:00:00.000Z`).toLocaleDateString(

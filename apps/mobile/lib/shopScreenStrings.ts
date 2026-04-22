@@ -114,8 +114,6 @@ function frStrings(): ShopScreenStrings {
     flashStripeCanceled: 'Paiement annulé. Tu peux réessayer quand tu veux.',
     kindLabel(kind: ShopCatalogEntry['kind']): string {
       switch (kind) {
-        case 'theme_pack':
-          return 'Thèmes';
         case 'title':
           return 'Titre';
         case 'xp_booster':
@@ -175,7 +173,7 @@ function frStrings(): ShopScreenStrings {
     rechargeSubtitle:
       'Paiement par carte via Stripe. Aucun abonnement — tu paies uniquement le montant choisi.',
     currentBalance: 'Solde actuel',
-    securePayment: '🔒 Paiement sécurisé',
+    securePayment: 'Paiement sécurisé',
     rechargeHint: 'Après validation, les QC sont ajoutés à ton solde. Utilisables dans la boutique.',
     rechargeFooter: 'Tu reviens sur la boutique après le paiement. Annulation = aucun débit.',
     redirecting: 'Redirection…',
@@ -212,8 +210,6 @@ function enStrings(): ShopScreenStrings {
     flashStripeCanceled: 'Payment canceled. You can try again anytime.',
     kindLabel(kind: ShopCatalogEntry['kind']): string {
       switch (kind) {
-        case 'theme_pack':
-          return 'Themes';
         case 'title':
           return 'Title';
         case 'xp_booster':
@@ -273,7 +269,7 @@ function enStrings(): ShopScreenStrings {
     rechargeSubtitle:
       'Pay by card via Stripe. No subscription — you only pay the amount you choose.',
     currentBalance: 'Current balance',
-    securePayment: '🔒 Secure payment',
+    securePayment: 'Secure payment',
     rechargeHint: 'After confirmation, QC are added to your balance. Spend them in the shop.',
     rechargeFooter: 'You return to the shop after payment. Cancel = no charge.',
     redirecting: 'Redirecting…',

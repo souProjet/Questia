@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
+import { Icon } from '@/components/Icons';
 import { HISTORY_PAGE_SIZE, questDisplayEmoji, type EscalationPhase } from '@questia/shared';
 
 type QuestTab = 'quests' | 'wallet';
@@ -478,9 +479,12 @@ function HistoryPageInner() {
                       <div className="hist-quest-card__body">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="flex gap-3 min-w-0">
-                            <span className="text-3xl shrink-0 leading-none" aria-hidden>
-                              {questDisplayEmoji(q.emoji)}
-                            </span>
+                            <Icon
+                              name={questDisplayEmoji(q.emoji)}
+                              size="xl"
+                              className="shrink-0 text-orange-800/95"
+                              aria-hidden
+                            />
                             <div className="min-w-0">
                               <p className="font-display font-black text-lg text-[var(--text)] leading-tight">{q.title}</p>
                               <p className="mt-1 text-xs font-semibold text-[var(--subtle)]">
@@ -523,7 +527,12 @@ function HistoryPageInner() {
                         {q.hook ? <p className="hist-hook">{q.hook}</p> : null}
                         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-semibold text-[var(--subtle)]">
                           {q.duration ? <span>⏱ {q.duration}</span> : null}
-                          {q.destinationLabel ? <span>📍 {q.destinationLabel}</span> : null}
+                          {q.destinationLabel ? (
+                            <span className="inline-flex items-center gap-1">
+                              <Icon name="MapPin" size="xs" className="text-cyan-800 shrink-0" aria-hidden />
+                              {q.destinationLabel}
+                            </span>
+                          ) : null}
                           {q.locationCity ? (
                             <span>
                               {t('city')} {q.locationCity}

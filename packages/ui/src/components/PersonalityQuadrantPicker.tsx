@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   optionSelected: {
-    borderColor: '#22d3ee',
+    borderColor: '#134e4a',
     backgroundColor: 'rgba(34,211,238,0.08)',
   },
   optionInner: {
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     color: DA.text,
   },
   optionLabelSelected: {
-    color: '#22d3ee',
+    color: '#134e4a',
   },
   optionDescription: {
     fontSize: 14,
@@ -93,13 +93,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   radioSelected: {
-    borderColor: '#22d3ee',
+    borderColor: '#134e4a',
     backgroundColor: 'rgba(34,211,238,0.15)',
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#22d3ee',
+    backgroundColor: '#134e4a',
   },
 });

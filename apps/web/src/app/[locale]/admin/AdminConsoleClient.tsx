@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { Icon } from '@/components/Icons';
 import { BADGE_DEFINITIONS, getThemeIds, TITLE_IDS } from '@questia/shared';
 import type { OverviewJson } from './adminOverviewTypes';
 
@@ -401,10 +402,10 @@ export default function AdminConsoleClient() {
           </label>
           <div className="relative mt-2">
             <span
-              className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 select-none text-[1.15rem] opacity-55"
+              className="pointer-events-none absolute left-3.5 top-1/2 z-10 flex h-5 w-5 -translate-y-1/2 items-center justify-center select-none opacity-55"
               aria-hidden
             >
-              🔍
+              <Icon name="Search" className="h-4 w-4 text-[var(--text)]" />
             </span>
             <input
               id="admin-user-search"

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal, ScrollView } from 'react-native';
 import type { QuestModel } from '@questia/shared';
 import { DA } from '../theme';
+import { UiLucideIcon } from './UiLucideIcon';
 
 interface SafetyConsentModalProps {
   visible: boolean;
@@ -43,7 +44,7 @@ export function SafetyConsentModal({ visible, quest, onConfirm, onCancel }: Safe
 
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.warningBadge}>
-              <Text style={styles.warningEmoji}>⚠️</Text>
+              <UiLucideIcon name="AlertTriangle" size={30} color="#ef4444" />
             </View>
 
             <Text style={styles.title}>Charte de Sécurité</Text>
@@ -60,7 +61,7 @@ export function SafetyConsentModal({ visible, quest, onConfirm, onCancel }: Safe
                   onPress={() => toggle(i)}
                 >
                   <View style={[styles.checkbox, checked.has(i) && styles.checkboxChecked]}>
-                    {checked.has(i) && <Text style={styles.checkmark}>✓</Text>}
+                    {checked.has(i) ? <UiLucideIcon name="Check" size={14} color="#fff" /> : null}
                   </View>
                   <Text style={[styles.ruleText, checked.has(i) && styles.ruleTextChecked]}>
                     {rule}
@@ -84,9 +85,16 @@ export function SafetyConsentModal({ visible, quest, onConfirm, onCancel }: Safe
                 onPress={() => { if (allChecked) { reset(); onConfirm(); } }}
                 disabled={!allChecked}
               >
-                <Text style={[styles.confirmText, !allChecked && styles.confirmTextDisabled]}>
-                  J'accepte et je pars ⚔️
-                </Text>
+                <View style={styles.confirmRow}>
+                  <Text style={[styles.confirmText, !allChecked && styles.confirmTextDisabled]}>
+                    J&apos;accepte et je pars
+                  </Text>
+                  <UiLucideIcon
+                    name="Swords"
+                    size={16}
+                    color={allChecked ? '#fff' : DA.muted}
+                  />
+                </View>
               </Pressable>
             </View>
           </ScrollView>
@@ -132,9 +140,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 16,
   },
-  warningEmoji: {
-    fontSize: 28,
-  },
   title: {
     fontSize: 22,
     fontWeight: '900',
@@ -150,7 +155,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   questTitle: {
-    color: '#22d3ee',
+    color: '#134e4a',
     fontWeight: '600',
   },
   rules: {
@@ -184,11 +189,6 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     backgroundColor: '#10b981',
     borderColor: '#10b981',
-  },
-  checkmark: {
-    color: '#fff',
-    fontWeight: '900',
-    fontSize: 13,
   },
   ruleText: {
     flex: 1,
@@ -225,11 +225,11 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 2,
-    backgroundColor: '#f97316',
+    backgroundColor: '#c2410c',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
-    shadowColor: '#f97316',
+    shadowColor: '#c2410c',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
@@ -239,6 +239,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(19,33,45,0.12)',
     shadowOpacity: 0,
     elevation: 0,
+  },
+  confirmRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   confirmText: {
     color: '#fff',

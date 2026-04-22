@@ -7,10 +7,13 @@ import {
   ActivityIndicator,
   StyleSheet,
   Switch,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { BlurView } from 'expo-blur';
+import { colorWithAlpha, UiLucideIcon, type ThemePalette } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
+import { GlassScrim } from './GlassScrim';
 
 type Option = { id: string; label: string };
 export type RefinementQuestionUi = {
@@ -26,17 +29,18 @@ function makeStyles(p: ThemePalette) {
   return StyleSheet.create({
     backdrop: {
       flex: 1,
-      backgroundColor: p.overlay,
+      position: 'relative',
       justifyContent: 'flex-end',
     },
     sheet: {
+      zIndex: 1,
       maxHeight: '90%',
       borderTopLeftRadius: 26,
       borderTopRightRadius: 26,
       overflow: 'hidden',
       borderWidth: 2,
       borderColor: 'rgba(253, 186, 116, 0.45)',
-      shadowColor: '#f97316',
+      shadowColor: '#c2410c',
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.12,
       shadowRadius: 24,
@@ -68,7 +72,6 @@ function makeStyles(p: ThemePalette) {
       borderColor: colorWithAlpha(p.cyan, 0.25),
       backgroundColor: colorWithAlpha(p.cyan, 0.12),
     },
-    iconEmoji: { fontSize: 22 },
     kicker: {
       fontSize: 10,
       fontWeight: '800',
@@ -173,7 +176,6 @@ function makeStyles(p: ThemePalette) {
     radioOff: { borderColor: p.border, backgroundColor: p.card },
     chipText: { fontSize: 13, color: p.onCreamMuted, flex: 1, lineHeight: 20 },
     chipTextOn: { color: p.onCream, fontWeight: '700' },
-    checkMark: { color: '#fff', fontSize: 12, fontWeight: '900' },
     hint: {
       fontSize: 11,
       color: p.subtle,
@@ -188,7 +190,7 @@ function makeStyles(p: ThemePalette) {
       borderColor: p.border,
       backgroundColor: colorWithAlpha(p.cardCream, 0.98),
     },
-    consentEmoji: { fontSize: 32, textAlign: 'center', marginBottom: 8 },
+    consentIconWrap: { alignItems: 'center', marginBottom: 8 },
     consentTitle: {
       fontSize: 17,
       fontWeight: '800',
@@ -351,15 +353,27 @@ function RefinementSheet({
   return (
     <Modal visible={visible} animationType="slide" transparent statusBarTranslucent>
       <View style={styles.backdrop}>
+        <GlassScrim overlayColor={palette.overlay} intensity={56} tint="dark" />
         <View style={styles.sheet}>
+          {Platform.OS !== 'web' ? (
+            <BlurView intensity={46} tint="light" style={StyleSheet.absoluteFillObject} />
+          ) : null}
+          <View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.card, 0.56) }]}
+          />
           <LinearGradient
-            colors={['#22d3ee', '#fbbf24', '#f97316']}
+            colors={['#134e4a', '#92400e', '#c2410c']}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             style={styles.topBar}
           />
           <LinearGradient
-            colors={[palette.cardCream, palette.card, palette.surface]}
+            colors={[
+              colorWithAlpha(palette.cardCream, 0.9),
+              colorWithAlpha(palette.card, 0.86),
+              colorWithAlpha(palette.surface, 0.88),
+            ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0.4, y: 1 }}
             style={styles.sheetGradient}
@@ -367,7 +381,7 @@ function RefinementSheet({
             <View style={styles.topRow}>
               <View style={styles.headerLeft}>
                 <View style={styles.iconWrap}>
-                  <Text style={styles.iconEmoji}>✨</Text>
+                  <UiLucideIcon name="Sparkles" size={22} color={palette.orange} strokeWidth={2} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.kicker}>Personnalisation</Text>
@@ -417,7 +431,7 @@ function RefinementSheet({
                         >
                           <View style={styles.chipInner}>
                             <View style={[styles.radio, sel ? styles.radioOn : styles.radioOff]}>
-                              {sel ? <Text style={styles.checkMark}>✓</Text> : null}
+                              {sel ? <UiLucideIcon name="Check" size={12} color="#fff" strokeWidth={2.8} /> : null}
                             </View>
                             <Text style={[styles.chipText, sel && styles.chipTextOn]}>{opt.label}</Text>
                           </View>
@@ -429,7 +443,9 @@ function RefinementSheet({
                 </View>
               ) : (
                 <View style={styles.consentBlock}>
-                  <Text style={styles.consentEmoji}>🔒</Text>
+                  <View style={styles.consentIconWrap}>
+                    <UiLucideIcon name="Lock" size={32} color={palette.cyan} strokeWidth={1.9} />
+                  </View>
                   <Text style={styles.consentTitle}>Presque fini</Text>
                   <Text style={styles.consentSub}>
                     Confirme ton accord pour qu'on adapte tes quêtes à ces préférences.

@@ -140,11 +140,15 @@ export default function OnboardingPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-12"
           style={{ background: 'radial-gradient(ellipse,rgba(34,211,238,0.35),transparent 70%)' }} />
         <div className="absolute top-[12%] right-[9%] w-[260px] h-[220px] rounded-full opacity-15"
-          style={{ background: 'radial-gradient(ellipse,#f97316,transparent 70%)' }} />
+          style={{ background: 'radial-gradient(ellipse,#c2410c,transparent 70%)' }} />
         <div className="absolute bottom-[10%] left-[8%] w-[260px] h-[220px] rounded-full opacity-15"
-          style={{ background: 'radial-gradient(ellipse,#22d3ee,transparent 70%)' }} />
-        <div className="absolute top-20 left-[12%] text-4xl opacity-10 animate-float select-none">🗺️</div>
-        <div className="absolute bottom-16 right-[10%] text-3xl opacity-10 animate-float select-none">🎲</div>
+          style={{ background: 'radial-gradient(ellipse,#134e4a,transparent 70%)' }} />
+        <div className="absolute top-20 left-[12%] flex items-center justify-center opacity-10 animate-float select-none">
+          <Icon name="Map" className="h-10 w-10 text-cyan-900/40" />
+        </div>
+        <div className="absolute bottom-16 right-[10%] flex items-center justify-center opacity-10 animate-float select-none">
+          <Icon name="Dices" className="h-9 w-9 text-orange-900/40" />
+        </div>
       </div>
 
       <main id="main-content" tabIndex={-1} className="relative w-full max-w-md outline-none">
@@ -154,8 +158,9 @@ export default function OnboardingPage() {
           <QuestiaLogo variant="onboarding" priority />
           <span className="font-display font-black text-2xl tracking-tight text-[var(--text)]">QUESTIA</span>
           {step < 3 && (
-            <span className="text-xs font-bold uppercase tracking-wider text-[var(--link-on-bg)]">
-              🎲 3 choix — des quêtes à ta sauce
+            <span className="inline-flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--link-on-bg)]">
+              <Icon name="Dices" size="sm" className="text-[var(--link-on-bg)]" aria-hidden />
+              3 choix — des quêtes à ta sauce
             </span>
           )}
         </div>
@@ -174,7 +179,7 @@ export default function OnboardingPage() {
                   className="h-full rounded-full transition-[width] duration-500 ease-out"
                   style={{
                     width: filled ? '100%' : '0%',
-                    background: 'linear-gradient(90deg, #22d3ee, #14b8a6, #f97316)',
+                    background: 'linear-gradient(90deg, #134e4a, #166534, #c2410c)',
                   }}
                 />
               </div>
@@ -191,7 +196,10 @@ export default function OnboardingPage() {
                 Dimanche libre,<br />
                 <span className="text-gradient">tu fais quoi ?</span>
               </h1>
-              <p className="text-sm text-[var(--text)]/70 mt-3">Le clic qui te ressemble ✨</p>
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-[var(--text)]/70">
+                <Icon name="Sparkles" size="sm" className="text-amber-600/90 shrink-0" aria-hidden />
+                Le clic qui te ressemble
+              </p>
             </div>
             <div className="space-y-3">
               {Q1_OPTIONS.map((o, idx) => (
@@ -226,7 +234,10 @@ export default function OnboardingPage() {
                 Plan foiré,<br />
                 <span className="text-gradient">tu réagis comment ?</span>
               </h1>
-              <p className="text-sm text-[var(--text)]/70 mt-3">Dernier clic 🎯</p>
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-[var(--text)]/70">
+                <Icon name="Target" size="sm" className="text-cyan-800/90 shrink-0" aria-hidden />
+                Dernier clic
+              </p>
             </div>
             <div className="space-y-3">
               {Q2_OPTIONS.map((o, idx) => (
@@ -268,7 +279,7 @@ export default function OnboardingPage() {
                 En soirée,<br />
                 <span className="text-gradient">t&apos;es comment ?</span>
               </h1>
-              <p className="text-sm text-[var(--text)]/70 mt-3">Optionnel — passe si tu veux 🤷</p>
+              <p className="text-sm text-[var(--text)]/70 mt-3">Optionnel — passe si tu veux</p>
             </div>
             <div className="space-y-3">
               {Q3_OPTIONS.map((o, idx) => (
@@ -315,7 +326,10 @@ export default function OnboardingPage() {
             role="region"
             aria-label="Ton profil Questia"
           >
-            <p className="label mb-2">C&apos;est tout ✓</p>
+            <p className="label mb-2 inline-flex items-center justify-center gap-1.5">
+              <Icon name="Check" size="sm" className="text-emerald-700 shrink-0" aria-hidden />
+              C&apos;est tout
+            </p>
             <h2 className="font-display font-black text-2xl sm:text-3xl text-[var(--text)] mb-2 leading-tight">
               Ton profil en un clin d&apos;œil
             </h2>
@@ -377,7 +391,12 @@ export default function OnboardingPage() {
                   <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                   Patience…
                 </span>
-              ) : '🚀 Créer mon compte'}
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <Icon name="Rocket" size="sm" className="text-white shrink-0" aria-hidden />
+                  Créer mon compte
+                </span>
+              )}
             </button>
 
             <button

@@ -116,18 +116,23 @@ export function Navbar() {
   }, [drawerMounted, closeMobile]);
 
   const marketingNavPillClass =
-    'inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-2.5 lg:px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all text-sm';
+    'inline-flex shrink-0 items-center gap-1.5 xl:gap-2 whitespace-nowrap px-2 md:px-2.5 xl:px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent hover:border-cyan-300/60 transition-all text-sm';
 
   /** Accès secondaire à la page « génération des quêtes » — à droite avec la langue pour éviter le chevauchement sur largeurs moyennes. */
   const questGenDiscreteClass =
     'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-700 hover:bg-white/45 hover:border-slate-200/60 transition-all motion-reduce:transition-none';
 
   const marketingDesktop = (
-    <div className="inline-flex w-max min-w-0 max-w-none flex-nowrap items-center gap-1.5 lg:gap-2 xl:gap-2.5">
+    <div className="inline-flex w-max min-w-0 max-w-none flex-nowrap items-center gap-1 md:gap-1.5 lg:gap-2 xl:gap-2.5">
       {marketingMenu.map(({ href, label, Icon }) => (
         <a key={href} href={href} className={marketingNavPillClass}>
           <span>{label}</span>
-          <Icon className="h-4 w-4 shrink-0 opacity-90" aria-hidden strokeWidth={2.25} />
+          {/* Icônes masquées sous xl : gagne de la place par lien et évite que le dernier (FAQ) passe sous la colonne droite. */}
+          <Icon
+            className="hidden h-4 w-4 shrink-0 opacity-90 xl:block"
+            aria-hidden
+            strokeWidth={2.25}
+          />
         </a>
       ))}
     </div>
@@ -136,7 +141,7 @@ export function Navbar() {
   const navShellClass = [
     'navbar-shell mx-auto w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[min(90rem,calc(100vw-2rem))] rounded-2xl min-w-0 px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3',
     showMarketingNav
-      ? 'flex flex-nowrap items-center justify-between gap-2 sm:gap-3 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-x-2 md:gap-y-0 lg:gap-x-4 xl:gap-x-6'
+      ? 'flex flex-nowrap items-center justify-between gap-2 sm:gap-3 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-x-1.5 md:gap-y-0 lg:gap-x-3 xl:gap-x-6'
       : 'flex flex-nowrap items-center justify-between gap-2 sm:gap-4 md:gap-5 lg:gap-7 xl:gap-10',
   ].join(' ');
 
@@ -162,7 +167,7 @@ export function Navbar() {
         </Link>
 
         {showMarketingNav && (
-          <div className="hidden min-w-0 justify-self-stretch md:flex md:min-w-0 md:items-center md:justify-center md:overflow-x-auto md:overflow-y-visible md:px-1 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden">
+          <div className="hidden min-w-0 w-full max-w-full justify-self-stretch md:flex md:min-w-0 md:min-h-0 md:items-center md:justify-start xl:justify-center md:overflow-x-auto md:overflow-y-clip md:px-1 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden">
             {marketingDesktop}
           </div>
         )}
@@ -174,7 +179,7 @@ export function Navbar() {
               className={`${questGenDiscreteClass} hidden md:inline-flex`}
               title={t('navQuestGen')}
             >
-              <Sparkles className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={2.25} aria-hidden />
+              <Sparkles className="hidden h-3.5 w-3.5 shrink-0 opacity-55 lg:inline" strokeWidth={2.25} aria-hidden />
               <span>{t('navQuestGenShort')}</span>
             </Link>
           ) : null}
@@ -216,7 +221,7 @@ export function Navbar() {
               )}
               <UserButton
                 appearance={{
-                  variables: { colorPrimary: '#f97316' },
+                  variables: { colorPrimary: '#c2410c' },
                   elements: { avatarBox: 'w-8 h-8' },
                 }}
               />

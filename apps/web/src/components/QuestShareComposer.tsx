@@ -80,7 +80,7 @@ function QuestShareCardFrame({
   const panelBg = panelDark ? 'rgba(15,23,42,0.72)' : 'rgba(255,255,255,0.74)';
   const titleColor = panelDark ? '#f8fafc' : '#0f172a';
   const mutedColor = panelDark ? 'rgba(226,232,240,0.88)' : '#475569';
-  const accentColor = panelDark ? '#22d3ee' : '#0e7490';
+  const accentColor = panelDark ? '#2dd4bf' : '#115e59';
   const dateLabel = formatQuestDateFr(payload.questDate);
   const fontSans = 'var(--font-inter), ui-sans-serif, system-ui, sans-serif';
   const fontDisplay = 'var(--font-space), var(--font-inter), ui-sans-serif, system-ui, sans-serif';
@@ -336,13 +336,16 @@ function QuestShareCardFrame({
           >
             <span
               style={{
-                fontSize: 40,
-                lineHeight: 1,
                 flexShrink: 0,
                 marginTop: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 40,
+                height: 40,
               }}
             >
-              {questDisplayEmoji(payload.emoji)}
+              <Icon name={questDisplayEmoji(payload.emoji)} className="h-9 w-9 text-slate-800" />
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p
@@ -392,8 +395,10 @@ function QuestShareCardFrame({
             {payload.streak > 0 ? (
               <>
                 {' · '}
-                <span style={{ fontWeight: 700 }}>🔥 {payload.streak}</span> jour
-                {payload.streak !== 1 ? 's' : ''} de suite
+                <span style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Icon name="Flame" className="h-3.5 w-3.5 text-orange-600 shrink-0" />
+                  {payload.streak} jour{payload.streak !== 1 ? 's' : ''} de suite
+                </span>
               </>
             ) : null}
           </p>
@@ -662,10 +667,6 @@ export function QuestShareComposer({
             } else {
               node.style.background = 'rgba(255, 255, 255, 0.92)';
             }
-          });
-          cloned.querySelectorAll<HTMLElement>('[data-share-emoji-decor]').forEach((node) => {
-            node.style.filter = 'none';
-            node.style.textShadow = '0 4px 14px rgba(15, 23, 42, 0.2)';
           });
         },
       });

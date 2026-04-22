@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Navbar } from '@/components/Navbar';
+import { Icon } from '@/components/Icons';
 import {
   BADGE_CATEGORY_LABEL_EN,
   BADGE_CATEGORY_LABEL_FR,
@@ -263,11 +264,12 @@ export default function ProfilePage() {
             </section>
 
             <section className="flex flex-wrap gap-3 mb-10">
-              <span className="pill-expansion shadow-sm">
-                <span aria-hidden>📍</span> {t('dayChip', { day: data.currentDay })}
+              <span className="pill-expansion shadow-sm inline-flex items-center gap-1.5">
+                <Icon name="MapPin" size="sm" className="text-[var(--cyan)]" aria-hidden />
+                {t('dayChip', { day: data.currentDay })}
               </span>
-              <span className="streak-badge text-xs shadow-sm">
-                <span aria-hidden>🔥</span>
+              <span className="streak-badge text-xs shadow-sm inline-flex items-center gap-1.5">
+                <Icon name="Flame" size="sm" className="text-orange-600" aria-hidden />
                 <span className="font-black">{data.streakCount}</span> {t('streakChip')}
               </span>
             </section>
@@ -287,10 +289,10 @@ export default function ProfilePage() {
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <span
-                      className={`text-3xl leading-none ${!b.unlocked ? 'opacity-55 saturate-50' : ''}`}
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface)] ring-1 ring-[color:color-mix(in_srgb,var(--text)_8%,transparent)] ${!b.unlocked ? 'opacity-55 saturate-50' : ''}`}
                       aria-hidden
                     >
-                      {b.placeholderEmoji}
+                      <Icon name={b.placeholderIcon} size="lg" className="text-[var(--orange)]" />
                     </span>
                     {b.unlocked ? (
                       <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-black uppercase tracking-wider text-emerald-900 ring-1 ring-emerald-400/55 shadow-sm">
@@ -452,19 +454,21 @@ export default function ProfilePage() {
               <div className="rounded-2xl border border-[var(--border-ui)] bg-[var(--card)] p-5 sm:p-6 shadow-sm">
                 <h3 className="text-xs font-black uppercase tracking-widest text-[var(--muted)] mb-4">{t('legalTitle')}</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {[
-                    { href: '/legal/confidentialite', label: t('legalPrivacy'), icon: '🔒' },
-                    { href: '/legal/mentions-legales', label: t('legalLegal'), icon: '📄' },
-                    { href: '/legal/cgu', label: t('legalTerms'), icon: '📋' },
-                    { href: '/legal/cgv', label: t('legalSales'), icon: '💳' },
-                    { href: '/legal/bien-etre', label: t('legalWellbeing'), icon: '💚' },
-                  ].map((l) => (
+                  {(
+                    [
+                      { href: '/legal/confidentialite', label: t('legalPrivacy'), icon: 'Lock' as const },
+                      { href: '/legal/mentions-legales', label: t('legalLegal'), icon: 'FileText' as const },
+                      { href: '/legal/cgu', label: t('legalTerms'), icon: 'ClipboardList' as const },
+                      { href: '/legal/cgv', label: t('legalSales'), icon: 'CreditCard' as const },
+                      { href: '/legal/bien-etre', label: t('legalWellbeing'), icon: 'Heart' as const },
+                    ] as const
+                  ).map((l) => (
                     <Link
                       key={l.href}
                       href={l.href}
                       className="flex items-center gap-2 rounded-xl border border-[var(--border-ui)] bg-[var(--surface)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] hover:border-cyan-400/50 hover:bg-cyan-50/60 transition-colors duration-150"
                     >
-                      <span className="text-base leading-none" aria-hidden>{l.icon}</span>
+                      <Icon name={l.icon} size="sm" className="text-[var(--muted)] shrink-0" aria-hidden />
                       {l.label}
                     </Link>
                   ))}
@@ -481,7 +485,7 @@ export default function ProfilePage() {
                   disabled={exporting}
                   className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/50 bg-cyan-50/70 px-4 py-2.5 text-sm font-bold text-cyan-900 hover:bg-cyan-100/80 hover:border-cyan-500/70 transition-colors disabled:opacity-50"
                 >
-                  <span aria-hidden>📥</span>
+                  <Icon name="Download" size="sm" className="shrink-0" aria-hidden />
                   {exporting ? t('exportPreparing') : t('exportCta')}
                 </button>
               </div>
@@ -489,7 +493,7 @@ export default function ProfilePage() {
               {/* ── Suppression ── */}
               <div className="rounded-2xl border border-red-200/80 bg-red-50/50 p-5 sm:p-6 shadow-sm">
                 <div className="flex items-start gap-3 mb-2">
-                  <span className="shrink-0 text-lg leading-none mt-0.5" aria-hidden>⚠️</span>
+                  <Icon name="AlertTriangle" size="md" className="shrink-0 text-red-600 mt-0.5" aria-hidden />
                   <h3 className="font-bold text-red-900">{t('deleteTitle')}</h3>
                 </div>
                 <p className="text-sm text-red-800/80 mb-4 leading-relaxed">

@@ -205,7 +205,7 @@ function SafetySheet({
               disabled={!ok}
               className="btn btn-md flex-[2] text-white transition-all"
               style={{
-                background: ok ? 'linear-gradient(135deg,#f97316,#fbbf24)' : 'rgba(15,23,42,.08)',
+                background: ok ? 'linear-gradient(135deg,#c2410c,#92400e)' : 'rgba(15,23,42,.08)',
                 color: ok ? '#fff' : '#64748b',
                 cursor: ok ? 'pointer' : 'not-allowed',
                 boxShadow: ok ? '0 4px 20px rgba(249,115,22,.35)' : 'none',
@@ -1214,10 +1214,13 @@ function AppPageContent() {
               <>
                 <div className="relative z-0 flex flex-col px-5 pb-1 pt-5 sm:px-6">
                   <div className="flex flex-col items-center text-center">
-                    <h2 className="font-display flex max-w-[24ch] items-baseline justify-center gap-2 px-1 text-xl font-black leading-snug text-[var(--text)] sm:text-[22px]">
-                      <span className="text-[22px] leading-none select-none sm:text-[24px]" aria-hidden>
-                        {questDisplayEmoji(quest.emoji)}
-                      </span>
+                    <h2 className="font-display flex max-w-[24ch] items-center justify-center gap-2 px-1 text-xl font-black leading-snug text-[var(--text)] sm:text-[22px]">
+                      <Icon
+                        name={questDisplayEmoji(quest.emoji)}
+                        size="lg"
+                        className="shrink-0 text-[var(--orange)]"
+                        aria-hidden
+                      />
                       <span>{quest.title}</span>
                     </h2>
                     <p className="mt-2 max-w-md text-[13px] leading-snug text-[var(--muted)]">
@@ -1274,7 +1277,12 @@ function AppPageContent() {
 
                 {isAccepted && (
                   <div className="px-5 pb-5 space-y-2">
-                    <button type="button" onClick={() => void doComplete()} className="btn btn-primary btn-lg w-full text-base font-black">
+                    <button
+                      type="button"
+                      onClick={() => void doComplete()}
+                      className="btn btn-primary btn-lg w-full text-base font-black inline-flex items-center justify-center gap-2"
+                    >
+                      <Icon name="Check" size="md" className="shrink-0" aria-hidden />
                       {t('validateQuest')}
                     </button>
                     <button
@@ -1323,7 +1331,12 @@ function AppPageContent() {
                     >
                       {rerolling ? '\u2026' : t('changeQuest', { label: rerollLabel })}
                     </button>
-                    <button type="button" onClick={handleAccept} className="btn btn-cta btn-lg w-full text-base font-black">
+                    <button
+                      type="button"
+                      onClick={handleAccept}
+                      className="btn btn-cta btn-lg w-full text-base font-black inline-flex items-center justify-center gap-2"
+                    >
+                      <Icon name="Swords" size="md" className="shrink-0" aria-hidden />
                       {t('acceptChallenge')}
                     </button>
                     <button

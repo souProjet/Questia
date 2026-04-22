@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { CommonActions } from '@react-navigation/native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,7 +43,6 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
         {
           paddingBottom: bottom,
           paddingTop: 8,
-          backgroundColor: palette.surface,
           borderTopWidth: 2,
           borderTopColor: colorWithAlpha(palette.cyan, 0.52),
         },
@@ -57,6 +57,26 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
         }),
       ]}
     >
+      {Platform.OS === 'web' ? (
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.surface, 0.94) }]}
+        />
+      ) : (
+        <BlurView
+          pointerEvents="none"
+          intensity={Platform.OS === 'ios' ? 96 : 72}
+          tint="light"
+          style={StyleSheet.absoluteFillObject}
+        />
+      )}
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFillObject,
+          { backgroundColor: colorWithAlpha(palette.card, Platform.OS === 'ios' ? 0.42 : 0.62) },
+        ]}
+      />
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const focused = state.index === index;
@@ -122,6 +142,8 @@ export function QuestiaTabBar({ state, descriptors, navigation }: BottomTabBarPr
 
 const styles = StyleSheet.create({
   outer: {
+    position: 'relative',
+    overflow: 'hidden',
     flexDirection: 'row',
     borderTopWidth: 0,
     paddingTop: 0,

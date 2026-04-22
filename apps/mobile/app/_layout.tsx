@@ -28,7 +28,7 @@ const errStyles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '800', color: '#ef4444', marginBottom: 12 },
   message: { fontSize: 14, color: DA.text, fontFamily: 'monospace', marginBottom: 16 },
   hint: { fontSize: 13, color: DA.muted, marginBottom: 24, lineHeight: 20 },
-  btn: { backgroundColor: '#f97316', paddingVertical: 14, borderRadius: 14, alignItems: 'center', shadowColor: '#f97316', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 4 },
+  btn: { backgroundColor: '#c2410c', paddingVertical: 14, borderRadius: 14, alignItems: 'center', shadowColor: '#c2410c', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 4 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });
 

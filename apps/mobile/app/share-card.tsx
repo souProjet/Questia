@@ -36,6 +36,7 @@ import {
   type ThemePalette,
 } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
+import { GlassScrim } from '../components/GlassScrim';
 import { useAppLocale } from '../contexts/AppLocaleContext';
 import { hapticLight, hapticMedium } from '../lib/haptics';
 
@@ -52,10 +53,11 @@ function siteHostDisplay(base: string): string {
 /** 2ᵉ couleur du dégradé du bouton partage (orange plus profond, cohérent par thème). */
 function orangeGradientEnd(orange: string): string {
   const map: Record<string, string> = {
-    '#f97316': '#ea580c',
+    '#c2410c': '#9a3412',
+    '#f97316': '#9a3412',
+    '#d9725c': '#9a3412',
     '#fb923c': '#ea580c',
     '#ea580c': '#c2410c',
-    '#c2410c': '#9a3412',
   };
   return map[orange] ?? '#ea580c';
 }
@@ -900,10 +902,11 @@ export default function ShareCardScreen() {
       onRequestClose={() => setPhotoSheetOpen(false)}
     >
       <View style={styles.photoSheetRoot} accessibilityViewIsModal>
-        <Pressable
-          style={styles.photoSheetBackdrop}
+        <GlassScrim
+          overlayColor={palette.overlay}
+          intensity={52}
+          tint="dark"
           onPress={() => setPhotoSheetOpen(false)}
-          accessibilityRole="button"
           accessibilityLabel="Fermer"
         />
         <SafeAreaView edges={['bottom']} style={styles.photoSheetSafe}>
@@ -1351,15 +1354,13 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
   photoSheetRoot: {
     flex: 1,
     justifyContent: 'flex-end',
-  },
-  photoSheetBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: p.overlay,
+    position: 'relative',
   },
   photoSheetSafe: {
     width: '100%',
     maxWidth: 520,
     alignSelf: 'center',
+    zIndex: 3,
   },
   photoSheetCard: {
     borderTopLeftRadius: 22,

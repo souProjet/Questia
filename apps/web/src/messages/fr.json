@@ -171,24 +171,24 @@
     },
     "steps": [
       {
-        "emoji": "🎯",
+        "icon": "Target",
         "title": "Toi, d'abord",
         "desc": "Tu indiques ton style et ce que tu es prêt à tenter — les missions s'alignent sur ton profil et ton énergie du moment."
       },
       {
-        "emoji": "🧠",
+        "icon": "Brain",
         "title": "Profil en 2 questions",
         "desc": "Deux réponses pour calibrer le défi — ni trop facile, ni injouable."
       },
       {
-        "emoji": "⚔️",
+        "icon": "Swords",
         "title": "Ta quête du matin",
         "desc": "Une mission courte, avec une fin claire. Tu coches, tu passes à autre chose."
       }
     ],
     "examples": [
       {
-        "emoji": "📸",
+        "icon": "Camera",
         "title": "L'Explorateur Urbain",
         "contextLabel": "Curiosité · après-midi",
         "mission": "Passe 1h dans un quartier que tu traverses sans jamais t'y arrêter. Photographie 5 choses qui t'étonnent.",
@@ -196,7 +196,7 @@
         "outdoor": true
       },
       {
-        "emoji": "☕",
+        "icon": "Coffee",
         "title": "Le Café des Étrangers",
         "contextLabel": "Pause sociale · 45 min",
         "mission": "Va dans un café que tu ne connais pas. Commande quelque chose que tu ne prends jamais. 45 min sans téléphone — mode boss fight.",
@@ -204,7 +204,7 @@
         "outdoor": false
       },
       {
-        "emoji": "📞",
+        "icon": "Phone",
         "title": "Ta Voix, une Fois",
         "contextLabel": "Reconnexion · court",
         "mission": "Appelle quelqu'un à qui tu penses depuis longtemps. Dis-lui que tu pensais à lui. Quête bonus : écoute vraiment.",
@@ -350,7 +350,7 @@
     "greeting": "Salut {name}",
     "defaultName": "aventurier·e",
     "heroTitle": "Place à ta quête du jour",
-    "heroSubtitle": "🎯 Objectif : sortir du pilote automatique — mode aventure.",
+    "heroSubtitle": "Objectif : sortir du pilote automatique — mode aventure.",
     "streakTitle": "Série : jours d'affilée avec une quête générée. Un abandon remet la série à zéro ; reporter ou relancer ne casse pas la série.",
     "streakDay": "jour",
     "streakDays": "jours",
@@ -359,8 +359,8 @@
     "journeyDay": "Parcours · jour {day}",
     "equippedTitleShop": "Titre boutique",
     "xpBonusTooltip": "Surcharges XP boutique restantes",
-    "xpBonusCharges": "⚡ {n} bonus XP",
-    "levelLine": "⭐ Niveau {level} · {xp} XP",
+    "xpBonusCharges": "{n} bonus XP",
+    "levelLine": "Niveau {level} · {xp} XP",
     "xpToLevel": "+{xp} XP pour monter",
     "xpInLevel": "{into}/{per} dans ce niveau",
     "questOfDay": "Quête du jour",
@@ -375,7 +375,7 @@
     "paceTodayTitle": "Pensée pour être bouclée dans la journée.",
     "pacePlannedLabel": "Rythme : à caler",
     "paceTodayLabel": "Rythme : aujourd'hui",
-    "outdoorBadge": "🌿 Extérieur",
+    "outdoorBadge": "Extérieur",
     "mapHeading": "Point de rendez-vous",
     "mapDescription": "Un point d'appui pour ta mission. Active la localisation pour voir l'itinéraire à pied sur la carte.",
     "hookLabel": "Pensée du jour",
@@ -393,10 +393,10 @@
     "abandonedSubtitle": "Aucun jugement : ta série est repartie à zéro, demain est une nouvelle carte.",
     "saving": "Enregistrement…",
     "confirming": "Confirmation…",
-    "validateQuest": "✅ J'ai fait la quête — valider",
+    "validateQuest": "J'ai fait la quête — valider",
     "validateHint": "Quand c'est fait dans la vraie vie, valide ici pour cocher ta mission.",
     "abandonLink": "Je ne peux pas la faire — passer cette carte",
-    "acceptChallenge": "⚔️ Je relève le défi !",
+    "acceptChallenge": "Je relève le défi !",
     "changeQuest": "Changer de quête ({label})",
     "rerollConfirmTitle": "Changer de quête ?",
     "rerollConfirmBody": "Tu consommes une relance et l\u2019XP de la nouvelle quête sera réduit de 25 %. Cette action est irréversible.",
@@ -415,7 +415,7 @@
     "abandonModalBody": "Aucun problème : ta série repart à zéro, sans mauvaise note. Demain, une nouvelle quête t'attend.",
     "back": "Retour",
     "bannerDismiss": "OK",
-    "safetyTitle": "🛡️ Avant de partir…",
+    "safetyTitle": "Avant de partir…",
     "safetySubtitle": "{title} se passe en extérieur. Coche chaque point pour confirmer.",
     "safetyRule1": "Je reste dans des lieux publics et accessibles.",
     "safetyRule2": "Je n'entrerai pas dans des propriétés privées.",
@@ -633,7 +633,7 @@
     "metadataTitle": "Connexion",
     "metadataDescription": "Connecte-toi à Questia pour retrouver ta quête du jour et ta série.",
     "badge": "Reprendre ta progression",
-    "title": "Bon retour, aventurier·e ⚔️",
+    "title": "Bon retour, aventurier·e",
     "subtitle": "Connecte-toi pour retrouver ta quête du jour et ta série.",
     "footerPrompt": "Pas encore de compte ?",
     "footerLink": "Créer un compte gratuitement"
@@ -642,7 +642,7 @@
     "metadataTitle": "Inscription",
     "metadataDescription": "Crée ton compte Questia — ta première quête personnalisée t'attend.",
     "badge": "Débloquer ta première quête",
-    "title": "Lance l'aventure 🎮",
+    "title": "Lance l'aventure",
     "subtitle": "Inscris-toi — ta première quête personnalisée t'attend de l'autre côté.",
     "footerPrompt": "Déjà un compte ?",
     "footerLink": "Se connecter"

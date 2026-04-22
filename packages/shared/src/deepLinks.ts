@@ -55,7 +55,7 @@ export function formatQuestShareEquippedTitleLine(
   if (!equippedTitleId) return null;
   const d = getTitleDefinition(equippedTitleId);
   if (!d) return null;
-  return `${d.emoji} ${d.label}`;
+  return d.label;
 }
 
 /** Ligne niveau + XP totaux pour carte / texte de partage. */

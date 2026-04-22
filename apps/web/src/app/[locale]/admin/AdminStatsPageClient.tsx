@@ -112,21 +112,21 @@ export default function AdminStatsPageClient() {
         </div>
 
         <div className="relative grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <AdminStat label="Comptes profil" value={d.totalProfiles} hint="total enregistrés" accent="cyan" icon="👤" />
-          <AdminStat label="Comptes admin" value={d.adminProfilesCount} hint="rôle administrateur" accent="violet" icon="✦" />
-          <AdminStat label="Inscriptions 7 j." value={d.profilesLast7Days} hint="nouveaux profils" accent="orange" icon="📈" />
+          <AdminStat label="Comptes profil" value={d.totalProfiles} hint="total enregistrés" accent="cyan" icon="User" />
+          <AdminStat label="Comptes admin" value={d.adminProfilesCount} hint="rôle administrateur" accent="violet" icon="Star" />
+          <AdminStat label="Inscriptions 7 j." value={d.profilesLast7Days} hint="nouveaux profils" accent="orange" icon="TrendingUp" />
           <AdminStat
             label="Quêtes générées aujourd'hui"
             value={d.questLogsForToday}
             hint={`jour ${d.todayUtc} (UTC)`}
             accent="violet"
-            icon="📜"
+            icon="ScrollText"
           />
-          <AdminStat label="Complétions aujourd'hui" value={d.completedToday} hint="tous utilisateurs" accent="cyan" icon="✓" />
-          <AdminStat label="Complétions (total)" value={d.totalCompletedQuests} hint="historique" accent="orange" icon="🏆" />
-          <AdminStat label="QC en circulation" value={d.totalCoinsInEconomy} hint="somme des soldes" accent="emerald" icon="🪙" />
-          <AdminStat label="Transactions boutique" value={d.shopTransactionsCount} hint="paiements / portefeuille" accent="cyan" icon="🛒" />
-          <AdminStat label="Appareils push" value={d.pushDevicesCount} hint="application mobile" accent="orange" icon="📱" />
+          <AdminStat label="Complétions aujourd'hui" value={d.completedToday} hint="tous utilisateurs" accent="cyan" icon="Check" />
+          <AdminStat label="Complétions (total)" value={d.totalCompletedQuests} hint="historique" accent="orange" icon="Trophy" />
+          <AdminStat label="QC en circulation" value={d.totalCoinsInEconomy} hint="somme des soldes" accent="emerald" icon="Coins" />
+          <AdminStat label="Transactions boutique" value={d.shopTransactionsCount} hint="paiements / portefeuille" accent="cyan" icon="ShoppingCart" />
+          <AdminStat label="Appareils push" value={d.pushDevicesCount} hint="application mobile" accent="orange" icon="Smartphone" />
         </div>
 
         {statusEntries.length > 0 ? (

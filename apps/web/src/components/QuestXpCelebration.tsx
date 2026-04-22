@@ -10,6 +10,7 @@ import {
   type DisplayBadge,
   type XpBreakdown,
 } from '@questia/shared';
+import { Icon } from '@/components/Icons';
 
 type Props = {
   open: boolean;
@@ -313,11 +314,11 @@ export function QuestXpCelebration({
                     }}
                   >
                     <span
-                      className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-cyan-100 text-2xl shadow-inner ring-2 ring-amber-300/50 ring-offset-2 ring-offset-white/90 motion-safe:animate-xp-number-pop motion-reduce:animate-none"
+                      className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-cyan-100 shadow-inner ring-2 ring-amber-300/50 ring-offset-2 ring-offset-white/90 motion-safe:animate-xp-number-pop motion-reduce:animate-none"
                       style={{ animationDelay: reducedMotion ? '0ms' : `${300 + i * 95}ms` }}
                       aria-hidden
                     >
-                      {b.placeholderEmoji}
+                      <Icon name={b.placeholderIcon} size="lg" className="text-orange-700" />
                     </span>
                     <div className="min-w-0">
                       <p className="font-black text-[var(--on-cream)]">{b.title}</p>

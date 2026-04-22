@@ -24,6 +24,7 @@ import {
 import { AnalyticsEvent } from '@/lib/analytics/events';
 import { trackAnalyticsEvent } from '@/lib/analytics/track';
 import { trackMetaPixelEvent } from '@/lib/analytics/trackMeta';
+import { Icon } from '@/components/Icons';
 
 function notifyQuestScreenShopGrantsUpdated() {
   if (typeof window !== 'undefined') {
@@ -70,7 +71,8 @@ function RechargeModalContent({
                 </span>
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--on-cream)_10%,transparent)] px-2.5 py-1 text-[11px] font-semibold text-[var(--on-cream-muted)]">
-                <span aria-hidden>🔒</span> {t('securePay')}
+                <Icon name="Lock" size="xs" className="text-amber-900/70 shrink-0" aria-hidden />
+                {t('securePay')}
               </span>
             </div>
           </div>
@@ -80,7 +82,7 @@ function RechargeModalContent({
             onClick={onClose}
             aria-label={t('close')}
           >
-            ✕
+            <Icon name="X" size="md" />
           </button>
         </div>
         <p className="mt-3 text-[11px] leading-relaxed text-[var(--on-cream-muted)]">
@@ -108,8 +110,8 @@ function RechargeModalContent({
                 }`}
               >
                 <div className="mb-3 flex items-start justify-between gap-2">
-                  <span className="text-3xl leading-none" aria-hidden>
-                    {pack.emoji}
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] ring-1 ring-[color:var(--border-ui)]" aria-hidden>
+                    <Icon name={pack.icon} size="lg" className="text-[var(--orange)]" />
                   </span>
                   <div className="flex flex-wrap items-center justify-end gap-1">
                     {pack.marketing?.badge ? <MarketingBadge badge={pack.marketing.badge} /> : null}
@@ -147,12 +149,12 @@ function RechargeModalContent({
                   <ul className="mt-3 space-y-1.5 border-t border-[color:var(--border-ui)] pt-3">
                     {pack.includedItems.map((line) => (
                       <li key={line} className="flex gap-2 text-[11px] font-semibold leading-snug text-[var(--muted)]">
-                        <span
+                        <Icon
+                          name="Check"
+                          size="xs"
                           className={`mt-0.5 shrink-0 ${isBest ? 'text-emerald-600' : 'text-[var(--green)]'}`}
                           aria-hidden
-                        >
-                          ✓
-                        </span>
+                        />
                         <span>{line}</span>
                       </li>
                     ))}
@@ -244,11 +246,10 @@ type TxRow = {
 
 function kindOrder(kind: ShopCatalogEntry['kind']): number {
   const order: Record<ShopCatalogEntry['kind'], number> = {
-    theme_pack: 0,
-    title: 1,
-    xp_booster: 2,
-    reroll_pack: 3,
-    bundle: 4,
+    title: 0,
+    xp_booster: 1,
+    reroll_pack: 2,
+    bundle: 3,
   };
   return order[kind] ?? 9;
 }
@@ -285,8 +286,6 @@ function ShopPageInner() {
   const kindLabel = useCallback(
     (kind: ShopCatalogEntry['kind']) => {
       switch (kind) {
-        case 'theme_pack':
-          return t('kindTheme');
         case 'title':
           return t('kindTitle');
         case 'xp_booster':
@@ -332,13 +331,12 @@ function ShopPageInner() {
     window.setTimeout(() => setPurchaseHighlightSku(null), 1800);
   }, []);
 
-  const { featuredBundle, xpItems, themeItems, titleItems, rerollItems } = useMemo(() => {
+  const { featuredBundle, xpItems, titleItems, rerollItems } = useMemo(() => {
     const bundle = items.find((i) => i.kind === 'bundle');
     const rest = items.filter((i) => i.kind !== 'bundle');
     return {
       featuredBundle: bundle,
       xpItems: rest.filter((i) => i.kind === 'xp_booster'),
-      themeItems: rest.filter((i) => i.kind === 'theme_pack'),
       titleItems: rest.filter((i) => i.kind === 'title'),
       rerollItems: rest.filter((i) => i.kind === 'reroll_pack'),
     };
@@ -564,8 +562,8 @@ function ShopPageInner() {
         } ${bump ? 'motion-safe:animate-shop-card-bump motion-reduce:ring-2 motion-reduce:ring-amber-300/50' : ''}`}
       >
         <div className="flex items-start justify-between gap-2 flex-wrap">
-          <span className="text-3xl leading-none" aria-hidden>
-            {item.emoji}
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] ring-1 ring-[color:var(--border-ui)]" aria-hidden>
+            <Icon name={item.icon} size="lg" className="text-[var(--orange)]" />
           </span>
           <div className="flex flex-wrap items-center gap-1 justify-end">
             {m?.badge ? <MarketingBadge badge={m.badge} /> : null}
@@ -686,43 +684,45 @@ function ShopPageInner() {
               <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden" aria-hidden>
                 <div className="absolute inset-0 bg-gradient-to-b from-amber-300/45 via-fuchsia-400/15 to-cyan-400/25 motion-safe:animate-shop-celebration-overlay motion-reduce:hidden" />
                 <div className="absolute inset-0 bg-gradient-to-t from-violet-500/10 via-transparent to-amber-200/20 motion-safe:animate-shop-gold-flash motion-reduce:hidden" />
-                {[
-                  { emoji: '✨', left: '10%', top: '24%', delay: '0ms', orbit: false },
-                  { emoji: '🎉', left: '82%', top: '18%', delay: '90ms', orbit: true },
-                  { emoji: '⭐', left: '44%', top: '62%', delay: '160ms', orbit: false },
-                  { emoji: '✨', left: '78%', top: '48%', delay: '220ms', orbit: true },
-                  { emoji: '🪙', left: '50%', top: '42%', delay: '100ms', orbit: false },
-                  { emoji: '💎', left: '18%', top: '52%', delay: '280ms', orbit: true },
-                  { emoji: '🔥', left: '64%', top: '28%', delay: '40ms', orbit: false },
-                  { emoji: '✨', left: '36%', top: '34%', delay: '340ms', orbit: true },
-                ].map((s, i) => (
+                {(
+                  [
+                    { icon: 'Sparkles', left: '10%', top: '24%', delay: '0ms', orbit: false },
+                    { icon: 'Sparkles', left: '82%', top: '18%', delay: '90ms', orbit: true },
+                    { icon: 'Star', left: '44%', top: '62%', delay: '160ms', orbit: false },
+                    { icon: 'Sparkles', left: '78%', top: '48%', delay: '220ms', orbit: true },
+                    { icon: 'Coins', left: '50%', top: '42%', delay: '100ms', orbit: false },
+                    { icon: 'Gem', left: '18%', top: '52%', delay: '280ms', orbit: true },
+                    { icon: 'Flame', left: '64%', top: '28%', delay: '40ms', orbit: false },
+                    { icon: 'Sparkles', left: '36%', top: '34%', delay: '340ms', orbit: true },
+                  ] as const
+                ).map((s, i) => (
                   <span
                     key={i}
-                    className={`absolute text-2xl sm:text-4xl motion-reduce:hidden ${
+                    className={`absolute motion-reduce:hidden ${
                       s.orbit ? 'motion-safe:animate-shop-sparkle-orbit' : 'motion-safe:animate-shop-sparkle'
                     }`}
                     style={{ left: s.left, top: s.top, animationDelay: s.delay }}
                   >
-                    {s.emoji}
+                    <Icon name={s.icon} size="xl" className="text-amber-600 sm:h-10 sm:w-10" />
                   </span>
                 ))}
                 <span
-                  className="absolute left-1/2 top-[32%] text-4xl sm:text-5xl motion-safe:animate-shop-coin-burst motion-reduce:hidden"
+                  className="absolute left-1/2 top-[32%] -translate-x-1/2 motion-safe:animate-shop-coin-burst motion-reduce:hidden"
                   style={{ animationDelay: '60ms' }}
                 >
-                  🪙
+                  <Icon name="Coins" size="2xl" className="text-amber-500" />
                 </span>
                 <span
-                  className="absolute left-[30%] top-[40%] text-3xl motion-safe:animate-shop-coin-burst motion-reduce:hidden"
+                  className="absolute left-[30%] top-[40%] motion-safe:animate-shop-coin-burst motion-reduce:hidden"
                   style={{ animationDelay: '140ms' }}
                 >
-                  🪙
+                  <Icon name="Coins" size="xl" className="text-amber-500" />
                 </span>
                 <span
-                  className="absolute left-[70%] top-[38%] text-3xl motion-safe:animate-shop-coin-burst motion-reduce:hidden"
+                  className="absolute left-[70%] top-[38%] motion-safe:animate-shop-coin-burst motion-reduce:hidden"
                   style={{ animationDelay: '200ms' }}
                 >
-                  🪙
+                  <Icon name="Coins" size="xl" className="text-amber-500" />
                 </span>
               </div>
             ) : null}
@@ -740,10 +740,10 @@ function ShopPageInner() {
                 <div className="flex flex-wrap items-center justify-between gap-4 sm:gap-6">
                   <div className="min-w-0 flex items-center gap-4">
                     <span
-                      className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl ring-2 ring-amber-400/40"
+                      className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 ring-2 ring-amber-400/40"
                       aria-hidden
                     >
-                      🪙
+                      <Icon name="Coins" size="xl" className="text-amber-700" />
                     </span>
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.15em] text-[var(--muted)] mb-1">
@@ -794,13 +794,16 @@ function ShopPageInner() {
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
-                    ⚡ +XP
+                    <Icon name="Zap" size="xs" className="text-amber-600 shrink-0" aria-hidden />
+                    +XP
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
-                    🎨 {t('sectionThemes')}
+                    <Icon name="Tag" size="xs" className="text-violet-700 shrink-0" aria-hidden />
+                    {t('sectionTitles')}
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
-                    🔁 {t('sectionRerolls')}
+                    <Icon name="RefreshCw" size="xs" className="text-cyan-700 shrink-0" aria-hidden />
+                    {t('sectionRerolls')}
                   </span>
                 </div>
 
@@ -815,7 +818,7 @@ function ShopPageInner() {
                           key={item.sku}
                           className="inline-flex items-center gap-1 rounded-full border border-emerald-300/70 bg-white px-2.5 py-1 text-xs font-bold text-emerald-900"
                         >
-                          <span aria-hidden>{item.emoji}</span>
+                          <Icon name={item.icon} size="xs" className="text-emerald-700 shrink-0" aria-hidden />
                           <span>{item.name}</span>
                           <span className="text-emerald-700/85">· {item.priceCoins} QC</span>
                         </li>
@@ -833,7 +836,7 @@ function ShopPageInner() {
                           key={item.sku}
                           className="inline-flex items-center gap-1 rounded-full border border-amber-300/70 bg-white px-2.5 py-1 text-xs font-bold text-amber-900"
                         >
-                          <span aria-hidden>{item.emoji}</span>
+                          <Icon name={item.icon} size="xs" className="text-amber-800 shrink-0" aria-hidden />
                           <span>{item.name}</span>
                           <span className="text-amber-800/85">· {item.priceCoins} QC</span>
                         </li>
@@ -855,10 +858,10 @@ function ShopPageInner() {
               <div className="shop-prefs-panel p-5 sm:p-6 pt-6 sm:pt-7">
                 <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
                   <span
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--violet)_16%,transparent)] text-[22px] ring-2 ring-[color:color-mix(in_srgb,var(--violet)_32%,transparent)]"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--violet)_16%,transparent)] ring-2 ring-[color:color-mix(in_srgb,var(--violet)_32%,transparent)]"
                     aria-hidden
                   >
-                    ⚙️
+                    <Icon name="Settings" size="md" className="text-violet-800" />
                   </span>
                   <div className="min-w-0">
                     <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[var(--subtle)]">
@@ -915,7 +918,7 @@ function ShopPageInner() {
                             const def = getTitleDefinition(id);
                             return (
                               <option key={id} value={id}>
-                                {def ? `${def.emoji} ${def.label}` : id}
+                                {def ? def.label : id}
                               </option>
                             );
                           })
@@ -956,8 +959,8 @@ function ShopPageInner() {
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <span className="text-4xl shrink-0" aria-hidden>
-                        {featuredBundle.emoji}
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface)] ring-2 ring-amber-400/35" aria-hidden>
+                        <Icon name={featuredBundle.icon} size="xl" className="text-[var(--orange)]" />
                       </span>
                       <div className="min-w-0 flex-1">
                         {featuredBundle.marketing?.badge ? (
@@ -1064,8 +1067,6 @@ function ShopPageInner() {
               <h2 id="shop-look-heading" className="font-display font-black text-lg text-[var(--text)] mb-3">
                 {t('sectionLook')}
               </h2>
-              <h3 className="text-xs font-black uppercase tracking-wider text-[var(--subtle)] mb-3">{t('sectionThemes')}</h3>
-              <ul className="grid gap-4 sm:grid-cols-2 mb-8">{themeItems.map(renderCatalogCard)}</ul>
               <h3 className="text-xs font-black uppercase tracking-wider text-[var(--subtle)] mb-3">{t('sectionTitles')}</h3>
               <ul className="grid gap-4 sm:grid-cols-2">{titleItems.map(renderCatalogCard)}</ul>
             </section>
@@ -1185,7 +1186,7 @@ function ShopPageInner() {
                     onClick={() => setInfoModal(null)}
                     aria-label={t('close')}
                   >
-                    ✕
+                    <Icon name="X" size="md" />
                   </button>
                   <h3 id="info-modal-title" className="font-display font-black text-lg text-[var(--text)] pr-8">
                     {infoModal.title}

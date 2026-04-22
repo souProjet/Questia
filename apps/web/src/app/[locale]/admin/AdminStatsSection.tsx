@@ -18,6 +18,7 @@ import {
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import type { GlobalStatsPayload, ShopMetricsMode } from '@/lib/admin/globalStats';
+import { Icon } from '@/components/Icons';
 import { QUEST_STATUSES } from '@/lib/admin/globalStats';
 
 const STATUT_LEGENDE: Record<string, string> = {
@@ -36,7 +37,7 @@ const STATUT_COULEUR: Record<string, string> = {
   completed: '#10b981',
   rejected: '#f43f5e',
   replaced: '#8b5cf6',
-  abandoned: '#f97316',
+  abandoned: '#c2410c',
 };
 
 const CHART_GRID = 'rgba(15, 23, 42, 0.06)';
@@ -120,6 +121,7 @@ function ChartShell({
   children,
   className = '',
 }: {
+  /** Nom d'icône Lucide (PascalCase) */
   icon: string;
   title: string;
   subtitle: string;
@@ -135,10 +137,10 @@ function ChartShell({
         <div className="mb-4 flex flex-wrap items-start gap-3 sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-start gap-3">
             <span
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-xl shadow-inner ring-1 ring-emerald-200/60"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 shadow-inner ring-1 ring-emerald-200/60"
               aria-hidden
             >
-              {icon}
+              <Icon name={icon} size="lg" className="text-emerald-800" />
             </span>
             <div className="min-w-0">
               <h3 className="font-display text-lg font-black leading-tight text-[var(--on-cream)]">{title}</h3>
@@ -270,9 +272,7 @@ export default function AdminStatsSection() {
 
       <div className="relative mb-8">
         <p className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-white/90 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-emerald-900/80 shadow-sm">
-          <span className="text-base" aria-hidden>
-            📊
-          </span>
+          <Icon name="BarChart3" size="sm" className="text-emerald-700" aria-hidden />
           Séries temporelles
         </p>
         <h2 className="font-display mt-3 text-xl font-black tracking-tight text-[var(--on-cream)] sm:text-2xl">
@@ -458,7 +458,7 @@ export default function AdminStatsSection() {
           </div>
 
           <ChartShell
-            icon="👥"
+            icon="Users"
             title="Inscriptions & base joueurs"
             subtitle="Barres : nouveaux comptes par jour · Courbe : total cumulé des profils à la fin de chaque jour."
           >
@@ -532,7 +532,7 @@ export default function AdminStatsSection() {
           <div className="grid gap-6 lg:grid-cols-5">
             <div className="lg:col-span-3">
               <ChartShell
-                icon="📚"
+                icon="Layers"
                 title="Quêtes par statut"
                 subtitle="Empilement journalier (une ligne par joueur et par jour). La couleur « Terminée » donne déjà les complétions du jour — pas de second graphique pour éviter le doublon."
               >
@@ -572,7 +572,7 @@ export default function AdminStatsSection() {
             </div>
             <div className="lg:col-span-2">
               <ChartShell
-                icon="◎"
+                icon="PieChart"
                 title="Répartition (période)"
                 subtitle="Part des statuts sur le total des lignes quête dans la plage."
               >
@@ -632,7 +632,7 @@ export default function AdminStatsSection() {
           </div>
 
           <ChartShell
-            icon={stats.shopMode === 'eur' ? '💶' : '🪙'}
+            icon={stats.shopMode === 'eur' ? 'Euro' : 'Coins'}
             title={stats.shopMode === 'eur' ? 'Encaissements réels (Stripe)' : 'Dépenses Quest Coins'}
             subtitle={
               stats.shopMode === 'eur'
@@ -716,8 +716,8 @@ export default function AdminStatsSection() {
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50/30 to-emerald-50/20 shadow-[0_12px_40px_-20px_rgba(15,23,42,0.1)]">
             <div className="border-b border-slate-200/70 bg-white/90 px-5 py-4 sm:px-6">
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-fuchsia-100 text-lg shadow-inner ring-1 ring-violet-200/50">
-                  🏷️
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-fuchsia-100 shadow-inner ring-1 ring-violet-200/50">
+                  <Icon name="Tag" size="md" className="text-violet-800" aria-hidden />
                 </span>
                 <div>
                   <h3 className="font-display text-lg font-black text-[var(--on-cream)]">Détail par article (SKU)</h3>

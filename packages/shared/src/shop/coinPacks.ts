@@ -13,7 +13,7 @@ export interface CoinPackEntry {
   currency: 'eur';
   /** Coins crédités sur le compte après paiement confirmé */
   coinsGranted: number;
-  emoji: string;
+  icon: string;
   /** Ordre d'affichage (plus petit = à gauche) */
   sortOrder?: number;
   marketing?: {
@@ -34,7 +34,7 @@ export const COIN_PACKS: CoinPackEntry[] = [
     priceCents: 499,
     currency: 'eur',
     coinsGranted: 500,
-    emoji: '🪙',
+    icon: 'Coins',
     sortOrder: 0,
     includedItems: ['500 QC ajoutés à ton solde après paiement', 'Utilisables sur tous les articles en QC'],
     contentsDetail:
@@ -48,7 +48,7 @@ export const COIN_PACKS: CoinPackEntry[] = [
     priceCents: 999,
     currency: 'eur',
     coinsGranted: 1200,
-    emoji: '💰',
+    icon: 'Wallet',
     sortOrder: 1,
     includedItems: ['1 200 QC sur ton compte', 'Même usage que les autres packs'],
     contentsDetail:
@@ -62,7 +62,7 @@ export const COIN_PACKS: CoinPackEntry[] = [
     priceCents: 1999,
     currency: 'eur',
     coinsGranted: 3000,
-    emoji: '✨',
+    icon: 'Sparkles',
     sortOrder: 2,
     includedItems: ["3 000 QC crédités d'un coup", 'Meilleur rapport QC / € du catalogue'],
     contentsDetail:

@@ -22,8 +22,8 @@ export const QUEST_SHARE_BACKGROUNDS: readonly QuestShareBackground[] = [
     id: 'adventure',
     label: 'Aventure',
     cssGradient:
-      'linear-gradient(165deg, #e0f7ff 0%, #fff7e6 42%, #d7f5f9 100%)',
-    colors: ['#e0f7ff', '#fff7e6', '#d7f5f9'],
+      'linear-gradient(165deg, #e8ecf8 0%, #f4f1ea 42%, #dce4ef 100%)',
+    colors: ['#e8ecf8', '#f4f1ea', '#dce4ef'],
     locations: [0, 0.42, 1],
     darkForeground: false,
   },
@@ -49,8 +49,8 @@ export const QUEST_SHARE_BACKGROUNDS: readonly QuestShareBackground[] = [
     id: 'ocean',
     label: 'Océan',
     cssGradient:
-      'linear-gradient(160deg, #cffafe 0%, #22d3ee 45%, #0e7490 100%)',
-    colors: ['#cffafe', '#22d3ee', '#0e7490'],
+      'linear-gradient(160deg, #e7f1ef 0%, #3d7a72 45%, #134e4a 100%)',
+    colors: ['#e7f1ef', '#3d7a72', '#134e4a'],
     locations: [0, 0.45, 1],
     darkForeground: false,
   },
@@ -58,8 +58,8 @@ export const QUEST_SHARE_BACKGROUNDS: readonly QuestShareBackground[] = [
     id: 'ember',
     label: 'Braise',
     cssGradient:
-      'linear-gradient(165deg, #fff1f2 0%, #fda4af 40%, #f97316 100%)',
-    colors: ['#fff1f2', '#fda4af', '#f97316'],
+      'linear-gradient(165deg, #faf6f4 0%, #d4a088 40%, #c2410c 100%)',
+    colors: ['#faf6f4', '#d4a088', '#c2410c'],
     locations: [0, 0.4, 1],
     darkForeground: false,
   },

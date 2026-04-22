@@ -29,95 +29,95 @@ export type ThemePalette = {
 };
 
 const defaultPalette: ThemePalette = {
-  bg: '#e8f8ff',
-  surface: '#f5fbff',
-  card: '#ffffff',
-  cardCream: '#fffdf5',
-  border: 'rgba(19,33,45,0.12)',
-  borderCyan: 'rgba(34,211,238,0.25)',
-  text: '#13212d',
-  muted: '#4d7187',
-  subtle: '#8bb9d1',
-  linkOnBg: '#155e75',
+  bg: '#ebe8e0',
+  surface: '#f2efe8',
+  card: '#faf8f4',
+  cardCream: '#fdfaf5',
+  border: 'rgba(28, 25, 23, 0.09)',
+  borderCyan: 'rgba(19, 78, 74, 0.22)',
+  text: '#1c1917',
+  muted: '#57534e',
+  subtle: '#78716c',
+  linkOnBg: '#115e59',
   inputBg: '#ffffff',
-  onCream: '#13212d',
-  onCreamMuted: '#4d6570',
-  cyan: '#22d3ee',
-  orange: '#f97316',
-  gold: '#fbbf24',
-  green: '#10b981',
-  overlay: 'rgba(19, 33, 45, 0.45)',
-  divider: 'rgba(19, 33, 45, 0.12)',
-  trackMuted: 'rgba(15, 23, 42, 0.12)',
+  onCream: '#1c1917',
+  onCreamMuted: '#57534e',
+  cyan: '#134e4a',
+  orange: '#c2410c',
+  gold: '#92400e',
+  green: '#166534',
+  overlay: 'rgba(12, 10, 9, 0.42)',
+  divider: 'rgba(28, 25, 23, 0.1)',
+  trackMuted: 'rgba(28, 25, 23, 0.12)',
 };
 
 const midnightPalette: ThemePalette = {
-  bg: '#0a101c',
-  surface: '#111b2e',
-  card: '#152238',
-  cardCream: '#f1f5f9',
-  border: 'rgba(232, 241, 250, 0.14)',
-  borderCyan: 'rgba(56, 189, 248, 0.4)',
-  text: '#f1f5f9',
-  muted: '#b4c4d8',
-  subtle: '#94a8bc',
-  linkOnBg: '#7dd3fc',
-  inputBg: '#0f1729',
-  onCream: '#13212d',
-  onCreamMuted: '#4d6570',
-  cyan: '#38bdf8',
+  bg: '#0c0a09',
+  surface: '#1c1917',
+  card: '#292524',
+  cardCream: '#f5f5f4',
+  border: 'rgba(231, 229, 228, 0.1)',
+  borderCyan: 'rgba(45, 212, 191, 0.25)',
+  text: '#e7e5e4',
+  muted: '#a8a29e',
+  subtle: '#78716c',
+  linkOnBg: '#5eead4',
+  inputBg: '#1c1917',
+  onCream: '#1c1917',
+  onCreamMuted: '#57534e',
+  cyan: '#2dd4bf',
   orange: '#fb923c',
   gold: '#fcd34d',
-  green: '#34d399',
-  overlay: 'rgba(0, 0, 0, 0.58)',
-  divider: 'rgba(232, 241, 250, 0.12)',
-  trackMuted: 'rgba(255, 255, 255, 0.14)',
+  green: '#4ade80',
+  overlay: 'rgba(0, 0, 0, 0.55)',
+  divider: 'rgba(231, 229, 228, 0.1)',
+  trackMuted: 'rgba(255, 255, 255, 0.1)',
 };
 
 const auroraPalette: ThemePalette = {
-  bg: '#fdf4ff',
-  surface: '#fff7fb',
-  card: '#ffffff',
-  cardCream: '#fffdf8',
-  border: 'rgba(59, 7, 100, 0.12)',
-  borderCyan: 'rgba(192, 38, 211, 0.32)',
-  text: '#3b0764',
-  muted: '#6b21a8',
-  subtle: '#9333b8',
-  linkOnBg: '#6d28d9',
+  bg: '#e8e4e1',
+  surface: '#f0ebe6',
+  card: '#faf7f3',
+  cardCream: '#fdfaf7',
+  border: 'rgba(41, 37, 36, 0.09)',
+  borderCyan: 'rgba(15, 118, 110, 0.2)',
+  text: '#292524',
+  muted: '#57534e',
+  subtle: '#78716c',
+  linkOnBg: '#115e59',
   inputBg: '#ffffff',
-  onCream: '#13212d',
-  onCreamMuted: '#4d6570',
-  cyan: '#c026d3',
-  orange: '#ea580c',
-  gold: '#fbbf24',
-  green: '#059669',
-  overlay: 'rgba(59, 7, 100, 0.42)',
-  divider: 'rgba(59, 7, 100, 0.12)',
-  trackMuted: 'rgba(59, 7, 100, 0.1)',
+  onCream: '#1c1917',
+  onCreamMuted: '#57534e',
+  cyan: '#0f766e',
+  orange: '#9a3412',
+  gold: '#854d0e',
+  green: '#166534',
+  overlay: 'rgba(28, 25, 23, 0.4)',
+  divider: 'rgba(41, 37, 36, 0.09)',
+  trackMuted: 'rgba(41, 37, 36, 0.08)',
 };
 
 const parchmentPalette: ThemePalette = {
-  bg: '#f5f0e6',
-  surface: '#faf6ee',
-  card: '#fffdf8',
-  cardCream: '#fffdf5',
-  border: 'rgba(61, 52, 40, 0.12)',
-  borderCyan: 'rgba(13, 148, 136, 0.3)',
-  text: '#3d3428',
-  muted: '#6b5d4a',
-  subtle: '#8a7b68',
-  linkOnBg: '#92400e',
+  bg: '#e7e2d8',
+  surface: '#efe9df',
+  card: '#faf6ee',
+  cardCream: '#fffdf8',
+  border: 'rgba(54, 47, 40, 0.1)',
+  borderCyan: 'rgba(22, 101, 52, 0.2)',
+  text: '#292524',
+  muted: '#57534e',
+  subtle: '#78716c',
+  linkOnBg: '#14532d',
   inputBg: '#fffdf8',
-  onCream: '#13212d',
-  onCreamMuted: '#4d6570',
-  cyan: '#0d9488',
-  orange: '#c2410c',
-  gold: '#ca8a04',
+  onCream: '#1c1917',
+  onCreamMuted: '#57534e',
+  cyan: '#166534',
+  orange: '#9a3412',
+  gold: '#854d0e',
   green: '#15803d',
-  overlay: 'rgba(61, 52, 40, 0.45)',
-  divider: 'rgba(61, 52, 40, 0.12)',
-  trackMuted: 'rgba(61, 52, 40, 0.14)',
+  overlay: 'rgba(40, 32, 24, 0.4)',
+  divider: 'rgba(54, 47, 40, 0.09)',
+  trackMuted: 'rgba(54, 47, 40, 0.1)',
 };
 
 export function getThemePalette(themeId: string | null | undefined): ThemePalette {
@@ -158,21 +158,21 @@ export function themePanelMuted(themeId: string | null | undefined, p: ThemePale
 
 export function heroBandGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
   if (!themeId || themeId === 'default') {
-    return ['#fffbeb', '#ffffff', 'rgba(236,254,255,0.92)'];
+    return ['rgba(255, 255, 255, 0.88)', p.card, colorWithAlpha(p.cyan, 0.08)];
   }
   return [colorWithAlpha(p.gold, 0.22), p.card, colorWithAlpha(p.cyan, 0.12)];
 }
 
 export function shopBalanceGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
   if (!themeId || themeId === 'default') {
-    return ['#fffbeb', '#ffffff', '#fef3c7'];
+    return [colorWithAlpha(p.gold, 0.18), p.surface, colorWithAlpha(p.gold, 0.1)];
   }
   return [colorWithAlpha(p.gold, 0.22), p.surface, colorWithAlpha(p.gold, 0.14)];
 }
 
 export function questSliderEmbeddedGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
   if (!themeId || themeId === 'default') {
-    return ['#fff7df', '#fff3c6', '#d7f5f9'];
+    return [colorWithAlpha(p.gold, 0.14), p.card, colorWithAlpha(p.cyan, 0.1)];
   }
   return [colorWithAlpha(p.gold, 0.2), p.card, colorWithAlpha(p.cyan, 0.14)];
 }
@@ -186,7 +186,7 @@ export function shareScreenPhotoAddGradient(
   p: ThemePalette,
 ): [string, string, string] {
   if (!themeId || themeId === 'default') {
-    return ['#fff7df', '#fff3c6', '#d7f5f9'];
+    return [colorWithAlpha(p.gold, 0.12), p.card, colorWithAlpha(p.cyan, 0.08)];
   }
   if (themeId === 'midnight') {
     return [colorWithAlpha(p.cyan, 0.12), p.surface, colorWithAlpha(p.card, 1)];
@@ -203,14 +203,14 @@ export function shareScreenPhotoAddGradient(
 
 export function missionBlockGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
   if (!themeId || themeId === 'default') {
-    return ['#ffffff', 'rgba(224,242,254,0.55)', '#ffffff'];
+    return [p.card, colorWithAlpha(p.cyan, 0.08), p.surface];
   }
   return [p.card, colorWithAlpha(p.cyan, 0.1), p.surface];
 }
 
 export function questDayStripGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
   if (!themeId || themeId === 'default') {
-    return ['rgba(255,247,237,0.98)', 'rgba(255,255,255,0.96)', 'rgba(254,243,199,0.55)'];
+    return [colorWithAlpha(p.orange, 0.1), p.card, colorWithAlpha(p.gold, 0.12)];
   }
   return [colorWithAlpha(p.orange, 0.12), p.card, colorWithAlpha(p.gold, 0.1)];
 }
@@ -218,7 +218,7 @@ export function questDayStripGradient(themeId: string | null | undefined, p: The
 /** Fond sous les boutons d'action (valider, relancer, etc.) */
 export function questActionsFooterGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
   if (!themeId || themeId === 'default') {
-    return ['rgba(255,255,255,0.88)', 'rgba(255,251,235,0.55)', 'rgba(236,254,255,0.45)'];
+    return [colorWithAlpha(p.card, 0.92), colorWithAlpha(p.surface, 0.88), colorWithAlpha(p.cyan, 0.06)];
   }
   return [colorWithAlpha(p.surface, 0.98), colorWithAlpha(p.card, 0.95), colorWithAlpha(p.cyan, 0.12)];
 }
@@ -232,7 +232,7 @@ export function questCardFaceGradient(
   p: ThemePalette,
 ): [string, string, string, string] {
   if (!themeId || themeId === 'default') {
-    return ['#ffffff', 'rgba(255, 251, 235, 0.97)', 'rgba(224, 242, 254, 0.42)', '#ffffff'];
+    return [p.card, colorWithAlpha(p.gold, 0.08), colorWithAlpha(p.cyan, 0.12), p.surface];
   }
   if (themeId === 'midnight') {
     return [
@@ -268,11 +268,11 @@ export function homeScreenBackdropGradient(
 ): [string, string, string, string, string] {
   if (!themeId || themeId === 'default') {
     return [
-      '#cff0ff',
-      '#e3f6ff',
-      colorWithAlpha(p.cyan, 0.16),
-      colorWithAlpha(p.orange, 0.08),
+      colorWithAlpha(p.cyan, 0.14),
+      p.surface,
+      colorWithAlpha(p.orange, 0.06),
       p.bg,
+      colorWithAlpha(p.card, 0.5),
     ];
   }
   if (themeId === 'midnight') {

@@ -14,12 +14,12 @@ vi.mock('@/lib/db', () => ({
 describe('applyGrantsToProfile', () => {
   it('ne fait rien si profil absent', async () => {
     findUnique.mockResolvedValue(null);
-    const item = getShopItem('themes_pack_premium')!;
+    const item = getShopItem('title_scout')!;
     await applyGrantsToProfile('missing', [item]);
     expect(update).not.toHaveBeenCalled();
   });
 
-  it('fusionne thèmes et met à jour', async () => {
+  it('fusionne titres et met à jour', async () => {
     findUnique.mockResolvedValue({
       id: 'p1',
       ownedThemes: ['default'],
@@ -29,10 +29,10 @@ describe('applyGrantsToProfile', () => {
       xpBonusCharges: 0,
     });
     update.mockResolvedValue({});
-    const item = getShopItem('themes_pack_premium')!;
+    const item = getShopItem('title_scout')!;
     await applyGrantsToProfile('p1', [item]);
     expect(update).toHaveBeenCalled();
     const data = (update.mock.calls[0]![0] as { data: Record<string, unknown> }).data;
-    expect(data.ownedThemes).toBeDefined();
+    expect(data.ownedTitleIds).toBeDefined();
   });
 });

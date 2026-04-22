@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import type { QuestModel } from '@questia/shared';
 import { DA } from '../theme';
+import { UiLucideIcon } from '../components/UiLucideIcon';
 
 interface QuestDetailScreenProps {
   questId: number;
@@ -12,10 +13,10 @@ interface QuestDetailScreenProps {
 }
 
 const comfortLevelConfig = {
-  low: { label: 'Faible', color: '#22c55e', emoji: '🟢' },
-  moderate: { label: 'Modéré', color: '#f59e0b', emoji: '🟡' },
-  high: { label: 'Élevé', color: '#f97316', emoji: '🟠' },
-  extreme: { label: 'Extrême', color: '#ef4444', emoji: '🔴' },
+  low: { label: 'Faible', color: '#22c55e' },
+  moderate: { label: 'Modéré', color: '#f59e0b' },
+  high: { label: 'Élevé', color: '#c2410c' },
+  extreme: { label: 'Extrême', color: '#ef4444' },
 };
 
 export function QuestDetailScreen({ questId, apiBaseUrl = '' }: QuestDetailScreenProps) {
@@ -87,9 +88,10 @@ export function QuestDetailScreen({ questId, apiBaseUrl = '' }: QuestDetailScree
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
           <Text style={styles.metaLabel}>Sortie de zone</Text>
-          <Text style={[styles.metaValue, { color: comfort.color }]}>
-            {comfort.emoji} {comfort.label}
-          </Text>
+          <View style={styles.comfortValueRow}>
+            <View style={[styles.comfortDot, { backgroundColor: comfort.color }]} />
+            <Text style={[styles.metaValue, { color: comfort.color }]}>{comfort.label}</Text>
+          </View>
         </View>
         <View style={styles.metaItem}>
           <Text style={styles.metaLabel}>Durée min.</Text>
@@ -99,13 +101,15 @@ export function QuestDetailScreen({ questId, apiBaseUrl = '' }: QuestDetailScree
 
       <View style={styles.tags}>
         {quest.requiresOutdoor && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>🌿 Extérieur</Text>
+          <View style={[styles.tag, styles.tagRow]}>
+            <UiLucideIcon name="Leaf" size={14} color="#10b981" />
+            <Text style={styles.tagText}>Extérieur</Text>
           </View>
         )}
         {quest.requiresSocial && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>👥 Social</Text>
+          <View style={[styles.tag, styles.tagRow]}>
+            <UiLucideIcon name="Users" size={14} color="#134e4a" />
+            <Text style={styles.tagText}>Social</Text>
           </View>
         )}
       </View>
@@ -165,6 +169,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: DA.text,
   },
+  comfortValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  comfortDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -176,6 +190,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   tagText: {
     fontSize: 13,

@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  Platform,
   useWindowDimensions,
   ActivityIndicator,
   ScrollView,
@@ -19,8 +20,9 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { questDisplayEmoji, questFamilyLabel, type AppLocale } from '@questia/shared';
-import { colorWithAlpha, questCardFaceGradient, type ThemePalette } from '@questia/ui';
+import { colorWithAlpha, questCardFaceGradient, UiLucideIcon, type ThemePalette } from '@questia/ui';
 import { hapticSuccess, hapticWarning } from '../lib/haptics';
 import { QuestDestinationMapWebView } from './QuestDestinationMapWebView';
 
@@ -120,8 +122,13 @@ export function QuestSwipeCard({
   themeId = null,
 }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const cardFaceColors = useMemo(() => questCardFaceGradient(themeId, p), [themeId, p]);
   const isDarkCard = themeId === 'midnight';
+  /** Dégradé plus transparent + flou natif = glass sobre sur la carte. */
+  const glassFaceColors = useMemo(() => {
+    const base = questCardFaceGradient(themeId, p);
+    const a = isDarkCard ? 0.72 : 0.66;
+    return base.map((c) => (c.startsWith('#') ? colorWithAlpha(c, a) : c)) as [string, string, string, string];
+  }, [themeId, p, isDarkCard]);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const cardScale = useSharedValue(1);
@@ -312,7 +319,9 @@ export function QuestSwipeCard({
     <View style={styles.cardInner}>
       <View style={styles.cardHeader}>
         <View style={styles.titleRow}>
-          <Text style={styles.emoji}>{questDisplayEmoji(quest.emoji)}</Text>
+          <View style={styles.questIconSlot} accessibilityElementsHidden>
+            <UiLucideIcon name={questDisplayEmoji(quest.emoji)} size={28} color={p.orange} strokeWidth={2} />
+          </View>
           <Text style={[styles.title, { color: p.text }]} numberOfLines={3}>
             {quest.title}
           </Text>
@@ -424,9 +433,17 @@ export function QuestSwipeCard({
           cardAnimStyle,
         ]}
       >
+        {Platform.OS !== 'web' ? (
+          <BlurView
+            pointerEvents="none"
+            intensity={isDarkCard ? 42 : 36}
+            tint={isDarkCard ? 'dark' : 'light'}
+            style={styles.cardFaceGradient}
+          />
+        ) : null}
         <LinearGradient
           pointerEvents="none"
-          colors={cardFaceColors}
+          colors={glassFaceColors}
           locations={[0, 0.35, 0.68, 1]}
           start={{ x: 0.08, y: 0 }}
           end={{ x: 0.94, y: 1 }}
@@ -656,9 +673,11 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 4,
   },
-  emoji: {
-    fontSize: 28,
-    lineHeight: 32,
+  questIconSlot: {
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 1,
   },
   title: {
     flex: 1,

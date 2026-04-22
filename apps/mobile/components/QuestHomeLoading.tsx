@@ -8,7 +8,7 @@ import {
 } from '@questia/shared';
 import { useAppLocale } from '../contexts/AppLocaleContext';
 import { useAppTheme } from '../contexts/AppThemeContext';
-import type { ThemePalette } from '@questia/ui';
+import { UiLucideIcon, type ThemePalette } from '@questia/ui';
 
 function buildStyles(p: ThemePalette) {
   return StyleSheet.create({
@@ -49,17 +49,10 @@ function buildStyles(p: ThemePalette) {
       height: 100,
       width: 100,
     },
-    iconEmoji: {
-      fontSize: 52,
-      textShadowColor: 'rgba(34,211,238,0.35)',
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 14,
-    },
-    sparkles: {
+    iconSparklesWrap: {
       position: 'absolute',
       top: 4,
       right: 8,
-      fontSize: 22,
     },
     primary: {
       fontSize: 21,
@@ -196,12 +189,10 @@ export function QuestHomeLoading({ compact }: Props) {
       <View style={styles.glowOrange} pointerEvents="none" />
       <Animated.View style={[styles.floatCol, floatStyle]}>
         <View style={styles.iconCluster}>
-          <Text style={styles.sparkles} accessibilityElementsHidden>
-            ✨
-          </Text>
-          <Text style={styles.iconEmoji} accessibilityLabel="">
-            🧭
-          </Text>
+          <View style={styles.iconSparklesWrap} accessibilityElementsHidden>
+            <UiLucideIcon name="Sparkles" size={22} color="rgba(245, 158, 11, 0.88)" strokeWidth={1.8} />
+          </View>
+          <UiLucideIcon name="Compass" size={52} color="#115e59" strokeWidth={1.35} />
         </View>
         {lines ? (
           <>

@@ -3,11 +3,11 @@ import { prisma } from '@/lib/db';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://questia.fr';
 
-const QUADRANT_LABELS: Record<string, { emoji: string; label: string }> = {
-  explorer_risktaker:  { emoji: '\u{1F525}', label: 'Aventurier audacieux' },
-  explorer_cautious:   { emoji: '\u{1F30D}', label: 'Explorateur prudent' },
-  homebody_risktaker:  { emoji: '\u{26A1}',  label: 'Rebelle casanier' },
-  homebody_cautious:   { emoji: '\u{1F331}', label: 'Cocon tranquille' },
+const QUADRANT_LABELS: Record<string, { label: string }> = {
+  explorer_risktaker:  { label: 'Aventurier audacieux' },
+  explorer_cautious:   { label: 'Explorateur prudent' },
+  homebody_risktaker:  { label: 'Rebelle casanier' },
+  homebody_cautious:   { label: 'Cocon tranquille' },
 };
 
 function buildNewUserEmail(
@@ -17,7 +17,7 @@ function buildNewUserEmail(
   ts: string,
 ): string {
   const q = QUADRANT_LABELS[`${explorerAxis}_${riskAxis}`]
-    ?? { emoji: '\u{1F9ED}', label: `${explorerAxis} / ${riskAxis}` };
+    ?? { label: `${explorerAxis} / ${riskAxis}` };
 
   return `
 <!DOCTYPE html>
@@ -29,7 +29,7 @@ function buildNewUserEmail(
       <table width="440" cellpadding="0" cellspacing="0" style="max-width:440px;width:100%">
 
         <!-- Header bar -->
-        <tr><td style="height:4px;background:linear-gradient(90deg,#22d3ee,#f97316,#10b981);border-radius:8px 8px 0 0"></td></tr>
+        <tr><td style="height:4px;background:linear-gradient(90deg,#134e4a,#c2410c,#166534);border-radius:8px 8px 0 0"></td></tr>
 
         <!-- Card -->
         <tr><td style="background:#ffffff;padding:32px 28px 28px;border-radius:0 0 8px 8px">
@@ -38,7 +38,7 @@ function buildNewUserEmail(
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td style="font-size:22px;font-weight:800;color:#0a0a0f;letter-spacing:-0.3px">
-                <span style="color:#22d3ee">Q</span>uestia
+                <span style="color:#134e4a">Q</span>uestia
               </td>
               <td align="right" style="font-size:11px;color:#a1a1aa">${ts}</td>
             </tr>
@@ -62,7 +62,7 @@ function buildNewUserEmail(
             <tr>
               <td align="center" style="padding:0 0 24px">
                 <div style="display:inline-block;background:#f4f4f5;border-radius:20px;padding:8px 20px;font-size:15px;font-weight:700;color:#27272a">
-                  ${q.emoji}&nbsp; ${q.label}
+                  ${q.label}
                 </div>
               </td>
             </tr>

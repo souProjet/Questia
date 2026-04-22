@@ -112,7 +112,7 @@ const logRow = {
   id: 'log1',
   questDate: '2026-03-24',
   archetypeId: 9,
-  generatedEmoji: '⚔️',
+  generatedEmoji: 'Swords',
   generatedTitle: 'T',
   generatedMission: 'M',
   generatedHook: 'H',

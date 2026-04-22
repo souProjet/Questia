@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { Icon } from '@/components/Icons';
 
 export type ExampleQuestSlide = {
   title: string;
@@ -10,7 +11,7 @@ export type ExampleQuestSlide = {
   mission: string;
   duration: string;
   outdoor: boolean;
-  emoji: string;
+  icon: string;
 };
 
 type Props = {
@@ -116,14 +117,12 @@ export function QuestExamplesSlider({ quests, variant = 'default', nestedInPanel
                 }
               >
                 <div className={`flex items-start gap-3 ${embedded ? 'mb-3.5' : 'mb-5'}`}>
-                  <span
-                    className={
-                      inLandingPanel ? 'text-[1.65rem] leading-none select-none' : embedded ? 'text-3xl leading-none select-none' : 'text-4xl leading-none select-none'
-                    }
+                  <Icon
+                    name={q.icon}
+                    size={inLandingPanel ? 'md' : embedded ? 'lg' : 'xl'}
+                    className="shrink-0 text-orange-800/95"
                     aria-hidden
-                  >
-                    {q.emoji}
-                  </span>
+                  />
                   <div className="min-w-0 flex-1 pr-11">
                     <h3
                       className={

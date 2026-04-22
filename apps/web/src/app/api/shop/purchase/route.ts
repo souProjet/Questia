@@ -12,12 +12,8 @@ function isFullyOwned(
   item: ShopCatalogEntry,
 ): boolean {
   if (item.kind === 'reroll_pack' || item.kind === 'xp_booster') return false;
-  const themes = parseStringArray(profile.ownedThemes);
   const titles = parseStringArray(profile.ownedTitleIds);
 
-  if (item.kind === 'theme_pack') {
-    return item.grants.themes?.every((t) => themes.includes(t)) ?? false;
-  }
   if (item.kind === 'title') {
     return item.grants.titles?.every((t) => titles.includes(t)) ?? false;
   }

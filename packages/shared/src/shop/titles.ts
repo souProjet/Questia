@@ -6,34 +6,35 @@ export interface TitleDefinition {
   id: string;
   /** Court libellé sous le pseudo / dans la nav */
   label: string;
-  emoji: string;
+  /** Nom d'icône Lucide (PascalCase) */
+  icon: string;
 }
 
 export const TITLES_REGISTRY: Record<string, TitleDefinition> = {
   scout: {
     id: 'scout',
     label: 'Éclaireur·se des trottoirs',
-    emoji: '🧭',
+    icon: 'Compass',
   },
   spark: {
     id: 'spark',
     label: 'Étincelle du quotidien',
-    emoji: '✨',
+    icon: 'Sparkles',
   },
   anchor: {
     id: 'anchor',
     label: 'Ancre du calme',
-    emoji: '⚓',
+    icon: 'Anchor',
   },
   comet: {
     id: 'comet',
     label: 'Traînée comète',
-    emoji: '☄️',
+    icon: 'Rocket',
   },
   heart: {
     id: 'heart',
     label: 'Cœur en vadrouille',
-    emoji: '💛',
+    icon: 'Heart',
   },
 };
 

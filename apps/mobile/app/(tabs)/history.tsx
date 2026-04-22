@@ -17,7 +17,7 @@ import { useAuth } from '@clerk/expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HISTORY_PAGE_SIZE, questDisplayEmoji, type EscalationPhase } from '@questia/shared';
-import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { colorWithAlpha, UiLucideIcon, type ThemePalette } from '@questia/ui';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { getHistoryScreenStrings } from '../../lib/historyScreenStrings';
@@ -473,9 +473,9 @@ export default function HistoryScreen() {
               </View>
               <View style={styles.questCardInner}>
                 <View style={styles.cardHead}>
-                  <Text style={styles.cardEmoji} accessibilityElementsHidden={true}>
-                    {questDisplayEmoji(q.emoji)}
-                  </Text>
+                  <View style={styles.cardQuestIcon} accessibilityElementsHidden>
+                    <UiLucideIcon name={questDisplayEmoji(q.emoji)} size={28} color={palette.orange} />
+                  </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={styles.cardTitle}>{q.title}</Text>
                     <Text style={styles.cardMeta}>
@@ -903,7 +903,12 @@ function createStyles(p: ThemePalette) {
     questCardStripe: { height: 4, width: '100%' },
     questCardInner: { padding: 16 },
     cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-    cardEmoji: { fontSize: 30 },
+    cardQuestIcon: {
+      marginTop: 2,
+      width: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     cardTitle: { fontSize: 17, fontWeight: '900', color: C.text, lineHeight: 22 },
     cardMeta: { fontSize: 11, color: p.muted, fontWeight: '600', marginTop: 4 },
     tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, alignItems: 'center' },

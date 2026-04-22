@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import type { QuestNarrationResponse } from '@questia/shared';
 import { DA } from '../theme';
+import { UiLucideIcon } from './UiLucideIcon';
 
 interface NarrationModalProps {
   visible: boolean;
@@ -42,11 +43,17 @@ export function NarrationModal({ visible, narration, wasFallback, onConfirm, onC
 
             {wasFallback && (
               <View style={styles.fallbackBadge}>
-                <Text style={styles.fallbackText}>🌧️ Quête adaptée aux conditions météo</Text>
+                <View style={styles.fallbackRow}>
+                  <UiLucideIcon name="CloudRain" size={16} color="#f59e0b" />
+                  <Text style={styles.fallbackText}>Quête adaptée aux conditions météo</Text>
+                </View>
               </View>
             )}
 
-            <Text style={styles.eyebrow}>⚔️  TA QUÊTE DU JOUR</Text>
+            <View style={styles.eyebrowRow}>
+              <UiLucideIcon name="Swords" size={14} color="#134e4a" />
+              <Text style={styles.eyebrow}>TA QUÊTE DU JOUR</Text>
+            </View>
             <Text style={styles.title}>{narration.title}</Text>
 
             <View style={styles.divider} />
@@ -61,7 +68,7 @@ export function NarrationModal({ visible, narration, wasFallback, onConfirm, onC
 
             <View style={styles.metaRow}>
               <View style={styles.metaItem}>
-                <Text style={styles.metaEmoji}>⏱</Text>
+                <UiLucideIcon name="Clock" size={22} color={DA.muted} />
                 <Text style={styles.metaValue}>{narration.estimatedDuration}</Text>
                 <Text style={styles.metaLabel}>Durée estimée</Text>
               </View>
@@ -69,7 +76,10 @@ export function NarrationModal({ visible, narration, wasFallback, onConfirm, onC
 
             {narration.safetyReminders.length > 0 && (
               <View style={styles.safetySection}>
-                <Text style={styles.safetyTitle}>⚠️  Rappels importants</Text>
+                <View style={styles.safetyTitleRow}>
+                  <UiLucideIcon name="AlertTriangle" size={18} color="#ef4444" />
+                  <Text style={styles.safetyTitle}>Rappels importants</Text>
+                </View>
                 {narration.safetyReminders.map((reminder, i) => (
                   <View key={i} style={styles.safetyItem}>
                     <Text style={styles.safetyBullet}>›</Text>
@@ -84,7 +94,10 @@ export function NarrationModal({ visible, narration, wasFallback, onConfirm, onC
                 <Text style={styles.laterText}>Plus tard</Text>
               </Pressable>
               <Pressable style={styles.goButton} onPress={onConfirm}>
-                <Text style={styles.goText}>C'est parti ! ⚔️</Text>
+                <View style={styles.goRow}>
+                  <Text style={styles.goText}>C&apos;est parti !</Text>
+                  <UiLucideIcon name="Swords" size={18} color="#ffffff" />
+                </View>
               </Pressable>
             </View>
 
@@ -123,17 +136,28 @@ const styles = StyleSheet.create({
     borderColor: '#f59e0b',
     alignSelf: 'flex-start',
   },
+  fallbackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   fallbackText: {
     color: '#f59e0b',
     fontSize: 12,
     fontWeight: '600',
+    flex: 1,
+  },
+  eyebrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
   },
   eyebrow: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#22d3ee',
+    color: '#134e4a',
     letterSpacing: 2,
-    marginBottom: 10,
   },
   title: {
     fontSize: 28,
@@ -157,7 +181,7 @@ const styles = StyleSheet.create({
   hookContainer: {
     backgroundColor: 'rgba(249,115,22,0.08)',
     borderLeftWidth: 3,
-    borderLeftColor: '#f97316',
+    borderLeftColor: '#c2410c',
     borderRadius: 4,
     padding: 16,
     marginBottom: 24,
@@ -167,7 +191,7 @@ const styles = StyleSheet.create({
   },
   hookQuote: {
     fontSize: 32,
-    color: '#f97316',
+    color: '#c2410c',
     lineHeight: 32,
     fontWeight: '900',
   },
@@ -192,10 +216,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: DA.border,
-  },
-  metaEmoji: {
-    fontSize: 22,
-    marginBottom: 4,
+    gap: 4,
   },
   metaValue: {
     fontSize: 15,
@@ -215,11 +236,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(239,68,68,0.2)',
   },
+  safetyTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
   safetyTitle: {
     fontSize: 13,
     fontWeight: '700',
     color: '#ef4444',
-    marginBottom: 10,
     letterSpacing: 0.5,
   },
   safetyItem: {
@@ -261,13 +287,18 @@ const styles = StyleSheet.create({
     flex: 2,
     paddingVertical: 16,
     borderRadius: 14,
-    backgroundColor: '#f97316',
+    backgroundColor: '#c2410c',
     alignItems: 'center',
-    shadowColor: '#f97316',
+    shadowColor: '#c2410c',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
+  },
+  goRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   goText: {
     color: '#ffffff',

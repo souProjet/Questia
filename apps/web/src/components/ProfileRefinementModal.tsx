@@ -220,8 +220,8 @@ export function ProfileRefinementModal({
                 className="motion-safe:animate-fade-up motion-reduce:animate-none rounded-2xl p-5 sm:p-6 border border-[var(--border-ui)] bg-gradient-to-br from-white/95 to-cyan-50/25"
               >
                 <div className="text-center mb-4">
-                  <span className="text-3xl" aria-hidden>
-                    🔒
+                  <span className="inline-flex justify-center" aria-hidden>
+                    <Icon name="Lock" size="2xl" className="text-cyan-900/85" />
                   </span>
                   <p className="text-base font-semibold text-[var(--on-cream)] mt-3">
                     Presque fini
@@ -268,7 +268,7 @@ export function ProfileRefinementModal({
                 style={{
                   background:
                     consent && allAnswered
-                      ? 'linear-gradient(135deg,#f97316,#fbbf24)'
+                      ? 'linear-gradient(135deg,#c2410c,#92400e)'
                       : 'rgba(15,23,42,.1)',
                   color: consent && allAnswered ? '#fff' : '#64748b',
                   boxShadow: consent && allAnswered ? '0 4px 20px rgba(249,115,22,.35)' : 'none',

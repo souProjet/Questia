@@ -31,6 +31,7 @@ import {
   colorWithAlpha,
   homeScreenBackdropGradient,
   homeScreenBackdropOrbTints,
+  UiLucideIcon,
   type ThemePalette,
 } from '@questia/ui';
 import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
@@ -38,6 +39,7 @@ import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { getHomeDashboardStrings } from '../../lib/homeDashboardStrings';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/QuestRewardOverlay';
+import { GlassScrim } from '../../components/GlassScrim';
 import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
 import { QuestHomeLoading } from '../../components/QuestHomeLoading';
 import { QuestSwipeCard } from '../../components/QuestSwipeCard';
@@ -143,7 +145,7 @@ function SafetySheet({ quest, onConfirm, onClose }: {
 
   return (
     <View style={sheet.overlay}>
-      <Pressable style={sheet.backdrop} onPress={onClose} />
+      <GlassScrim overlayColor={palette.overlay} intensity={48} tint="dark" onPress={onClose} accessibilityLabel="Fermer" />
       <View style={sheet.container}>
         <View style={sheet.handle} />
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -817,9 +819,10 @@ export default function DashboardScreen() {
             J.{quest?.day ?? 1}
           </Text>
           {(quest?.streak ?? 0) > 0 ? (
-            <Text style={[styles.headerStreak, { color: palette.orange }]}>
-              {'🔥'} {quest?.streak}
-            </Text>
+            <View style={styles.headerStreakRow}>
+              <UiLucideIcon name="Flame" size={16} color={palette.orange} strokeWidth={2.2} />
+              <Text style={[styles.headerStreak, { color: palette.orange }]}>{quest?.streak}</Text>
+            </View>
           ) : (
             <View />
           )}
@@ -896,6 +899,8 @@ export default function DashboardScreen() {
         {/* Modal report */}
         <Modal visible={showReportModal} transparent animationType="fade" onRequestClose={() => setShowReportModal(false)}>
           <View style={styles.modalBackdrop}>
+            <GlassScrim overlayColor={palette.overlay} intensity={52} tint="dark" />
+            <View style={styles.modalBackdropInner}>
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>{reportUi.reportModalTitle}</Text>
               <Text style={styles.modalBody}>{reportUi.reportModalBody(REPORT_DEFER_MAX_DAYS)}</Text>
@@ -926,12 +931,15 @@ export default function DashboardScreen() {
                 </Pressable>
               </View>
             </View>
+            </View>
           </View>
         </Modal>
 
         {/* Modal abandon */}
         <Modal visible={showAbandonModal} transparent animationType="fade" onRequestClose={() => setShowAbandonModal(false)}>
           <View style={styles.modalBackdrop}>
+            <GlassScrim overlayColor={palette.overlay} intensity={52} tint="dark" />
+            <View style={styles.modalBackdropInner}>
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>{homeUi.abandonCta} ?</Text>
               <Text style={styles.modalBody}>{homeUi.abandonedSub}</Text>
@@ -944,12 +952,15 @@ export default function DashboardScreen() {
                 </Pressable>
               </View>
             </View>
+            </View>
           </View>
         </Modal>
 
         {/* Modal reroll confirm */}
         <Modal visible={showRerollConfirm} transparent animationType="fade" onRequestClose={() => setShowRerollConfirm(false)}>
           <View style={styles.modalBackdrop}>
+            <GlassScrim overlayColor={palette.overlay} intensity={52} tint="dark" />
+            <View style={styles.modalBackdropInner}>
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>{homeUi.rerollConfirmTitle}</Text>
               <Text style={styles.modalBody}>{homeUi.rerollConfirmBody}</Text>
@@ -961,6 +972,7 @@ export default function DashboardScreen() {
                   <Text style={styles.modalBtnPrimaryText}>{homeUi.rerollConfirmAction}</Text>
                 </Pressable>
               </View>
+            </View>
             </View>
           </View>
         </Modal>
@@ -1019,6 +1031,7 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
       paddingVertical: 10,
     },
     headerDay: { fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
+    headerStreakRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     headerStreak: { fontSize: 16, fontWeight: '900' },
     headerAvatar: {
       width: 36,
@@ -1100,9 +1113,14 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
     },
     modalBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(15,23,42,0.55)',
+      position: 'relative',
       justifyContent: 'center',
       padding: 20,
+    },
+    modalBackdropInner: {
+      flex: 1,
+      justifyContent: 'center',
+      zIndex: 1,
     },
     modalCard: {
       backgroundColor: p.card,
@@ -1206,7 +1224,6 @@ function buildSafetySheetStyles(p: ThemePalette) {
   };
   return StyleSheet.create({
     overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 },
-    backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: p.overlay },
     container: {
       position: 'absolute',
       bottom: 0,

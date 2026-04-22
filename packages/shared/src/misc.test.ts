@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { HISTORY_PAGE_SIZE } from './historyPagination';
 import { formatQuestDateFr } from './formatQuestDateFr';
-import { questDisplayEmoji, QUEST_LUCIDE_ICON_TO_EMOJI } from './questDisplayEmoji';
+import { normalizeQuestIconName, questDisplayEmoji, QUEST_LUCIDE_ICON_TO_EMOJI } from './questIconName';
 import { QUEST_SHARE_BACKGROUNDS, getQuestShareBackgroundById } from './questShareBackgrounds';
 import {
   questFamilyLabel,
@@ -38,21 +38,29 @@ describe('formatQuestDateFr', () => {
   });
 });
 
-describe('questDisplayEmoji', () => {
+describe('normalizeQuestIconName', () => {
   it('défaut si vide', () => {
-    expect(questDisplayEmoji(null)).toBe('⚔️');
-    expect(questDisplayEmoji('')).toBe('⚔️');
-    expect(questDisplayEmoji('   ')).toBe('⚔️');
+    expect(normalizeQuestIconName(null)).toBe('Swords');
+    expect(normalizeQuestIconName('')).toBe('Swords');
+    expect(normalizeQuestIconName('   ')).toBe('Swords');
   });
-  it('mappe Lucide vers emoji', () => {
-    expect(questDisplayEmoji('Swords')).toBe(QUEST_LUCIDE_ICON_TO_EMOJI.Swords);
-    expect(questDisplayEmoji('swords')).toBe(QUEST_LUCIDE_ICON_TO_EMOJI.Swords);
+  it('mappe les noms Lucide', () => {
+    expect(normalizeQuestIconName('Swords')).toBe('Swords');
+    expect(normalizeQuestIconName('swords')).toBe('Swords');
+    expect(normalizeQuestIconName('MapPin')).toBe('MapPin');
   });
-  it('garde un caractère non ASCII', () => {
-    expect(questDisplayEmoji('🔥')).toBe('🔥');
+  it('convertit les emojis historiques', () => {
+    expect(normalizeQuestIconName('🔥')).toBe('Flame');
+    expect(normalizeQuestIconName(QUEST_LUCIDE_ICON_TO_EMOJI.Camera)).toBe('Camera');
   });
   it('inconnu → défaut', () => {
-    expect(questDisplayEmoji('UnknownIconName')).toBe('⚔️');
+    expect(normalizeQuestIconName('UnknownIconName')).toBe('Swords');
+  });
+});
+
+describe('questDisplayEmoji (alias)', () => {
+  it('alias de normalizeQuestIconName', () => {
+    expect(questDisplayEmoji('Camera')).toBe('Camera');
   });
 });
 

@@ -1,6 +1,6 @@
 export * from './types';
 export * from './historyPagination';
-export * from './questDisplayEmoji';
+export * from './questIconName';
 export * from './questShareBackgrounds';
 export * from './formatQuestDateFr';
 export * from './constants/quests';

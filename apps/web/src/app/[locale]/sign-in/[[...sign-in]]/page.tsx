@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { SignIn } from '@clerk/nextjs';
 import { Link } from '@/i18n/navigation';
+import { Icon } from '@/components/Icons';
 import { AuthQuestShell } from '@/components/AuthQuestShell';
 import { clerkAuthAppearance } from '@/lib/clerk-auth-appearance';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -34,7 +35,7 @@ export default async function SignInPage({
     <AuthQuestShell
       badge={
         <>
-          <span aria-hidden>🧭</span> {t('badge')}
+          <Icon name="Compass" size="sm" className="inline-block shrink-0 text-cyan-800/90" aria-hidden /> {t('badge')}
         </>
       }
       title={t('title')}

@@ -14,7 +14,7 @@ import {
 import * as Linking from 'expo-linking';
 import * as ClerkExpo from '@clerk/expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { DA } from '@questia/ui';
+import { DA, UiLucideIcon } from '@questia/ui';
 import { hasOnboardingAnswers } from '../../lib/onboardingGate';
 
 const { useSignIn, useSignUp, useSSO } = ClerkExpo as any;
@@ -260,7 +260,7 @@ export default function AuthScreen() {
       >
         <View style={s.verifyInner}>
           <View style={s.verifyIconBox}>
-            <Text style={s.verifyIconText}>🛡️</Text>
+            <UiLucideIcon name="Shield" size={30} color="#0e7490" strokeWidth={1.8} />
           </View>
           <Text style={s.verifyTitle}>Confirmer cet appareil</Text>
           <Text style={s.verifySubtitle}>
@@ -322,7 +322,7 @@ export default function AuthScreen() {
       >
         <View style={s.verifyInner}>
           <View style={s.verifyIconBox}>
-            <Text style={s.verifyIconText}>📧</Text>
+            <UiLucideIcon name="Mail" size={30} color="#0e7490" strokeWidth={1.8} />
           </View>
           <Text style={s.verifyTitle}>Vérifie ton email</Text>
           <Text style={s.verifySubtitle}>
@@ -377,8 +377,14 @@ export default function AuthScreen() {
           </View>
           <Text style={s.appTitle}>QUESTIA</Text>
           <View style={s.badgeRow}>
+            <UiLucideIcon
+              name={mode === 'sign-in' ? 'Compass' : 'Rocket'}
+              size={14}
+              color="#0e7490"
+              strokeWidth={2.2}
+            />
             <Text style={s.badgeText}>
-              {mode === 'sign-in' ? '🧭 Reprendre ta progression' : '🚀 Débloquer ta première quête'}
+              {mode === 'sign-in' ? 'Reprendre ta progression' : 'Débloquer ta première quête'}
             </Text>
           </View>
           <Text style={s.appTagline}>
@@ -531,6 +537,9 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: 'rgba(34,211,238,0.1)',
     borderWidth: 1,
     borderColor: 'rgba(14,116,144,0.2)',
@@ -665,11 +674,11 @@ const s = StyleSheet.create({
 
   primaryButton: {
     overflow: 'hidden',
-    backgroundColor: '#f97316',
+    backgroundColor: '#c2410c',
     paddingVertical: 18,
     borderRadius: 16,
     alignItems: 'center',
-    shadowColor: '#f97316',
+    shadowColor: '#c2410c',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 14,
@@ -729,9 +738,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
-  },
-  verifyIconText: {
-    fontSize: 28,
   },
   verifyTitle: {
     fontSize: 24,

@@ -63,9 +63,6 @@ export function catalogItemFullyOwned(
     return coinPurchasedSkus.has(item.sku);
   }
 
-  if (item.kind === 'theme_pack') {
-    return item.grants.themes?.every((t) => ownedThemeIds.has(t)) ?? false;
-  }
   if (item.kind === 'title') {
     return item.grants.titles?.every((t) => ownedTitles.has(t)) ?? false;
   }

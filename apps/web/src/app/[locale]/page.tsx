@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { ArrowRight } from 'lucide-react';
+import { Icon } from '@/components/Icons';
 import { Navbar } from '@/components/Navbar';
 import { QuestiaLogo } from '@/components/QuestiaLogo';
 import { QuestExamplesSlider, type ExampleQuestSlide } from '@/components/QuestExamplesSlider';
@@ -71,7 +72,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           ? 'Android'
           : 'Ios'
       : null;
-  const STEPS = t.raw('steps') as { emoji: string; title: string; desc: string }[];
+  const STEPS = t.raw('steps') as { icon: string; title: string; desc: string }[];
   const EXAMPLE_QUESTS = t.raw('examples') as ExampleQuestSlide[];
   const testimonialQuotes = t.raw('testimonialQuotes') as { quote: string; name: string; age: number }[];
   const LANDING_FAQ = t.raw('faqItems') as { question: string; answer: string }[];
@@ -92,14 +93,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           aria-labelledby="hero-heading"
         >
           <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-            <div className="absolute top-16 sm:top-24 left-[4%] sm:left-[8%] text-4xl sm:text-6xl opacity-20 sm:opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none">
-              🧭
+            <div className="absolute top-16 sm:top-24 left-[4%] sm:left-[8%] flex items-center justify-center opacity-20 sm:opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none">
+              <Icon name="Compass" className="h-10 w-10 sm:h-14 sm:w-14 text-cyan-900/35" />
             </div>
-            <div className="absolute top-20 sm:top-28 right-[6%] sm:right-[10%] text-3xl sm:text-5xl opacity-20 sm:opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none [animation-delay:2s]">
-              🎒
+            <div className="absolute top-20 sm:top-28 right-[6%] sm:right-[10%] flex items-center justify-center opacity-20 sm:opacity-25 select-none motion-safe:animate-float motion-reduce:animate-none [animation-delay:2s]">
+              <Icon name="Backpack" className="h-9 w-9 sm:h-12 sm:w-12 text-orange-900/30" />
             </div>
-            <div className="absolute bottom-16 sm:bottom-20 left-[40%] sm:left-[45%] text-3xl sm:text-5xl opacity-20 sm:opacity-25 select-none motion-safe:animate-float-delayed motion-reduce:animate-none">
-              🎲
+            <div className="absolute bottom-16 sm:bottom-20 left-[40%] sm:left-[45%] flex items-center justify-center opacity-20 sm:opacity-25 select-none motion-safe:animate-float-delayed motion-reduce:animate-none">
+              <Icon name="Dices" className="h-9 w-9 sm:h-12 sm:w-12 text-slate-800/25" />
             </div>
           </div>
 
@@ -116,7 +117,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 {t('hero.gradient')}
               </span>
               <br />
-              {t('hero.line2')} <span aria-hidden>🗺️</span>
+              <span className="inline-flex items-center gap-2 flex-wrap">
+                {t('hero.line2')}{' '}
+                <Icon name="Map" className="inline-block h-[1.1em] w-[1.1em] shrink-0 translate-y-[0.06em] text-cyan-800/90" aria-hidden />
+              </span>
             </h1>
 
             <div className="space-y-4 max-w-xl lg:max-w-2xl xl:max-w-[44rem] motion-safe:animate-fade-up motion-safe:delay-100 motion-reduce:opacity-100">
@@ -185,7 +189,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10 sm:mb-14 md:mb-20 space-y-4 sm:space-y-5">
             <p className="label flex items-center justify-center gap-2 text-emerald-900">
-              <span aria-hidden>⚡</span> {t('how.label')}
+              <Icon name="Zap" size="sm" className="text-emerald-800/90 shrink-0" aria-hidden />
+              {t('how.label')}
             </p>
             <h2 id="how-heading" className="font-display font-black text-2xl sm:text-3xl md:text-5xl text-slate-900 leading-tight [overflow-wrap:anywhere] px-1">
               {t('how.title')}
@@ -203,9 +208,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   i === 1 ? 'md:-rotate-1' : i === 2 ? 'md:rotate-1' : ''
                 }`}
               >
-                <span className="text-5xl leading-none" aria-hidden>
-                  {s.emoji}
-                </span>
+                <Icon name={s.icon} size="2xl" className="text-orange-700 shrink-0" aria-hidden />
                 <div className="space-y-3">
                   <p className="text-xs font-black text-orange-800 uppercase tracking-wider">
                     {t('how.stepLabel')} {i + 1}
@@ -228,7 +231,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <LandingReveal delayMs={40}>
         <div className="max-w-3xl mx-auto text-center space-y-5 sm:space-y-6 px-1">
           <p className="label flex items-center justify-center gap-2 text-cyan-900">
-            <span aria-hidden>📲</span> {t(storesReady ? 'download.label' : 'download.labelWeb')}
+            <Icon name="Smartphone" size="sm" className="text-cyan-900/90 shrink-0" aria-hidden />
+            {t(storesReady ? 'download.label' : 'download.labelWeb')}
           </p>
           <h2 id="download-heading" className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
             {t(landingStoreSuffix ? `download.titleStores${landingStoreSuffix}` : 'download.titleWeb')}
@@ -253,7 +257,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="max-w-5xl mx-auto relative">
           <div className="text-center mb-10 sm:mb-12 md:mb-16 space-y-3 sm:space-y-4 px-1">
             <p className="label flex items-center justify-center gap-2 text-orange-900">
-              <span aria-hidden>💬</span> {t('testimonials.label')}
+              <Icon name="MessageCircle" size="sm" className="text-orange-900/90 shrink-0" aria-hidden />
+              {t('testimonials.label')}
             </p>
             <h2 id="testimonials-heading" className="font-display font-black text-2xl sm:text-3xl md:text-5xl text-slate-900 leading-tight [overflow-wrap:anywhere]">
               {t('testimonials.title')}

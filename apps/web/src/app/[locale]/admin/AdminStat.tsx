@@ -1,3 +1,5 @@
+import { Icon } from '@/components/Icons';
+
 export function AdminStat({
   label,
   value,
@@ -9,7 +11,7 @@ export function AdminStat({
   value: number;
   hint: string;
   accent: 'cyan' | 'orange' | 'violet' | 'emerald';
-  /** Emoji ou court symbole décoratif */
+  /** Nom d'icône Lucide (PascalCase) */
   icon?: string;
 }) {
   const styles =
@@ -32,7 +34,7 @@ export function AdminStat({
               iconBg: 'bg-emerald-100/90 text-emerald-900',
             }
           : {
-              ring: 'border-violet-300/70 bg-gradient-to-br from-white via-violet-50/45 to-white shadow-[0_8px_32px_-12px_rgba(139,92,246,0.32)]',
+              ring: 'border-violet-300/70 bg-gradient-to-br from-white via-violet-50/45 to-white shadow-[0_12px_40px_-16px_rgba(139,92,246,0.32)]',
               glow: 'from-violet-400/25 to-transparent',
               iconBg: 'bg-violet-100/90 text-violet-900',
             };
@@ -48,10 +50,10 @@ export function AdminStat({
       <div className="relative flex items-start gap-3">
         {icon ? (
           <span
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg shadow-inner ${styles.iconBg}`}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-inner ${styles.iconBg}`}
             aria-hidden
           >
-            {icon}
+            <Icon name={icon} size="lg" />
           </span>
         ) : null}
         <div className="min-w-0 flex-1">

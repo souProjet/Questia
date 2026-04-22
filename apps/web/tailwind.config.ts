@@ -6,9 +6,9 @@ const config: Config = {
     extend: {
       colors: {
         bg: {
-          primary: '#e8f8ff',
-          card: '#ffffff',
-          hover: '#f5fbff',
+          primary: '#ebe8e0',
+          card: '#faf8f4',
+          hover: '#f2efe8',
         },
       },
       fontFamily: {
@@ -235,10 +235,10 @@ const config: Config = {
         },
       },
       boxShadow: {
-        'glow-cyan': '0 0 36px rgba(34, 211, 238, 0.22)',
-        'glow-cyan-sm': '0 0 18px rgba(34, 211, 238, 0.12)',
-        'glow-orange': '0 0 28px rgba(249, 115, 22, 0.2)',
-        'glow-gold': '0 0 30px rgba(251, 191, 36, 0.18)',
+        'glow-cyan': '0 0 28px rgba(19, 78, 74, 0.14)',
+        'glow-cyan-sm': '0 0 14px rgba(19, 78, 74, 0.1)',
+        'glow-orange': '0 0 24px rgba(194, 65, 12, 0.14)',
+        'glow-gold': '0 0 24px rgba(146, 64, 14, 0.12)',
       },
     },
   },

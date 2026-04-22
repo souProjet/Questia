@@ -37,7 +37,7 @@ describe('bundleOwnership', () => {
     expect(
       hasAllPermanentBundleGrants(
         bundle,
-        bundle.grants.themes ?? [],
+        [],
         bundle.grants.titles ?? [],
       ),
     ).toBe(true);
@@ -57,15 +57,9 @@ describe('bundleOwnership', () => {
     expect(catalogItemFullyOwned(rr, {}, new Set())).toBe(false);
     expect(catalogItemFullyOwned(xp, {}, new Set())).toBe(false);
   });
-  it('catalogItemFullyOwned — theme_pack', () => {
-    const tp = SHOP_CATALOG.find((c) => c.kind === 'theme_pack')!;
-    const owned = { ownedThemes: tp.grants.themes ?? [] };
-    expect(catalogItemFullyOwned(tp, owned, new Set())).toBe(true);
-    expect(catalogItemFullyOwned(tp, { ownedThemes: [] }, new Set())).toBe(false);
-  });
   it('catalogItemFullyOwned — bundle avec achat coin', () => {
     const shop = {
-      ownedThemes: bundle.grants.themes,
+      ownedThemes: ['default'],
       ownedTitleIds: bundle.grants.titles,
     };
     expect(catalogItemFullyOwned(bundle, shop, new Set([bundle.sku]))).toBe(true);
@@ -103,7 +97,7 @@ describe('marketing', () => {
 describe('titles', () => {
   it('registry et getTitleDefinition', () => {
     expect(TITLE_IDS.length).toBeGreaterThan(0);
-    expect(getTitleDefinition('scout')?.emoji).toBeDefined();
+    expect(getTitleDefinition('scout')?.icon).toBeDefined();
     expect(getTitleDefinition('zzz')).toBeUndefined();
   });
 });

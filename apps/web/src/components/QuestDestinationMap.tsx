@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState } from 'react';
+import { Icon } from '@/components/Icons';
 
 export type QuestDestinationPayload = {
   label: string;
@@ -115,11 +116,13 @@ export default function QuestDestinationMap({
   if (!dest) {
     return (
       <div className="rounded-2xl border border-cyan-200/50 bg-gradient-to-br from-white via-cyan-50/30 to-white p-4 shadow-sm ring-1 ring-cyan-100/70">
-        <p className="text-sm font-semibold text-cyan-950">
-          📍{' '}
-          {!destination.label.trim() || /^null$/i.test(destination.label.trim())
-            ? 'Lieu à préciser'
-            : destination.label}
+        <p className="flex items-start gap-2 text-sm font-semibold text-cyan-950">
+          <Icon name="MapPin" size="sm" className="mt-0.5 shrink-0 text-cyan-800" aria-hidden />
+          <span>
+            {!destination.label.trim() || /^null$/i.test(destination.label.trim())
+              ? 'Lieu à préciser'
+              : destination.label}
+          </span>
         </p>
         <p className="mt-2 text-xs leading-relaxed text-[var(--on-cream-muted)]">
           Le lieu n'a pas pu être placé sur la carte. Ouvre Google Maps pour t'orienter.

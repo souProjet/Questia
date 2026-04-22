@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
-import { QUADRANT_DEFAULTS, applySociabilityAdjustment, isValidSociabilityLevel, getBadgeCatalogForUi, getThemeIds, TITLE_IDS } from '@questia/shared';
+import {
+  QUADRANT_DEFAULTS,
+  applySociabilityAdjustment,
+  isValidSociabilityLevel,
+  getBadgeCatalogForUi,
+  getThemeIds,
+  effectiveOwnedThemes,
+  TITLE_IDS,
+} from '@questia/shared';
 import type { ExplorerAxis, RiskAxis, SociabilityLevel } from '@questia/shared';
 import { parseAppLocaleFromRequest } from '@/lib/requestLocale';
 import { progressionFields, serializeBadges } from '@/lib/progression';
@@ -87,7 +95,7 @@ export async function PATCH(request: NextRequest) {
   const profile = await prisma.profile.findUnique({ where: { clerkId: userId } });
   if (!profile) return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
 
-  const ownedThemes = parseStringArray(profile.ownedThemes);
+  const ownedThemes = effectiveOwnedThemes(parseStringArray(profile.ownedThemes));
   const ownedTitles = parseStringArray((profile as { ownedTitleIds?: unknown }).ownedTitleIds);
   const allowedThemes = new Set(getThemeIds());
   const allowedTitleIds = new Set(TITLE_IDS);

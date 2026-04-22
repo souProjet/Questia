@@ -42,7 +42,7 @@ describe('deepLinks', () => {
     expect(formatQuestShareEquippedTitleLine(null)).toBe(null);
     expect(formatQuestShareEquippedTitleLine(undefined)).toBe(null);
     expect(formatQuestShareEquippedTitleLine('')).toBe(null);
-    expect(formatQuestShareEquippedTitleLine('scout')).toBe('🧭 Éclaireur·se des trottoirs');
+    expect(formatQuestShareEquippedTitleLine('scout')).toBe('Éclaireur·se des trottoirs');
     expect(formatQuestShareEquippedTitleLine('unknown-id')).toBe(null);
   });
 
@@ -60,9 +60,9 @@ describe('deepLinks', () => {
       buildQuestShareMessage({
         title: 'Hello',
         webUrl: 'https://x.fr/app',
-        equippedTitleLine: '🧭 Scout',
+        equippedTitleLine: 'Éclaireur·se des trottoirs',
         progressionLine: 'Nv. 2 · 100 XP',
       }),
-    ).toBe('Hello\n🧭 Scout\nNv. 2 · 100 XP\nhttps://x.fr/app');
+    ).toBe('Hello\nÉclaireur·se des trottoirs\nNv. 2 · 100 XP\nhttps://x.fr/app');
   });
 });

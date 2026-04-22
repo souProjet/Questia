@@ -64,7 +64,8 @@ export interface BadgeDefinition {
   id: BadgeId;
   title: string;
   criteria: string;
-  placeholderEmoji: string;
+  /** Nom d'icône Lucide (PascalCase) pour l'affichage UI */
+  placeholderIcon: string;
   category: BadgeCategory;
 }
 
@@ -77,42 +78,42 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     id: 'phase_calibration_fin',
     title: 'Étalonnage franchi',
     criteria: 'Atteindre au moins le jour 3 de ton parcours.',
-    placeholderEmoji: '🌱',
+    placeholderIcon: 'Leaf',
     category: 'phase',
   },
   {
     id: 'phase_expansion',
     title: 'Horizon élargi',
     criteria: 'Entrer en phase Expansion (jour 4+).',
-    placeholderEmoji: '🧭',
+    placeholderIcon: 'Compass',
     category: 'phase',
   },
   {
     id: 'phase_rupture',
     title: 'Point de rupture',
     criteria: 'Entrer en phase Rupture (jour 11+).',
-    placeholderEmoji: '⚡',
+    placeholderIcon: 'Zap',
     category: 'phase',
   },
   {
     id: 'parcours_jour_21',
     title: 'Trois semaines',
     criteria: 'Atteindre le jour 21 de parcours.',
-    placeholderEmoji: '📅',
+    placeholderIcon: 'Calendar',
     category: 'milestone',
   },
   {
     id: 'parcours_jour_30',
     title: 'Un mois sur la route',
     criteria: 'Atteindre le jour 30 de parcours.',
-    placeholderEmoji: '🗓️',
+    placeholderIcon: 'CalendarDays',
     category: 'milestone',
   },
   {
     id: 'parcours_jour_60',
     title: 'Saison habitée',
     criteria: 'Atteindre le jour 60 de parcours.',
-    placeholderEmoji: '🏕️',
+    placeholderIcon: 'Tent',
     category: 'milestone',
   },
   // ── Séries ────────────────────────────────────────────────────────────────
@@ -120,35 +121,35 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     id: 'serie_3',
     title: 'Premier élan',
     criteria: 'Atteindre une série de 3 jours.',
-    placeholderEmoji: '✨',
+    placeholderIcon: 'Sparkles',
     category: 'serie',
   },
   {
     id: 'serie_7',
     title: 'Semaine en feu',
     criteria: 'Atteindre une série de 7 jours.',
-    placeholderEmoji: '🔥',
+    placeholderIcon: 'Flame',
     category: 'serie',
   },
   {
     id: 'serie_14',
     title: "Deux semaines d'affilée",
     criteria: 'Atteindre une série de 14 jours.',
-    placeholderEmoji: '💫',
+    placeholderIcon: 'Star',
     category: 'serie',
   },
   {
     id: 'serie_30',
     title: 'Marathon',
     criteria: 'Atteindre une série de 30 jours.',
-    placeholderEmoji: '🏅',
+    placeholderIcon: 'Medal',
     category: 'serie',
   },
   {
     id: 'serie_60',
     title: "Rythme d'acier",
     criteria: 'Atteindre une série de 60 jours.',
-    placeholderEmoji: '🔩',
+    placeholderIcon: 'Wrench',
     category: 'serie',
   },
   // ── Volume (quêtes validées) ─────────────────────────────────────────────
@@ -156,49 +157,49 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     id: 'premiere_quete',
     title: 'Première pierre',
     criteria: 'Valider ta première quête.',
-    placeholderEmoji: '🥇',
+    placeholderIcon: 'Award',
     category: 'volume',
   },
   {
     id: 'cinq_quetes',
     title: 'Cinq victoires',
     criteria: 'Valider 5 quêtes au total.',
-    placeholderEmoji: '5️⃣',
+    placeholderIcon: 'Hash',
     category: 'volume',
   },
   {
     id: 'dix_quetes',
     title: 'Régularité',
     criteria: 'Valider 10 quêtes au total.',
-    placeholderEmoji: '🔟',
+    placeholderIcon: 'ListOrdered',
     category: 'volume',
   },
   {
     id: 'quinze_quetes',
     title: 'En série',
     criteria: 'Valider 15 quêtes au total.',
-    placeholderEmoji: '📎',
+    placeholderIcon: 'Paperclip',
     category: 'volume',
   },
   {
     id: 'vingt_cinq_quetes',
     title: 'Quart de siècle',
     criteria: 'Valider 25 quêtes au total.',
-    placeholderEmoji: '💠',
+    placeholderIcon: 'Gem',
     category: 'volume',
   },
   {
     id: 'cinquante_quetes',
     title: 'Demi-centenaire',
     criteria: 'Valider 50 quêtes au total.',
-    placeholderEmoji: '🎯',
+    placeholderIcon: 'Target',
     category: 'volume',
   },
   {
     id: 'cent_quetes',
     title: 'Cent pas',
     criteria: 'Valider 100 quêtes au total.',
-    placeholderEmoji: '💯',
+    placeholderIcon: 'Trophy',
     category: 'volume',
   },
   // ── Extérieur ─────────────────────────────────────────────────────────────
@@ -206,35 +207,35 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     id: 'premiere_exterieur',
     title: 'Premier pas dehors',
     criteria: 'Valider ta première quête extérieure.',
-    placeholderEmoji: '🌿',
+    placeholderIcon: 'Sprout',
     category: 'exploration',
   },
   {
     id: 'exterieur_5',
     title: 'Air du dehors',
     criteria: 'Valider 5 quêtes extérieures.',
-    placeholderEmoji: '🌤️',
+    placeholderIcon: 'CloudSun',
     category: 'exploration',
   },
   {
     id: 'exterieur_10',
     title: 'Explorateur·rice des lieux',
     criteria: 'Valider 10 quêtes extérieures.',
-    placeholderEmoji: '🗺️',
+    placeholderIcon: 'Map',
     category: 'exploration',
   },
   {
     id: 'exterieur_25',
     title: 'Grand large',
     criteria: 'Valider 25 quêtes extérieures.',
-    placeholderEmoji: '🧗',
+    placeholderIcon: 'Mountain',
     category: 'exploration',
   },
   {
     id: 'exterieur_50',
     title: 'Horizon ouvert',
     criteria: 'Valider 50 quêtes extérieures.',
-    placeholderEmoji: '🌍',
+    placeholderIcon: 'Globe',
     category: 'exploration',
   },
   // ── Quadrants (profil + volume) ──────────────────────────────────────────
@@ -242,28 +243,28 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     id: 'quadrant_audacieux',
     title: 'Trait pour trait · audacieux',
     criteria: 'Profil Explorateur·rice + Preneur·se de risque et 15 quêtes validées.',
-    placeholderEmoji: '🎲',
+    placeholderIcon: 'Dices',
     category: 'style',
   },
   {
     id: 'quadrant_explorer_prudent',
     title: 'Trait pour trait · explorateur sage',
     criteria: 'Profil Explorateur·rice + Prudence et 15 quêtes validées.',
-    placeholderEmoji: '🧠',
+    placeholderIcon: 'Brain',
     category: 'style',
   },
   {
     id: 'quadrant_homebody_prudent',
     title: 'Trait pour trait · ancrage',
     criteria: 'Profil Casanier·ière + Prudence et 15 quêtes validées.',
-    placeholderEmoji: '🏠',
+    placeholderIcon: 'Home',
     category: 'style',
   },
   {
     id: 'quadrant_homebody_risktaker',
     title: 'Trait pour trait · tension',
     criteria: 'Profil Casanier·ière + Audace et 15 quêtes validées.',
-    placeholderEmoji: '🎭',
+    placeholderIcon: 'Drama',
     category: 'style',
   },
 ];
@@ -404,7 +405,7 @@ export interface DisplayBadge {
   unlockedAt: string;
   title: string;
   criteria: string;
-  placeholderEmoji: string;
+  placeholderIcon: string;
   category: BadgeCategory;
 }
 
@@ -426,7 +427,7 @@ export function displayEarnedBadges(raw: unknown, locale: AppLocale = 'fr'): Dis
       unlockedAt: b.unlockedAt,
       title: def ? text.title : b.id,
       criteria: def ? text.criteria : '',
-      placeholderEmoji: def?.placeholderEmoji ?? '🏅',
+      placeholderIcon: def?.placeholderIcon ?? 'Medal',
       category: def?.category ?? 'progression',
     };
   });
@@ -436,7 +437,7 @@ export interface BadgeCatalogEntry {
   id: BadgeId;
   title: string;
   criteria: string;
-  placeholderEmoji: string;
+  placeholderIcon: string;
   category: BadgeCategory;
   unlocked: boolean;
   unlockedAt?: string;
@@ -464,7 +465,7 @@ export function getBadgeCatalogForUi(earnedRaw: unknown, locale: AppLocale = 'fr
       id: def.id,
       title,
       criteria,
-      placeholderEmoji: def.placeholderEmoji,
+      placeholderIcon: def.placeholderIcon,
       category: def.category,
       unlocked: dates.has(def.id),
       unlockedAt: dates.get(def.id),

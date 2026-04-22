@@ -169,24 +169,24 @@
     },
     "steps": [
       {
-        "emoji": "🎯",
+        "icon": "Target",
         "title": "You first",
         "desc": "You share your style and what you're willing to try — missions align with your profile and your energy."
       },
       {
-        "emoji": "🧠",
+        "icon": "Brain",
         "title": "Profile in 2 questions",
         "desc": "Two answers to calibrate the challenge — not too easy, not impossible."
       },
       {
-        "emoji": "⚔️",
+        "icon": "Swords",
         "title": "Your morning quest",
         "desc": "A short mission with a clear ending. Check it off and move on."
       }
     ],
     "examples": [
       {
-        "emoji": "📸",
+        "icon": "Camera",
         "title": "The Urban Explorer",
         "contextLabel": "Curiosity · afternoon",
         "mission": "Spend 1 hour in a neighbourhood you usually just pass through. Photograph 5 things that surprise you.",
@@ -194,7 +194,7 @@
         "outdoor": true
       },
       {
-        "emoji": "☕",
+        "icon": "Coffee",
         "title": "The Strangers' Café",
         "contextLabel": "Social break · 45 min",
         "mission": "Go to a café you've never tried. Order something you never pick. 45 minutes phone-free — boss fight mode.",
@@ -202,7 +202,7 @@
         "outdoor": false
       },
       {
-        "emoji": "📞",
+        "icon": "Phone",
         "title": "Your Voice, Once",
         "contextLabel": "Reconnection · short",
         "mission": "Call someone you've been meaning to reach. Tell them you were thinking of them. Bonus: really listen.",
@@ -348,7 +348,7 @@
     "greeting": "Hi {name}",
     "defaultName": "adventurer",
     "heroTitle": "Here's today's quest",
-    "heroSubtitle": "🎯 Goal: get off autopilot — adventure mode.",
+    "heroSubtitle": "Goal: get off autopilot — adventure mode.",
     "streakTitle": "Streak: consecutive days with a generated quest. Abandoning resets it; deferring or rerolling does not.",
     "streakDay": "day",
     "streakDays": "days",
@@ -357,8 +357,8 @@
     "journeyDay": "Journey · day {day}",
     "equippedTitleShop": "Shop title",
     "xpBonusTooltip": "Remaining shop XP boosts",
-    "xpBonusCharges": "⚡ {n} XP bonus",
-    "levelLine": "⭐ Level {level} · {xp} XP",
+    "xpBonusCharges": "{n} XP bonus",
+    "levelLine": "Level {level} · {xp} XP",
     "xpToLevel": "+{xp} XP to level up",
     "xpInLevel": "{into}/{per} in this level",
     "questOfDay": "Today's quest",
@@ -373,7 +373,7 @@
     "paceTodayTitle": "Designed to finish within the day.",
     "pacePlannedLabel": "Pace: to schedule",
     "paceTodayLabel": "Pace: today",
-    "outdoorBadge": "🌿 Outdoors",
+    "outdoorBadge": "Outdoors",
     "mapHeading": "Meet-up point",
     "mapDescription": "A reference point for your mission. Enable location to see walking directions on the map.",
     "hookLabel": "Thought for the day",
@@ -391,10 +391,10 @@
     "abandonedSubtitle": "No judgment: your streak resets to zero; tomorrow is a new card.",
     "saving": "Saving…",
     "confirming": "Confirming…",
-    "validateQuest": "✅ I did it — complete quest",
+    "validateQuest": "I did it — complete quest",
     "validateHint": "When it's done in real life, complete here to check it off.",
     "abandonLink": "I can't do it — skip this card",
-    "acceptChallenge": "⚔️ I take the challenge!",
+    "acceptChallenge": "I take the challenge!",
     "changeQuest": "Change quest ({label})",
     "rerollConfirmTitle": "Change quest?",
     "rerollConfirmBody": "You'll use a reroll and the new quest's XP will be reduced by 25%. This cannot be undone.",
@@ -413,7 +413,7 @@
     "abandonModalBody": "That's fine: your streak goes back to zero, with no penalty. A new quest awaits tomorrow.",
     "back": "Back",
     "bannerDismiss": "OK",
-    "safetyTitle": "🛡️ Before you head out…",
+    "safetyTitle": "Before you head out…",
     "safetySubtitle": "{title} takes place outdoors. Check each point to confirm.",
     "safetyRule1": "I stay in public, accessible places.",
     "safetyRule2": "I will not enter private property.",
@@ -631,7 +631,7 @@
     "metadataTitle": "Sign in",
     "metadataDescription": "Sign in to Questia to open today's quest and keep your streak.",
     "badge": "Pick up where you left off",
-    "title": "Welcome back, adventurer ⚔️",
+    "title": "Welcome back, adventurer",
     "subtitle": "Sign in to see today's quest and your streak.",
     "footerPrompt": "No account yet?",
     "footerLink": "Create a free account"
@@ -640,7 +640,7 @@
     "metadataTitle": "Sign up",
     "metadataDescription": "Create your Questia account — your first personalized quest is waiting.",
     "badge": "Unlock your first quest",
-    "title": "Start the adventure 🎮",
+    "title": "Start the adventure",
     "subtitle": "Sign up — your first personalized quest is on the other side.",
     "footerPrompt": "Already have an account?",
     "footerLink": "Sign in"

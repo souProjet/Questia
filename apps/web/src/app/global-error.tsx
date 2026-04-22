@@ -1,18 +1,20 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import { IBM_Plex_Sans, IBM_Plex_Serif } from 'next/font/google';
 import './globals.css';
 import { AppErrorView } from '@/components/AppErrorView';
 
-const inter = Inter({
+const plexSans = IBM_Plex_Sans({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-inter',
   display: 'swap',
 });
 
-const spaceGrotesk = Space_Grotesk({
+const plexSerif = IBM_Plex_Serif({
   subsets: ['latin'],
+  weight: ['400', '600', '700'],
   variable: '--font-space',
   display: 'swap',
 });
@@ -33,7 +35,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html lang="fr" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="fr" className={`${plexSans.variable} ${plexSerif.variable}`}>
       <body className="font-sans antialiased">
         <AppErrorView
           reset={reset}

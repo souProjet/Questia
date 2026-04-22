@@ -8,7 +8,7 @@ export const clerkAuthAppearance = {
     logoImageUrl: '',
   },
   variables: {
-    colorPrimary: '#f97316',
+    colorPrimary: '#c2410c',
     colorBackground: '#ffffff',
     colorText: '#0f172a',
     colorTextSecondary: '#64748b',

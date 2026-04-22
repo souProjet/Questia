@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { SignUp } from '@clerk/nextjs';
 import { Link } from '@/i18n/navigation';
+import { Icon } from '@/components/Icons';
 import { AuthQuestShell } from '@/components/AuthQuestShell';
 import { clerkAuthAppearance } from '@/lib/clerk-auth-appearance';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -34,7 +35,7 @@ export default async function SignUpPage({
     <AuthQuestShell
       badge={
         <>
-          <span aria-hidden>🚀</span> {t('badge')}
+          <Icon name="Rocket" size="sm" className="inline-block shrink-0 text-orange-700/95" aria-hidden /> {t('badge')}
         </>
       }
       title={t('title')}

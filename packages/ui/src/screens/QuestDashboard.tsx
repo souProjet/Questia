@@ -13,6 +13,7 @@ import type {
 import { QuestCard } from '../components/QuestCard';
 import { SafetyConsentModal } from '../components/SafetyConsentModal';
 import { NarrationModal } from '../components/NarrationModal';
+import { UiLucideIcon } from '../components/UiLucideIcon';
 import { DA } from '../theme';
 
 interface QuestDashboardProps {
@@ -27,9 +28,9 @@ interface QuestDashboardProps {
 }
 
 const PHASE_CONFIG = {
-  calibration: { label: 'Étalonnage', color: '#10b981', emoji: '🌱', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
-  expansion:   { label: 'Expansion',  color: '#22d3ee', emoji: '🌙', bg: 'rgba(34,211,238,0.12)', border: 'rgba(34,211,238,0.3)' },
-  rupture:     { label: 'Rupture',    color: '#f97316', emoji: '⚡', bg: 'rgba(249,115,22,0.12)',  border: 'rgba(249,115,22,0.3)' },
+  calibration: { label: 'Étalonnage', color: '#10b981', icon: 'Leaf', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
+  expansion:   { label: 'Expansion',  color: '#134e4a', icon: 'Moon', bg: 'rgba(19,78,74,0.12)', border: 'rgba(19,78,74,0.3)' },
+  rupture:     { label: 'Rupture',    color: '#c2410c', icon: 'Zap', bg: 'rgba(194,65,12,0.12)',  border: 'rgba(194,65,12,0.3)' },
 };
 
 export function QuestDashboard({
@@ -155,7 +156,7 @@ export function QuestDashboard({
           <Text style={styles.dayLabel}>Jour {day}</Text>
         </View>
         <View style={[styles.phaseBadge, { backgroundColor: pc.bg, borderColor: pc.border }]}>
-          <Text style={styles.phaseEmoji}>{pc.emoji}</Text>
+          <UiLucideIcon name={pc.icon} size={18} color={pc.color} />
           <Text style={[styles.phaseLabel, { color: pc.color }]}>{pc.label}</Text>
         </View>
       </View>
@@ -163,26 +164,33 @@ export function QuestDashboard({
       {/* ── Stats ── */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statEmoji}>🔥</Text>
+          <UiLucideIcon name="Flame" size={22} color="#c2410c" />
           <Text style={styles.statValue}>{streak}</Text>
           <Text style={styles.statLabel}>Série</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statEmoji}>🎲</Text>
+          <UiLucideIcon name="Dices" size={22} color="#134e4a" />
           <Text style={styles.statValue}>{rerollsLeft}/{MAX_REROLLS_PER_DAY}</Text>
           <Text style={styles.statLabel}>Rerolls</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statEmoji}>⚡</Text>
+          <UiLucideIcon name="Zap" size={22} color="#f59e0b" />
           <Text style={styles.statValue}>{Math.round(congruenceDelta * 100)}</Text>
           <Text style={styles.statLabel}>Delta Δ</Text>
         </View>
       </View>
 
       {/* ── Quest card ── */}
-      <Text style={styles.sectionTitle}>
-        {questAccepted ? '✅  Quête en cours' : '⚔️  Quête du Jour'}
-      </Text>
+      <View style={styles.sectionTitleRow}>
+        {questAccepted ? (
+          <UiLucideIcon name="Check" size={20} color="#10b981" />
+        ) : (
+          <UiLucideIcon name="Swords" size={20} color="#c2410c" />
+        )}
+        <Text style={styles.sectionTitle}>
+          {questAccepted ? 'Quête en cours' : 'Quête du Jour'}
+        </Text>
+      </View>
 
       {!apiBaseUrl.trim() ? (
         <View style={styles.loadingCard}>
@@ -190,12 +198,12 @@ export function QuestDashboard({
         </View>
       ) : !currentQuest ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator size="large" color="#22d3ee" />
+          <ActivityIndicator size="large" color="#134e4a" />
           <Text style={styles.loadingTitle}>Chargement des archétypes…</Text>
         </View>
       ) : loading ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator size="large" color="#22d3ee" />
+          <ActivityIndicator size="large" color="#134e4a" />
           <Text style={styles.loadingTitle}>Le Maître des Quêtes rédige ta narration…</Text>
           <Text style={styles.loadingSubtitle}>Préparation de ton aventure personnalisée</Text>
         </View>
@@ -211,9 +219,12 @@ export function QuestDashboard({
             onPress={handleReroll}
             disabled={rerollsLeft <= 0}
           >
-            <Text style={[styles.rerollText, rerollsLeft <= 0 && styles.rerollTextDisabled]}>
-              🎲  Relancer la quête
-            </Text>
+            <View style={styles.rerollTextRow}>
+              <UiLucideIcon name="Dices" size={16} color={rerollsLeft <= 0 ? DA.muted : '#c2410c'} />
+              <Text style={[styles.rerollText, rerollsLeft <= 0 && styles.rerollTextDisabled]}>
+                Relancer la quête
+              </Text>
+            </View>
             <Text style={[styles.rerollCount, rerollsLeft <= 0 && styles.rerollTextDisabled]}>
               {rerollsLeft} restant{rerollsLeft > 1 ? 's' : ''}
             </Text>
@@ -221,7 +232,10 @@ export function QuestDashboard({
 
           {rerollsLeft <= 0 && (
             <Pressable style={styles.buyButton}>
-              <Text style={styles.buyText}>🌟  Obtenir plus de Rerolls</Text>
+              <View style={styles.buyTextRow}>
+                <UiLucideIcon name="Sparkles" size={16} color="#c2410c" />
+                <Text style={styles.buyText}>Obtenir plus de Rerolls</Text>
+              </View>
             </Pressable>
           )}
         </View>
@@ -230,7 +244,7 @@ export function QuestDashboard({
       {/* ── Accepted state ── */}
       {questAccepted && (
         <View style={styles.acceptedCard}>
-          <Text style={styles.acceptedEmoji}>⚔️</Text>
+          <UiLucideIcon name="Swords" size={32} color="#c2410c" />
           <Text style={styles.acceptedTitle}>Quête acceptée !</Text>
           <Text style={styles.acceptedSubtitle}>
             Tu as lancé ton aventure. Reviens demain pour une nouvelle quête.
@@ -276,7 +290,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#22d3ee',
+    color: '#134e4a',
     letterSpacing: 3,
     marginBottom: 4,
   },
@@ -294,9 +308,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     gap: 6,
-  },
-  phaseEmoji: {
-    fontSize: 14,
   },
   phaseLabel: {
     fontSize: 13,
@@ -317,10 +328,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: DA.borderCyan,
-  },
-  statEmoji: {
-    fontSize: 20,
-    marginBottom: 4,
+    gap: 4,
   },
   statValue: {
     fontSize: 18,
@@ -335,13 +343,28 @@ const styles = StyleSheet.create({
   },
 
   // Section title
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+  },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
     color: DA.muted,
     letterSpacing: 1.5,
-    marginBottom: 14,
     textTransform: 'uppercase',
+  },
+  rerollTextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  buyTextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 
   // Loading
@@ -387,7 +410,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   rerollText: {
-    color: '#22d3ee',
+    color: '#134e4a',
     fontWeight: '700',
     fontSize: 15,
   },
@@ -423,10 +446,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
     gap: 8,
-  },
-  acceptedEmoji: {
-    fontSize: 40,
-    marginBottom: 4,
   },
   acceptedTitle: {
     fontSize: 22,

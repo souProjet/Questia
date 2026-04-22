@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
-import { Compass, Sparkles } from 'lucide-react';
+import { Compass, Dices, Sparkles } from 'lucide-react';
 import type { QuestLoaderSession } from '@questia/shared';
 import {
   getDailyQuestLoadingLines,
@@ -44,14 +44,14 @@ export function QuestHomeLoading() {
         <div className="absolute -top-12 left-1/2 w-[min(40rem,110vw)] h-[min(40rem,110vw)] -translate-x-1/2 rounded-full bg-gradient-to-br from-cyan-300/28 via-amber-200/10 to-orange-200/18 blur-3xl motion-safe:animate-glow-soft motion-reduce:opacity-45" />
         <div className="absolute top-[20%] right-[6%] w-72 h-72 rounded-full bg-gradient-to-bl from-orange-200/20 to-transparent blur-3xl motion-safe:animate-float motion-reduce:opacity-30" />
         <div className="absolute bottom-[18%] left-[4%] w-64 h-64 rounded-full bg-cyan-300/12 blur-3xl motion-safe:animate-float-delayed motion-reduce:opacity-25" />
-        <div className="absolute top-[22%] left-[10%] text-4xl opacity-[0.22] select-none motion-safe:animate-float motion-reduce:opacity-12">
-          🧭
+        <div className="absolute top-[22%] left-[10%] flex items-center justify-center opacity-[0.22] select-none motion-safe:animate-float motion-reduce:opacity-12">
+          <Compass className="h-10 w-10 text-cyan-900/50" strokeWidth={1.35} aria-hidden />
         </div>
-        <div className="absolute top-[26%] right-[12%] text-3xl opacity-[0.2] select-none motion-safe:animate-float-delayed motion-reduce:opacity-[0.12]">
-          🎲
+        <div className="absolute top-[26%] right-[12%] flex items-center justify-center opacity-[0.2] select-none motion-safe:animate-float-delayed motion-reduce:opacity-[0.12]">
+          <Dices className="h-9 w-9 text-orange-900/45" strokeWidth={1.35} aria-hidden />
         </div>
-        <div className="absolute bottom-[32%] right-[18%] text-2xl opacity-[0.14] select-none motion-safe:animate-float motion-reduce:opacity-10 [animation-delay:1.1s]">
-          ✨
+        <div className="absolute bottom-[32%] right-[18%] flex items-center justify-center opacity-[0.14] select-none motion-safe:animate-float motion-reduce:opacity-10 [animation-delay:1.1s]">
+          <Sparkles className="h-7 w-7 text-amber-600/40" strokeWidth={1.35} aria-hidden />
         </div>
       </div>
 

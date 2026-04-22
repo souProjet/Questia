@@ -35,7 +35,7 @@ describe('/api/quest/share/[shareId] GET', () => {
   it('200 avec payload public', async () => {
     prismaMock.questLog.findUnique.mockResolvedValue({
       questDate: '2026-03-28',
-      generatedEmoji: '⚔️',
+      generatedEmoji: 'Swords',
       generatedTitle: 'Titre',
       generatedMission: 'Mission',
       generatedHook: 'Hook',

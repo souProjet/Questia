@@ -11,6 +11,7 @@ import {
   AccessibilityInfo,
   ScrollView,
 } from 'react-native';
+import { GlassScrim } from './GlassScrim';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { DisplayBadge, XpBreakdown } from '@questia/shared';
 import {
@@ -25,6 +26,7 @@ import {
   themePanelMuted,
   themePanelText,
   type ThemePalette,
+  UiLucideIcon,
 } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
 import { useAppLocale } from '../contexts/AppLocaleContext';
@@ -230,6 +232,7 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onContinue}>
       <View style={styles.backdrop}>
+        <GlassScrim overlayColor={palette.overlay} intensity={58} tint="dark" />
         <Animated.View
           pointerEvents="none"
           style={[
@@ -377,7 +380,9 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
                   <Text style={styles.badgeKicker}>Nouveaux badges</Text>
                   {badgesUnlocked.map((b) => (
                     <View key={b.id} style={styles.badgeRow}>
-                      <Text style={styles.badgeEmoji}>{b.placeholderEmoji}</Text>
+                      <View style={styles.badgeIconWrap}>
+                        <UiLucideIcon name={b.placeholderIcon} size={24} color={palette.orange} />
+                      </View>
                       <View style={{ flex: 1, minWidth: 0 }}>
                         <Text style={styles.badgeTitle} numberOfLines={2}>
                           {b.title}
@@ -415,7 +420,7 @@ function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) 
   return StyleSheet.create({
     backdrop: {
       flex: 1,
-      backgroundColor: p.overlay,
+      position: 'relative',
       justifyContent: 'center',
       paddingVertical: 12,
       paddingHorizontal: 14,
@@ -440,7 +445,7 @@ function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) 
     },
     cardWrap: {
       position: 'relative',
-      zIndex: 2,
+      zIndex: 3,
       width: '100%',
       maxWidth: Math.min(SCREEN_W - 28, 400),
       alignSelf: 'center',
@@ -610,7 +615,16 @@ function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) 
       marginBottom: 2,
     },
     badgeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-    badgeEmoji: { fontSize: 22 },
+    badgeIconWrap: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colorWithAlpha(p.orange, 0.12),
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.orange, 0.22),
+    },
     badgeTitle: { fontSize: 13, fontWeight: '900', color: panelText },
     badgeCrit: { fontSize: 11, color: panelMuted, marginTop: 2, fontWeight: '600' },
     cta: {

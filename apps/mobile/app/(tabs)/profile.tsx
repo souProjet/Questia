@@ -23,7 +23,7 @@ import {
   type RiskAxis,
   type EscalationPhase,
 } from '@questia/shared';
-import { colorWithAlpha, type ThemePalette } from '@questia/ui';
+import { colorWithAlpha, UiLucideIcon, type ThemePalette } from '@questia/ui';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { hapticLight } from '../../lib/haptics';
@@ -244,9 +244,12 @@ export default function ProfileScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <Text style={styles.greeting}>
-            {user?.firstName ?? s.defaultName} <Text style={styles.emoji}>{'\u{1F3AE}'}</Text>
-          </Text>
+          <View style={styles.greetingRow}>
+            <Text style={styles.greeting}>
+              {user?.firstName ?? s.defaultName}
+            </Text>
+            <UiLucideIcon name="Sparkles" size={20} color={palette.orange} />
+          </View>
           <Text style={styles.quadrant}>{quadrantLabel}</Text>
 
           <Pressable
@@ -279,7 +282,9 @@ export default function ProfileScreen() {
               accessibilityHint={s.a11yHistoryHint}
               style={({ pressed }) => [styles.mini, pressed && styles.miniPressed]}
             >
-              <Text style={styles.miniEmoji}>{'\u{1F4CD}'}</Text>
+              <View style={styles.miniIconWrap}>
+                <UiLucideIcon name="MapPin" size={18} color={palette.cyan} />
+              </View>
               <Text style={styles.miniVal}>{s.dayChip(profile?.currentDay ?? 1)}</Text>
               <Text style={styles.miniLbl}>{s.journey}</Text>
             </Pressable>
@@ -290,7 +295,9 @@ export default function ProfileScreen() {
               accessibilityHint={s.a11yHomeHint}
               style={({ pressed }) => [styles.mini, pressed && styles.miniPressed]}
             >
-              <Text style={styles.miniEmoji}>{'\u{1F525}'}</Text>
+              <View style={styles.miniIconWrap}>
+                <UiLucideIcon name="Flame" size={18} color={palette.orange} />
+              </View>
               <Text style={styles.miniVal}>{profile?.streakCount ?? 0}</Text>
               <Text style={styles.miniLbl}>{s.streak}</Text>
             </Pressable>
@@ -300,9 +307,13 @@ export default function ProfileScreen() {
             <View style={styles.todayInfoGrid}>
               {todayInfo.phase ? (
                 <View style={styles.todayInfoCard}>
-                  <Text style={styles.todayInfoEmoji}>
-                    {todayInfo.phase === 'calibration' ? '\u{1F331}' : todayInfo.phase === 'expansion' ? '\u{1F9ED}' : '\u{26A1}'}
-                  </Text>
+                  <View style={styles.todayInfoIconWrap}>
+                    <UiLucideIcon
+                      name={todayInfo.phase === 'calibration' ? 'Leaf' : todayInfo.phase === 'expansion' ? 'Compass' : 'Zap'}
+                      size={18}
+                      color={palette.cyan}
+                    />
+                  </View>
                   <Text style={styles.todayInfoLabel}>
                     {appLocale === 'en'
                       ? todayInfo.phase === 'calibration' ? 'Discovery' : todayInfo.phase === 'expansion' ? 'Exploration' : 'Intensity'
@@ -312,7 +323,9 @@ export default function ProfileScreen() {
               ) : null}
               {todayInfo.weather ? (
                 <View style={styles.todayInfoCard}>
-                  <Text style={styles.todayInfoEmoji}>{'\u{2600}\u{FE0F}'}</Text>
+                  <View style={styles.todayInfoIconWrap}>
+                    <UiLucideIcon name="Sun" size={18} color={palette.orange} />
+                  </View>
                   <Text style={styles.todayInfoLabel} numberOfLines={1}>
                     {todayInfo.weather}{todayInfo.weatherTemp != null ? ` ${Math.round(todayInfo.weatherTemp)}°` : ''}
                   </Text>
@@ -321,13 +334,21 @@ export default function ProfileScreen() {
               ) : null}
               {todayInfo.equippedTitleId && getTitleDefinition(todayInfo.equippedTitleId) ? (
                 <View style={styles.todayInfoCard}>
-                  <Text style={styles.todayInfoEmoji}>{getTitleDefinition(todayInfo.equippedTitleId)!.emoji}</Text>
+                  <View style={styles.todayInfoIconWrap}>
+                    <UiLucideIcon
+                      name={getTitleDefinition(todayInfo.equippedTitleId)!.icon}
+                      size={18}
+                      color={palette.orange}
+                    />
+                  </View>
                   <Text style={styles.todayInfoLabel} numberOfLines={1}>{getTitleDefinition(todayInfo.equippedTitleId)!.label}</Text>
                 </View>
               ) : null}
               {(todayInfo.xpBonusCharges ?? 0) > 0 ? (
                 <View style={styles.todayInfoCard}>
-                  <Text style={styles.todayInfoEmoji}>{'\u{26A1}'}</Text>
+                  <View style={styles.todayInfoIconWrap}>
+                    <UiLucideIcon name="Zap" size={18} color={palette.green} />
+                  </View>
                   <Text style={styles.todayInfoLabel}>
                     {todayInfo.xpBonusCharges} {appLocale === 'en' ? 'XP bonus' : 'bonus XP'}
                   </Text>
@@ -533,7 +554,9 @@ export default function ProfileScreen() {
                 style={[styles.badgeCard, b.unlocked ? styles.badgeCardUnlocked : styles.badgeCardLocked]}
               >
                 <View style={styles.badgeTopRow}>
-                  <Text style={[styles.badgeEmoji, !b.unlocked && styles.badgeEmojiMuted]}>{b.placeholderEmoji}</Text>
+                  <View style={[styles.badgeIconWrap, !b.unlocked && styles.badgeIconWrapMuted]}>
+                    <UiLucideIcon name={b.placeholderIcon} size={26} color={palette.orange} />
+                  </View>
                   {b.unlocked ? (
                     <View style={styles.badgePillUnlocked}>
                       <Text style={styles.badgePillUnlockedText}>{s.unlocked}</Text>
@@ -630,8 +653,8 @@ function createProfileStyles(p: ThemePalette) {
     retry: { backgroundColor: C.accent, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 },
     retryText: { color: '#fff', fontWeight: '800' },
     scroll: { padding: 20, paddingBottom: 40 },
-    greeting: { fontSize: 26, fontWeight: '900', color: C.text, marginBottom: 6 },
-    emoji: { fontSize: 22 },
+    greetingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+    greeting: { fontSize: 26, fontWeight: '900', color: C.text },
     quadrant: { fontSize: 14, fontWeight: '700', color: C.muted, marginBottom: 20 },
 
     levelCard: {
@@ -666,8 +689,8 @@ function createProfileStyles(p: ThemePalette) {
       borderWidth: 1, borderColor: 'rgba(34,211,238,0.25)',
     },
     fill: {
-      height: '100%', borderRadius: 8, backgroundColor: '#22d3ee',
-      shadowColor: '#22d3ee', shadowOpacity: 0.45, shadowRadius: 8,
+      height: '100%', borderRadius: 8, backgroundColor: '#134e4a',
+      shadowColor: '#134e4a', shadowOpacity: 0.45, shadowRadius: 8,
     },
 
     miniStats: { flexDirection: 'row', gap: 10, marginBottom: 22 },
@@ -676,7 +699,7 @@ function createProfileStyles(p: ThemePalette) {
       alignItems: 'center', borderWidth: 1, borderColor: C.border,
     },
     miniPressed: { opacity: 0.88 },
-    miniEmoji: { fontSize: 18, marginBottom: 4 },
+    miniIconWrap: { marginBottom: 4, height: 22, alignItems: 'center', justifyContent: 'center' },
     miniVal: { fontSize: 16, fontWeight: '900', color: C.text },
     miniLbl: { fontSize: 10, color: C.muted, fontWeight: '600', marginTop: 2 },
 
@@ -691,7 +714,7 @@ function createProfileStyles(p: ThemePalette) {
       borderWidth: 1,
       borderColor: C.border,
     },
-    todayInfoEmoji: { fontSize: 18, marginBottom: 4 },
+    todayInfoIconWrap: { marginBottom: 4, height: 22, alignItems: 'center', justifyContent: 'center' },
     todayInfoLabel: { fontSize: 11, fontWeight: '700', color: C.text, textAlign: 'center' },
     todayInfoSub: { fontSize: 10, fontWeight: '500', color: C.muted, marginTop: 2, textAlign: 'center' },
 
@@ -765,8 +788,17 @@ function createProfileStyles(p: ThemePalette) {
       backgroundColor: p.surface, borderWidth: 2, borderStyle: 'dashed', borderColor: p.border, opacity: 0.95,
     },
     badgeTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
-    badgeEmoji: { fontSize: 28 },
-    badgeEmojiMuted: { opacity: 0.45 },
+    badgeIconWrap: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colorWithAlpha(p.orange, 0.1),
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.orange, 0.22),
+    },
+    badgeIconWrapMuted: { opacity: 0.45 },
     badgePillUnlocked: {
       backgroundColor: colorWithAlpha(p.green, 0.2), paddingHorizontal: 8, paddingVertical: 3,
       borderRadius: 999, borderWidth: 1, borderColor: colorWithAlpha(p.green, 0.45),

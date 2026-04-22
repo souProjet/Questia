@@ -4,6 +4,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { QuestModel } from '@questia/shared';
 import { DA } from '../theme';
+import { UiLucideIcon } from './UiLucideIcon';
 
 interface QuestCardProps {
   quest: QuestModel;
@@ -12,23 +13,31 @@ interface QuestCardProps {
 }
 
 const COMFORT_CONFIG = {
-  low:      { label: 'Confort',  color: '#10b981', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)',  bar: 1 },
-  moderate: { label: 'Modéré',  color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', bar: 2 },
-  high:     { label: 'Élevé',   color: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.3)', bar: 3 },
-  extreme:  { label: 'Extrême', color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)',  bar: 4 },
+  low: { label: 'Confort', color: '#10b981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', bar: 1 },
+  moderate: { label: 'Modéré', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', bar: 2 },
+  high: { label: 'Élevé', color: '#c2410c', bg: 'rgba(194,65,12,0.12)', border: 'rgba(194,65,12,0.3)', bar: 3 },
+  extreme: { label: 'Extrême', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', bar: 4 },
 };
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  spatial_adventure: '🚆', public_introspection: '🍽️', sensory_deprivation: '🌌',
-  exploratory_sociability: '🗺️', physical_existential: '⛰️', async_discipline: '🌅',
-  dopamine_detox: '📵', active_empathy: '🤝', temporal_projection: '✉️',
-  hostile_immersion: '🎭', spontaneous_altruism: '☀️', relational_vulnerability: '📞',
-  unconditional_service: '🍳',
+const CATEGORY_ICON: Record<string, string> = {
+  spatial_adventure: 'Train',
+  public_introspection: 'UtensilsCrossed',
+  sensory_deprivation: 'Moon',
+  exploratory_sociability: 'Map',
+  physical_existential: 'Mountain',
+  async_discipline: 'Sunrise',
+  dopamine_detox: 'Smartphone',
+  active_empathy: 'Handshake',
+  temporal_projection: 'Mail',
+  hostile_immersion: 'Drama',
+  spontaneous_altruism: 'Sun',
+  relational_vulnerability: 'Phone',
+  unconditional_service: 'ChefHat',
 };
 
 export function QuestCard({ quest, onAccept, accepted = false }: QuestCardProps) {
   const comfort = COMFORT_CONFIG[quest.comfortLevel];
-  const categoryEmoji = CATEGORY_EMOJI[quest.category] ?? '⚔️';
+  const categoryIcon = CATEGORY_ICON[quest.category] ?? 'Swords';
 
   return (
     <View style={[styles.card, accepted && styles.cardAccepted]}>
@@ -36,7 +45,7 @@ export function QuestCard({ quest, onAccept, accepted = false }: QuestCardProps)
       {/* Top row */}
       <View style={styles.topRow}>
         <View style={styles.categoryBadge}>
-          <Text style={styles.categoryEmoji}>{categoryEmoji}</Text>
+          <UiLucideIcon name={categoryIcon} size={24} color={DA.text} />
           <Text style={styles.questNumber}>Quête #{quest.id}</Text>
         </View>
         <View style={[styles.comfortBadge, { backgroundColor: comfort.bg, borderColor: comfort.border }]}>
@@ -59,24 +68,30 @@ export function QuestCard({ quest, onAccept, accepted = false }: QuestCardProps)
       {/* Tags */}
       <View style={styles.tags}>
         {quest.requiresOutdoor && (
-          <View style={[styles.tag, styles.tagOutdoor]}>
-            <Text style={styles.tagOutdoorText}>🌿 Extérieur</Text>
+          <View style={[styles.tag, styles.tagOutdoor, styles.tagWithIcon]}>
+            <UiLucideIcon name="Leaf" size={14} color="#10b981" />
+            <Text style={styles.tagOutdoorText}>Extérieur</Text>
           </View>
         )}
         {quest.requiresSocial && (
-          <View style={[styles.tag, styles.tagSocial]}>
-            <Text style={styles.tagSocialText}>👥 Social</Text>
+          <View style={[styles.tag, styles.tagSocial, styles.tagWithIcon]}>
+            <UiLucideIcon name="Users" size={14} color="#134e4a" />
+            <Text style={styles.tagSocialText}>Social</Text>
           </View>
         )}
-        <View style={styles.tag}>
-          <Text style={styles.tagText}>⏱ {quest.minimumDurationMinutes} min</Text>
+        <View style={[styles.tag, styles.tagWithIcon]}>
+          <UiLucideIcon name="Clock" size={14} color={DA.muted} />
+          <Text style={styles.tagText}>{quest.minimumDurationMinutes} min</Text>
         </View>
       </View>
 
       {/* CTA */}
       {accepted ? (
         <View style={styles.acceptedBadge}>
-          <Text style={styles.acceptedText}>✅  Quête acceptée</Text>
+          <View style={styles.acceptedRow}>
+            <UiLucideIcon name="Check" size={18} color="#10b981" />
+            <Text style={styles.acceptedText}>Quête acceptée</Text>
+          </View>
         </View>
       ) : (
         <Pressable
@@ -85,7 +100,10 @@ export function QuestCard({ quest, onAccept, accepted = false }: QuestCardProps)
           accessibilityRole="button"
           accessibilityLabel="Accepter la quête"
         >
-          <Text style={styles.acceptText}>Accepter la quête  ⚔️</Text>
+          <View style={styles.acceptRow}>
+            <Text style={styles.acceptText}>Accepter la quête</Text>
+            <UiLucideIcon name="Swords" size={18} color="#ffffff" />
+          </View>
         </Pressable>
       )}
 
@@ -100,7 +118,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: 'rgba(249,115,22,0.25)',
-    shadowColor: '#f97316',
+    shadowColor: '#c2410c',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
@@ -120,9 +138,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  categoryEmoji: {
-    fontSize: 24,
   },
   questNumber: {
     fontSize: 12,
@@ -181,6 +196,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: DA.border,
   },
+  tagWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   tagText: {
     fontSize: 12,
     color: DA.muted,
@@ -201,20 +221,25 @@ const styles = StyleSheet.create({
   },
   tagSocialText: {
     fontSize: 12,
-    color: '#22d3ee',
+    color: '#134e4a',
     fontWeight: '600',
   },
 
   acceptButton: {
-    backgroundColor: '#f97316',
+    backgroundColor: '#c2410c',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
-    shadowColor: '#f97316',
+    shadowColor: '#c2410c',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
+  },
+  acceptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   acceptText: {
     color: '#ffffff',
@@ -229,6 +254,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(16,185,129,0.3)',
+  },
+  acceptedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   acceptedText: {
     color: '#10b981',

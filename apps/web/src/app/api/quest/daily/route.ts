@@ -25,6 +25,7 @@ import {
   isValidSociabilityLevel,
   clampQuestDurationBounds,
   parseHeavyQuestPreference,
+  effectiveOwnedThemes,
 } from '@questia/shared';
 import type {
   AppLocale,
@@ -156,7 +157,7 @@ function shopClientPayload(profile: {
     rerollsRemaining: profile.rerollsRemaining,
     bonusRerollCredits: profile.bonusRerollCredits ?? 0,
     activeThemeId: profile.activeThemeId ?? 'default',
-    ownedThemes: parseStringArray(profile.ownedThemes),
+    ownedThemes: effectiveOwnedThemes(parseStringArray(profile.ownedThemes)),
     ownedTitleIds: ownedTitles,
     equippedTitleId: equipped,
     xpBonusCharges: profile.xpBonusCharges ?? 0,

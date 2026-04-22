@@ -4,87 +4,119 @@
 
 @layer base {
   :root {
-    --bg:       #e8f8ff;
-    --surface:  #f5fbff;
-    --card:     #ffffff;
-    --border:   rgba(255,255,255,0.07);
-    --border-m: rgba(255,255,255,0.12);
-    /** Bordures / filets UI (remplace slate-200 figé) */
-    --border-ui: rgba(15, 23, 42, 0.1);
-    --border-ui-strong: rgba(15, 23, 42, 0.16);
-    --progress-track: rgba(15, 23, 42, 0.12);
+    --bg:       #ebe8e0;
+    --surface:  #f2efe8;
+    --card:     #faf8f4;
+    --border:   rgba(28, 25, 23, 0.08);
+    --border-m: rgba(28, 25, 23, 0.12);
+    --border-ui: rgba(28, 25, 23, 0.09);
+    --border-ui-strong: rgba(28, 25, 23, 0.14);
+    --progress-track: rgba(28, 25, 23, 0.1);
     --input-bg: #ffffff;
-    --violet:   #22d3ee;
-    --orange:   #f97316;
-    --gold:     #fbbf24;
-    --green:    #10b981;
-    --red:      #ef4444;
-    --text:     #13212d;
-    --muted:    #4d7187;
-    --subtle:   #8bb9d1;
-    /** Texte sur panneaux toujours clairs (carte quête, modales crème) — inchangé par thème */
-    --on-cream: #13212d;
-    --on-cream-muted: #4d6570;
-    --on-cream-subtle: #64748b;
-    /** Liens sur fond « aventure » clair (retour, etc.) */
-    --link-on-bg: #155e75;
+    /** Accent principal (historique : --violet) + alias onglets / focus */
+    --violet:   #134e4a;
+    --cyan:     #134e4a;
+    --orange:   #c2410c;
+    --gold:     #92400e;
+    --green:    #166534;
+    --red:      #b91c1c;
+    --text:     #1c1917;
+    --muted:    #57534e;
+    --subtle:   #78716c;
+    --on-cream: #1c1917;
+    --on-cream-muted: #57534e;
+    --on-cream-subtle: #78716c;
+    --link-on-bg: #115e59;
+    /**
+     * Glassmorphisme sobre : flou maîtrisé, saturation ≤ ~1.06 (lisibilité).
+     * Utilisé par navbar, cartes, modales, panneaux app.
+     */
+    --glass-blur: 22px;
+    --glass-blur-soft: 16px;
+    --glass-blur-heavy: 28px;
+    --glass-blur-tint: 12px;
+    --glass-sat: 1.06;
+    --glass-sat-subtle: 1.04;
+    --glass-sat-nav: 1.05;
   }
 
   /* Thèmes boutique (data-theme sur <html>) */
   html[data-theme="midnight"] {
-    --bg: #0a101c;
-    --surface: #111b2e;
-    --card: #152238;
-    /** Texte principal : proche du blanc pour WCAG sur fond bleu nuit */
-    --text: #f1f5f9;
-    --muted: #b4c4d8;
-    --subtle: #94a8bc;
-    --border-ui: rgba(232, 241, 250, 0.14);
-    --border-ui-strong: rgba(232, 241, 250, 0.24);
-    --progress-track: rgba(255, 255, 255, 0.14);
-    --input-bg: #0f1729;
-    --violet: #38bdf8;
+    --bg: #0c0a09;
+    --surface: #1c1917;
+    --card: #292524;
+    --text: #e7e5e4;
+    --muted: #a8a29e;
+    --subtle: #78716c;
+    --border-ui: rgba(231, 229, 228, 0.1);
+    --border-ui-strong: rgba(231, 229, 228, 0.16);
+    --progress-track: rgba(255, 255, 255, 0.1);
+    --input-bg: #1c1917;
+    --violet: #2dd4bf;
+    --cyan: #2dd4bf;
     --orange: #fb923c;
     --gold: #fcd34d;
-    --green: #34d399;
-    /** Liens / accents sur fond sombre (hors cartes crème) */
-    --link-on-bg: #7dd3fc;
+    --green: #4ade80;
+    --link-on-bg: #5eead4;
+    --glass-blur: 26px;
+    --glass-blur-soft: 20px;
+    --glass-blur-heavy: 34px;
+    --glass-blur-tint: 14px;
+    --glass-sat: 1.04;
+    --glass-sat-subtle: 1.03;
+    --glass-sat-nav: 1.04;
   }
 
   html[data-theme="aurora"] {
-    --link-on-bg: #6d28d9;
-    --bg: #fdf4ff;
-    --surface: #fff7fb;
-    --card: #ffffff;
-    --text: #3b0764;
-    --muted: #6b21a8;
-    --subtle: #9333b8;
-    --border-ui: rgba(59, 7, 100, 0.12);
-    --border-ui-strong: rgba(59, 7, 100, 0.2);
-    --progress-track: rgba(59, 7, 100, 0.1);
+    --link-on-bg: #115e59;
+    --bg: #e8e4e1;
+    --surface: #f0ebe6;
+    --card: #faf7f3;
+    --text: #292524;
+    --muted: #57534e;
+    --subtle: #78716c;
+    --border-ui: rgba(41, 37, 36, 0.09);
+    --border-ui-strong: rgba(41, 37, 36, 0.14);
+    --progress-track: rgba(41, 37, 36, 0.08);
     --input-bg: #ffffff;
-    --violet: #c026d3;
-    --orange: #ea580c;
-    --gold: #fbbf24;
-    --green: #059669;
+    --violet: #0f766e;
+    --cyan: #0f766e;
+    --orange: #9a3412;
+    --gold: #854d0e;
+    --green: #166534;
+    --glass-blur: 22px;
+    --glass-blur-soft: 16px;
+    --glass-blur-heavy: 28px;
+    --glass-blur-tint: 12px;
+    --glass-sat: 1.06;
+    --glass-sat-subtle: 1.04;
+    --glass-sat-nav: 1.05;
   }
 
   html[data-theme="parchment"] {
-    --link-on-bg: #92400e;
-    --bg: #f5f0e6;
-    --surface: #faf6ee;
-    --card: #fffdf8;
-    --text: #3d3428;
-    --muted: #6b5d4a;
-    --subtle: #8a7b68;
-    --border-ui: rgba(61, 52, 40, 0.12);
-    --border-ui-strong: rgba(61, 52, 40, 0.2);
-    --progress-track: rgba(61, 52, 40, 0.12);
+    --link-on-bg: #14532d;
+    --bg: #e7e2d8;
+    --surface: #efe9df;
+    --card: #faf6ee;
+    --text: #292524;
+    --muted: #57534e;
+    --subtle: #78716c;
+    --border-ui: rgba(54, 47, 40, 0.1);
+    --border-ui-strong: rgba(54, 47, 40, 0.15);
+    --progress-track: rgba(54, 47, 40, 0.1);
     --input-bg: #fffdf8;
-    --violet: #0d9488;
-    --orange: #c2410c;
-    --gold: #ca8a04;
+    --violet: #166534;
+    --cyan: #166534;
+    --orange: #9a3412;
+    --gold: #854d0e;
     --green: #15803d;
+    --glass-blur: 22px;
+    --glass-blur-soft: 16px;
+    --glass-blur-heavy: 28px;
+    --glass-blur-tint: 12px;
+    --glass-sat: 1.06;
+    --glass-sat-subtle: 1.04;
+    --glass-sat-nav: 1.05;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -99,25 +131,13 @@
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    /* Fond aventure par défaut — couvre tout le viewport, pas de bande plate en bas */
+    /* Fond discret : léger dégradé vertical, pas de halos ni motifs type « landing IA » */
     background-color: var(--bg);
-    background-image:
-      radial-gradient(ellipse 78% 50% at 50% -22%, rgba(34, 211, 238, 0.38), transparent),
-      radial-gradient(ellipse 60% 42% at 100% 52%, rgba(249, 115, 22, 0.28), transparent),
-      radial-gradient(ellipse 55% 38% at 0% 80%, rgba(16, 185, 129, 0.22), transparent),
-      repeating-linear-gradient(
-        -18deg,
-        transparent,
-        transparent 48px,
-        rgba(34, 211, 238, 0.1) 48px,
-        rgba(34, 211, 238, 0.1) 49px
-      ),
-      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.42) 1px, transparent 0);
-    background-size: auto, auto, auto, auto, 32px 32px;
+    background-image: linear-gradient(180deg, var(--surface) 0%, var(--bg) 38%, var(--bg) 100%);
     background-attachment: fixed;
   }
   ::selection {
-    background: rgba(249, 115, 22, 0.35);
+    background: color-mix(in srgb, var(--orange) 28%, transparent);
     color: var(--text);
   }
   ::-webkit-scrollbar { width: 5px; }
@@ -179,31 +199,47 @@
    * Navbar : verre clair — bordure plus lisible sur fond sombre (ex. thème Nuit boréale).
    */
   .navbar-shell {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(236, 253, 255, 0.92));
-    border: 1px solid rgba(8, 145, 178, 0.42);
+    background: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--card) 82%, transparent),
+      color-mix(in srgb, var(--surface) 58%, transparent)
+    );
+    border: 1px solid color-mix(in srgb, var(--violet) 14%, var(--border-ui-strong));
     box-shadow:
-      0 10px 30px rgba(15, 23, 42, 0.14),
-      inset 0 1px 0 rgba(255, 255, 255, 0.78);
-    backdrop-filter: blur(14px);
+      0 10px 28px color-mix(in srgb, var(--text) 8%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-nav));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-nav));
   }
   html[data-theme="midnight"] .navbar-shell {
-    background: linear-gradient(145deg, rgba(17, 27, 46, 0.94), rgba(21, 34, 56, 0.92));
-    border-color: rgba(56, 189, 248, 0.55);
+    background: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--card) 78%, transparent),
+      color-mix(in srgb, var(--surface) 55%, transparent)
+    );
+    border-color: color-mix(in srgb, var(--violet) 22%, var(--border-ui-strong));
     box-shadow:
-      0 12px 36px rgba(0, 0, 0, 0.42),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      0 12px 32px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
   }
 
   /**
-   * Tiroir menu mobile — même famille que .landing-hero-panel (crème · cyan · orange).
+   * Tiroir menu mobile — verre (lisible sur le fond page).
    */
   .navbar-mobile-drawer {
-    background: linear-gradient(165deg, #fff7df 0%, #fff3c6 35%, #f8fdff 55%, #e8f8fc 100%);
-    border-left: 2px solid rgba(249, 115, 22, 0.38);
+    background: linear-gradient(
+      175deg,
+      color-mix(in srgb, var(--card) 76%, transparent),
+      color-mix(in srgb, var(--surface) 62%, transparent)
+    );
+    border-left: 1px solid color-mix(in srgb, var(--violet) 12%, var(--border-ui-strong));
     box-shadow:
-      -18px 0 52px rgba(249, 115, 22, 0.12),
-      -8px 0 0 rgba(120, 53, 15, 0.07),
-      inset 1px 0 0 rgba(255, 255, 255, 0.65);
+      -14px 0 40px color-mix(in srgb, var(--text) 10%, transparent),
+      inset 1px 0 0 rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   }
   html[data-theme="midnight"] .navbar-mobile-drawer {
     background: linear-gradient(
@@ -217,6 +253,8 @@
       -18px 0 52px rgba(0, 0, 0, 0.45),
       -8px 0 0 rgba(0, 0, 0, 0.2),
       inset 1px 0 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-subtle));
   }
 
   /** Bouton menu mobile + en-tête tiroir — alignés sur data-theme */
@@ -260,47 +298,53 @@
   /* Landing — jeu / aventure (DA) : cyan · orange · vert */
   .bg-adventure {
     background-color: var(--bg);
-    background-image:
-      radial-gradient(ellipse 78% 50% at 50% -22%, rgba(34, 211, 238, 0.38), transparent),
-      radial-gradient(ellipse 60% 42% at 100% 52%, rgba(249, 115, 22, 0.28), transparent),
-      radial-gradient(ellipse 55% 38% at 0% 80%, rgba(16, 185, 129, 0.22), transparent),
-      repeating-linear-gradient(
-        -18deg,
-        transparent,
-        transparent 48px,
-        rgba(34, 211, 238, 0.1) 48px,
-        rgba(34, 211, 238, 0.1) 49px
-      ),
-      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.42) 1px, transparent 0);
-    background-size: auto, auto, auto, auto, 32px 32px;
+    background-image: linear-gradient(180deg, var(--surface) 0%, var(--bg) 42%, var(--bg) 100%);
   }
 
   /* Bandes de section pour rythme visuel (jeu) */
   .section-band-how {
-    background: linear-gradient(180deg, rgba(34, 211, 238, 0.06) 0%, transparent 45%, rgba(16, 185, 129, 0.05) 100%);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--violet) 7%, transparent) 0%,
+      transparent 45%,
+      color-mix(in srgb, var(--green) 6%, transparent) 100%
+    );
   }
   .section-band-social {
-    background: linear-gradient(180deg, rgba(249, 115, 22, 0.05) 0%, transparent 50%, rgba(34, 211, 238, 0.04) 100%);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--orange) 6%, transparent) 0%,
+      transparent 50%,
+      color-mix(in srgb, var(--violet) 5%, transparent) 100%
+    );
   }
 
   /* CTA final — même famille que .quest-slider-embedded (carte quête / plateau) */
   .section-band-cta {
     background: linear-gradient(
       180deg,
-      rgba(34, 211, 238, 0.05) 0%,
-      rgba(255, 247, 223, 0.45) 42%,
-      rgba(249, 115, 22, 0.04) 100%
+      color-mix(in srgb, var(--violet) 5%, transparent) 0%,
+      color-mix(in srgb, var(--card) 55%, transparent) 42%,
+      color-mix(in srgb, var(--orange) 5%, transparent) 100%
     );
   }
   .landing-cta-panel {
-    background: linear-gradient(165deg, #fff7df 0%, #fff3c6 42%, #d7f5f9 100%);
-    border: 2px solid rgba(249, 115, 22, 0.38);
-    box-shadow: 0 22px 42px rgba(249, 115, 22, 0.16), 0 6px 0 rgba(120, 53, 15, 0.12);
-    border-radius: 26px;
+    background: linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--card) 86%, transparent),
+      color-mix(in srgb, var(--surface) 70%, transparent)
+    );
+    border: 1px solid color-mix(in srgb, var(--violet) 10%, var(--border-ui-strong));
+    box-shadow:
+      0 14px 36px color-mix(in srgb, var(--text) 9%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    border-radius: 20px;
   }
   @media (min-width: 768px) {
     .landing-cta-panel {
-      border-radius: 28px;
+      border-radius: 22px;
     }
   }
 
@@ -313,18 +357,17 @@
     isolation: isolate;
     overflow: hidden;
     background: linear-gradient(
-      165deg,
-      #fff7df 0%,
-      #fff3c6 35%,
-      #f0fbff 58%,
-      #d7f5f9 100%
+      168deg,
+      color-mix(in srgb, var(--card) 88%, transparent),
+      color-mix(in srgb, var(--surface) 68%, transparent)
     );
-    border: 2px solid rgba(249, 115, 22, 0.38);
+    border: 1px solid color-mix(in srgb, var(--violet) 12%, var(--border-ui-strong));
     box-shadow:
-      0 26px 52px rgba(249, 115, 22, 0.13),
-      0 7px 0 rgba(120, 53, 15, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.72);
-    border-radius: 22px;
+      0 16px 40px color-mix(in srgb, var(--text) 8%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.48);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    border-radius: 18px;
   }
   .landing-hero-panel::before {
     content: '';
@@ -332,14 +375,9 @@
     left: 0;
     right: 0;
     top: 0;
-    height: 4px;
+    height: 2px;
     z-index: 0;
-    background: linear-gradient(
-      90deg,
-      rgba(34, 211, 238, 0.85) 0%,
-      rgba(249, 115, 22, 0.72) 50%,
-      rgba(16, 185, 129, 0.75) 100%
-    );
+    background: var(--violet);
     pointer-events: none;
   }
   @media (min-width: 640px) {
@@ -354,10 +392,7 @@
   }
   @media (min-width: 1536px) {
     .landing-hero-panel {
-      box-shadow:
-        0 32px 64px rgba(249, 115, 22, 0.11),
-        0 8px 0 rgba(120, 53, 15, 0.09),
-        inset 0 1px 0 rgba(255, 255, 255, 0.75);
+      box-shadow: 0 12px 32px color-mix(in srgb, var(--text) 8%, transparent);
     }
   }
 
@@ -367,16 +402,20 @@
    * Évite bg-[var(--card)]/95 en Tailwind : l'opacité sur variable hex ne produit souvent aucun fond.
    */
   .shop-elevated-surface {
-    background-color: var(--card);
+    position: relative;
+    isolation: isolate;
+    background-color: transparent;
     background-image: linear-gradient(
       155deg,
-      color-mix(in srgb, var(--surface) 48%, var(--card)) 0%,
-      var(--card) 42%,
-      color-mix(in srgb, var(--bg) 22%, var(--card)) 100%
+      color-mix(in srgb, var(--surface) 38%, transparent) 0%,
+      color-mix(in srgb, var(--card) 58%, transparent) 42%,
+      color-mix(in srgb, var(--bg) 28%, transparent) 100%
     );
     box-shadow:
-      inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 52%, transparent),
       0 10px 32px -14px color-mix(in srgb, var(--text) 16%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
   }
 
   /** Messages flash boutique — alignés sur les variables de thème (pas de vert « admin » figé) */
@@ -472,115 +511,168 @@
    * Accueil / boutique / profil : surfaces pilotées par data-theme (ex. Nuit boréale).
    */
   .app-app-hero-band {
+    position: relative;
+    isolation: isolate;
     border-radius: 1.75rem;
     border: 2px solid color-mix(in srgb, var(--orange) 38%, transparent);
     background: linear-gradient(
       145deg,
-      color-mix(in srgb, var(--gold) 22%, var(--surface)) 0%,
-      var(--card) 48%,
-      color-mix(in srgb, var(--violet) 14%, var(--surface)) 100%
+      color-mix(in srgb, var(--gold) 16%, transparent) 0%,
+      color-mix(in srgb, var(--card) 52%, transparent) 48%,
+      color-mix(in srgb, var(--violet) 11%, transparent) 100%
     );
     box-shadow:
       0 10px 0 color-mix(in srgb, var(--orange) 12%, transparent),
-      0 22px 48px color-mix(in srgb, var(--orange) 18%, transparent);
+      0 22px 48px color-mix(in srgb, var(--orange) 18%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 38%, transparent);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   }
 
   .app-shop-balance-card {
+    position: relative;
+    isolation: isolate;
     border-radius: 1.5rem;
     border: 2px solid color-mix(in srgb, var(--gold) 45%, transparent);
     background: linear-gradient(
       145deg,
-      color-mix(in srgb, var(--gold) 22%, var(--surface)) 0%,
-      var(--card) 52%,
-      color-mix(in srgb, var(--gold) 16%, var(--surface)) 100%
+      color-mix(in srgb, var(--gold) 16%, transparent) 0%,
+      color-mix(in srgb, var(--card) 54%, transparent) 52%,
+      color-mix(in srgb, var(--gold) 12%, transparent) 100%
     );
-    box-shadow: 0 12px 40px -8px color-mix(in srgb, var(--text) 16%, transparent);
+    box-shadow:
+      0 12px 40px -8px color-mix(in srgb, var(--text) 16%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
   }
 
   .app-shop-featured-card {
+    position: relative;
+    isolation: isolate;
     border-radius: 1.5rem;
     border: 2px solid color-mix(in srgb, var(--violet) 38%, var(--border-ui-strong));
     background: linear-gradient(
       152deg,
-      color-mix(in srgb, var(--violet) 10%, var(--surface)) 0%,
-      var(--card) 45%,
-      color-mix(in srgb, var(--gold) 16%, var(--surface)) 100%
+      color-mix(in srgb, var(--violet) 8%, transparent) 0%,
+      color-mix(in srgb, var(--card) 54%, transparent) 45%,
+      color-mix(in srgb, var(--gold) 12%, transparent) 100%
     );
     color: var(--text);
-    box-shadow: 0 12px 32px -12px color-mix(in srgb, var(--text) 16%, transparent);
+    box-shadow:
+      0 12px 32px -12px color-mix(in srgb, var(--text) 16%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 38%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
   }
 
   .app-profile-level-card {
+    position: relative;
+    isolation: isolate;
     border-radius: 1.5rem;
     border: 2px solid color-mix(in srgb, var(--violet) 38%, var(--border-ui-strong));
     background: linear-gradient(
       152deg,
-      color-mix(in srgb, var(--violet) 10%, var(--surface)) 0%,
-      var(--card) 45%,
-      color-mix(in srgb, var(--gold) 16%, var(--surface)) 100%
+      color-mix(in srgb, var(--violet) 8%, transparent) 0%,
+      color-mix(in srgb, var(--card) 54%, transparent) 45%,
+      color-mix(in srgb, var(--gold) 12%, transparent) 100%
     );
-    box-shadow: 0 10px 28px -12px color-mix(in srgb, var(--text) 16%, transparent);
+    box-shadow:
+      0 10px 28px -12px color-mix(in srgb, var(--text) 16%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 38%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
   }
 
   .app-profile-badge-unlocked {
+    position: relative;
+    isolation: isolate;
     border-radius: 1rem;
     border: 2px solid color-mix(in srgb, var(--gold) 55%, transparent);
     background: linear-gradient(
       145deg,
-      color-mix(in srgb, var(--gold) 22%, var(--surface)) 0%,
-      var(--card) 48%,
-      color-mix(in srgb, var(--orange) 12%, var(--surface)) 100%
+      color-mix(in srgb, var(--gold) 16%, transparent) 0%,
+      color-mix(in srgb, var(--card) 54%, transparent) 48%,
+      color-mix(in srgb, var(--orange) 9%, transparent) 100%
     );
     color: var(--text);
-    box-shadow: 0 12px 36px -12px color-mix(in srgb, var(--text) 18%, transparent);
+    box-shadow:
+      0 12px 36px -12px color-mix(in srgb, var(--text) 18%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 36%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
   }
 
   .app-quest-day-strip {
+    position: relative;
+    isolation: isolate;
     border-radius: 1rem;
     border: 2px solid color-mix(in srgb, var(--orange) 38%, transparent);
     background: linear-gradient(
       145deg,
-      color-mix(in srgb, var(--orange) 12%, var(--surface)) 0%,
-      var(--card) 48%,
-      color-mix(in srgb, var(--gold) 18%, var(--surface)) 100%
+      color-mix(in srgb, var(--orange) 10%, transparent) 0%,
+      color-mix(in srgb, var(--card) 54%, transparent) 48%,
+      color-mix(in srgb, var(--gold) 14%, transparent) 100%
     );
-    box-shadow: 0 12px 36px -14px color-mix(in srgb, var(--text) 16%, transparent);
+    box-shadow:
+      0 12px 36px -14px color-mix(in srgb, var(--text) 16%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 38%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
   }
 
   .app-quest-xp-strip {
+    position: relative;
+    isolation: isolate;
     border-radius: 1rem;
     border: 1px solid color-mix(in srgb, var(--violet) 35%, var(--border-ui-strong));
     background: linear-gradient(
       155deg,
-      color-mix(in srgb, var(--violet) 10%, var(--surface)) 0%,
-      var(--card) 45%,
-      color-mix(in srgb, var(--gold) 8%, var(--surface)) 100%
+      color-mix(in srgb, var(--violet) 8%, transparent) 0%,
+      color-mix(in srgb, var(--card) 62%, transparent) 45%,
+      color-mix(in srgb, var(--gold) 7%, transparent) 100%
     );
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 8%, transparent);
+    box-shadow:
+      0 1px 2px color-mix(in srgb, var(--text) 8%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 45%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
   }
 
   .quest-mission-panel {
+    position: relative;
+    isolation: isolate;
     border-radius: 1rem;
     border: 2px solid color-mix(in srgb, var(--violet) 40%, var(--border-ui-strong));
     background: linear-gradient(
       155deg,
-      var(--card) 0%,
-      color-mix(in srgb, var(--violet) 10%, var(--surface)) 50%,
-      var(--card) 100%
+      color-mix(in srgb, var(--card) 58%, transparent) 0%,
+      color-mix(in srgb, var(--violet) 9%, transparent) 50%,
+      color-mix(in srgb, var(--card) 58%, transparent) 100%
     );
-    box-shadow: 0 8px 28px -6px color-mix(in srgb, var(--text) 14%, transparent);
+    box-shadow:
+      0 8px 28px -6px color-mix(in srgb, var(--text) 14%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 42%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
   }
 
   .quest-map-panel {
+    position: relative;
+    isolation: isolate;
     border-radius: 1rem;
     border: 1px solid color-mix(in srgb, var(--violet) 32%, var(--border-ui-strong));
     background: linear-gradient(
       155deg,
-      color-mix(in srgb, var(--violet) 10%, var(--surface)) 0%,
-      var(--card) 45%,
-      color-mix(in srgb, var(--green) 8%, var(--surface)) 100%
+      color-mix(in srgb, var(--violet) 8%, transparent) 0%,
+      color-mix(in srgb, var(--card) 60%, transparent) 45%,
+      color-mix(in srgb, var(--green) 7%, transparent) 100%
     );
-    box-shadow: 0 8px 28px -8px color-mix(in srgb, var(--text) 14%, transparent);
+    box-shadow:
+      0 8px 28px -8px color-mix(in srgb, var(--text) 14%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
   }
 
   /**
@@ -590,17 +682,18 @@
   /** À combiner avec `absolute inset-0` ou `fixed inset-0` selon le contexte. */
   .quest-modal-backdrop {
     background: linear-gradient(
-      155deg,
-      color-mix(in srgb, var(--text) 42%, transparent) 0%,
-      color-mix(in srgb, var(--violet) 22%, #0f172a) 48%,
-      color-mix(in srgb, var(--orange) 18%, #0f172a) 100%
+      165deg,
+      color-mix(in srgb, var(--text) 32%, transparent) 0%,
+      color-mix(in srgb, var(--violet) 10%, rgba(12, 10, 9, 0.72)) 50%,
+      color-mix(in srgb, var(--text) 36%, transparent) 100%
     );
-    backdrop-filter: blur(11px);
-    -webkit-backdrop-filter: blur(11px);
+    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-subtle));
   }
 
   .quest-modal-panel {
     position: relative;
+    isolation: isolate;
     width: 100%;
     max-width: 28rem;
     overflow: hidden;
@@ -608,15 +701,17 @@
     border: 2px solid color-mix(in srgb, var(--orange) 36%, var(--border-ui-strong));
     background: linear-gradient(
       168deg,
-      color-mix(in srgb, var(--surface) 52%, var(--card)) 0%,
-      var(--card) 50%,
-      color-mix(in srgb, var(--violet) 11%, var(--card)) 100%
+      color-mix(in srgb, var(--surface) 42%, transparent) 0%,
+      color-mix(in srgb, var(--card) 55%, transparent) 50%,
+      color-mix(in srgb, var(--violet) 9%, transparent) 100%
     );
     box-shadow:
       0 24px 56px -16px color-mix(in srgb, var(--text) 18%, transparent),
       0 8px 0 color-mix(in srgb, var(--orange) 10%, transparent),
-      inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
+      inset 0 1px 0 color-mix(in srgb, #fff 48%, transparent);
     color: var(--text);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   }
 
   .quest-modal-panel-accent {
@@ -638,6 +733,7 @@
   /** Panneau large (détail quête) : même langage visuel, bordure violet/orange */
   .quest-modal-sheet {
     position: relative;
+    isolation: isolate;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -645,14 +741,16 @@
     border: 2px solid color-mix(in srgb, var(--violet) 28%, var(--border-ui-strong));
     background: linear-gradient(
       172deg,
-      color-mix(in srgb, var(--surface) 48%, var(--card)) 0%,
-      var(--card) 52%,
-      color-mix(in srgb, var(--orange) 8%, var(--card)) 100%
+      color-mix(in srgb, var(--surface) 40%, transparent) 0%,
+      color-mix(in srgb, var(--card) 56%, transparent) 52%,
+      color-mix(in srgb, var(--orange) 7%, transparent) 100%
     );
     box-shadow:
       0 -12px 48px color-mix(in srgb, var(--text) 16%, transparent),
-      inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+      inset 0 1px 0 color-mix(in srgb, #fff 44%, transparent);
     color: var(--text);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   }
   @media (min-width: 640px) {
     .quest-modal-sheet {
@@ -665,24 +763,80 @@
   }
 
   .card {
-    background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(245,251,255,.94));
-    border: 1px solid rgba(19,33,45,.12);
-    border-radius: 20px;
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(
+      175deg,
+      color-mix(in srgb, var(--card) 76%, transparent),
+      color-mix(in srgb, var(--surface) 58%, transparent)
+    );
+    border: 1px solid color-mix(in srgb, var(--violet) 8%, var(--border-ui));
+    border-radius: 16px;
+    box-shadow:
+      0 4px 16px color-mix(in srgb, var(--text) 6%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
   }
   .card-hover {
-    transition: border-color .2s, background .2s, transform .2s;
+    transition: border-color .2s, background .2s, transform .2s, box-shadow .2s;
   }
   .card-hover:hover {
-    border-color: rgba(34,211,238,.36);
-    background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(226,246,255,.95));
-    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--violet) 18%, var(--border-ui));
+    transform: translateY(-1px);
+    box-shadow:
+      0 10px 28px color-mix(in srgb, var(--text) 8%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
-  /* ── Glass (sur fond clair) ── */
+  /** Surface verre — panneaux flottants, encarts. */
   .glass {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--card) 70%, transparent),
+      color-mix(in srgb, var(--surface) 52%, transparent)
+    );
+    border: 1px solid color-mix(in srgb, var(--violet) 10%, var(--border-ui));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      0 10px 32px color-mix(in srgb, var(--text) 7%, transparent);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  }
+
+  /**
+   * Carte auth (sign-in / sign-up) — coque verre alignée sur les tokens --glass-*.
+   */
+  .auth-glass-panel {
+    position: relative;
+    isolation: isolate;
+    border-radius: 1.5rem;
+    border: 1px solid color-mix(in srgb, var(--violet) 14%, rgba(255, 255, 255, 0.45));
+    background: linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--card) 52%, transparent),
+      color-mix(in srgb, var(--surface) 38%, transparent)
+    );
+    box-shadow:
+      0 16px 48px -12px color-mix(in srgb, var(--text) 14%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  }
+  html[data-theme="midnight"] .auth-glass-panel {
+    border-color: color-mix(in srgb, var(--violet) 28%, rgba(255, 255, 255, 0.12));
+    background: linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--card) 58%, transparent),
+      color-mix(in srgb, var(--surface) 48%, transparent)
+    );
+    box-shadow:
+      0 20px 56px -14px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat-subtle));
   }
 
   /* Modal partage : scrollbar discrète (WebKit + Firefox) */
@@ -728,46 +882,31 @@
 
   /* ── Text gradients : fonds clairs (landing, cartes crème) — stops foncés pour le contraste ── */
   .text-gradient {
-    color: #164e63;
-    background: linear-gradient(
-      118deg,
-      #164e63 0%,
-      #115e59 44%,
-      #7c2d12 100%
-    );
+    color: var(--text);
+    background: linear-gradient(118deg, #1c1917 0%, #44403c 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Accroches hero / CTA / app : même famille cyan → teal (DA), sans saut orange ni glow agressif */
   .text-gradient-pop {
-    color: #0e7490;
+    color: var(--violet);
     display: inline-block;
-    background: linear-gradient(
-      118deg,
-      #0e7490 0%,
-      #0d9488 40%,
-      #0f766e 78%,
-      #115e59 100%
-    );
+    background: linear-gradient(118deg, #134e4a 0%, #0f766e 55%, #1c1917 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    /* léger relief sur fond clair, sans halos multiples */
-    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.85));
   }
-  /* Alias historique : même rendu que .text-gradient (évite @apply sur composant custom) */
   .text-gradient-on-dark {
-    color: #164e63;
-    background: linear-gradient(118deg, #164e63 0%, #115e59 44%, #7c2d12 100%);
+    color: var(--text);
+    background: linear-gradient(118deg, #1c1917 0%, #44403c 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .text-warm {
-    color: #9a3412;
-    background: linear-gradient(120deg, #9a3412 0%, #c2410c 45%, #047857 100%);
+    color: var(--orange);
+    background: linear-gradient(120deg, #7c2d12 0%, #c2410c 50%, #92400e 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -783,17 +922,25 @@
 
   .btn-primary {
     @apply btn text-white;
-    background: linear-gradient(135deg, #0891b2, #22d3ee);
-    box-shadow: 0 4px 20px rgba(34,211,238,.3);
+    background: var(--violet);
+    box-shadow: none;
+    border: 1px solid color-mix(in srgb, var(--violet) 65%, black);
   }
-  .btn-primary:hover { box-shadow: 0 6px 30px rgba(34,211,238,.45); transform: translateY(-1px); }
+  .btn-primary:hover {
+    background: color-mix(in srgb, var(--violet) 92%, black);
+    transform: translateY(-1px);
+  }
 
   .btn-cta {
     @apply btn text-white;
-    background: linear-gradient(135deg, #f97316, #fbbf24);
-    box-shadow: 0 4px 20px rgba(249,115,22,.35);
+    background: var(--orange);
+    box-shadow: none;
+    border: 1px solid color-mix(in srgb, var(--orange) 70%, black);
   }
-  .btn-cta:hover { box-shadow: 0 8px 32px rgba(249,115,22,.5); transform: translateY(-2px); }
+  .btn-cta:hover {
+    background: color-mix(in srgb, var(--orange) 90%, black);
+    transform: translateY(-1px);
+  }
 
   .btn-ghost {
     @apply btn;
@@ -968,10 +1115,12 @@
     font-size: 10px;
     line-height: 1.35;
     border-radius: 10px;
-    border: 1px solid rgba(8, 145, 178, 0.22);
-    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid color-mix(in srgb, var(--violet) 18%, var(--border-ui));
+    background: color-mix(in srgb, var(--card) 82%, transparent) !important;
+    backdrop-filter: blur(var(--glass-blur-tint)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-tint)) saturate(var(--glass-sat-subtle));
     color: var(--muted);
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--text) 8%, transparent);
   }
   .quest-map-leaflet .leaflet-control-attribution a {
     color: color-mix(in srgb, var(--link-on-bg) 90%, var(--text));
@@ -1019,16 +1168,16 @@
   /** Lien « Console » admin — dégradé discret, cohérent Questia */
   .admin-console-link {
     @apply items-center gap-2 rounded-full px-4 py-2 text-sm font-black tracking-tight text-white transition-all duration-200;
-    background: linear-gradient(135deg, #6d28d9 0%, #c026d3 48%, #ea580c 100%);
+    background: linear-gradient(135deg, #134e4a 0%, #92400e 48%, #c2410c 100%);
     box-shadow:
-      0 4px 18px rgba(109, 40, 217, 0.32),
-      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      0 3px 14px color-mix(in srgb, var(--text) 18%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
   .admin-console-link:hover {
-    filter: brightness(1.07);
+    filter: brightness(1.05);
     box-shadow:
-      0 8px 26px rgba(192, 38, 211, 0.38),
-      inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      0 6px 20px color-mix(in srgb, var(--text) 22%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
     transform: translateY(-1px);
   }
   .admin-console-link:active {
@@ -1081,12 +1230,17 @@
     gap: 0.25rem;
     padding: 0.25rem;
     border-radius: 1rem;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(236, 253, 255, 0.9));
-    border: 1px solid color-mix(in srgb, var(--cyan) 38%, var(--border-ui));
+    background: linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--card) 72%, transparent),
+      color-mix(in srgb, var(--surface) 58%, transparent)
+    );
+    border: 1px solid color-mix(in srgb, var(--violet) 10%, var(--border-ui-strong));
     box-shadow:
-      0 10px 28px color-mix(in srgb, var(--text) 12%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.78);
-    backdrop-filter: blur(12px);
+      0 8px 24px color-mix(in srgb, var(--text) 8%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.38);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
   }
   @media (prefers-reduced-motion: no-preference) {
     .hist-tabs {
@@ -1094,9 +1248,15 @@
     }
   }
   html[data-theme="midnight"] .hist-tabs {
-    background: linear-gradient(145deg, rgba(21, 34, 56, 0.94), rgba(17, 27, 46, 0.96));
-    border-color: rgba(56, 189, 248, 0.45);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--card) 75%, transparent),
+      color-mix(in srgb, var(--surface) 55%, transparent)
+    );
+    border-color: color-mix(in srgb, var(--violet) 20%, var(--border-ui-strong));
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat-subtle));
   }
   .hist-tab {
     flex: 1 1 140px;
@@ -1139,9 +1299,11 @@
   }
 
   .hist-filters-panel {
+    position: relative;
+    isolation: isolate;
     border-radius: 1.5rem;
     border: 2px solid color-mix(in srgb, var(--violet) 32%, var(--border-ui-strong));
-    background-color: var(--card);
+    background-color: transparent;
     background-image: linear-gradient(
         90deg,
         color-mix(in srgb, var(--violet) 70%, transparent),
@@ -1150,17 +1312,19 @@
       ),
       linear-gradient(
         152deg,
-        color-mix(in srgb, var(--surface) 42%, var(--card)) 0%,
-        var(--card) 48%,
-        color-mix(in srgb, var(--bg) 18%, var(--card)) 100%
+        color-mix(in srgb, var(--surface) 36%, transparent) 0%,
+        color-mix(in srgb, var(--card) 52%, transparent) 48%,
+        color-mix(in srgb, var(--bg) 22%, transparent) 100%
       );
     background-size: 100% 4px, 100% 100%;
     background-repeat: no-repeat, no-repeat;
     background-position: top, 0 0;
     box-shadow:
       0 16px 40px -18px color-mix(in srgb, var(--text) 22%, transparent),
-      inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
+      inset 0 1px 0 color-mix(in srgb, #fff 44%, transparent);
     padding: 1.125rem 1.25rem 1.25rem;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   }
   @media (prefers-reduced-motion: no-preference) {
     .hist-filters-panel {
@@ -1300,20 +1464,24 @@
       0 3px 14px color-mix(in srgb, var(--gold) 24%, transparent);
   }
   .hist-quest-card {
+    position: relative;
+    isolation: isolate;
     border-radius: 1.5rem;
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--orange) 22%, var(--border-ui));
     background: linear-gradient(
       165deg,
-      color-mix(in srgb, var(--gold) 22%, var(--surface)) 0%,
-      var(--card) 45%,
-      color-mix(in srgb, var(--orange) 14%, var(--surface)) 100%
+      color-mix(in srgb, var(--gold) 16%, transparent) 0%,
+      color-mix(in srgb, var(--card) 54%, transparent) 45%,
+      color-mix(in srgb, var(--orange) 11%, transparent) 100%
     );
     box-shadow:
-      inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent),
       0 4px 6px -1px color-mix(in srgb, var(--text) 8%, transparent),
       0 22px 44px -14px color-mix(in srgb, var(--violet) 18%, transparent),
       0 12px 28px -16px color-mix(in srgb, var(--orange) 12%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
   }
   .hist-quest-card--enter {
     animation: hist-card-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -1349,14 +1517,17 @@
     border: 2px solid color-mix(in srgb, var(--violet) 38%, var(--border-ui));
     background: linear-gradient(
       168deg,
-      color-mix(in srgb, var(--surface) 35%, var(--card)) 0%,
-      var(--card) 100%
+      color-mix(in srgb, var(--surface) 28%, transparent) 0%,
+      color-mix(in srgb, var(--card) 58%, transparent) 100%
     );
     font-size: 0.875rem;
     font-weight: 600;
     line-height: 1.55;
     color: var(--text);
     white-space: pre-wrap;
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 38%, transparent);
   }
 
   .hist-hook {
@@ -1365,9 +1536,9 @@
     border-radius: 1rem;
     background: linear-gradient(
       105deg,
-      color-mix(in srgb, var(--violet) 10%, var(--surface)) 0%,
-      var(--card) 55%,
-      color-mix(in srgb, var(--gold) 18%, var(--surface)) 100%
+      color-mix(in srgb, var(--violet) 8%, transparent) 0%,
+      color-mix(in srgb, var(--card) 56%, transparent) 55%,
+      color-mix(in srgb, var(--gold) 12%, transparent) 100%
     );
     border: 1px solid color-mix(in srgb, var(--orange) 28%, transparent);
     border-left-width: 4px;
@@ -1375,6 +1546,9 @@
     font-size: 0.875rem;
     font-style: italic;
     color: var(--muted);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 36%, transparent);
   }
 
   .hist-reuse-btn {
@@ -1423,7 +1597,10 @@
 
   /* ── Divider ── */
   .divider { height: 1px; background: var(--border); }
-  .divider-glow { height: 1px; background: linear-gradient(90deg, transparent, rgba(34,211,238,.4), transparent); }
+  .divider-glow {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--violet) 45%, transparent), transparent);
+  }
 
   /* ── Section label (lisible sur fond clair) ── */
   .label { @apply text-xs font-black tracking-widest uppercase text-orange-800; }
@@ -1440,47 +1617,82 @@
 
   /* ── Quest card highlight ── */
   .quest-glow {
-    box-shadow: 0 0 0 1px rgba(34,211,238,.24), 0 20px 60px rgba(34,211,238,.09);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--violet) 22%, transparent),
+      0 22px 60px color-mix(in srgb, var(--violet) 12%, transparent);
   }
   .quest-glow-orange {
-    box-shadow: 0 0 0 1px rgba(249,115,22,.2), 0 20px 60px rgba(249,115,22,.08);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--orange) 18%, transparent),
+      0 22px 60px color-mix(in srgb, var(--orange) 8%, transparent);
   }
 
   .quest-board {
-    background: linear-gradient(165deg, #fff7df, #fff3c6 40%, #fde68a 120%);
-    border: 2px solid rgba(249, 115, 22, 0.35);
-    box-shadow: 0 24px 40px rgba(249,115,22,.2), 0 6px 0 rgba(120,53,15,.16);
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--card) 72%, transparent),
+      color-mix(in srgb, var(--surface) 54%, transparent)
+    );
+    border: 1px solid color-mix(in srgb, var(--orange) 14%, var(--border-ui-strong));
+    box-shadow:
+      0 12px 32px color-mix(in srgb, var(--text) 8%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.38);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   }
 
-  /* Page /app — carte quête : même ADN « plateau » mais plus aérée, moins de bordures qui rivalisent */
+  /* Page /app — carte quête : verre léger */
   .app-quest-surface {
-    background: linear-gradient(165deg, #ffffff 0%, #fffbf5 45%, #fff3e0 100%);
-    border: 1px solid rgba(249, 115, 22, 0.2);
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--card) 78%, transparent),
+      color-mix(in srgb, var(--gold) 5%, transparent) 52%,
+      color-mix(in srgb, var(--surface) 64%, transparent) 100%
+    );
+    border: 1px solid color-mix(in srgb, var(--orange) 12%, var(--border-ui));
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      0 4px 6px -1px rgba(15, 23, 42, 0.05),
-      0 22px 44px -14px rgba(34, 211, 238, 0.14),
-      0 12px 28px -16px rgba(249, 115, 22, 0.1);
-    border-radius: 1.75rem;
+      0 6px 22px color-mix(in srgb, var(--text) 7%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    border-radius: 1.5rem;
   }
   .app-quest-surface--active {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      0 0 0 1px rgba(16, 185, 129, 0.22),
-      0 22px 44px -14px rgba(16, 185, 129, 0.12);
+      0 0 0 1px color-mix(in srgb, var(--green) 28%, transparent),
+      0 22px 44px -14px color-mix(in srgb, var(--green) 14%, transparent);
   }
   .app-hook-quote {
-    background: linear-gradient(105deg, rgba(224, 242, 254, 0.65) 0%, rgba(255, 247, 237, 0.9) 55%, rgba(254, 243, 199, 0.45) 100%);
-    border: 1px solid rgba(249, 115, 22, 0.12);
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(
+      105deg,
+      color-mix(in srgb, var(--violet) 8%, transparent) 0%,
+      color-mix(in srgb, var(--card) 58%, transparent) 52%,
+      color-mix(in srgb, var(--gold) 11%, transparent) 100%
+    );
+    border: 1px solid color-mix(in srgb, var(--orange) 16%, var(--border-ui));
     border-left-width: 4px;
-    border-left-color: rgba(249, 115, 22, 0.55);
+    border-left-color: color-mix(in srgb, var(--orange) 48%, transparent);
     border-radius: 1rem;
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 38%, transparent);
   }
 
   /** Pastille / badge (ex. AuthQuestShell) — pas le bloc citation */
   .quest-sticker {
-    background: linear-gradient(135deg, rgba(34,211,238,.22), rgba(16,185,129,.18));
-    border: 1px solid rgba(14, 116, 144, 0.35);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--violet) 22%, transparent),
+      color-mix(in srgb, var(--green) 18%, transparent)
+    );
+    border: 1px solid color-mix(in srgb, var(--violet) 32%, var(--border-ui));
     color: var(--on-cream);
   }
 
@@ -1488,6 +1700,8 @@
    * Citation du jour (hook) — alignée sur le plateau : crème, orange, cyan, pas d'italique global.
    */
   .quest-hook-card {
+    position: relative;
+    isolation: isolate;
     border-radius: 1rem;
     padding: 0.875rem 1rem 1rem;
     max-width: 36rem;
@@ -1495,14 +1709,16 @@
     margin-right: auto;
     background: linear-gradient(
       155deg,
-      color-mix(in srgb, var(--gold) 14%, var(--surface)) 0%,
-      var(--card) 42%,
-      color-mix(in srgb, var(--violet) 10%, var(--surface)) 100%
+      color-mix(in srgb, var(--gold) 11%, transparent) 0%,
+      color-mix(in srgb, var(--card) 56%, transparent) 42%,
+      color-mix(in srgb, var(--violet) 8%, transparent) 100%
     );
     border: 1px solid color-mix(in srgb, var(--orange) 28%, transparent);
     box-shadow:
-      inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent),
       0 0 0 1px color-mix(in srgb, var(--violet) 14%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
   }
   .quest-hook-card__label {
     font-size: 10px;
@@ -1528,38 +1744,44 @@
     }
   }
   .quest-hook-card__g {
-    color: rgba(249, 115, 22, 0.75);
+    color: color-mix(in srgb, var(--orange) 72%, var(--text));
     font-weight: 800;
   }
 
   /* Slider hero — dégradé aligné sur les variables de thème (Nuit boréale, etc.) */
   .quest-slider-embedded {
+    position: relative;
+    isolation: isolate;
     background: linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--gold) 20%, var(--surface)) 0%,
-      var(--card) 42%,
-      color-mix(in srgb, var(--violet) 14%, var(--surface)) 100%
+      168deg,
+      color-mix(in srgb, var(--card) 74%, transparent),
+      color-mix(in srgb, var(--surface) 58%, transparent)
     );
-    border: 2px solid color-mix(in srgb, var(--orange) 35%, transparent);
+    border: 1px solid color-mix(in srgb, var(--orange) 16%, var(--border-ui-strong));
     box-shadow:
-      0 10px 22px color-mix(in srgb, var(--text) 12%, transparent),
-      0 6px 0 color-mix(in srgb, var(--orange) 14%, transparent);
-    border-radius: 26px;
+      0 10px 28px color-mix(in srgb, var(--text) 8%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat));
+    border-radius: 20px;
   }
 
-  /* Slider dans le panneau hero landing — même DA, sans double bordure */
+  /* Slider dans le panneau hero landing */
   .quest-slider-landing {
+    position: relative;
+    isolation: isolate;
     background: linear-gradient(
-      155deg,
-      rgba(255, 255, 255, 0.72) 0%,
-      rgba(255, 249, 232, 0.58) 48%,
-      rgba(210, 248, 255, 0.42) 100%
+      160deg,
+      color-mix(in srgb, var(--card) 70%, transparent),
+      color-mix(in srgb, var(--surface) 54%, transparent)
     );
-    border: 1px solid rgba(249, 115, 22, 0.22);
+    border: 1px solid color-mix(in srgb, var(--violet) 8%, var(--border-ui));
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.7),
-      0 3px 12px rgba(249, 115, 22, 0.07);
-    border-radius: 20px;
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      0 4px 16px color-mix(in srgb, var(--text) 6%, transparent);
+    backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-sat-subtle));
+    border-radius: 16px;
   }
   @media (min-width: 768px) {
     .quest-slider-landing {
@@ -1585,6 +1807,89 @@
     border: 1px solid color-mix(in srgb, var(--orange) 32%, transparent);
   }
 
+  /** Réduit le flou pour accessibilité (sensibilité au mouvement / vestibulaire). */
+  @media (prefers-reduced-motion: reduce) {
+    .navbar-shell,
+    html[data-theme="midnight"] .navbar-shell,
+    .navbar-mobile-drawer,
+    html[data-theme="midnight"] .navbar-mobile-drawer,
+    .landing-cta-panel,
+    .landing-hero-panel,
+    .quest-modal-backdrop,
+    .quest-modal-panel,
+    .quest-modal-sheet,
+    .card,
+    .glass,
+    .auth-glass-panel,
+    .shop-elevated-surface,
+    .app-quest-xp-strip,
+    .quest-mission-panel,
+    .quest-map-panel,
+    .hist-tabs,
+    html[data-theme="midnight"] .hist-tabs,
+    .hist-filters-panel,
+    .hist-quest-card,
+    .hist-mission,
+    .hist-hook,
+    .quest-board,
+    .app-quest-surface,
+    .app-hook-quote,
+    .quest-hook-card,
+    .quest-slider-embedded,
+    .quest-slider-landing,
+    .quest-map-leaflet .leaflet-control-attribution,
+    .app-app-hero-band,
+    .app-shop-balance-card,
+    .app-shop-featured-card,
+    .app-profile-level-card,
+    .app-profile-badge-unlocked,
+    .app-quest-day-strip {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .navbar-shell,
+    html[data-theme="midnight"] .navbar-shell,
+    .navbar-mobile-drawer,
+    html[data-theme="midnight"] .navbar-mobile-drawer,
+    .landing-cta-panel,
+    .landing-hero-panel,
+    .quest-modal-backdrop,
+    .quest-modal-panel,
+    .quest-modal-sheet,
+    .card,
+    .glass,
+    .auth-glass-panel,
+    .shop-elevated-surface,
+    .app-quest-xp-strip,
+    .quest-mission-panel,
+    .quest-map-panel,
+    .hist-tabs,
+    html[data-theme="midnight"] .hist-tabs,
+    .hist-filters-panel,
+    .hist-quest-card,
+    .hist-mission,
+    .hist-hook,
+    .quest-board,
+    .app-quest-surface,
+    .app-hook-quote,
+    .quest-hook-card,
+    .quest-slider-embedded,
+    .quest-slider-landing,
+    .quest-map-leaflet .leaflet-control-attribution,
+    .app-app-hero-band,
+    .app-shop-balance-card,
+    .app-shop-featured-card,
+    .app-profile-level-card,
+    .app-profile-badge-unlocked,
+    .app-quest-day-strip {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+  }
+
   /* ── Step animation ── */
   .animate-fadeIn { animation: fadeIn 0.35s ease-out; }
   @media (prefers-reduced-motion: reduce) {
@@ -1593,14 +1898,14 @@
 
   /* ── Clerk (sign-in / sign-up) — transparent, s'intègre dans AuthQuestShell ── */
   .auth-clerk-root {
-    --clerk-color-primary: #f97316;
+    --clerk-color-primary: #c2410c;
     --clerk-color-background: transparent;
-    --clerk-color-foreground: #0f172a;
-    --clerk-color-text: #0f172a;
-    --clerk-color-text-secondary: #64748b;
-    --clerk-color-input-background: #f8fafc;
-    --clerk-color-neutral: #f1f5f9;
-    --clerk-color-shimmer: #e0f2fe;
+    --clerk-color-foreground: #141b26;
+    --clerk-color-text: #141b26;
+    --clerk-color-text-secondary: #5a6578;
+    --clerk-color-input-background: rgba(255, 255, 255, 0.88);
+    --clerk-color-neutral: #e8eef6;
+    --clerk-color-shimmer: #e4e9f5;
     color-scheme: light;
     width: 100%;
     max-width: 100%;
@@ -1703,21 +2008,21 @@
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
-    background: #f97316 !important;
+    background: #c2410c !important;
     color: #fff !important;
     font-weight: 800 !important;
     font-size: 0.9375rem !important;
     letter-spacing: 0.01em !important;
     padding: 0.875rem 1.5rem !important;
     border-radius: 0.875rem !important;
-    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.28) !important;
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--orange) 28%, transparent) !important;
     text-transform: none !important;
     border: none !important;
     transition: background 0.15s, box-shadow 0.15s, transform 0.15s !important;
   }
   .auth-clerk-root .cl-formButtonPrimary:hover {
-    background: #ea580c !important;
-    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.38) !important;
+    background: #9a3412 !important;
+    box-shadow: 0 8px 26px color-mix(in srgb, var(--orange) 36%, transparent) !important;
     transform: translateY(-1px) !important;
   }
   .auth-clerk-root .cl-formButtonPrimary:active {
@@ -1736,15 +2041,15 @@
     color: #0f172a !important;
   }
   .auth-clerk-root .cl-socialButtonsBlockButton:hover {
-    background: #ecfeff !important;
-    border-color: rgba(34, 211, 238, 0.45) !important;
+    background: color-mix(in srgb, var(--violet) 8%, var(--card)) !important;
+    border-color: color-mix(in srgb, var(--violet) 35%, var(--border-ui)) !important;
   }
   .auth-clerk-root .cl-footerActionLink {
-    color: #0e7490 !important;
+    color: #115e59 !important;
     font-weight: 700 !important;
   }
   .auth-clerk-root .cl-footerActionLink:hover {
-    color: #ea580c !important;
+    color: #c2410c !important;
   }
   .auth-clerk-root .cl-dividerLine {
     background: #e2e8f0 !important;

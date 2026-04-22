@@ -7,3 +7,12 @@ jest.mock('react-native-webview', () => {
     WebView: () => React.createElement(View, { testID: 'webview-mock' }),
   };
 });
+
+jest.mock('expo-blur', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    BlurView: ({ children, style, ...rest }: { children?: React.ReactNode; style?: object }) =>
+      React.createElement(View, { style, ...rest }, children),
+  };
+});
