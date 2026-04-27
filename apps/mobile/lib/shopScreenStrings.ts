@@ -174,7 +174,7 @@ function frStrings(): ShopScreenStrings {
     sectionRerolls: 'Relances',
     sectionQuestPacks: 'Packs de quêtes',
     questPacksIntro:
-      "Oriente le moteur vers une ambiance, un style de vie ou une ville. Plusieurs packs cohabitent.",
+      "Chaque pack est un parcours de 10 quêtes en 3 chapitres, à jouer en parallèle de ta quête quotidienne. Titre exclusif et Quest Coins à la clé.",
     questPackKindAll: 'Tous',
     questPackKindVibe: 'Ambiances',
     questPackKindLifestyle: 'Style de vie',
@@ -280,7 +280,7 @@ function enStrings(): ShopScreenStrings {
     sectionRerolls: 'Rerolls',
     sectionQuestPacks: 'Quest packs',
     questPacksIntro:
-      'Steer the engine toward a vibe, a lifestyle or a city. Multiple packs cohabit.',
+      'Each pack is a 10-quest journey in 3 chapters, played alongside your daily quest. Earn an exclusive title and Quest Coins on completion.',
     questPackKindAll: 'All',
     questPackKindVibe: 'Vibes',
     questPackKindLifestyle: 'Lifestyle',

@@ -139,6 +139,8 @@ model Profile {
   xpBonusCharges        Int             @default(0) @map("xp_bonus_charges")
   /** Packs de quêtes possédés (ids QUEST_PACKS_REGISTRY — JSON string[]) */
   ownedQuestPackIds     Json            @default("[]") @map("owned_quest_pack_ids")
+  /** Progression dans les parcours de packs (JSON: { [packId]: { completed, rewardClaimed } }) */
+  questPackProgress     Json            @default("{}") @map("quest_pack_progress")
   /** Rappel push (app mobile) pour la quête du jour */
   reminderPushEnabled   Boolean         @default(false) @map("reminder_push_enabled")
   /** Rappel par e-mail */

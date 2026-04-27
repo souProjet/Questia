@@ -131,17 +131,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'vibe',
     name: 'Pack Couple',
     description:
-      "Oriente l'IA vers des quêtes à vivre à deux : petits gestes complices, sorties, rituels relationnels — sans niaiserie.",
+      "Un parcours de 10 quêtes pour casser la routine à deux — petits gestes complices, sorties, rituels relationnels.",
     priceCoins: 500,
     icon: 'Heart',
     grants: { questPackIds: ['pack_couple'] },
     includedItems: [
-      "Quêtes ancrées dans la relation (à deux ou en duo)",
-      "Boost catégoriel permanent (vulnérabilité relationnelle, empathie)",
-      "Achat unique — actif tant que tu le veux dans la boutique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Joue à ton rythme, en parallèle de la quête quotidienne",
+      "Récompense finale : titre exclusif « Tandem » + 200 QC",
     ],
     contentsDetail:
-      "Ce pack ajoute un biais durable au moteur de sélection : davantage de quêtes type « rituel partagé », « micro-attention » ou « sortie pensée pour deux ». Tu peux le combiner avec d'autres packs (Nocturne, Gastronomie…). Désactivable à venir dans le profil.",
+      "10 quêtes éditoriales pensées pour les duos, organisées en 3 chapitres : Découverte, Approfondissement, Maîtrise. Chaque chapitre se débloque quand tu termines le précédent. À la fin du parcours, tu reçois un titre exclusif et un bonus de Quest Coins.",
     marketing: { badge: 'new', hook: 'Pour le quotidien des duos.' },
   },
   {
@@ -150,17 +150,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'vibe',
     name: 'Pack Osé',
     description:
-      "Pour pousser un cran plus loin sans déraper : geste audacieux, prise de parole, mini-performance.",
+      "Un parcours de 10 quêtes pour pousser un cran plus loin sans déraper — geste audacieux, prise de parole, mini-performance.",
     priceCoins: 500,
     icon: 'Flame',
     grants: { questPackIds: ['pack_ose'] },
     includedItems: [
-      "Boost vers les quêtes à inconfort visible (mais sain)",
-      "Conserve les garde-fous sécurité du moteur",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Garde-fous sécurité préservés à chaque étape",
+      "Récompense finale : titre exclusif « Audacieux·se » + 200 QC",
     ],
     contentsDetail:
-      "« Osé » ne veut pas dire « stupide » : le pack pondère vers des quêtes où tu fais quelque chose de visible (parler, montrer, oser un geste) tout en respectant les règles de sécurité de Questia.",
+      "10 quêtes éditoriales qui montent en intensité — parler haut, montrer, oser un geste — sans transgresser autrui. Trois chapitres de difficulté croissante. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new', hook: 'Un cran au-dessus.' },
   },
   {
@@ -169,17 +169,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'vibe',
     name: 'Pack Rencontres',
     description:
-      "Briser la glace, créer le déclic. Plus de quêtes qui ouvrent une vraie porte vers les autres.",
+      "Un parcours de 10 quêtes pour briser la glace et créer le déclic — sans drague forcée, juste de vraies portes ouvertes.",
     priceCoins: 500,
     icon: 'Sparkles',
     grants: { questPackIds: ['pack_rencontres'] },
     includedItems: [
-      "Plus de sociabilité exploratoire et d'échanges sincères",
-      "Pas de drague forcée — qualité de l'échange avant la quantité",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Du compliment sincère au rendez-vous décalé",
+      "Récompense finale : titre exclusif « Étincelle » + 200 QC",
     ],
     contentsDetail:
-      "Tu reçois plus souvent des quêtes qui ouvrent un échange : un compliment honnête, une question décalée, un sujet sortant des banalités. Compatible Nocturne / Paris / Gastronomie.",
+      "10 étapes pour apprendre à ouvrir un échange : compliment honnête, question décalée, sujet sortant des banalités. Chapitre par chapitre, tu progresses vers des interactions plus assumées. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
   {
@@ -188,17 +188,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'vibe',
     name: 'Pack Nocturne',
     description:
-      "Quand la ville change de peau après la nuit tombée — quêtes qui s'allument plutôt en soirée.",
+      "Un parcours de 10 quêtes pour goûter à la ville après la nuit tombée — marche éclairée, observation, rituel du soir.",
     priceCoins: 500,
     icon: 'Moon',
     grants: { questPackIds: ['pack_nocturne'] },
     includedItems: [
-      "Boost « après le coucher du soleil »",
-      "Mix introspection urbaine + micro-aventure",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "À jouer après le coucher du soleil — sécurité incluse",
+      "Récompense finale : titre exclusif « Noctambule » + 200 QC",
     ],
     contentsDetail:
-      "Le moteur favorise les archétypes qui se prêtent au soir : marche éclairée, observation urbaine, rituel nocturne, sortie tardive. Le LLM reçoit aussi la consigne d'orienter le récit après le coucher du soleil.",
+      "10 quêtes nocturnes en 3 chapitres : flânerie éclairée, micro-aventure urbaine, rituel du soir. La sécurité de base est rappelée à chaque étape. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
   {
@@ -207,17 +207,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'vibe',
     name: 'Pack Piment',
     description:
-      "Un soupçon de provocation pour pimenter la journée — micro-performance publique, voix qui se pose.",
+      "Un parcours de 10 quêtes piquantes — micro-performance publique, voix qui se pose, gestes qui sortent du rang.",
     priceCoins: 500,
     icon: 'Zap',
     grants: { questPackIds: ['pack_piment'] },
     includedItems: [
-      "Boost vers l'introspection publique et l'inconfort visible",
-      "Toujours sous garde-fous (jamais transgresser autrui)",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Inconfort visible mais sain — jamais aux dépens d'autrui",
+      "Récompense finale : titre exclusif « Pimenté·e » + 200 QC",
     ],
     contentsDetail:
-      "Le pack pousse vers des quêtes un peu piquantes : parler à voix haute, demander quelque chose d'inhabituel, décaler le regard public. Aucune quête ne te demandera de mettre quelqu'un en difficulté.",
+      "10 quêtes pour flirter avec l'inconfort visible : parler à voix haute, demander quelque chose d'inhabituel, décaler le regard public. Aucune étape ne te demandera de mettre quelqu'un en difficulté. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
 
@@ -228,17 +228,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'lifestyle',
     name: 'Pack Solo absolu',
     description:
-      "Pour les périodes où tu veux être seul·e sans culpabiliser — quêtes introspectives, sans interaction sociale.",
+      "Un parcours de 10 quêtes introspectives à vivre seul·e — sans culpabilité, sans contrainte sociale.",
     priceCoins: 500,
     icon: 'User',
     grants: { questPackIds: ['pack_solo_absolu'] },
     includedItems: [
-      "Aucune quête à contrainte sociale (jamais imposée)",
-      "Boost privation sensorielle / discipline asynchrone / détox",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Aucune étape ne demande d'aller voir quelqu'un",
+      "Récompense finale : titre exclusif « Solitude lumineuse » + 200 QC",
     ],
     contentsDetail:
-      "Le moteur évite les quêtes qui exigent d'aller voir quelqu'un et privilégie celles que tu peux faire entièrement seul·e. Idéal pour des semaines plus introverties ou des périodes calmes.",
+      "10 quêtes pour des semaines introverties ou des périodes calmes. Trois chapitres : Pause, Présence, Profondeur. Tu peux les jouer dans l'ordre que tu veux à l'intérieur d'un chapitre. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
   {
@@ -247,17 +247,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'lifestyle',
     name: 'Pack Gastronomie',
     description:
-      "Manger autrement : produit, marché, geste, lieu. Le goût comme terrain de quête.",
+      "Un parcours de 10 quêtes pour manger autrement — produit, marché, geste, lieu. Le goût comme terrain de jeu.",
     priceCoins: 500,
     icon: 'UtensilsCrossed',
     grants: { questPackIds: ['pack_gastronomie'] },
     includedItems: [
-      "Plus de quêtes ancrées « bouche, marché, cuisine »",
-      "Compatible avec un pack lieu (Lyon, Marseille…)",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Goût, geste, mémoire — pas un cours de nutrition",
+      "Récompense finale : titre exclusif « Gourmet·te » + 200 QC",
     ],
     contentsDetail:
-      "Le pack ajoute un biais vers des quêtes alimentaires (produit, lieu, geste) sans transformer Questia en application nutrition. Le LLM reçoit la consigne de privilégier goût, geste et mémoire — pas un cours.",
+      "10 quêtes ancrées dans la bouche, le marché, la cuisine. Cumulable avec un pack lieu (Lyon, Marseille…) pour une saveur locale. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
   {
@@ -266,17 +266,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'lifestyle',
     name: 'Pack Slow life',
     description:
-      "Ralentir, sentir, respirer. Des quêtes courtes, lentes, attentives — quand tu veux décompresser.",
+      "Un parcours de 10 quêtes lentes pour ralentir, sentir, respirer — courtes, attentives, sans course contre la montre.",
     priceCoins: 500,
     icon: 'Leaf',
     grants: { questPackIds: ['pack_slow_life'] },
     includedItems: [
-      "Boost privation sensorielle / détox dopaminergique",
-      "Pas de course contre la montre",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Micro-rituels apaisants, jamais d'urgence",
+      "Récompense finale : titre exclusif « Tempo doux » + 200 QC",
     ],
     contentsDetail:
-      "Le moteur oriente vers des micro-rituels lents (boisson chaude, balade lente, silence court) plutôt que vers des défis intenses. Idéal pour les périodes chargées où tu veux rester sur de petites victoires apaisantes.",
+      "10 quêtes pour les périodes chargées : boisson chaude, balade lente, silence court, attention sensorielle. Trois chapitres pour t'installer durablement dans la lenteur. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
   {
@@ -285,17 +285,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'lifestyle',
     name: 'Pack Social & amis',
     description:
-      "Renforcer les liens qui comptent : message, attention concrète, retrouvailles.",
+      "Un parcours de 10 quêtes pour renforcer les liens qui comptent — message, attention concrète, retrouvailles.",
     priceCoins: 500,
     icon: 'Users',
     grants: { questPackIds: ['pack_social_amis'] },
     includedItems: [
-      "Boost vers les quêtes sociales et empathiques",
-      "Idéal si tu veux entretenir un cercle de proches",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Lien réel, pas du scrolling de feed",
+      "Récompense finale : titre exclusif « Tisseur·se » + 200 QC",
     ],
     contentsDetail:
-      "Plus de quêtes type « écris à quelqu'un que tu n'as pas vu depuis 3 mois », « propose un café cette semaine », « fais une attention concrète » — pas du scrolling de feed, du lien réel.",
+      "10 étapes pour entretenir un cercle de proches : écris à quelqu'un perdu de vue, propose un café, fais une attention concrète. Trois chapitres : Reconnecter, Faire vivre, Approfondir. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
 
@@ -306,17 +306,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'location',
     name: 'Pack Paris',
     description:
-      "Ancre tes quêtes dans Paris : arrondissements, rives, métro, détails vrais — pas de cliché touristique.",
+      "Un parcours de 10 quêtes pour arpenter Paris autrement — arrondissements, rives, métro, détails vrais.",
     priceCoins: 450,
     icon: 'MapPin',
     grants: { questPackIds: ['pack_paris'] },
     includedItems: [
-      "Plus de quêtes situées dans Paris quand le contexte le permet",
-      "Détail concret (arrondissement, rive, ligne de métro)",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Aucun cliché touristique — Paris des habitants",
+      "Récompense finale : titre exclusif « Flâneur·se de Paris » + 180 QC",
     ],
     contentsDetail:
-      "Quand le GPS et la météo le permettent, le LLM reçoit une consigne d'ancrage à Paris : un arrondissement, une rive, un café réel. Pas de filtre dur — si tu n'es pas à Paris ce jour-là, la quête s'adapte.",
+      "10 quêtes ancrées dans Paris : passages couverts, micro-quartiers, lignes de métro mythiques, terrasses ignorées. Si tu n'es pas à Paris quand tu joues, la mission reste réalisable à distance (souvenir, échange, projet). Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
   {
@@ -325,17 +325,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'location',
     name: 'Pack Lyon',
     description:
-      "Entre Saône et Rhône, traboules et terrasses : tes quêtes prennent racine à Lyon.",
+      "Un parcours de 10 quêtes entre Saône et Rhône, traboules et terrasses — Lyon comme terrain de jeu.",
     priceCoins: 450,
     icon: 'MapPin',
     grants: { questPackIds: ['pack_lyon'] },
     includedItems: [
-      "Plus de quêtes ancrées Lyon (Presqu'île, Croix-Rousse…)",
-      "Détails concrets (traboules, quais)",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Presqu'île, Croix-Rousse, traboules, quais",
+      "Récompense finale : titre exclusif « Gone des quais » + 180 QC",
     ],
     contentsDetail:
-      "Quand pertinent, la quête se situe à Lyon avec un détail vrai (Presqu'île, Croix-Rousse, traboules, quais). Compatible avec d'autres packs (Gastronomie, Couple, Nocturne…).",
+      "10 quêtes pour découvrir Lyon par ses détails vrais. Cumulable avec Gastronomie, Couple ou Nocturne pour des combinaisons savoureuses. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
   {
@@ -344,17 +344,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'location',
     name: 'Pack Nantes',
     description:
-      "Île, machines, Loire : Nantes se prête au jeu. Quêtes ancrées dans les quartiers vivants.",
+      "Un parcours de 10 quêtes pour habiter Nantes — Île, machines, Loire et quartiers vivants.",
     priceCoins: 450,
     icon: 'MapPin',
     grants: { questPackIds: ['pack_nantes'] },
     includedItems: [
-      "Plus de quêtes ancrées Nantes (Île, Bouffay, Erdre…)",
-      "Détails concrets",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Île de Nantes, Bouffay, bords d'Erdre",
+      "Récompense finale : titre exclusif « Voyageur·se nantais » + 180 QC",
     ],
     contentsDetail:
-      "La quête s'ancre à Nantes quand c'est pertinent — Île de Nantes, quartier Bouffay, bords d'Erdre — avec un détail vrai. Pas de filtre dur si tu n'y es pas.",
+      "10 quêtes inspirées des micro-paysages nantais. Si tu n'y es pas pendant le parcours, la mission s'adapte (souvenir, projet, ami à interroger). Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
   {
@@ -363,17 +363,17 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
     questPackKind: 'location',
     name: 'Pack Marseille',
     description:
-      "Calanques, Vieux-Port, mistral : la ville donne le ton à tes quêtes.",
+      "Un parcours de 10 quêtes côté Calanques, Vieux-Port, mistral — Marseille donne le tempo.",
     priceCoins: 450,
     icon: 'MapPin',
     grants: { questPackIds: ['pack_marseille'] },
     includedItems: [
-      "Plus de quêtes ancrées Marseille (Vieux-Port, Panier, calanques…)",
-      "Détails concrets",
-      "Achat unique",
+      "Parcours de 10 quêtes en 3 chapitres (3 → 4 → 3)",
+      "Vieux-Port, Panier, calanques, corniche",
+      "Récompense finale : titre exclusif « Cap au Sud » + 180 QC",
     ],
     contentsDetail:
-      "La quête se situe à Marseille avec un détail réel (Vieux-Port, Panier, calanques, corniche) quand le contexte s'y prête. Mix idéal avec Gastronomie, Solo absolu ou Slow life.",
+      "10 quêtes phocéennes : odeurs du Vieux-Port, ruelles du Panier, balades sur la corniche, plongée mistral. Mix idéal avec Gastronomie, Solo absolu ou Slow life. Récompense finale : titre + Quest Coins.",
     marketing: { badge: 'new' },
   },
 ];

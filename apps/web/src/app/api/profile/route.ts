@@ -9,6 +9,7 @@ import {
   getThemeIds,
   effectiveOwnedThemes,
   TITLE_IDS,
+  parseQuestPackProgress,
 } from '@questia/shared';
 import type { ExplorerAxis, RiskAxis, SociabilityLevel } from '@questia/shared';
 import { parseAppLocaleFromRequest } from '@/lib/requestLocale';
@@ -34,6 +35,7 @@ function shopPayload(profile: {
   equippedTitleId?: string | null;
   xpBonusCharges?: number | null;
   ownedQuestPackIds?: unknown;
+  questPackProgress?: unknown;
 }) {
   const ownedTitles = parseStringArray(profile.ownedTitleIds);
   let equipped = profile.equippedTitleId ?? null;
@@ -48,6 +50,7 @@ function shopPayload(profile: {
     equippedTitleId: equipped,
     xpBonusCharges: profile.xpBonusCharges ?? 0,
     ownedQuestPackIds: parseStringArray(profile.ownedQuestPackIds),
+    questPackProgress: parseQuestPackProgress(profile.questPackProgress),
   };
 }
 

@@ -515,7 +515,17 @@ function ShopPageInner() {
             {item.priceCoins.toLocaleString(numLocale)} QC
           </span>
           {owns ? (
-            <span className="text-xs font-black uppercase tracking-wider text-[var(--green)]">{t('owned')}</span>
+            item.kind === 'quest_pack' && item.grants.questPackIds?.[0] ? (
+              <Link
+                href={`/app/parcours/${item.grants.questPackIds[0]}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition-transform hover:scale-[1.03] active:scale-95"
+              >
+                <Icon name="Compass" size="xs" aria-hidden />
+                {locale === 'en' ? 'View journey' : 'Voir le parcours'}
+              </Link>
+            ) : (
+              <span className="text-xs font-black uppercase tracking-wider text-[var(--green)]">{t('owned')}</span>
+            )
           ) : (
             <button
               type="button"
@@ -812,8 +822,8 @@ function ShopPageInner() {
                     </h2>
                     <p className="mt-1 text-sm text-[var(--muted)] max-w-2xl">
                       {locale === 'en'
-                        ? 'Permanently bias the quest engine and the AI narration toward a vibe, a lifestyle, or a city. Stack as many as you like — they cohabit.'
-                        : "Oriente durablement le moteur et le récit IA vers une ambiance, un style de vie ou une ville. Plusieurs packs cohabitent."}
+                        ? 'Each pack is a 10-quest journey in 3 chapters, played alongside your daily quest. Earn an exclusive title and Quest Coins on completion.'
+                        : "Chaque pack est un parcours de 10 quêtes en 3 chapitres, à jouer en parallèle de ta quête quotidienne. Titre exclusif et Quest Coins à la clé."}
                     </p>
                   </div>
                 </div>

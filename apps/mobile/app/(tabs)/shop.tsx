@@ -655,7 +655,25 @@ export default function ShopScreen() {
         <View style={styles.cardFooter}>
           <Text style={styles.price}>{item.priceCoins.toLocaleString(s.numLocale)} QC</Text>
           {owns ? (
-            <Text style={styles.ownsLbl}>{s.owned}</Text>
+            item.kind === 'quest_pack' && item.grants.questPackIds?.[0] ? (
+              <Pressable
+                style={styles.viewArcBtn}
+                onPress={() => {
+                  hapticLight();
+                  const pid = item.grants.questPackIds?.[0];
+                  if (pid) {
+                    router.push(`/parcours/${pid}` as never);
+                  }
+                }}
+              >
+                <UiLucideIcon name="Compass" size={14} color="#FFFFFF" />
+                <Text style={styles.viewArcBtnText}>
+                  {appLocale === 'en' ? 'View journey' : 'Voir le parcours'}
+                </Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.ownsLbl}>{s.owned}</Text>
+            )
           ) : (
             <Pressable
               style={[
@@ -1527,6 +1545,16 @@ function createShopStyles(p: ThemePalette) {
   },
   price: { fontSize: 18, fontWeight: '900', color: p.orange },
   ownsLbl: { fontSize: 11, fontWeight: '900', color: p.green, letterSpacing: 0.5 },
+  viewArcBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#7C3AED',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  viewArcBtnText: { color: '#FFFFFF', fontWeight: '900', fontSize: 12, letterSpacing: 0.4 },
   buyBtn: {
     backgroundColor: p.orange,
     paddingHorizontal: 18,
