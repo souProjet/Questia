@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
-import { Sparkles, Palette, Sliders, Layers, Zap } from 'lucide-react';
+import { Palette, Sliders, Layers, Zap } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { AuraProfileSimulator } from './AuraProfileSimulator';
 

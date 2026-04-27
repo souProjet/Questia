@@ -112,43 +112,6 @@ const PRESETS: { label: string; values: PersonalityVector }[] = [
   },
 ];
 
-// ─── Composant orbe ───────────────────────────────────────────────────────────
-
-function AuraOrb({
-  color,
-  size,
-  label,
-  description,
-  blur,
-  className = '',
-}: {
-  color: string;
-  size: number;
-  label: string;
-  description: string;
-  blur: number;
-  className?: string;
-}) {
-  return (
-    <div className={`flex flex-col items-center gap-2 ${className}`}>
-      <div
-        className="rounded-full transition-all duration-700 ease-out"
-        style={{
-          width: size,
-          height: size,
-          backgroundColor: color,
-          filter: `blur(${blur}px)`,
-          opacity: 0.85,
-        }}
-      />
-      <div className="text-center">
-        <p className="text-xs font-bold text-[var(--text)]">{label}</p>
-        <p className="mt-0.5 text-[11px] text-[var(--muted)] max-w-[120px] leading-tight">{description}</p>
-      </div>
-    </div>
-  );
-}
-
 // ─── Slider trait ─────────────────────────────────────────────────────────────
 
 function TraitSlider({
