@@ -86,9 +86,9 @@ export interface ScoreWeights {
 }
 
 export const DEFAULT_SCORE_WEIGHTS: ScoreWeights = Object.freeze({
-  affinity: 0.45,
+  affinity: 0.38,
   phaseFit: 0.25,
-  freshness: 0.20,
+  freshness: 0.27,
   refinement: 0.10,
 });
 
@@ -96,4 +96,4 @@ export const DEFAULT_SCORE_WEIGHTS: ScoreWeights = Object.freeze({
 export const DEFAULT_CANDIDATE_POOL_SIZE = 5;
 
 /** Nombre de jours pendant lesquels un archétype servi est ignoré. */
-export const DEFAULT_RECENT_EXCLUSION_DAYS = 14;
+export const DEFAULT_RECENT_EXCLUSION_DAYS = 7;
