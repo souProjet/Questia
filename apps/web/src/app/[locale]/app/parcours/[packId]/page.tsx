@@ -45,20 +45,22 @@ function chapterStatusBadge(
   if (status === 'completed') {
     return {
       label: loc === 'en' ? 'Done' : 'Terminé',
-      className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      className:
+        'border border-[color:color-mix(in_srgb,var(--green)_32%,var(--border-ui))] bg-[color-mix(in_srgb,var(--green)_12%,var(--surface))] text-[var(--green)]',
       icon: 'CheckCircle2',
     };
   }
   if (status === 'in_progress') {
     return {
       label: loc === 'en' ? 'In progress' : 'En cours',
-      className: 'bg-violet-100 text-violet-700 border-violet-200',
+      className:
+        'border border-[color:color-mix(in_srgb,var(--orange)_28%,var(--border-ui))] bg-[color-mix(in_srgb,var(--gold)_18%,var(--card))] text-[var(--text)]',
       icon: 'PlayCircle',
     };
   }
   return {
     label: loc === 'en' ? 'Locked' : 'Verrouillé',
-    className: 'bg-slate-100 text-slate-500 border-slate-200',
+    className: 'border border-[color:var(--border-ui)] bg-[color-mix(in_srgb,var(--text)_5%,var(--card))] text-[var(--muted)]',
     icon: 'Lock',
   };
 }
@@ -80,10 +82,10 @@ function SlotLine({
     <li
       className={`group flex items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
         isDone
-          ? 'border-emerald-200 bg-emerald-50/60'
+          ? 'border-[color:color-mix(in_srgb,var(--green)_32%,var(--border-ui))] bg-[color-mix(in_srgb,var(--green)_8%,var(--card))]'
           : isLocked
-            ? 'border-[color:var(--border-ui)] bg-[var(--surface)]/60 opacity-60'
-            : 'border-[color:var(--border-ui)] bg-[var(--card)] hover:border-violet-300 hover:bg-violet-50/30 cursor-pointer'
+            ? 'border-[color:var(--border-ui)] bg-[var(--surface)]/70 opacity-55'
+            : 'card cursor-pointer border-[color:color-mix(in_srgb,var(--orange)_12%,var(--border-ui))] shadow-sm hover:-translate-y-px hover:shadow-md motion-reduce:transform-none'
       }`}
       onClick={isLocked ? undefined : onOpen}
       role={isLocked ? undefined : 'button'}
@@ -97,12 +99,12 @@ function SlotLine({
       }}
     >
       <span
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
           isDone
-            ? 'bg-emerald-200/80 text-emerald-700'
+            ? 'border-[color:color-mix(in_srgb,var(--green)_35%,transparent)] bg-[color-mix(in_srgb,var(--green)_16%,var(--card))] text-[var(--green)]'
             : isLocked
-              ? 'bg-slate-200 text-slate-400'
-              : 'bg-violet-100 text-violet-700'
+              ? 'border-[color:var(--border-ui)] bg-[color-mix(in_srgb,var(--text)_6%,var(--card))] text-[var(--muted)]'
+              : 'border-[color:color-mix(in_srgb,var(--violet)_24%,var(--border-ui))] bg-[color-mix(in_srgb,var(--violet)_9%,var(--card))] text-[var(--violet)]'
         }`}
         aria-hidden
       >
@@ -110,7 +112,11 @@ function SlotLine({
       </span>
       <div className="min-w-0 flex-1">
         <p
-          className={`text-sm font-bold leading-tight ${isDone ? 'text-emerald-800 line-through decoration-emerald-400/60' : 'text-[var(--text)]'}`}
+          className={`text-sm font-bold leading-tight ${
+            isDone
+              ? 'text-[color:color-mix(in_srgb,var(--green)_88%,var(--text))] line-through decoration-[color:color-mix(in_srgb,var(--green)_45%,transparent)]'
+              : 'text-[var(--text)]'
+          }`}
         >
           {pickLocale(loc, slot.title)}
         </p>
@@ -122,7 +128,7 @@ function SlotLine({
         </p>
       </div>
       {!isLocked && !isDone ? (
-        <Icon name="ChevronRight" size="sm" className="text-violet-500" aria-hidden />
+        <Icon name="ChevronRight" size="sm" className="text-[var(--link-on-bg)]" aria-hidden />
       ) : null}
     </li>
   );
@@ -149,17 +155,27 @@ function SlotModal({
 }) {
   const safety = slot.safetyNote ? pickLocale(loc, slot.safetyNote) : null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 sm:items-center sm:p-4" onClick={onClose}>
+    <div
+      className="quest-modal-backdrop fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+      onClick={onClose}
+      role="presentation"
+    >
       <div
-        className="w-full max-w-xl overflow-hidden rounded-t-3xl bg-[var(--card)] shadow-2xl ring-1 ring-[color:var(--border-ui-strong)] sm:rounded-3xl"
+        className="quest-modal-sheet flex max-h-[min(90vh,760px)] w-full max-w-xl flex-col overflow-hidden sm:max-h-[min(88vh,720px)]"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal
       >
-        <header className="flex items-start justify-between gap-3 border-b border-[color:var(--border-ui)] px-5 py-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-700" aria-hidden>
+        <div className="quest-modal-panel-accent shrink-0" aria-hidden />
+        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[color:var(--border-ui)] px-5 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-[color:color-mix(in_srgb,var(--orange)_30%,var(--border-ui))] bg-[color-mix(in_srgb,var(--violet)_9%,var(--card))] text-[var(--violet)]"
+              aria-hidden
+            >
               <Icon name={slot.icon} size="lg" />
             </span>
-            <div>
+            <div className="min-w-0">
               <p className="text-[11px] font-black uppercase tracking-wider text-[var(--muted)]">
                 {pickLocale(loc, chapter.title)}
               </p>
@@ -171,22 +187,22 @@ function SlotModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text)]"
+            className="shrink-0 rounded-full p-2 text-[var(--muted)] transition hover:bg-[color-mix(in_srgb,var(--text)_6%,var(--card))] hover:text-[var(--text)]"
             aria-label={loc === 'en' ? 'Close' : 'Fermer'}
           >
             <Icon name="X" size="md" />
           </button>
         </header>
 
-        <div className="space-y-4 px-5 py-5">
+        <div className="quest-modal-panel-body min-h-0 flex-1 space-y-4 overflow-y-auto">
           <p className="text-sm font-semibold leading-relaxed text-[var(--text)]">
             {pickLocale(loc, slot.mission)}
           </p>
-          <p className="rounded-xl bg-violet-50 p-3 text-xs italic leading-relaxed text-violet-900">
+          <p className="app-hook-quote p-4 text-sm italic leading-relaxed text-[var(--text)]">
             « {pickLocale(loc, slot.hook)} »
           </p>
-          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
-            <span className="inline-flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
+            <span className="inline-flex items-center gap-1.5">
               <Icon name="Clock" size="xs" aria-hidden />
               {slot.durationMinutes < 60
                 ? `${slot.durationMinutes} min`
@@ -196,18 +212,18 @@ function SlotModal({
             <span>+{slot.xp} XP</span>
           </div>
           {safety ? (
-            <p className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold leading-relaxed text-amber-900">
-              <Icon name="ShieldAlert" size="xs" className="mt-0.5 shrink-0" aria-hidden />
+            <p className="flex items-start gap-2 rounded-xl border-2 border-[color:color-mix(in_srgb,var(--gold)_40%,var(--border-ui))] bg-[color-mix(in_srgb,var(--gold)_14%,var(--card))] p-3.5 text-xs font-semibold leading-relaxed text-[var(--text)]">
+              <Icon name="ShieldAlert" size="xs" className="mt-0.5 shrink-0 text-[var(--gold)]" aria-hidden />
               <span>{safety}</span>
             </p>
           ) : null}
         </div>
 
-        <footer className="flex items-center justify-end gap-2 border-t border-[color:var(--border-ui)] bg-[var(--surface)]/40 px-5 py-3">
+        <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-[color:var(--border-ui)] bg-[color-mix(in_srgb,var(--surface)_64%,var(--card))] px-5 py-3.5 sm:px-6">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl px-3 py-2 text-sm font-bold text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]"
+            className="rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text)]"
           >
             {loc === 'en' ? 'Later' : 'Plus tard'}
           </button>
@@ -215,7 +231,7 @@ function SlotModal({
             type="button"
             onClick={onComplete}
             disabled={busy || status !== 'available'}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
+            className="btn btn-primary inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-50"
           >
             <Icon name="Check" size="xs" aria-hidden />
             {status === 'completed'
@@ -227,11 +243,10 @@ function SlotModal({
                 : loc === 'en'
                   ? "I've done it"
                   : "C'est fait"}
-            <span className="text-[10px] font-bold opacity-80">+{slot.xp} XP</span>
+            <span className="text-[10px] font-bold opacity-90">+{slot.xp} XP</span>
           </button>
         </footer>
-        {/* Sourcing arc id (silent) */}
-        <span className="hidden">{arc.packId}</span>
+        <span className="sr-only">{arc.packId}</span>
       </div>
     </div>
   );
@@ -245,19 +260,22 @@ function RewardBanner({
   loc: Locale;
 }) {
   return (
-    <div className="rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-rose-50 p-5 shadow-sm motion-safe:animate-fade-up">
-      <div className="flex items-center gap-3">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-200/80 text-amber-700" aria-hidden>
+    <div className="app-shop-balance-card p-5 motion-safe:animate-fade-up">
+      <div className="flex items-start gap-4">
+        <span
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-[color:color-mix(in_srgb,var(--gold)_50%,var(--border-ui))] bg-[color-mix(in_srgb,var(--gold)_18%,var(--card))] text-[var(--gold)]"
+          aria-hidden
+        >
           <Icon name="Trophy" size="lg" />
         </span>
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-wider text-amber-700">
+        <div className="min-w-0">
+          <p className="text-[11px] font-black uppercase tracking-wider text-[var(--gold)]">
             {loc === 'en' ? 'Journey complete' : 'Parcours terminé'}
           </p>
-          <p className="font-display text-xl font-black text-amber-900">
+          <p className="font-display text-xl font-black text-[var(--text)]">
             {loc === 'en' ? 'Title unlocked + bonus QC' : 'Titre débloqué + bonus QC'}
           </p>
-          <p className="mt-1 text-sm font-bold text-amber-900">
+          <p className="mt-1.5 text-sm font-bold leading-snug text-[var(--text)]">
             {loc === 'en'
               ? `Title "${reward.titleId}" added · +${reward.coins} QC credited`
               : `Titre « ${reward.titleId} » ajouté · +${reward.coins} QC crédités`}
@@ -378,45 +396,50 @@ export default function ParcoursPage({ params }: RouteParams) {
   return (
     <div className="min-h-screen bg-adventure">
       <Navbar />
-      <main className="relative z-10 mx-auto max-w-3xl px-4 pt-24 pb-24">
+      <main className="relative z-10 mx-auto max-w-2xl px-4 pt-24 pb-28">
         <Link
           href="/app/shop"
-          className="mb-4 inline-flex items-center gap-2 text-sm font-bold text-[var(--link-on-bg)] hover:underline"
+          className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--link-on-bg)] transition hover:underline"
         >
           <Icon name="ChevronLeft" size="xs" />
           {loc === 'en' ? 'Back to shop' : 'Retour boutique'}
         </Link>
 
-        <header className="rounded-3xl bg-gradient-to-br from-violet-600 to-fuchsia-600 p-6 text-white shadow-lg">
+        <header className="app-app-hero-band p-6 sm:p-7">
           <div className="flex items-start gap-4">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm" aria-hidden>
+            <span
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-[color:color-mix(in_srgb,var(--orange)_38%,var(--border-ui))] bg-[var(--card)] text-[var(--violet)] shadow-sm"
+              aria-hidden
+            >
               <Icon name={packMeta.icon} size="xl" />
             </span>
             <div className="min-w-0">
-              <p className="text-[11px] font-black uppercase tracking-widest opacity-80">
+              <p className="text-[11px] font-black uppercase tracking-widest text-[var(--muted)]">
                 {loc === 'en' ? '10-quest journey' : 'Parcours de 10 quêtes'}
               </p>
-              <h1 className="font-display text-2xl font-black leading-tight">
+              <h1 className="font-display text-2xl font-black leading-tight text-[var(--text)] sm:text-3xl">
                 {loc === 'en' ? packMeta.labelEn : packMeta.label}
               </h1>
-              <p className="mt-1 text-sm font-medium opacity-90">
+              <p className="mt-1.5 text-sm font-semibold leading-relaxed text-[var(--muted)]">
                 {loc === 'en' ? packMeta.taglineEn : packMeta.tagline}
               </p>
             </div>
           </div>
 
           {data ? (
-            <div className="mt-5">
-              <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider opacity-90">
+            <div className="mt-6">
+              <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-[var(--muted)]">
                 <span>
                   {data.state.completedCount}/{data.state.totalSlots}{' '}
                   {loc === 'en' ? 'completed' : 'complétées'}
                 </span>
-                <span>{Math.round((data.state.completedCount / Math.max(1, data.state.totalSlots)) * 100)}%</span>
+                <span className="tabular-nums text-[var(--text)]">
+                  {Math.round((data.state.completedCount / Math.max(1, data.state.totalSlots)) * 100)}%
+                </span>
               </div>
-              <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-white/20">
+              <div className="mt-2.5 h-2.5 w-full overflow-hidden rounded-full bg-[var(--progress-track)] ring-1 ring-[color:color-mix(in_srgb,var(--text)_5%,transparent)]">
                 <div
-                  className="h-full rounded-full bg-white transition-all"
+                  className="h-full rounded-full bg-[var(--green)] shadow-[0_0_12px_color-mix(in_srgb,var(--green)_40%,transparent)] transition-all duration-500 ease-out"
                   style={{
                     width: `${Math.round((data.state.completedCount / Math.max(1, data.state.totalSlots)) * 100)}%`,
                   }}
@@ -427,7 +450,7 @@ export default function ParcoursPage({ params }: RouteParams) {
         </header>
 
         {recentXp > 0 ? (
-          <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+          <p className="streak-badge mt-5 w-full justify-center text-sm font-black text-[var(--green)]">
             +{recentXp} XP {loc === 'en' ? 'awarded' : 'crédités'}
           </p>
         ) : null}
@@ -435,7 +458,7 @@ export default function ParcoursPage({ params }: RouteParams) {
         {recentReward ? <div className="mt-4"><RewardBanner reward={recentReward} loc={loc} /></div> : null}
 
         {data?.state.rewardClaimed && !recentReward ? (
-          <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+          <p className="streak-badge mt-5 w-full justify-center text-sm font-black text-[var(--text)]">
             {loc === 'en' ? 'Journey already completed — well done!' : 'Parcours déjà bouclé — bravo !'}
           </p>
         ) : null}
@@ -452,37 +475,49 @@ export default function ParcoursPage({ params }: RouteParams) {
         ) : null}
 
         {data ? (
-          <section className="mt-6 space-y-5">
+          <section className="mt-8">
+            <p className="label mb-3 px-0.5">
+              {loc === 'en' ? 'Your path' : 'Ton parcours'}
+            </p>
+            <div className="relative space-y-5">
             {data.state.chapters.map((c, i) => {
               const badge = chapterStatusBadge(c.status, loc);
               const fullChapter = data.arc.chapters[i];
               return (
                 <article
                   key={c.id}
-                  className={`rounded-2xl border bg-[var(--card)] p-4 shadow-sm ${
-                    c.status === 'locked' ? 'border-[color:var(--border-ui)] opacity-70' : 'border-[color:var(--border-ui)]'
+                  className={`app-shop-featured-card relative p-5 sm:pl-6 ${
+                    c.status === 'locked' ? 'opacity-[0.72]' : ''
                   }`}
                 >
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div>
+                  <div className="mb-1 flex items-start justify-between gap-3 sm:gap-4">
+                    <div className="flex shrink-0 items-start pt-0.5">
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-[color:color-mix(in_srgb,var(--violet)_35%,var(--border-ui))] bg-[var(--card)] font-display text-sm font-black text-[var(--text)] shadow-sm"
+                        aria-hidden
+                      >
+                        {i + 1}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
                       <p className="text-[11px] font-black uppercase tracking-wider text-[var(--muted)]">
                         {loc === 'en' ? `Chapter ${i + 1}` : `Chapitre ${i + 1}`}
                       </p>
-                      <h2 className="font-display text-lg font-black text-[var(--text)]">
+                      <h2 className="font-display text-lg font-black leading-snug text-[var(--text)] sm:text-xl">
                         {pickLocale(loc, c.title)}
                       </h2>
-                      <p className="mt-1 text-xs font-semibold text-[var(--muted)] leading-relaxed">
+                      <p className="mt-1.5 text-xs font-semibold leading-relaxed text-[var(--muted)]">
                         {pickLocale(loc, c.description)}
                       </p>
                     </div>
                     <span
-                      className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${badge.className}`}
+                      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider ${badge.className}`}
                     >
                       <Icon name={badge.icon} size="xs" aria-hidden />
                       {badge.label}
                     </span>
                   </div>
-                  <ul className="space-y-2">
+                  <ul className="mt-3 space-y-2">
                     {c.slots.map((s, idx) => (
                       <SlotLine
                         key={s.key}
@@ -502,16 +537,17 @@ export default function ParcoursPage({ params }: RouteParams) {
               );
             })}
 
-            <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50/40 p-4">
-              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-700">
+            <div className="app-shop-balance-card border-2 border-dashed border-[color:color-mix(in_srgb,var(--gold)_45%,var(--border-ui))] p-5">
+              <p className="flex items-center gap-2.5 text-xs font-black uppercase tracking-wider text-[var(--gold)]">
                 <Icon name="Trophy" size="xs" aria-hidden />
                 {loc === 'en' ? 'Final reward' : 'Récompense finale'}
               </p>
-              <p className="mt-1 text-sm font-bold text-amber-900">
+              <p className="mt-2 text-sm font-bold leading-relaxed text-[var(--text)]">
                 {loc === 'en'
                   ? `Title "${data.arc.rewardTitleId}" + ${data.arc.rewardCoins} Quest Coins`
                   : `Titre « ${data.arc.rewardTitleId} » + ${data.arc.rewardCoins} Quest Coins`}
               </p>
+            </div>
             </div>
           </section>
         ) : null}
