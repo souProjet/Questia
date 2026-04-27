@@ -21,8 +21,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { questDisplayEmoji, questFamilyLabel, type AppLocale } from '@questia/shared';
-import { colorWithAlpha, questCardFaceGradient, UiLucideIcon, type ThemePalette } from '@questia/ui';
+import { questDisplayEmoji, questFamilyLabel, type AppLocale, type PersonalityVector } from '@questia/shared';
+import { colorWithAlpha, questCardFaceGradient, computeAuraCardBlobs, UiLucideIcon, type ThemePalette } from '@questia/ui';
 import { hapticSuccess, hapticWarning } from '../lib/haptics';
 import { useQuestCardDeviceTilt } from '../lib/useQuestCardDeviceTilt';
 import { QuestDestinationMapWebView } from './QuestDestinationMapWebView';
@@ -58,6 +58,8 @@ interface Props {
   quest: SwipeCardQuest;
   locale: AppLocale;
   palette: ThemePalette;
+  /** Personnalité de l'utilisateur pour le Profil Aura Visuelle des blobs. */
+  personality?: PersonalityVector | null;
   canReroll: boolean;
   onAccept: () => void;
   onReroll: () => void;
@@ -109,6 +111,7 @@ export function QuestSwipeCard({
   quest,
   locale,
   palette: p,
+  personality = null,
   canReroll,
   onAccept,
   onReroll,
@@ -130,6 +133,10 @@ export function QuestSwipeCard({
     const a = isDarkCard ? 0.72 : 0.66;
     return base.map((c) => (c.startsWith('#') ? colorWithAlpha(c, a) : c)) as [string, string, string, string];
   }, [themeId, p, isDarkCard]);
+  const auraBlobs = useMemo(
+    () => computeAuraCardBlobs(personality, themeId, p, isDarkCard),
+    [personality, themeId, p, isDarkCard],
+  );
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const cardScale = useSharedValue(1);
@@ -470,21 +477,21 @@ export function QuestSwipeCard({
             style={[
               styles.cardBlob,
               styles.cardBlobTR,
-              { backgroundColor: colorWithAlpha(p.orange, isDarkCard ? 0.032 : 0.022) },
+              { backgroundColor: auraBlobs.tr },
             ]}
           />
           <View
             style={[
               styles.cardBlob,
               styles.cardBlobBL,
-              { backgroundColor: colorWithAlpha(p.cyan, isDarkCard ? 0.028 : 0.018) },
+              { backgroundColor: auraBlobs.bl },
             ]}
           />
           <View
             style={[
               styles.cardBlob,
               styles.cardBlobMid,
-              { backgroundColor: colorWithAlpha(p.gold, isDarkCard ? 0.022 : 0.014) },
+              { backgroundColor: auraBlobs.mid },
             ]}
           />
         </View>

@@ -17,6 +17,7 @@ export {
   homeScreenBackdropOrbTints,
   type ThemePalette,
 } from './theme';
+export { computeAuraOrbTints, computeAuraCardBlobs, auraOrbCssVars } from './auraProfile';
 export { QuestDashboard } from './screens/QuestDashboard';
 export { QuestDetailScreen } from './screens/QuestDetailScreen';
 export { SafetyConsentModal } from './components/SafetyConsentModal';

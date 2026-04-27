@@ -28,6 +28,7 @@ import {
   type EscalationPhase,
 } from '@questia/shared';
 import { colorWithAlpha, UiLucideIcon, type ThemePalette } from '@questia/ui';
+import { AuraTabShell } from '../../components/AuraTabShell';
 import { BlurView } from 'expo-blur';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
@@ -374,6 +375,7 @@ export default function ProfileScreen() {
   });
 
   return (
+    <AuraTabShell>
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
         <View style={{ width: 72 }} />
@@ -832,6 +834,7 @@ export default function ProfileScreen() {
         onClose={() => setAppearSelectKind(null)}
       />
     </SafeAreaView>
+    </AuraTabShell>
   );
 }
 
@@ -847,7 +850,7 @@ function createProfileStyles(p: ThemePalette) {
   };
 
   return StyleSheet.create({
-    safe: { flex: 1, backgroundColor: C.bg },
+    safe: { flex: 1, backgroundColor: 'transparent' },
     topBar: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -17,6 +17,7 @@ import { MarketingScripts } from '@/components/analytics/MarketingScripts';
 import { QuestiaPostHogProvider } from '@/components/analytics/QuestiaPostHogProvider';
 import { SkipLink } from '@/components/SkipLink';
 import { HtmlLang } from '@/components/HtmlLang';
+import { AuraOrbsLayer } from '@/components/aura/AuraOrbsLayer';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -133,6 +134,7 @@ export default async function LocaleLayout({
         <QuestiaPostHogProvider>
           <HtmlLang />
           <SkipLink />
+          <AuraOrbsLayer />
           {children}
           <CookieNotice />
           <MarketingScripts />

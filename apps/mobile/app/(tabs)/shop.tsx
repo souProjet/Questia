@@ -35,6 +35,7 @@ import {
   type ShopMarketingBadge,
 } from '@questia/shared';
 import { colorWithAlpha, shopBalanceGradient, UiLucideIcon, type ThemePalette } from '@questia/ui';
+import { AuraTabShell } from '../../components/AuraTabShell';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { getShopScreenStrings } from '../../lib/shopScreenStrings';
@@ -693,6 +694,7 @@ export default function ShopScreen() {
   }
 
   return (
+    <AuraTabShell>
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <Animated.View
         pointerEvents="none"
@@ -1172,6 +1174,7 @@ export default function ShopScreen() {
       ) : null}
       </Animated.View>
     </SafeAreaView>
+    </AuraTabShell>
   );
 }
 
@@ -1187,7 +1190,7 @@ function createShopStyles(p: ThemePalette) {
   };
 
   return StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.bg },
+  safe: { flex: 1, backgroundColor: 'transparent' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 40 },
   topBar: {

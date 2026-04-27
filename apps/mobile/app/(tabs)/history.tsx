@@ -18,6 +18,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HISTORY_PAGE_SIZE, questDisplayEmoji, type EscalationPhase } from '@questia/shared';
 import { colorWithAlpha, UiLucideIcon, type ThemePalette } from '@questia/ui';
+import { AuraTabShell } from '../../components/AuraTabShell';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { getHistoryScreenStrings } from '../../lib/historyScreenStrings';
@@ -286,6 +287,7 @@ export default function HistoryScreen() {
   );
 
   return (
+    <AuraTabShell>
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
         <View style={{ width: 72 }} />
@@ -742,6 +744,7 @@ export default function HistoryScreen() {
         />
       )}
     </SafeAreaView>
+    </AuraTabShell>
   );
 }
 
@@ -749,7 +752,7 @@ function createStyles(p: ThemePalette) {
   const elev = elevationAndroidSafe;
   const C = { text: p.text, muted: p.muted };
   return StyleSheet.create({
-    safe: { flex: 1, backgroundColor: p.bg },
+    safe: { flex: 1, backgroundColor: 'transparent' },
     topBar: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -30,10 +30,11 @@ import {
 import {
   colorWithAlpha,
   homeScreenBackdropGradient,
-  homeScreenBackdropOrbTints,
+  computeAuraOrbTints,
   UiLucideIcon,
   type ThemePalette,
 } from '@questia/ui';
+import type { PersonalityVector } from '@questia/shared';
 import type { EscalationPhase, DisplayBadge, XpBreakdown } from '@questia/shared';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { getHomeDashboardStrings } from '../../lib/homeDashboardStrings';
@@ -720,7 +721,7 @@ export default function DashboardScreen() {
     void AsyncStorage.setItem('questia_swipe_onboarding_seen', '1');
   }, []);
 
-  const { palette, themeId } = useAppTheme();
+  const { palette, themeId, personality } = useAppTheme();
   const styles = useMemo(() => buildDashboardStyles(palette, themeId), [palette, themeId]);
 
   const swipeStrings = useMemo(() => ({
@@ -755,7 +756,7 @@ export default function DashboardScreen() {
 
   if (loading && !quest) {
     return (
-      <HomeBackdropShell palette={palette} themeId={themeId} styles={styles}>
+      <HomeBackdropShell palette={palette} themeId={themeId} personality={personality} styles={styles}>
         <QuestHomeLoading compact={compact} />
       </HomeBackdropShell>
     );
@@ -764,7 +765,7 @@ export default function DashboardScreen() {
   if (error && !quest) {
     const sessionExpired = error === homeUi.errSession;
     return (
-      <HomeBackdropShell palette={palette} themeId={themeId} styles={styles}>
+      <HomeBackdropShell palette={palette} themeId={themeId} personality={personality} styles={styles}>
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>{normalizeDisplayText(error)}</Text>
           <Pressable style={styles.retryBtn} onPress={() => void loadQuest()}>
@@ -786,7 +787,7 @@ export default function DashboardScreen() {
   }
 
   return (
-    <HomeBackdropShell palette={palette} themeId={themeId} styles={styles}>
+    <HomeBackdropShell palette={palette} themeId={themeId} personality={personality} styles={styles}>
         {/* Flash d'acceptation */}
         <Animated.View
           pointerEvents="none"
@@ -854,6 +855,7 @@ export default function DashboardScreen() {
               locale={appLocale}
               palette={palette}
               themeId={themeId}
+              personality={personality}
               canReroll={canRerollQuest}
               onAccept={handleAccept}
               onReroll={confirmReroll}
@@ -1184,16 +1186,21 @@ type DashboardStyles = ReturnType<typeof buildDashboardStyles>;
 function HomeBackdropShell({
   palette,
   themeId,
+  personality,
   styles,
   children,
 }: {
   palette: ThemePalette;
   themeId: string;
+  personality: PersonalityVector | null;
   styles: DashboardStyles;
   children: React.ReactNode;
 }) {
   const gradientColors = useMemo(() => homeScreenBackdropGradient(themeId, palette), [themeId, palette]);
-  const orbTints = useMemo(() => homeScreenBackdropOrbTints(themeId, palette), [themeId, palette]);
+  const orbTints = useMemo(
+    () => computeAuraOrbTints(personality, themeId, palette),
+    [personality, themeId, palette],
+  );
   const bottom = gradientColors[4];
   return (
     <GestureHandlerRootView style={[styles.rootShell, { backgroundColor: bottom }]}>

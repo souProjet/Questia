@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -38,6 +38,13 @@
     --glass-sat: 1.05;
     --glass-sat-subtle: 1.03;
     --glass-sat-nav: 1.04;
+    /* Aura visuelle — valeurs par défaut (thème clair).
+       AuraOrbsLayer les remplace dès que la personnalité est chargée.
+       Si clearAuraVars() retire l'inline-style, ces valeurs :root reprennent
+       automatiquement → les orbes restent visibles même sans personnalité. */
+    --aura-tr: rgba(194, 65, 12, 0.30);
+    --aura-bl: rgba(19,  78, 74, 0.26);
+    --aura-tl: rgba(146, 64, 14, 0.22);
   }
 
   /* Thèmes boutique (data-theme sur <html>) */
@@ -65,6 +72,10 @@
     --glass-sat: 1.03;
     --glass-sat-subtle: 1.02;
     --glass-sat-nav: 1.03;
+    /* Aura defaults — thème dark : plus vifs pour compenser le fond sombre */
+    --aura-tr: rgba(251, 146, 60, 0.38);
+    --aura-bl: rgba(45,  212, 191, 0.32);
+    --aura-tl: rgba(252, 211, 77, 0.28);
   }
 
   html[data-theme="aurora"] {
@@ -137,12 +148,35 @@
      */
     background-color: var(--bg);
     background-image:
-      radial-gradient(ellipse 110% 58% at 8% -6%, color-mix(in srgb, var(--violet) 22%, transparent) 0%, transparent 52%),
-      radial-gradient(ellipse 90% 52% at 96% 14%, color-mix(in srgb, var(--orange) 16%, transparent) 0%, transparent 48%),
-      radial-gradient(ellipse 72% 42% at 48% 102%, color-mix(in srgb, var(--gold) 12%, transparent) 0%, transparent 44%),
+      radial-gradient(ellipse 110% 58% at 8% -6%,   color-mix(in srgb, var(--violet) 22%, transparent) 0%, transparent 52%),
+      radial-gradient(ellipse  90% 52% at 96% 14%,  color-mix(in srgb, var(--orange) 16%, transparent) 0%, transparent 48%),
+      radial-gradient(ellipse  72% 42% at 48% 102%, color-mix(in srgb, var(--gold)   12%, transparent) 0%, transparent 44%),
       linear-gradient(180deg, var(--surface) 0%, var(--bg) 38%, var(--bg) 100%);
     /* Pas de `background-attachment: fixed` ici : avec `backdrop-filter` sur la navbar / cartes,
        Chrome et Firefox peuvent ne plus composer le flou correctement (fond « mort »). */
+  }
+
+  /**
+   * Aura visuelle — pseudo-élément fixé au viewport.
+   *
+   * Pourquoi ::before plutôt qu'un div React (fixed) ou un background-image sur body ?
+   * - Toujours dans le DOM (CSS pur, aucun flash d'hydratation React)
+   * - Positionné au viewport (pas à la hauteur de l'élément) → stable quel que soit le contenu
+   * - z-index: 1 → au-dessus des fonds opaques des pages (z-index: auto),
+   *              → en-dessous des contenus interactifs (main z-10, navbar z-50+)
+   * - Les CSS vars --aura-* sont mises à jour par AuraOrbsLayer depuis le profil utilisateur.
+   *   Les valeurs :root servent de fallback (toujours visible, avant toute hydratation).
+   */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(ellipse 72% 58% at 102% 2%,   var(--aura-tr) 0%, transparent 62%),
+      radial-gradient(ellipse 76% 62% at -4% 98%,   var(--aura-bl) 0%, transparent 65%),
+      radial-gradient(ellipse 58% 52% at -2% 36%,   var(--aura-tl) 0%, transparent 58%);
   }
   ::selection {
     background: color-mix(in srgb, var(--orange) 28%, transparent);
@@ -151,7 +185,6 @@
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--subtle); border-radius: 3px; }
-
   /**
    * Lien « Aller au contenu » : hors écran jusqu'au focus clavier.
    */
