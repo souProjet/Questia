@@ -318,35 +318,35 @@ export function homeScreenBackdropOrbTints(
 ): { tr: string; bl: string; tl: string } {
   if (!themeId || themeId === 'default') {
     return {
-      tr: colorWithAlpha(p.gold, 0.1),
-      bl: colorWithAlpha(p.cyan, 0.11),
-      tl: colorWithAlpha(p.text, 0.05),
+      tr: colorWithAlpha(p.gold,   0.38),
+      bl: colorWithAlpha(p.cyan,   0.32),
+      tl: colorWithAlpha(p.orange, 0.28),
     };
   }
   if (themeId === 'midnight') {
     return {
-      tr: colorWithAlpha(p.orange, 0.1),
-      bl: colorWithAlpha(p.cyan, 0.14),
-      tl: colorWithAlpha(p.cyan, 0.07),
+      tr: colorWithAlpha(p.orange, 0.42),
+      bl: colorWithAlpha(p.cyan,   0.40),
+      tl: colorWithAlpha(p.cyan,   0.30),
     };
   }
   if (themeId === 'aurora') {
     return {
-      tr: colorWithAlpha(p.gold, 0.1),
-      bl: colorWithAlpha(p.cyan, 0.12),
-      tl: colorWithAlpha(p.cyan, 0.08),
+      tr: colorWithAlpha(p.gold,   0.36),
+      bl: colorWithAlpha(p.cyan,   0.34),
+      tl: colorWithAlpha(p.cyan,   0.28),
     };
   }
   if (themeId === 'parchment') {
     return {
-      tr: colorWithAlpha(p.gold, 0.09),
-      bl: colorWithAlpha(p.cyan, 0.1),
-      tl: colorWithAlpha(p.gold, 0.08),
+      tr: colorWithAlpha(p.gold,   0.36),
+      bl: colorWithAlpha(p.cyan,   0.30),
+      tl: colorWithAlpha(p.gold,   0.28),
     };
   }
   return {
-    tr: colorWithAlpha(p.gold, 0.1),
-    bl: colorWithAlpha(p.cyan, 0.12),
-    tl: colorWithAlpha(p.cyan, 0.08),
+    tr: colorWithAlpha(p.gold,   0.36),
+    bl: colorWithAlpha(p.cyan,   0.32),
+    tl: colorWithAlpha(p.cyan,   0.28),
   };
 }

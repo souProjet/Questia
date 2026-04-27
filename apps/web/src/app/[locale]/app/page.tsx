@@ -1171,13 +1171,24 @@ function AppPageContent() {
         <div className="flex w-full flex-1 flex-col items-center justify-start gap-4 py-2 sm:justify-center sm:py-4 sm:min-h-[min(560px,calc(100dvh-11rem))]">
         {quest ? (
           <div className="relative w-full max-w-[480px]">
-            {/* Halo doux sous la carte (pas de « 2e carte » vide façon Tinder : il n'y a pas de profil suivant ici) */}
-            {questCardTransformsActive && !isAbandoned ? (
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -inset-8 -z-10 rounded-[40px] bg-gradient-to-br from-[var(--orange)]/[0.07] via-transparent to-[var(--cyan)]/[0.08] opacity-90"
-              />
-            ) : null}
+            {/**
+             * Halo d'aura personnalisé derrière la carte : reprend les mêmes variables
+             * --aura-tr / --aura-bl / --aura-tl que body::before, donc les mêmes couleurs
+             * que sur /aura. Toujours rendu (même en abandon / completed) pour que l'aura
+             * reste perceptible derrière le contenu opaque de la carte.
+             */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-16 -z-10 motion-safe:animate-glow-soft motion-reduce:opacity-70"
+              style={{
+                backgroundImage: [
+                  'radial-gradient(ellipse 70% 60% at 100% 0%, var(--aura-tr) 0%, transparent 70%)',
+                  'radial-gradient(ellipse 75% 65% at 0% 100%, var(--aura-bl) 0%, transparent 70%)',
+                  'radial-gradient(ellipse 60% 55% at 0% 0%, var(--aura-tl) 0%, transparent 65%)',
+                ].join(', '),
+                filter: 'blur(28px)',
+              }}
+            />
             <div
             key={questCardSwapKey}
             className={`relative w-full max-w-[480px] rounded-[28px] border-2 overflow-hidden shadow-xl ${

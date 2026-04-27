@@ -19,24 +19,6 @@ function buildStyles(p: ThemePalette) {
       paddingHorizontal: 22,
       paddingVertical: 28,
     },
-    glow: {
-      position: 'absolute',
-      top: '16%',
-      alignSelf: 'center',
-      width: 360,
-      height: 360,
-      borderRadius: 999,
-      backgroundColor: 'rgba(34,211,238,0.11)',
-    },
-    glowOrange: {
-      position: 'absolute',
-      top: '22%',
-      right: '-8%',
-      width: 220,
-      height: 220,
-      borderRadius: 999,
-      backgroundColor: 'rgba(251,146,60,0.08)',
-    },
     floatCol: {
       alignItems: 'center',
       maxWidth: 400,
@@ -185,8 +167,6 @@ export function QuestHomeLoading({ compact }: Props) {
 
   return (
     <View style={styles.outer}>
-      <View style={styles.glow} pointerEvents="none" />
-      <View style={styles.glowOrange} pointerEvents="none" />
       <Animated.View style={[styles.floatCol, floatStyle]}>
         <View style={styles.iconCluster}>
           <View style={styles.iconSparklesWrap} accessibilityElementsHidden>

@@ -57,10 +57,10 @@ type AuraParams = { saturation: number; lightness: number; baseAlpha: number; in
 function auraParams(themeId: string | null | undefined): AuraParams {
   if (themeId === 'midnight') {
     // Thème sombre : couleurs plus vives + alpha généreux pour les radial-gradients CSS
-    return { saturation: 0.72, lightness: 0.52, baseAlpha: 0.38, intensityBoost: 0.28 };
+    return { saturation: 0.74, lightness: 0.54, baseAlpha: 0.50, intensityBoost: 0.32 };
   }
   // Thèmes clairs : alpha affirmé, les radial-gradients n'ont pas de blur natif
-  return { saturation: 0.58, lightness: 0.60, baseAlpha: 0.28, intensityBoost: 0.22 };
+  return { saturation: 0.62, lightness: 0.58, baseAlpha: 0.42, intensityBoost: 0.26 };
 }
 
 function orbColor(

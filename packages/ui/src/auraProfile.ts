@@ -81,10 +81,11 @@ type AuraParams = {
 
 function auraParams(themeId: string | null | undefined): AuraParams {
   if (themeId === 'midnight') {
-    return { saturation: 0.70, lightness: 0.52, baseAlpha: 0.18, intensityBoost: 0.18 };
+    // Thème sombre : couleurs vives, alpha élevé (pas de blur en RN, compenser par l'opacité)
+    return { saturation: 0.74, lightness: 0.56, baseAlpha: 0.42, intensityBoost: 0.28 };
   }
-  // Thèmes clairs (default, aurora, parchment) : plus affirmés
-  return { saturation: 0.55, lightness: 0.64, baseAlpha: 0.13, intensityBoost: 0.14 };
+  // Thèmes clairs : alpha suffisamment affirmé pour être visible sans filtre blur natif
+  return { saturation: 0.62, lightness: 0.60, baseAlpha: 0.34, intensityBoost: 0.24 };
 }
 
 // ─── Couleur d'un orbe ────────────────────────────────────────────────────────

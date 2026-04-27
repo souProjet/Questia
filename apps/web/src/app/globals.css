@@ -42,9 +42,9 @@
        AuraOrbsLayer les remplace dès que la personnalité est chargée.
        Si clearAuraVars() retire l'inline-style, ces valeurs :root reprennent
        automatiquement → les orbes restent visibles même sans personnalité. */
-    --aura-tr: rgba(194, 65, 12, 0.30);
-    --aura-bl: rgba(19,  78, 74, 0.26);
-    --aura-tl: rgba(146, 64, 14, 0.22);
+    --aura-tr: rgba(194, 65, 12, 0.42);
+    --aura-bl: rgba(19,  78, 74, 0.36);
+    --aura-tl: rgba(146, 64, 14, 0.30);
   }
 
   /* Thèmes boutique (data-theme sur <html>) */
@@ -73,9 +73,9 @@
     --glass-sat-subtle: 1.02;
     --glass-sat-nav: 1.03;
     /* Aura defaults — thème dark : plus vifs pour compenser le fond sombre */
-    --aura-tr: rgba(251, 146, 60, 0.38);
-    --aura-bl: rgba(45,  212, 191, 0.32);
-    --aura-tl: rgba(252, 211, 77, 0.28);
+    --aura-tr: rgba(251, 146, 60, 0.50);
+    --aura-bl: rgba(45,  212, 191, 0.42);
+    --aura-tl: rgba(252, 211, 77, 0.36);
   }
 
   html[data-theme="aurora"] {
@@ -173,10 +173,16 @@
     inset: 0;
     z-index: 1;
     pointer-events: none;
+    /**
+     * Ellipses généreuses qui se chevauchent fortement vers le centre du viewport :
+     * même quand une carte opaque (carte de quête sur /app) couvre le centre,
+     * les bords de la carte restent baignés par l'aura, et l'aura ne disparaît
+     * pas une fois le contenu chargé.
+     */
     background-image:
-      radial-gradient(ellipse 72% 58% at 102% 2%,   var(--aura-tr) 0%, transparent 62%),
-      radial-gradient(ellipse 76% 62% at -4% 98%,   var(--aura-bl) 0%, transparent 65%),
-      radial-gradient(ellipse 58% 52% at -2% 36%,   var(--aura-tl) 0%, transparent 58%);
+      radial-gradient(ellipse 105% 85% at 92% 8%,  var(--aura-tr) 0%, transparent 78%),
+      radial-gradient(ellipse 110% 90% at 4% 94%,  var(--aura-bl) 0%, transparent 80%),
+      radial-gradient(ellipse 88% 76% at 6% 40%,   var(--aura-tl) 0%, transparent 75%);
   }
   ::selection {
     background: color-mix(in srgb, var(--orange) 28%, transparent);
