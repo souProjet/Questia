@@ -1,6 +1,6 @@
 /**
- * Titres d'affichage (boutique) — une ligne de données par id, aucun CSS à ajouter.
- * Pour en créer un nouveau : ajouter une entrée ici + un SKU dans catalog.ts qui grant `titles: ['id']`.
+ * Titres d'affichage — gratuits et accessibles à tous par défaut.
+ * Pour en créer un nouveau : ajouter une entrée ici.
  */
 export interface TitleDefinition {
   id: string;

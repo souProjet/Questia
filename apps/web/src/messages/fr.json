@@ -485,7 +485,16 @@
     "prefsHeavyHint": "Sorties / extérieur ou quêtes « à caler » (social ou longue durée). Le réglage module la sélection des archétypes (en douceur) et les consignes au modèle.",
     "prefsHeavyLow": "Rarement",
     "prefsHeavyBalanced": "Équilibré",
-    "prefsHeavyHigh": "Souvent"
+    "prefsHeavyHigh": "Souvent",
+    "appearanceTitle": "Apparence",
+    "appearanceSub": "Thème et titre — s'appliquent immédiatement dans l'app.",
+    "appearanceTheme": "Thème actif",
+    "appearanceTitleEquip": "Titre sur le profil",
+    "themeDefault": "Questia (clair)",
+    "themeMidnight": "Nuit boréale",
+    "themeAurora": "Aurore",
+    "themeParchment": "Parchemin",
+    "noTitle": "Aucun titre"
   },
   "AppHistory": {
     "eyebrow": "Journal",

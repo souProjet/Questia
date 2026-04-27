@@ -66,6 +66,24 @@ export function getProfileScreenStrings(locale: AppLocale) {
       prefsHeavyLow: 'Rarely',
       prefsHeavyBalanced: 'Balanced',
       prefsHeavyHigh: 'Often',
+      appearanceSection: 'Appearance',
+      appearanceTheme: 'Active theme',
+      appearanceTitle: 'Profile title',
+      noTitle: 'No title',
+      themeLabel: (id: string) => {
+        if (id === 'default') return 'Questia (light)';
+        if (id === 'midnight') return 'Boreal night';
+        if (id === 'aurora') return 'Aurora';
+        if (id === 'parchment') return 'Parchment';
+        return id;
+      },
+      selectThemeTitle: 'Active theme',
+      selectTitleTitle: 'Profile title',
+      themeCurrentA11y: (name: string) => `Current theme: ${name}`,
+      themeOpenHint: 'Opens theme picker',
+      titleCurrentA11y: (name: string) => `Profile title: ${name}`,
+      titleOpenHint: 'Opens title picker',
+      errSaveAppearance: 'Could not save appearance.',
     };
   }
   return {
@@ -129,6 +147,24 @@ export function getProfileScreenStrings(locale: AppLocale) {
     prefsHeavyLow: 'Rarement',
     prefsHeavyBalanced: 'Équilibré',
     prefsHeavyHigh: 'Souvent',
+    appearanceSection: 'Apparence',
+    appearanceTheme: 'Thème actif',
+    appearanceTitle: 'Titre sur le profil',
+    noTitle: 'Aucun titre',
+    themeLabel: (id: string) => {
+      if (id === 'default') return 'Questia (clair)';
+      if (id === 'midnight') return 'Nuit boréale';
+      if (id === 'aurora') return 'Aurore';
+      if (id === 'parchment') return 'Parchemin';
+      return id;
+    },
+    selectThemeTitle: 'Thème actif',
+    selectTitleTitle: 'Titre sur le profil',
+    themeCurrentA11y: (name: string) => `Thème actuel : ${name}`,
+    themeOpenHint: 'Ouvre le choix de thème',
+    titleCurrentA11y: (name: string) => `Titre sur le profil : ${name}`,
+    titleOpenHint: 'Ouvre le choix du titre affiché',
+    errSaveAppearance: "Impossible d'enregistrer l'apparence.",
   };
 }
 

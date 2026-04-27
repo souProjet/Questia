@@ -24,8 +24,6 @@ import {
   SHOP_CATALOG,
   COIN_PACKS,
   getCoinPack,
-  getThemeIds,
-  getTitleDefinition,
   XP_SHOP_BONUS_PER_CHARGE,
   bonusPercentVsPack,
   questCoinsPerEuro,
@@ -54,11 +52,9 @@ function notifyQuestScreenShopGrantsUpdated() {
 
 type ProfileShop = {
   coinBalance: number;
-  activeThemeId: string;
-  ownedThemes: string[];
+  ownedThemes?: string[];
   bonusRerollCredits: number;
-  ownedTitleIds: string[];
-  equippedTitleId: string | null;
+  ownedTitleIds?: string[];
   xpBonusCharges: number;
 };
 
@@ -76,8 +72,6 @@ type TxRow = {
   label: string;
   createdAt: string;
 };
-
-const TITLE_NONE = '__title_none__';
 
 function kindOrder(kind: ShopCatalogEntry['kind']): number {
   const order: Record<ShopCatalogEntry['kind'], number> = {
@@ -206,6 +200,7 @@ export default function ShopScreen() {
   const s = useMemo(() => getShopScreenStrings(appLocale), [appLocale]);
   const { palette, themeId, refresh: refreshAppTheme } = useAppTheme();
   const styles = useMemo(() => createShopStyles(palette), [palette]);
+  const insets = useSafeAreaInsets();
   const balanceGradientColors = useMemo(() => shopBalanceGradient(themeId, palette), [themeId, palette]);
   const { getToken } = useAuth();
   const getTokenRef = useRef(getToken);
@@ -241,7 +236,6 @@ export default function ShopScreen() {
   const [stripeLoadingSku, setStripeLoadingSku] = useState<string | null>(null);
   const [coinPurchaseSku, setCoinPurchaseSku] = useState<string | null>(null);
   const [flash, setFlash] = useState<ShopFlash | null>(null);
-  const [selectKind, setSelectKind] = useState<null | 'theme' | 'title'>(null);
   const [rechargeModalVisible, setRechargeModalVisible] = useState(false);
   const stripeCheckoutSku = useRef<string | null>(null);
   /** Évite double traitement (openAuthSession + deep link / onglet boutique). */
@@ -309,31 +303,6 @@ export default function ShopScreen() {
     },
     [balanceScale, bumpScale, celebrateOverlay, screenShake],
   );
-
-  const themeOptions = useMemo(() => {
-    if (!shop) return [] as SelectOpt[];
-    const o = new Set(shop.ownedThemes ?? ['default']);
-    return getThemeIds()
-      .filter((id) => o.has(id))
-      .map((id) => ({ value: id, label: s.themeLabel(id) }));
-  }, [shop, s]);
-
-  const titleOptions = useMemo(() => {
-    if (!shop) return [] as SelectOpt[];
-    const rows: SelectOpt[] = [{ value: TITLE_NONE, label: s.noTitle }];
-    for (const id of shop.ownedTitleIds ?? []) {
-      const def = getTitleDefinition(id);
-      rows.push({ value: id, label: def ? def.label : id });
-    }
-    return rows;
-  }, [shop, s]);
-
-  const titleDisplayLabel = (profileShop: ProfileShop) => {
-    const id = profileShop.equippedTitleId;
-    if (!id) return s.noTitle;
-    const def = getTitleDefinition(id);
-    return def ? def.label : id;
-  };
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -626,29 +595,6 @@ export default function ShopScreen() {
     }
   };
 
-  const savePreferences = async (patch: {
-    activeThemeId?: string;
-    equippedTitleId?: string | null;
-  }) => {
-    setFlash(null);
-    const token = await getTokenRef.current();
-    const res = await apiFetch(`${API_BASE_URL}/api/profile`, token, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-    });
-    if (!res.ok) {
-      const j = (await res.json().catch(() => ({}))) as { error?: string };
-      hapticError();
-      setFlash({ message: j.error ?? s.errSavePrefs, kind: 'error' });
-      return;
-    }
-    hapticLight();
-    const j = (await res.json()) as { shop?: ProfileShop };
-    setShop(j.shop ?? null);
-    if (patch.activeThemeId != null) void refreshAppTheme();
-  };
-
   const balance = shop?.coinBalance ?? 0;
 
   const renderCatalogCard = (item: ShopCatalogEntry) => {
@@ -847,90 +793,6 @@ export default function ShopScreen() {
               </View>
             </View>
 
-            <View style={styles.prefsSectionOuter}>
-              <Text style={styles.prefsSectionHeading}>{s.prefsHeading}</Text>
-              <Text style={styles.prefsSectionIntro}>{s.prefsIntro}</Text>
-
-              <View style={styles.prefsPanelOuter}>
-                <LinearGradient
-                  colors={[palette.cyan, palette.orange, palette.green]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.prefsStripe}
-                />
-                <View style={styles.prefsPanelBody}>
-                  <LinearGradient
-                    colors={[palette.surface, palette.card, palette.card]}
-                    locations={[0, 0.4, 1]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={StyleSheet.absoluteFill}
-                    pointerEvents="none"
-                  />
-                  <View style={styles.prefsPanelInner}>
-                  <View style={styles.prefsEquipRow}>
-                    <View style={styles.prefsGearIcon}>
-                      <Text style={styles.prefsGearEmoji} accessibilityElementsHidden>
-                        ⚙️
-                      </Text>
-                    </View>
-                    <View style={styles.prefsEquipCopy}>
-                      <Text style={styles.prefsPanelKicker}>{s.customization}</Text>
-                      <Text style={styles.prefsPanelLead}>{s.customizationLead}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.prefsFieldsGrid}>
-                    <View style={styles.prefsFieldCard}>
-                      <Text style={styles.prefsFieldLabel}>{s.fieldTheme}</Text>
-                      <Pressable
-                        style={styles.prefsSelectRow}
-                        onPress={() => setSelectKind('theme')}
-                        accessibilityRole="button"
-                        accessibilityLabel={s.themeCurrentA11y(s.themeLabel(shop.activeThemeId))}
-                        accessibilityHint={s.themeOpenHint}
-                      >
-                        <Text style={styles.prefsSelectRowText}>{s.themeLabel(shop.activeThemeId)}</Text>
-                        <Text style={styles.prefsSelectChevron} importantForAccessibility="no">
-                          ▼
-                        </Text>
-                      </Pressable>
-                    </View>
-                    <View style={styles.prefsFieldCard}>
-                      <Text style={styles.prefsFieldLabel}>{s.fieldTitle}</Text>
-                      <Pressable
-                        style={styles.prefsSelectRow}
-                        onPress={() => setSelectKind('title')}
-                        accessibilityRole="button"
-                        accessibilityLabel={s.titleCurrentA11y(titleDisplayLabel(shop))}
-                        accessibilityHint={s.titleOpenHint}
-                      >
-                        <Text style={styles.prefsSelectRowText}>{titleDisplayLabel(shop)}</Text>
-                        <Text style={styles.prefsSelectChevron} importantForAccessibility="no">
-                          ▼
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
-
-                  <View style={styles.prefsStatsRow}>
-                    <View style={styles.statPillOrange}>
-                      <Text style={styles.statPillLabel}>{s.bonusRerolls}</Text>
-                      <Text style={styles.statPillValueReroll}>{shop.bonusRerollCredits}</Text>
-                    </View>
-                    <View style={styles.statPillGreen}>
-                      <Text style={styles.statPillLabel}>{s.xpCharges}</Text>
-                      <Text style={styles.statPillValueXp}>{shop.xpBonusCharges}</Text>
-                      <Text style={styles.statPillHint}>
-                        {s.xpPerValidation(XP_SHOP_BONUS_PER_CHARGE)}
-                      </Text>
-                    </View>
-                  </View>
-                  </View>
-                </View>
-              </View>
-            </View>
-
             {featuredBundle ? (
               <View style={styles.section}>
                 <Text style={styles.h2}>{s.featured}</Text>
@@ -1035,14 +897,77 @@ export default function ShopScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.h2}>{s.sectionLook}</Text>
-              <Text style={styles.h3}>{s.sectionTitles}</Text>
-              {titleItems.map(renderCatalogCard)}
+              <Text style={styles.h2}>{s.sectionRerolls}</Text>
+              {rerollItems.map(renderCatalogCard)}
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.h2}>{s.sectionRerolls}</Text>
-              {rerollItems.map(renderCatalogCard)}
+              <Text style={styles.h2}>{appLocale === 'en' ? 'Coming soon' : 'Bientôt disponible'}</Text>
+              <View style={styles.comingSoonCard}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <View style={styles.comingSoonIcon}>
+                    <UiLucideIcon name="Sparkles" size={22} color={palette.cyan} />
+                  </View>
+                  <View style={styles.comingSoonBadge}>
+                    <UiLucideIcon name="Clock" size={11} color={palette.cyan} />
+                    <Text style={styles.comingSoonBadgeText}>
+                      {appLocale === 'en' ? 'COMING SOON' : 'BIENTÔT'}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.comingSoonTitle}>
+                  {appLocale === 'en' ? 'Themed quest packs' : 'Packs de quêtes thématiques'}
+                </Text>
+                <Text style={styles.comingSoonDesc}>
+                  {appLocale === 'en'
+                    ? 'Packs by vibe (couple, spicy, night out…), location (Paris, Lyon…) or lifestyle (solo, slow life, social…).'
+                    : 'Des packs par ambiance (couple, osé, nocturne…), par lieu (Paris, Lyon…) ou style de vie (solo, slow life, social…).'}
+                </Text>
+
+                <View style={styles.comingSoonTags}>
+                  {(appLocale === 'en'
+                    ? [
+                        { icon: 'Heart' as const,           label: 'Couple' },
+                        { icon: 'Flame' as const,           label: 'Spicy' },
+                        { icon: 'Sparkles' as const,        label: 'Dating' },
+                        { icon: 'Moon' as const,            label: 'Night out' },
+                        { icon: 'User' as const,            label: 'Solo' },
+                        { icon: 'Zap' as const,             label: 'Daring' },
+                        { icon: 'UtensilsCrossed' as const, label: 'Gastro' },
+                        { icon: 'Leaf' as const,            label: 'Slow life' },
+                        { icon: 'Users' as const,           label: 'Social' },
+                        { icon: 'MapPin' as const,          label: 'Paris' },
+                        { icon: 'MapPin' as const,          label: 'Nantes' },
+                        { icon: 'MapPin' as const,          label: 'Lyon' },
+                      ]
+                    : [
+                        { icon: 'Heart' as const,           label: 'Couple' },
+                        { icon: 'Flame' as const,           label: 'Osé' },
+                        { icon: 'Sparkles' as const,        label: 'Rencontres' },
+                        { icon: 'Moon' as const,            label: 'Nocturne' },
+                        { icon: 'User' as const,            label: 'Solo absolu' },
+                        { icon: 'Zap' as const,             label: 'Piment' },
+                        { icon: 'UtensilsCrossed' as const, label: 'Gastronomie' },
+                        { icon: 'Leaf' as const,            label: 'Slow life' },
+                        { icon: 'Users' as const,           label: 'Social & amis' },
+                        { icon: 'MapPin' as const,          label: 'Paris' },
+                        { icon: 'MapPin' as const,          label: 'Nantes' },
+                        { icon: 'MapPin' as const,          label: 'Lyon' },
+                      ]
+                  ).map((tag) => (
+                    <View key={tag.label} style={styles.comingSoonTag}>
+                      <UiLucideIcon name={tag.icon} size={11} color={palette.cyan} />
+                      <Text style={styles.comingSoonTagText}>{tag.label}</Text>
+                    </View>
+                  ))}
+                  <View style={[styles.comingSoonTag, { opacity: 0.55 }]}>
+                    <Text style={[styles.comingSoonTagText, { fontStyle: 'italic' }]}>
+                      {appLocale === 'en' ? '& more…' : 'et plus…'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
 
             <View style={styles.section}>
@@ -1098,41 +1023,9 @@ export default function ShopScreen() {
       </ScrollView>
 
       {shop && !error ? (
-        <SelectSheet
-          visible={selectKind !== null}
-          title={
-            selectKind === 'theme'
-              ? s.selectThemeTitle
-              : selectKind === 'title'
-                ? s.selectTitleTitle
-                : ''
-          }
-          options={
-            selectKind === 'theme' ? themeOptions : selectKind === 'title' ? titleOptions : []
-          }
-          selectedValue={
-            selectKind === 'theme'
-              ? shop.activeThemeId
-              : selectKind === 'title'
-                ? (shop.equippedTitleId ?? TITLE_NONE)
-                : ''
-          }
-          onSelect={(v) => {
-            if (selectKind === 'theme') void savePreferences({ activeThemeId: v });
-            else if (selectKind === 'title') {
-              void savePreferences({ equippedTitleId: v === TITLE_NONE ? null : v });
-            }
-          }}
-          onClose={() => setSelectKind(null)}
-          closeLabel={s.close}
-          closeA11y={s.closeA11y}
-        />
-      ) : null}
-
-      {shop && !error ? (
         <Modal
           visible={rechargeModalVisible}
-          animationType="fade"
+          animationType="slide"
           transparent
           statusBarTranslucent={Platform.OS === 'android'}
           onRequestClose={() => setRechargeModalVisible(false)}
@@ -1140,54 +1033,51 @@ export default function ShopScreen() {
           <View style={styles.modalRoot}>
             <GlassScrim
               overlayColor={palette.overlay}
-              intensity={62}
+              intensity={55}
               tint="dark"
               onPress={() => setRechargeModalVisible(false)}
               accessibilityLabel={s.closeA11y}
             />
             <View pointerEvents="box-none" style={styles.modalSheetWrap}>
-              <View style={[styles.modalSheet, styles.rechargeModalSheet]}>
-                {Platform.OS !== 'web' ? (
-                  <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFillObject} />
-                ) : null}
-                <View
-                  pointerEvents="none"
-                  style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.card, 0.64) }]}
-                />
-                <View style={styles.rechargeModalHeader}>
-                  <View style={styles.rechargeModalHeaderTop}>
-                    <View style={styles.rechargeModalHeaderText}>
-                      <Text style={styles.rechargeModalTitle}>{s.rechargeTitle}</Text>
-                      <Text style={styles.rechargeModalSubtitle}>{s.rechargeSubtitle}</Text>
-                      <View style={styles.rechargeModalPills}>
-                        <View style={styles.rechargeBalancePill}>
-                          <Text style={styles.rechargeBalancePillLbl}>{s.currentBalance}</Text>
-                          <Text style={styles.rechargeBalancePillVal}>
-                            {balance.toLocaleString(s.numLocale)} QC
-                          </Text>
-                        </View>
-                        <View style={styles.rechargeTrustPill}>
-                          <UiLucideIcon name="Lock" size={14} color={palette.green} strokeWidth={2.2} />
-                          <Text style={styles.rechargeTrustPillTxt}>{s.securePayment}</Text>
-                        </View>
-                      </View>
-                      <Text style={styles.rechargeModalHint}>{s.rechargeHint}</Text>
-                    </View>
-                    <Pressable
-                      onPress={() => setRechargeModalVisible(false)}
-                      hitSlop={12}
-                      accessibilityRole="button"
-                      accessibilityLabel={s.closeA11y}
-                    >
-                      <Text style={styles.rechargeModalClose}>✕</Text>
-                    </Pressable>
+              <View style={[styles.modalSheet, styles.rechargeModalSheet, { paddingBottom: 16 + insets.bottom }]}>
+                {/* — En-tête — */}
+                <View style={styles.rechargeSheetHandle} />
+                <View style={styles.rechargeModalHeaderTop}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={styles.rechargeModalTitle}>{s.rechargeTitle}</Text>
+                    <Text style={styles.rechargeModalSubtitle}>{s.rechargeSubtitle}</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setRechargeModalVisible(false)}
+                    hitSlop={14}
+                    accessibilityRole="button"
+                    accessibilityLabel={s.closeA11y}
+                    style={styles.rechargeCloseBtn}
+                  >
+                    <Text style={styles.rechargeModalClose}>✕</Text>
+                  </Pressable>
+                </View>
+
+                {/* — Solde + sécurité — */}
+                <View style={styles.rechargeInfoRow}>
+                  <View style={styles.rechargeBalancePill}>
+                    <Text style={styles.rechargeBalancePillLbl}>{s.currentBalance}</Text>
+                    <Text style={styles.rechargeBalancePillVal}>
+                      {balance.toLocaleString(s.numLocale)} QC
+                    </Text>
+                  </View>
+                  <View style={styles.rechargeTrustPill}>
+                    <UiLucideIcon name="Lock" size={13} color={palette.green} strokeWidth={2.2} />
+                    <Text style={styles.rechargeTrustPillTxt}>{s.securePayment}</Text>
                   </View>
                 </View>
+
+                {/* — Liste des packs — */}
                 <ScrollView
                   style={styles.rechargeModalScroll}
                   contentContainerStyle={styles.rechargeModalScrollContent}
                   keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator
+                  showsVerticalScrollIndicator={false}
                 >
                   {coinPacksSorted.map((pack) => {
                     const eur = (pack.priceCents / 100).toLocaleString(s.numLocale, {
@@ -1202,9 +1092,10 @@ export default function ShopScreen() {
                     const isBest = pack.marketing?.badge === 'best_value';
                     return (
                       <View key={pack.sku} style={[styles.rechargePackCard, isBest && styles.rechargePackCardBest]}>
+                        {/* icône + badge */}
                         <View style={styles.rechargePackTop}>
                           <View style={styles.rechargePackIconWrap}>
-                            <UiLucideIcon name={pack.icon} size={30} color={palette.orange} />
+                            <UiLucideIcon name={pack.icon} size={28} color={palette.orange} />
                           </View>
                           <View style={styles.cardBadges}>
                             {pack.marketing?.badge ? (
@@ -1226,12 +1117,16 @@ export default function ShopScreen() {
                             ) : null}
                           </View>
                         </View>
+
+                        {/* QC accordés */}
                         <Text style={styles.rechargePackQc}>
                           +{pack.coinsGranted.toLocaleString(s.numLocale)}{' '}
                           <Text style={styles.rechargePackQcUnit}>QC</Text>
                         </Text>
                         <Text style={styles.rechargePackName}>{pack.name}</Text>
-                        <Text style={styles.rechargePackDesc}>{pack.description}</Text>
+                        {pack.description ? (
+                          <Text style={styles.rechargePackDesc}>{pack.description}</Text>
+                        ) : null}
                         {pack.includedItems?.map((line) => (
                           <View key={line} style={styles.rechargePackBulletRow}>
                             <Text style={styles.rechargePackBullet}>✓</Text>
@@ -1241,16 +1136,20 @@ export default function ShopScreen() {
                         {pack.marketing?.hook ? (
                           <Text style={styles.rechargePackHook}>{pack.marketing.hook}</Text>
                         ) : null}
+
+                        {/* Prix + bouton paiement */}
                         <View style={styles.rechargePackPriceBlock}>
-                          <Text style={styles.rechargePackEur}>
-                            {appLocale === 'en' ? `€${eur}` : `${eur} €`}
-                          </Text>
-                          <Text style={styles.rechargePackMeta}>
-                            {s.qcPerEur(Math.round(qcPerEur))}
-                            {bonusVsStarter > 0 ? (
-                              <Text style={styles.bonusPct}>{s.bonusVsSmall(bonusVsStarter)}</Text>
-                            ) : null}
-                          </Text>
+                          <View style={styles.rechargePackPriceRow}>
+                            <Text style={styles.rechargePackEur}>
+                              {appLocale === 'en' ? `€${eur}` : `${eur} €`}
+                            </Text>
+                            <Text style={styles.rechargePackMeta}>
+                              {s.qcPerEur(Math.round(qcPerEur))}
+                              {bonusVsStarter > 0 ? (
+                                <Text style={styles.bonusPct}>{s.bonusVsSmall(bonusVsStarter)}</Text>
+                              ) : null}
+                            </Text>
+                          </View>
                           <Pressable
                             style={[styles.stripeBtn, stripeLoadingSku === pack.sku && styles.buyBtnDisabled]}
                             disabled={stripeLoadingSku === pack.sku}
@@ -1264,13 +1163,8 @@ export default function ShopScreen() {
                       </View>
                     );
                   })}
-                </ScrollView>
-                <View style={styles.rechargeModalFooter}>
                   <Text style={styles.rechargeModalFooterTxt}>{s.rechargeFooter}</Text>
-                  <Pressable style={styles.modalCancel} onPress={() => setRechargeModalVisible(false)}>
-                    <Text style={styles.modalCancelText}>{s.close}</Text>
-                  </Pressable>
-                </View>
+                </ScrollView>
               </View>
             </View>
           </View>
@@ -1532,6 +1426,75 @@ function createShopStyles(p: ThemePalette) {
   strike: { textDecorationLine: 'line-through', color: p.subtle },
   saveAmt: { fontWeight: '900', color: p.green },
   mutedSm: { color: p.subtle, fontSize: 11 },
+  comingSoonCard: {
+    borderRadius: 20,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: colorWithAlpha(p.cyan, 0.35),
+    backgroundColor: colorWithAlpha(p.cyan, 0.06),
+    padding: 16,
+  },
+  comingSoonIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorWithAlpha(p.cyan, 0.14),
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.28),
+  },
+  comingSoonBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.45),
+    backgroundColor: colorWithAlpha(p.cyan, 0.1),
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  comingSoonBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: p.cyan,
+    letterSpacing: 1,
+  },
+  comingSoonTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: p.text,
+    marginBottom: 6,
+  },
+  comingSoonDesc: {
+    fontSize: 12,
+    color: p.muted,
+    fontWeight: '500',
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  comingSoonTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  comingSoonTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.cyan, 0.3),
+    backgroundColor: colorWithAlpha(p.cyan, 0.08),
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  comingSoonTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: p.text,
+  },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1744,124 +1707,140 @@ function createShopStyles(p: ThemePalette) {
     shadowRadius: 12,
   },
   rechargeModalSheet: {
-    maxHeight: '90%',
+    maxHeight: '88%',
     paddingHorizontal: 0,
-    paddingBottom: 0,
     paddingTop: 0,
     overflow: 'hidden',
+    backgroundColor: p.card,
   },
-  rechargeModalHeader: {
-    borderBottomWidth: 1,
-    borderBottomColor: colorWithAlpha(p.green, 0.25),
-    backgroundColor: colorWithAlpha(p.green, 0.1),
+  rechargeSheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: colorWithAlpha(p.muted, 0.35),
+    marginTop: 12,
+    marginBottom: 4,
   },
   rechargeModalHeaderTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 8,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colorWithAlpha(p.muted, 0.2),
   },
-  rechargeModalHeaderText: { flex: 1, minWidth: 0 },
   rechargeModalTitle: { fontSize: 18, fontWeight: '900', color: C.text },
   rechargeModalSubtitle: {
     fontSize: 12,
     color: p.muted,
-    fontWeight: '600',
-    marginTop: 6,
+    fontWeight: '500',
+    marginTop: 4,
     lineHeight: 17,
   },
-  rechargeModalPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  rechargeBalancePill: {
+  rechargeCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colorWithAlpha(p.muted, 0.12),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  rechargeModalClose: { fontSize: 14, color: C.muted, fontWeight: '700' },
+  rechargeInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(251,191,36,0.55)',
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colorWithAlpha(p.muted, 0.2),
   },
-  rechargeBalancePillLbl: { fontSize: 10, fontWeight: '800', color: '#92400e' },
-  rechargeBalancePillVal: { fontSize: 13, fontWeight: '900', color: C.text },
-  rechargeTrustPill: {
+  rechargeBalancePill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     borderRadius: 999,
-    backgroundColor: colorWithAlpha(p.text, 0.06),
-    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.orange, 0.5),
+    backgroundColor: colorWithAlpha(p.orange, 0.1),
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  rechargeBalancePillLbl: { fontSize: 10, fontWeight: '700', color: p.muted },
+  rechargeBalancePillVal: { fontSize: 13, fontWeight: '900', color: p.orange },
+  rechargeTrustPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 999,
+    backgroundColor: colorWithAlpha(p.green, 0.12),
+    paddingVertical: 5,
     paddingHorizontal: 10,
-    justifyContent: 'center',
   },
-  rechargeTrustPillTxt: { fontSize: 10, fontWeight: '700', color: p.muted },
-  rechargeModalHint: {
-    fontSize: 11,
-    color: C.muted,
-    fontWeight: '600',
-    marginTop: 10,
-    lineHeight: 16,
-  },
-  rechargeModalClose: { fontSize: 22, color: '#64748b', fontWeight: '700', paddingLeft: 4 },
-  rechargeModalScroll: { flexGrow: 0, maxHeight: 420 },
-  rechargeModalScrollContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 12 },
+  rechargeTrustPillTxt: { fontSize: 10, fontWeight: '700', color: p.green },
+  rechargeModalScroll: { flex: 1 },
+  rechargeModalScrollContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, gap: 12 },
   rechargePackCard: {
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: p.divider,
-    backgroundColor: p.inputBg,
+    borderWidth: 1,
+    borderColor: colorWithAlpha(p.muted, 0.2),
+    backgroundColor: p.surface,
     padding: 14,
-    marginBottom: 4,
   },
   rechargePackCardBest: {
+    borderWidth: 2,
     borderColor: p.green,
-    backgroundColor: colorWithAlpha(p.green, 0.12),
+    backgroundColor: colorWithAlpha(p.green, 0.08),
   },
   rechargePackTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   rechargePackIconWrap: {
-    width: 44,
-    height: 44,
+    width: 42,
+    height: 42,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorWithAlpha(p.orange, 0.1),
+    backgroundColor: colorWithAlpha(p.orange, 0.12),
     borderWidth: 1,
-    borderColor: colorWithAlpha(p.orange, 0.2),
+    borderColor: colorWithAlpha(p.orange, 0.22),
   },
-  rechargePackQc: { fontSize: 26, fontWeight: '900', color: '#065f46', marginTop: 8 },
-  rechargePackQcUnit: { fontSize: 15, fontWeight: '900', color: '#047857' },
-  rechargePackName: { fontSize: 12, fontWeight: '800', color: '#64748b', marginTop: 4 },
-  rechargePackDesc: { fontSize: 12, color: '#334155', fontWeight: '600', marginTop: 8, lineHeight: 17 },
-  rechargePackBulletRow: { flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'flex-start' },
-  rechargePackBullet: { fontSize: 12, color: '#059669', fontWeight: '900', marginTop: 1 },
-  rechargePackBulletTxt: { flex: 1, fontSize: 11, color: '#334155', fontWeight: '600', lineHeight: 15 },
-  rechargePackHook: { fontSize: 11, fontWeight: '800', color: '#047857', marginTop: 8 },
+  rechargePackQc: { fontSize: 24, fontWeight: '900', color: p.green, marginTop: 10 },
+  rechargePackQcUnit: { fontSize: 14, fontWeight: '900', color: p.green },
+  rechargePackName: { fontSize: 12, fontWeight: '800', color: C.muted, marginTop: 2 },
+  rechargePackDesc: { fontSize: 12, color: C.muted, fontWeight: '500', marginTop: 6, lineHeight: 17 },
+  rechargePackBulletRow: { flexDirection: 'row', gap: 8, marginTop: 6, alignItems: 'flex-start' },
+  rechargePackBullet: { fontSize: 12, color: p.green, fontWeight: '900', marginTop: 1 },
+  rechargePackBulletTxt: { flex: 1, fontSize: 11, color: C.muted, fontWeight: '600', lineHeight: 15 },
+  rechargePackHook: { fontSize: 11, fontWeight: '700', color: p.linkOnBg, marginTop: 8, fontStyle: 'italic' },
   rechargePackPriceBlock: {
     marginTop: 12,
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: p.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colorWithAlpha(p.muted, 0.25),
+  },
+  rechargePackPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    flexWrap: 'wrap',
+    gap: 4,
   },
   rechargePackEur: { fontSize: 22, fontWeight: '900', color: C.text },
-  rechargePackMeta: { fontSize: 11, fontWeight: '700', color: p.muted, marginTop: 4 },
-  rechargeModalFooter: {
-    borderTopWidth: 1,
-    borderTopColor: p.divider,
-    backgroundColor: p.surface,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 12,
-  },
+  rechargePackMeta: { fontSize: 11, fontWeight: '700', color: C.muted },
   rechargeModalFooterTxt: {
     fontSize: 11,
     textAlign: 'center',
-    color: p.muted,
-    fontWeight: '600',
+    color: C.muted,
+    fontWeight: '500',
     lineHeight: 16,
-    marginBottom: 8,
+    marginTop: 4,
+    marginBottom: 4,
   },
   /** Feuille des selects (thème, titre) — cartes arrondies, pas de liste à traits. */
   selectSheetSheet: {

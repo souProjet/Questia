@@ -9,8 +9,6 @@ import {
   SHOP_CATALOG,
   COIN_PACKS,
   getCoinPack,
-  getThemeIds,
-  getTitleDefinition,
   XP_SHOP_BONUS_PER_CHARGE,
   bonusPercentVsPack,
   questCoinsPerEuro,
@@ -32,6 +30,8 @@ function notifyQuestScreenShopGrantsUpdated() {
   }
 }
 
+/* ─── Modale recharge QC ─────────────────────────────────────────────────── */
+
 function RechargeModalContent({
   coinPacksSorted,
   coinPackReference,
@@ -52,46 +52,37 @@ function RechargeModalContent({
   const t = useTranslations('AppShop');
   const locale = useLocale();
   const numLocale = locale === 'en' ? 'en-US' : 'fr-FR';
+
   return (
-    <div className="flex max-h-[min(90vh,820px)] min-h-0 flex-col">
-      <header className="shrink-0 border-b border-emerald-100 bg-gradient-to-br from-emerald-50/95 via-amber-50/50 to-cyan-50/40 px-5 pb-4 pt-5 sm:px-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h2 id="recharge-modal-title" className="font-display font-black text-xl leading-tight text-[var(--on-cream)] sm:text-2xl">
-              {t('rechargeTitle')}
-            </h2>
-            <p className="mt-1.5 text-sm font-medium text-[var(--on-cream-muted)]">
-              {t('rechargeSub')}
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-white/95 px-3 py-1 text-xs font-bold text-amber-950 shadow-sm backdrop-blur-[2px]">
-                <span className="text-amber-800/80">{t('currentBalance')}</span>
-                <span className="font-display tabular-nums font-black text-[var(--on-cream)]">
-                  {balance.toLocaleString(numLocale)} QC
-                </span>
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--on-cream)_10%,transparent)] px-2.5 py-1 text-[11px] font-semibold text-[var(--on-cream-muted)]">
-                <Icon name="Lock" size="xs" className="text-amber-900/70 shrink-0" aria-hidden />
-                {t('securePay')}
-              </span>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="shrink-0 rounded-full p-2 text-[var(--on-cream-muted)] transition-colors hover:bg-black/5 hover:text-[var(--on-cream)]"
-            onClick={onClose}
-            aria-label={t('close')}
-          >
-            <Icon name="X" size="md" />
-          </button>
+    <div className="flex max-h-[min(88vh,640px)] min-h-0 flex-col">
+      {/* ── En-tête compact ── */}
+      <header className="shrink-0 flex items-center justify-between gap-3 border-b border-[color:var(--border-ui)] px-5 py-4 sm:px-6">
+        <div className="min-w-0 flex-1">
+          <h2 id="recharge-modal-title" className="font-display font-black text-lg text-[var(--text)]">
+            {t('rechargeTitle')}
+          </h2>
+          <p className="mt-0.5 text-xs font-medium text-[var(--muted)]">
+            {t('currentBalance')} <span className="font-black text-[var(--text)] tabular-nums">{balance.toLocaleString(numLocale)} QC</span>
+            {' · '}
+            <span className="inline-flex items-center gap-1">
+              <Icon name="Lock" size="xs" className="text-[var(--green)] shrink-0" aria-hidden />
+              {t('securePay')}
+            </span>
+          </p>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-[var(--on-cream-muted)]">
-          {t('rechargeNote')}
-        </p>
+        <button
+          type="button"
+          className="shrink-0 rounded-full p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text)]"
+          onClick={onClose}
+          aria-label={t('close')}
+        >
+          <Icon name="X" size="md" />
+        </button>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
-        <ul className="grid gap-4 sm:grid-cols-3 sm:gap-3">
+      {/* ── Packs ── */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+        <ul className="grid gap-3 sm:grid-cols-3">
           {coinPacksSorted.map((pack) => {
             const eur = (pack.priceCents / 100).toFixed(2).replace('.', ',');
             const qcPerEur = questCoinsPerEuro(pack.priceCents, pack.coinsGranted);
@@ -103,103 +94,55 @@ function RechargeModalContent({
             return (
               <li
                 key={pack.sku}
-                className={`flex min-h-0 flex-col rounded-2xl border-2 p-4 shadow-sm transition-shadow ${
+                className={`flex flex-col rounded-2xl border-2 p-4 ${
                   isBest
-                    ? 'border-emerald-400 bg-gradient-to-b from-emerald-50/95 to-white ring-2 ring-emerald-300/40'
+                    ? 'border-emerald-400 bg-emerald-50/70 ring-2 ring-emerald-200/50'
                     : 'border-[color:var(--border-ui)] bg-[var(--card)]'
                 }`}
               >
-                <div className="mb-3 flex items-start justify-between gap-2">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] ring-1 ring-[color:var(--border-ui)]" aria-hidden>
-                    <Icon name={pack.icon} size="lg" className="text-[var(--orange)]" />
-                  </span>
-                  <div className="flex flex-wrap items-center justify-end gap-1">
-                    {pack.marketing?.badge ? <MarketingBadge badge={pack.marketing.badge} /> : null}
-                    {pack.contentsDetail ? (
-                      <button
-                        type="button"
-                        className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-ui)] bg-[var(--surface)] text-[10px] font-black text-[var(--muted)] hover:bg-[var(--card)]"
-                        aria-label={t('moreInfo', { name: pack.name })}
-                        onClick={() => onShowInfo(pack.name, pack.contentsDetail!)}
-                      >
-                        i
-                      </button>
-                    ) : null}
-                  </div>
+                {/* Badge */}
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  {pack.marketing?.badge ? (
+                    <MarketingBadge badge={pack.marketing.badge} />
+                  ) : (
+                    <span />
+                  )}
+                  {pack.contentsDetail ? (
+                    <button
+                      type="button"
+                      className="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-[color:var(--border-ui)] bg-[var(--surface)] text-[10px] font-black text-[var(--muted)] hover:bg-[var(--card)]"
+                      aria-label={t('moreInfo', { name: pack.name })}
+                      onClick={() => onShowInfo(pack.name, pack.contentsDetail!)}
+                    >
+                      i
+                    </button>
+                  ) : null}
                 </div>
 
-                <p
-                  className={`font-display text-2xl font-black leading-none tracking-tight sm:text-[1.65rem] ${
-                    isBest ? 'text-emerald-900' : 'text-[var(--green)]'
-                  }`}
-                >
-                  +{pack.coinsGranted.toLocaleString(numLocale)}{' '}
-                  <span
-                    className={`text-base font-black ${
-                      isBest ? 'text-emerald-700/90' : 'text-[var(--green)]'
-                    }`}
-                  >
-                    QC
-                  </span>
+                {/* Montant QC */}
+                <p className={`font-display text-3xl font-black leading-none tracking-tight ${isBest ? 'text-emerald-800' : 'text-[var(--green)]'}`}>
+                  +{pack.coinsGranted.toLocaleString(numLocale)}
+                  <span className="ml-1 text-lg">QC</span>
                 </p>
-                <p className="mt-1 text-xs font-bold text-[var(--subtle)]">{pack.name}</p>
-                <p className="mt-2 line-clamp-2 text-xs font-medium leading-snug text-[var(--muted)]">{pack.description}</p>
 
-                {pack.includedItems?.length ? (
-                  <ul className="mt-3 space-y-1.5 border-t border-[color:var(--border-ui)] pt-3">
-                    {pack.includedItems.map((line) => (
-                      <li key={line} className="flex gap-2 text-[11px] font-semibold leading-snug text-[var(--muted)]">
-                        <Icon
-                          name="Check"
-                          size="xs"
-                          className={`mt-0.5 shrink-0 ${isBest ? 'text-emerald-600' : 'text-[var(--green)]'}`}
-                          aria-hidden
-                        />
-                        <span>{line}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+                {/* Taux */}
+                <p className={`mt-1 text-[11px] font-bold ${isBest ? 'text-emerald-600' : 'text-[var(--green)]'}`}>
+                  {t('qcPerEur', { n: Math.round(qcPerEur) })}
+                  {bonusVsStarter > 0 ? (
+                    <span className="ml-1 font-black">{t('vsStarter', { n: bonusVsStarter })}</span>
+                  ) : null}
+                </p>
 
-                {pack.marketing?.hook ? (
-                  <p
-                    className={`mt-2 text-[11px] font-bold ${
-                      isBest ? 'text-emerald-800/90' : 'text-[var(--green)]'
-                    }`}
-                  >
-                    {pack.marketing.hook}
-                  </p>
-                ) : null}
-
-                <div className="mt-auto border-t border-[color:var(--border-ui)] pt-3">
-                  <p className="font-display text-xl font-black tabular-nums text-[var(--text)]">
+                {/* Prix + CTA */}
+                <div className="mt-auto pt-4">
+                  <p className="font-display text-2xl font-black tabular-nums text-[var(--text)]">
                     {eur} €
-                  </p>
-                  <p className="mt-0.5 text-[11px] font-bold text-[var(--subtle)]">
-                    <span
-                      className={
-                        isBest ? 'tabular-nums text-emerald-800' : 'tabular-nums text-[var(--green)]'
-                      }
-                    >
-                      {t('qcPerEur', { n: Math.round(qcPerEur) })}
-                    </span>
-                    {bonusVsStarter > 0 ? (
-                      <span
-                        className={
-                          isBest
-                            ? 'ml-1 font-black text-emerald-700'
-                            : 'ml-1 font-black text-[var(--green)]'
-                        }
-                      >
-                        {t('vsStarter', { n: bonusVsStarter })}
-                      </span>
-                    ) : null}
                   </p>
                   <button
                     type="button"
                     disabled={stripeLoadingSku === pack.sku}
                     onClick={() => onPay(pack.sku)}
-                    className="btn btn-primary btn-sm mt-3 w-full text-xs font-black shadow-md disabled:opacity-50"
+                    className="btn btn-primary btn-sm mt-3 w-full font-black disabled:opacity-50"
                   >
                     {stripeLoadingSku === pack.sku ? t('redirecting') : t('payAmount', { amount: eur })}
                   </button>
@@ -210,49 +153,15 @@ function RechargeModalContent({
         </ul>
       </div>
 
-      <footer className="shrink-0 border-t border-[color:var(--border-ui)] bg-[var(--surface)] px-5 py-3 text-center sm:px-6">
-        <p className="text-[11px] font-medium leading-relaxed text-[var(--subtle)]">
-          {t('rechargeFooter')}
-        </p>
+      {/* ── Footer minimaliste ── */}
+      <footer className="shrink-0 border-t border-[color:var(--border-ui)] px-5 py-2.5 text-center sm:px-6">
+        <p className="text-[11px] text-[var(--subtle)]">{t('rechargeFooter')}</p>
       </footer>
     </div>
   );
 }
 
-type ShopFlash = { message: string; kind: 'success' | 'error' | 'info' };
-
-type ProfileShop = {
-  coinBalance: number;
-  activeThemeId: string;
-  ownedThemes: string[];
-  bonusRerollCredits: number;
-  ownedTitleIds: string[];
-  equippedTitleId: string | null;
-  xpBonusCharges: number;
-};
-
-type TxRow = {
-  id: string;
-  entryKind: string;
-  coinsDelta: number | null;
-  coinBalanceAfter: number | null;
-  amountCents: number;
-  currency: string;
-  status: string;
-  primarySku: string;
-  label: string;
-  createdAt: string;
-};
-
-function kindOrder(kind: ShopCatalogEntry['kind']): number {
-  const order: Record<ShopCatalogEntry['kind'], number> = {
-    title: 0,
-    xp_booster: 1,
-    reroll_pack: 2,
-    bundle: 3,
-  };
-  return order[kind] ?? 9;
-}
+/* ─── Badge marketing ─────────────────────────────────────────────────────── */
 
 function MarketingBadge({ badge }: { badge: ShopMarketingBadge }) {
   const t = useTranslations('AppShop');
@@ -271,44 +180,119 @@ function MarketingBadge({ badge }: { badge: ShopMarketingBadge }) {
     new: 'bg-cyan-600 text-white border-cyan-700',
   };
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide border ${styles[badge]}`}
-    >
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide border ${styles[badge]}`}>
       {labels[badge]}
     </span>
   );
 }
 
+/* ─── Types ───────────────────────────────────────────────────────────────── */
+
+type ShopFlash = { message: string; kind: 'success' | 'error' | 'info' };
+
+type ProfileShop = {
+  coinBalance: number;
+  activeThemeId: string;
+  bonusRerollCredits: number;
+  xpBonusCharges: number;
+  ownedThemes?: string[];
+  ownedTitleIds?: string[];
+};
+
+type TxRow = {
+  id: string;
+  entryKind: string;
+  coinsDelta: number | null;
+  coinBalanceAfter: number | null;
+  amountCents: number;
+  currency: string;
+  status: string;
+  primarySku: string;
+  label: string;
+  createdAt: string;
+};
+
+/* ─── Carte "Bientôt disponible" ──────────────────────────────────────────── */
+
+function ComingSoonCard() {
+  const tags: { icon: string; label: string; cls: string }[] = [
+    { icon: 'Heart',           label: 'Couple',        cls: 'border-rose-200/70 bg-rose-50/80 text-rose-700' },
+    { icon: 'Flame',           label: 'Osé',           cls: 'border-orange-200/70 bg-orange-50/80 text-orange-700' },
+    { icon: 'Sparkles',        label: 'Rencontres',    cls: 'border-rose-200/70 bg-rose-50/80 text-rose-700' },
+    { icon: 'Moon',            label: 'Nocturne',      cls: 'border-indigo-200/70 bg-indigo-50/80 text-indigo-700' },
+    { icon: 'User',            label: 'Solo absolu',   cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
+    { icon: 'Zap',             label: 'Piment',        cls: 'border-red-200/70 bg-red-50/80 text-red-700' },
+    { icon: 'UtensilsCrossed', label: 'Gastronomie',   cls: 'border-amber-200/70 bg-amber-50/80 text-amber-800' },
+    { icon: 'Leaf',            label: 'Slow life',     cls: 'border-emerald-200/70 bg-emerald-50/80 text-emerald-700' },
+    { icon: 'Users',           label: 'Social & amis', cls: 'border-sky-200/70 bg-sky-50/80 text-sky-700' },
+    { icon: 'MapPin',          label: 'Paris',         cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
+    { icon: 'MapPin',          label: 'Lyon',          cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
+    { icon: 'MapPin',          label: 'Nantes',        cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
+    { icon: 'MapPin',          label: 'Marseille',     cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
+  ];
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-violet-200/80 bg-gradient-to-br from-violet-50/60 via-white to-rose-50/40 p-5 sm:p-6">
+      <div className="absolute right-4 top-4 opacity-[0.07] pointer-events-none select-none" aria-hidden>
+        <Icon name="Sparkles" size="2xl" className="text-violet-500 h-20 w-20" />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 ring-1 ring-violet-200/80" aria-hidden>
+          <Icon name="Backpack" size="md" className="text-violet-700" />
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-300/60 bg-violet-100 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-violet-700">
+          <Icon name="Clock" size="xs" className="shrink-0" aria-hidden />
+          Bientôt
+        </span>
+      </div>
+
+      <p className="font-display font-black text-lg text-[var(--text)] leading-snug">
+        Packs de quêtes thématiques
+      </p>
+      <p className="mt-2 text-sm text-[var(--muted)] font-medium leading-relaxed max-w-lg">
+        Des packs ciblés par <strong className="text-[var(--text)] font-bold">ambiance</strong> (couple, nocturne, osé…), par <strong className="text-[var(--text)] font-bold">lieu</strong> (Paris, Nantes…) ou par <strong className="text-[var(--text)] font-bold">style de vie</strong> (solo, slow life, social…). Moins d'aléatoire, exactement ce dont tu as envie.
+      </p>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {tags.map((tag) => (
+          <span
+            key={tag.label}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${tag.cls}`}
+          >
+            <Icon name={tag.icon} size="xs" className="shrink-0" aria-hidden />
+            {tag.label}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-200/50 bg-white/60 px-2.5 py-1 text-xs font-semibold text-violet-500 italic">
+          et bien d'autres…
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Page principale ─────────────────────────────────────────────────────── */
+
 function ShopPageInner() {
   const t = useTranslations('AppShop');
   const locale = useLocale();
   const numLocale = locale === 'en' ? 'en-US' : 'fr-FR';
-  const kindLabel = useCallback(
-    (kind: ShopCatalogEntry['kind']) => {
-      switch (kind) {
-        case 'title':
-          return t('kindTitle');
-        case 'xp_booster':
-          return t('kindXp');
-        case 'reroll_pack':
-          return t('kindReroll');
-        case 'bundle':
-          return t('kindBundle');
-        default:
-          return '';
-      }
-    },
-    [t],
-  );
+
   const searchParams = useSearchParams();
-  const [items] = useState<ShopCatalogEntry[]>(() =>
-    [...SHOP_CATALOG].sort((a, b) => kindOrder(a.kind) - kindOrder(b.kind) || a.name.localeCompare(b.name)),
-  );
+
   const coinPacksSorted = useMemo(
     () => [...COIN_PACKS].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
     [],
   );
   const coinPackReference = coinPacksSorted[0];
+
+  const { bundleItem, boostItems, rerollItems } = useMemo(() => ({
+    bundleItem: SHOP_CATALOG.find((i) => i.kind === 'bundle'),
+    boostItems: SHOP_CATALOG.filter((i) => i.kind === 'xp_booster'),
+    rerollItems: SHOP_CATALOG.filter((i) => i.kind === 'reroll_pack'),
+  }), []);
+
   const [shop, setShop] = useState<ProfileShop | null>(null);
   const [transactions, setTransactions] = useState<TxRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -318,7 +302,6 @@ function ShopPageInner() {
   const [flash, setFlash] = useState<ShopFlash | null>(null);
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [infoModal, setInfoModal] = useState<{ title: string; body: string } | null>(null);
-  /** Ré-anime le solde (clé) + flash / carte après achat QC */
   const [balanceAnimTick, setBalanceAnimTick] = useState(0);
   const [purchaseHighlightSku, setPurchaseHighlightSku] = useState<string | null>(null);
   const [celebratePurchase, setCelebratePurchase] = useState(false);
@@ -330,17 +313,6 @@ function ShopPageInner() {
     window.setTimeout(() => setCelebratePurchase(false), 2200);
     window.setTimeout(() => setPurchaseHighlightSku(null), 1800);
   }, []);
-
-  const { featuredBundle, xpItems, titleItems, rerollItems } = useMemo(() => {
-    const bundle = items.find((i) => i.kind === 'bundle');
-    const rest = items.filter((i) => i.kind !== 'bundle');
-    return {
-      featuredBundle: bundle,
-      xpItems: rest.filter((i) => i.kind === 'xp_booster'),
-      titleItems: rest.filter((i) => i.kind === 'title'),
-      rerollItems: rest.filter((i) => i.kind === 'reroll_pack'),
-    };
-  }, [items]);
 
   const coinPurchasedSkus = useMemo(() => buildCoinPurchasedSkuSet(transactions), [transactions]);
 
@@ -384,24 +356,18 @@ function ShopPageInner() {
       let skipDup = false;
       try {
         skipDup = sessionStorage.getItem('questia_stripe_purchase_done') === '1';
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
       let sku: string | null = null;
       try {
         sku = sessionStorage.getItem('questia_checkout_sku');
         if (sku) sessionStorage.removeItem('questia_checkout_sku');
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
       const pack = sku ? getCoinPack(sku) : undefined;
       const valueEur = pack ? pack.priceCents / 100 : 0;
       if (sku && !skipDup) {
         try {
           sessionStorage.setItem('questia_stripe_purchase_done', '1');
-        } catch {
-          /* ignore */
-        }
+        } catch { /* ignore */ }
         trackAnalyticsEvent(AnalyticsEvent.purchase, {
           currency: 'EUR',
           value: valueEur,
@@ -416,10 +382,7 @@ function ShopPageInner() {
           content_type: 'product',
         });
       }
-      setFlash({
-        message: t('flashPaid'),
-        kind: 'success',
-      });
+      setFlash({ message: t('flashPaid'), kind: 'success' });
       setBalanceAnimTick((n) => n + 1);
       setCelebratePurchase(true);
       window.setTimeout(() => setCelebratePurchase(false), 2200);
@@ -453,9 +416,7 @@ function ShopPageInner() {
       try {
         sessionStorage.setItem('questia_checkout_sku', sku);
         sessionStorage.removeItem('questia_stripe_purchase_done');
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
       const res = await fetch('/api/shop/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -511,52 +472,21 @@ function ShopPageInner() {
     }
   };
 
-  const savePreferences = async (patch: {
-    activeThemeId?: string;
-    equippedTitleId?: string | null;
-  }) => {
-    setFlash(null);
-    const res = await fetch('/api/profile', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-    });
-    if (!res.ok) {
-      const j = (await res.json().catch(() => ({}))) as { error?: string };
-      setFlash({ message: j.error ?? t('errSave'), kind: 'error' });
-      return;
-    }
-    const j = (await res.json()) as { shop?: ProfileShop };
-    setShop(j.shop ?? null);
-  };
-
-  const ownedThemeIds = new Set(shop?.ownedThemes ?? ['default']);
   const balance = shop?.coinBalance ?? 0;
-  const unownedItems = useMemo(() => {
-    if (!shop) return [] as ShopCatalogEntry[];
-    return items
-      .filter((item) => !catalogItemFullyOwned(item, shop, coinPurchasedSkus))
-      .sort((a, b) => a.priceCoins - b.priceCoins);
-  }, [items, shop, coinPurchasedSkus]);
-  const unlockNow = useMemo(
-    () => unownedItems.filter((item) => item.priceCoins <= balance).slice(0, 3),
-    [unownedItems, balance],
-  );
-  const unlockSoon = useMemo(
-    () => unownedItems.filter((item) => item.priceCoins > balance).slice(0, 3),
-    [unownedItems, balance],
-  );
 
+  /* Rendu d'une carte catalogue standard */
   const renderCatalogCard = (item: ShopCatalogEntry) => {
-    const owns = catalogItemFullyOwned(item, shop!, coinPurchasedSkus);
+    if (!shop) return null;
+    const owns = catalogItemFullyOwned(item, shop, coinPurchasedSkus);
     const affordable = balance >= item.priceCoins;
-    const m = item.marketing;
     const bump = purchaseHighlightSku === item.sku;
+    const m = item.marketing;
+
     return (
       <li
         key={item.sku}
         className={`shop-elevated-surface rounded-2xl border p-5 flex flex-col gap-3 transition-shadow duration-300 ${
-          m?.badge === 'featured' || m?.badge === 'best_value'
+          m?.badge === 'best_value'
             ? 'border-emerald-300/80 ring-1 ring-emerald-200/60'
             : 'border-[color:var(--border-ui)]'
         } ${bump ? 'motion-safe:animate-shop-card-bump motion-reduce:ring-2 motion-reduce:ring-amber-300/50' : ''}`}
@@ -567,9 +497,6 @@ function ShopPageInner() {
           </span>
           <div className="flex flex-wrap items-center gap-1 justify-end">
             {m?.badge ? <MarketingBadge badge={m.badge} /> : null}
-            <span className="text-[10px] font-black uppercase tracking-wider text-[var(--subtle)] shrink-0">
-              {kindLabel(item.kind)}
-            </span>
             {item.contentsDetail ? (
               <button
                 type="button"
@@ -582,27 +509,32 @@ function ShopPageInner() {
             ) : null}
           </div>
         </div>
-        <p className="font-black text-[var(--text)]">{item.name}</p>
-        <p className="text-xs text-[var(--muted)] font-medium leading-relaxed flex-1">{item.description}</p>
-        {item.includedItems?.length ? (
-          <ul className="list-disc pl-4 text-[11px] font-medium text-[var(--muted)] space-y-0.5">
-            {item.includedItems.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        ) : null}
-        {m?.hook ? (
-          <p className="text-[11px] font-semibold text-[var(--green)]">{m.hook}</p>
-        ) : null}
-        {m?.compareAtCoins != null && m.savingsCoins != null ? (
-          <p className="text-xs text-[var(--subtle)]">
-            <span className="line-through tabular-nums">{m.compareAtCoins.toLocaleString(numLocale)} QC</span>
-            <span className="mx-1.5 font-bold text-[var(--green)]">
-              −{m.savingsCoins.toLocaleString(numLocale)} QC
-            </span>
-            <span className="text-[var(--subtle)]">{t('vsSeparate')}</span>
-          </p>
-        ) : null}
+
+        <div className="flex-1">
+          <p className="font-black text-[var(--text)]">{item.name}</p>
+          <p className="mt-1.5 text-xs text-[var(--muted)] font-medium leading-relaxed">{item.description}</p>
+          {item.includedItems?.length ? (
+            <ul className="mt-3 space-y-1.5">
+              {item.includedItems.map((line) => (
+                <li key={line} className="flex gap-2 text-[11px] font-semibold leading-snug text-[var(--muted)]">
+                  <Icon name="Check" size="xs" className="mt-0.5 shrink-0 text-[var(--green)]" aria-hidden />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {m?.hook ? (
+            <p className="mt-2 text-[11px] font-bold text-[var(--green)]">{m.hook}</p>
+          ) : null}
+          {m?.compareAtCoins != null && m.savingsCoins != null ? (
+            <p className="mt-2 text-xs text-[var(--subtle)]">
+              <span className="line-through tabular-nums">{m.compareAtCoins.toLocaleString(numLocale)} QC</span>
+              <span className="mx-1.5 font-bold text-[var(--green)]">−{m.savingsCoins.toLocaleString(numLocale)} QC</span>
+              <span className="text-[var(--subtle)]">{t('vsSeparate')}</span>
+            </p>
+          ) : null}
+        </div>
+
         <div className="flex items-center justify-between gap-2 pt-3 border-t border-[color:var(--border-ui)]">
           <span className="font-display text-xl font-black text-[var(--orange)] tabular-nums">
             {item.priceCoins.toLocaleString(numLocale)} QC
@@ -614,20 +546,13 @@ function ShopPageInner() {
               type="button"
               disabled={coinPurchaseSku === item.sku}
               onClick={() => {
-                if (!affordable) {
-                  setRechargeOpen(true);
-                  return;
-                }
+                if (!affordable) { setRechargeOpen(true); return; }
                 void buyWithCoins(item.sku);
               }}
-              className={`btn btn-primary btn-md text-sm font-black transition-transform duration-150 will-change-transform hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100 ${
+              className={`btn btn-primary btn-md text-sm font-black transition-transform duration-150 hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100 ${
                 !affordable && coinPurchaseSku !== item.sku ? 'ring-2 ring-amber-400/80 ring-offset-2 ring-offset-[var(--card)]' : ''
               }`}
-              title={
-                !affordable
-                  ? t('insufficientHint')
-                  : undefined
-              }
+              title={!affordable ? t('insufficientHint') : undefined}
             >
               {coinPurchaseSku === item.sku ? '…' : t('buy')}
             </button>
@@ -641,6 +566,7 @@ function ShopPageInner() {
     <div className="min-h-screen bg-adventure">
       <Navbar />
       <main id="main-content" tabIndex={-1} className="relative z-10 max-w-4xl mx-auto px-3 sm:px-5 pt-24 pb-24 outline-none">
+
         <Link
           href="/app"
           className="inline-flex items-center gap-2 text-sm font-bold text-[var(--link-on-bg)] hover:underline mb-6"
@@ -650,16 +576,13 @@ function ShopPageInner() {
 
         <h1 className="font-display font-black text-3xl text-[var(--text)] mb-6">{t('title')}</h1>
 
+        {/* Messages flash */}
         {flash ? (
           <div
             role={flash.kind === 'error' ? 'alert' : 'status'}
             key={flash.message}
             className={`mb-6 rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--text)] motion-safe:animate-fade-up motion-reduce:animate-none ${
-              flash.kind === 'success'
-                ? 'shop-flash-success'
-                : flash.kind === 'error'
-                  ? 'shop-flash-error'
-                  : 'shop-flash-info'
+              flash.kind === 'success' ? 'shop-flash-success' : flash.kind === 'error' ? 'shop-flash-error' : 'shop-flash-info'
             }`}
           >
             {flash.message}
@@ -680,6 +603,7 @@ function ShopPageInner() {
 
         {shop && !loading && (
           <>
+            {/* Confettis d'achat */}
             {celebratePurchase ? (
               <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden" aria-hidden>
                 <div className="absolute inset-0 bg-gradient-to-b from-amber-300/45 via-fuchsia-400/15 to-cyan-400/25 motion-safe:animate-shop-celebration-overlay motion-reduce:hidden" />
@@ -698,37 +622,27 @@ function ShopPageInner() {
                 ).map((s, i) => (
                   <span
                     key={i}
-                    className={`absolute motion-reduce:hidden ${
-                      s.orbit ? 'motion-safe:animate-shop-sparkle-orbit' : 'motion-safe:animate-shop-sparkle'
-                    }`}
+                    className={`absolute motion-reduce:hidden ${s.orbit ? 'motion-safe:animate-shop-sparkle-orbit' : 'motion-safe:animate-shop-sparkle'}`}
                     style={{ left: s.left, top: s.top, animationDelay: s.delay }}
                   >
                     <Icon name={s.icon} size="xl" className="text-amber-600 sm:h-10 sm:w-10" />
                   </span>
                 ))}
-                <span
-                  className="absolute left-1/2 top-[32%] -translate-x-1/2 motion-safe:animate-shop-coin-burst motion-reduce:hidden"
-                  style={{ animationDelay: '60ms' }}
-                >
-                  <Icon name="Coins" size="2xl" className="text-amber-500" />
-                </span>
-                <span
-                  className="absolute left-[30%] top-[40%] motion-safe:animate-shop-coin-burst motion-reduce:hidden"
-                  style={{ animationDelay: '140ms' }}
-                >
-                  <Icon name="Coins" size="xl" className="text-amber-500" />
-                </span>
-                <span
-                  className="absolute left-[70%] top-[38%] motion-safe:animate-shop-coin-burst motion-reduce:hidden"
-                  style={{ animationDelay: '200ms' }}
-                >
-                  <Icon name="Coins" size="xl" className="text-amber-500" />
-                </span>
+                {(['60ms', '140ms', '200ms'] as const).map((delay, i) => (
+                  <span
+                    key={delay}
+                    className="absolute motion-safe:animate-shop-coin-burst motion-reduce:hidden"
+                    style={{ left: `${[50, 30, 70][i]}%`, top: `${[32, 40, 38][i]}%`, animationDelay: delay }}
+                  >
+                    <Icon name="Coins" size={i === 0 ? '2xl' : 'xl'} className="text-amber-500" />
+                  </span>
+                ))}
               </div>
             ) : null}
 
+            {/* ── Carte solde ─────────────────────────────────────────────── */}
             <div
-              className={`sticky top-24 z-40 -mx-4 px-4 pt-2 pb-6 mb-6 motion-reduce:animate-none ${
+              className={`sticky top-24 z-40 -mx-4 px-4 pt-2 pb-6 mb-8 motion-reduce:animate-none ${
                 celebratePurchase ? 'motion-safe:animate-shop-screen-shake' : ''
               }`}
             >
@@ -739,10 +653,7 @@ function ShopPageInner() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-4 sm:gap-6">
                   <div className="min-w-0 flex items-center gap-4">
-                    <span
-                      className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 ring-2 ring-amber-400/40"
-                      aria-hidden
-                    >
+                    <span className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 ring-2 ring-amber-400/40" aria-hidden>
                       <Icon name="Coins" size="xl" className="text-amber-700" />
                     </span>
                     <div>
@@ -756,6 +667,20 @@ function ShopPageInner() {
                         {balance.toLocaleString(numLocale)}
                         <span className="ml-2 text-2xl sm:text-3xl font-black text-[var(--orange)]">{t('questCoins')}</span>
                       </p>
+                      {/* Stats inventaire rapides */}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--orange)_10%,var(--card))] px-2.5 py-1 text-[11px] font-semibold text-[var(--text)]">
+                          <Icon name="RefreshCw" size="xs" className="text-[var(--orange)] shrink-0" aria-hidden />
+                          <span className="text-[var(--muted)]">{t('bonusRerolls')}</span>
+                          <span className="font-black tabular-nums text-[var(--orange)]">{shop.bonusRerollCredits}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--green)_10%,var(--card))] px-2.5 py-1 text-[11px] font-semibold text-[var(--text)]">
+                          <Icon name="Zap" size="xs" className="text-[var(--green)] shrink-0" aria-hidden />
+                          <span className="text-[var(--muted)]">{t('xpBoosts')}</span>
+                          <span className="font-black tabular-nums text-[var(--green)]">{shop.xpBonusCharges}</span>
+                          <span className="text-[10px] text-[var(--muted)]">{t('xpPerValidation', { n: XP_SHOP_BONUS_PER_CHARGE })}</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <button
@@ -769,315 +694,144 @@ function ShopPageInner() {
               </div>
             </div>
 
-            <section className="mb-8" aria-labelledby="shop-value-heading">
-              <div className="app-shop-featured-card rounded-2xl p-5 sm:p-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2
-                      id="shop-value-heading"
-                      className="font-display font-black text-xl text-[var(--text)]"
-                    >
-                      {t('valueTitle')}
+            {/* ── Offre groupée ───────────────────────────────────────────── */}
+            {bundleItem ? (() => {
+              const owns = catalogItemFullyOwned(bundleItem, shop, coinPurchasedSkus);
+              const affordable = balance >= bundleItem.priceCoins;
+              const bump = purchaseHighlightSku === bundleItem.sku;
+              return (
+                <section className="mb-10" aria-labelledby="shop-bundle-heading">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h2 id="shop-bundle-heading" className="font-display font-black text-xl text-[var(--text)] drop-shadow-[0_1px_0_rgba(0,0,0,0.20)]">
+                      {t('featuredHeading')}
                     </h2>
-                    <p className="mt-1 text-sm font-medium text-[var(--muted)]">
-                      {t('valueSubtitle')}
-                    </p>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm font-black"
-                    onClick={() => setRechargeOpen(true)}
+
+                  <div
+                    className={`app-shop-featured-card p-5 sm:p-6 transition-shadow duration-300 ${
+                      bump ? 'motion-safe:animate-shop-card-bump motion-reduce:ring-2 motion-reduce:ring-amber-300/60' : ''
+                    }`}
                   >
-                    {t('addQc')}
-                  </button>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
-                    <Icon name="Zap" size="xs" className="text-amber-600 shrink-0" aria-hidden />
-                    +XP
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
-                    <Icon name="Tag" size="xs" className="text-violet-700 shrink-0" aria-hidden />
-                    {t('sectionTitles')}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-ui)] bg-white/80 px-3 py-1 text-xs font-bold text-[var(--text)]">
-                    <Icon name="RefreshCw" size="xs" className="text-cyan-700 shrink-0" aria-hidden />
-                    {t('sectionRerolls')}
-                  </span>
-                </div>
-
-                {unlockNow.length > 0 ? (
-                  <div className="mt-4 rounded-xl border border-emerald-200/70 bg-emerald-50/60 p-3">
-                    <p className="text-xs font-black uppercase tracking-wide text-emerald-800">
-                      {t('valueUnlockNow')}
-                    </p>
-                    <ul className="mt-2 flex flex-wrap gap-2">
-                      {unlockNow.map((item) => (
-                        <li
-                          key={item.sku}
-                          className="inline-flex items-center gap-1 rounded-full border border-emerald-300/70 bg-white px-2.5 py-1 text-xs font-bold text-emerald-900"
-                        >
-                          <Icon name={item.icon} size="xs" className="text-emerald-700 shrink-0" aria-hidden />
-                          <span>{item.name}</span>
-                          <span className="text-emerald-700/85">· {item.priceCoins} QC</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : unlockSoon.length > 0 ? (
-                  <div className="mt-4 rounded-xl border border-amber-200/70 bg-amber-50/60 p-3">
-                    <p className="text-xs font-black uppercase tracking-wide text-amber-900">
-                      {t('valueNeedMore')}
-                    </p>
-                    <ul className="mt-2 flex flex-wrap gap-2">
-                      {unlockSoon.map((item) => (
-                        <li
-                          key={item.sku}
-                          className="inline-flex items-center gap-1 rounded-full border border-amber-300/70 bg-white px-2.5 py-1 text-xs font-bold text-amber-900"
-                        >
-                          <Icon name={item.icon} size="xs" className="text-amber-800 shrink-0" aria-hidden />
-                          <span>{item.name}</span>
-                          <span className="text-amber-800/85">· {item.priceCoins} QC</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-
-            <section className="mb-10" aria-labelledby="shop-prefs-heading">
-              <h2 id="shop-prefs-heading" className="font-display font-black text-xl text-[var(--text)] mb-1">
-                {t('prefsTitle')}
-              </h2>
-              <p className="text-sm text-[var(--muted)] mb-4 max-w-xl">
-                {t('prefsSub')}
-              </p>
-
-              <div className="shop-prefs-panel p-5 sm:p-6 pt-6 sm:pt-7">
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                  <span
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--violet)_16%,transparent)] ring-2 ring-[color:color-mix(in_srgb,var(--violet)_32%,transparent)]"
-                    aria-hidden
-                  >
-                    <Icon name="Settings" size="md" className="text-violet-800" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[var(--subtle)]">
-                      {t('customization')}
-                    </p>
-                    <p className="text-sm font-bold text-[var(--text)]">
-                      {t('customizationSub')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="shop-pref-field p-4 flex flex-col gap-2">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
-                      {t('activeTheme')}
-                    </label>
-                    <select
-                      className="shop-pref-select"
-                      value={shop.activeThemeId}
-                      onChange={(e) => void savePreferences({ activeThemeId: e.target.value })}
-                    >
-                      {getThemeIds()
-                        .filter((id) => ownedThemeIds.has(id))
-                        .map((id) => (
-                          <option key={id} value={id}>
-                            {id === 'default'
-                              ? t('themeDefault')
-                              : id === 'midnight'
-                                ? t('themeMidnight')
-                                : id === 'aurora'
-                                  ? t('themeAurora')
-                                  : id === 'parchment'
-                                    ? t('themeParchment')
-                                    : id}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                  <div className="shop-pref-field p-4 flex flex-col gap-2">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-[var(--subtle)]">
-                      {t('titleEquip')}
-                    </label>
-                    <select
-                      className="shop-pref-select"
-                      value={shop.equippedTitleId ?? ''}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        void savePreferences({ equippedTitleId: v === '' ? null : v });
-                      }}
-                    >
-                      <option value="">{t('noTitle')}</option>
-                      {(shop.ownedTitleIds ?? []).length > 0
-                        ? (shop.ownedTitleIds ?? []).map((id) => {
-                            const def = getTitleDefinition(id);
-                            return (
-                              <option key={id} value={id}>
-                                {def ? def.label : id}
-                              </option>
-                            );
-                          })
-                        : null}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-5 border-t border-[color:var(--border-ui)] flex flex-wrap gap-2.5">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--orange)_14%,var(--card))] px-3 py-1.5 text-xs font-semibold text-[var(--text)]">
-                    <span className="text-[var(--muted)]">{t('bonusRerolls')}</span>
-                    <span className="font-black tabular-nums text-[var(--orange)]">
-                      {shop.bonusRerollCredits}
-                    </span>
-                  </div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border-ui)] bg-[color:color-mix(in_srgb,var(--green)_12%,var(--card))] px-3 py-1.5 text-xs font-semibold text-[var(--text)]">
-                    <span className="text-[var(--muted)]">{t('xpBoosts')}</span>
-                    <span className="font-black tabular-nums text-[var(--green)]">{shop.xpBonusCharges}</span>
-                    <span className="text-[10px] font-medium text-[var(--muted)]">
-                      {t('xpPerValidation', { n: XP_SHOP_BONUS_PER_CHARGE })}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {featuredBundle ? (
-              <section className="mb-10" aria-labelledby="shop-featured-heading">
-                <h2 id="shop-featured-heading" className="font-display font-black text-xl text-[var(--text)] mb-3 drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]">
-                  {t('featuredHeading')}
-                </h2>
-                <div
-                  className={`app-shop-featured-card p-6 transition-shadow duration-300 ${
-                    purchaseHighlightSku === featuredBundle.sku
-                      ? 'motion-safe:animate-shop-card-bump motion-reduce:ring-2 motion-reduce:ring-amber-300/60'
-                      : ''
-                  }`}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface)] ring-2 ring-amber-400/35" aria-hidden>
-                        <Icon name={featuredBundle.icon} size="xl" className="text-[var(--orange)]" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        {featuredBundle.marketing?.badge ? (
-                          <MarketingBadge badge={featuredBundle.marketing.badge} />
-                        ) : null}
-                        <div className="mt-2 flex items-start gap-2">
-                          <p className="font-display font-black text-xl text-[var(--text)] flex-1 min-w-0">
-                            {featuredBundle.name}
-                          </p>
-                          {featuredBundle.contentsDetail ? (
-                            <button
-                              type="button"
-                              className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-slate-300/80 bg-white/95 text-[10px] font-black text-[var(--on-cream-muted)] shadow-sm hover:bg-white mt-0.5"
-                              aria-label={t('moreInfo', { name: featuredBundle.name })}
-                              onClick={() =>
-                                setInfoModal({
-                                  title: featuredBundle.name,
-                                  body: featuredBundle.contentsDetail!,
-                                })
-                              }
-                            >
-                              i
-                            </button>
-                          ) : null}
+                    <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface)] ring-2 ring-amber-400/35" aria-hidden>
+                          <Icon name={bundleItem.icon} size="xl" className="text-[var(--orange)]" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          {bundleItem.marketing?.badge ? <MarketingBadge badge={bundleItem.marketing.badge} /> : null}
+                          <div className="mt-1.5 flex items-start gap-2">
+                            <p className="font-display font-black text-xl text-[var(--text)] flex-1 min-w-0">
+                              {bundleItem.name}
+                            </p>
+                            {bundleItem.contentsDetail ? (
+                              <button
+                                type="button"
+                                className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border border-slate-300/80 bg-white/95 text-[10px] font-black text-[var(--on-cream-muted)] shadow-sm hover:bg-white mt-0.5"
+                                aria-label={t('moreInfo', { name: bundleItem.name })}
+                                onClick={() => setInfoModal({ title: bundleItem.name, body: bundleItem.contentsDetail! })}
+                              >
+                                i
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <p className="text-sm text-[var(--muted)] font-medium mb-2">{featuredBundle.description}</p>
-                  {featuredBundle.includedItems?.length ? (
-                    <ul className="list-disc pl-5 text-sm text-[var(--muted)] font-medium space-y-1 mb-2">
-                      {featuredBundle.includedItems.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {featuredBundle.marketing?.hook ? (
-                    <p className="text-sm font-semibold text-[var(--link-on-bg)] mb-3">{featuredBundle.marketing.hook}</p>
-                  ) : null}
-                  {featuredBundle.marketing?.compareAtCoins != null &&
-                  featuredBundle.marketing?.savingsCoins != null ? (
-                    <p className="text-sm text-[var(--muted)] mb-4">
-                      <span className="line-through tabular-nums text-[var(--subtle)]">
-                        {featuredBundle.marketing.compareAtCoins.toLocaleString(numLocale)} QC
-                      </span>
-                      <span className="ml-2 font-black text-[var(--green)]">
-                        {t('economy', {
-                          n: featuredBundle.marketing.savingsCoins.toLocaleString(numLocale),
-                        })}
-                      </span>
-                      <span className="text-[var(--subtle)] text-xs ml-1">{t('vsDetail')}</span>
-                    </p>
-                  ) : null}
-                  {(() => {
-                    const owns = catalogItemFullyOwned(featuredBundle, shop, coinPurchasedSkus);
-                    const affordable = balance >= featuredBundle.priceCoins;
-                    return (
-                      <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[color:var(--border-ui)]">
-                        <span className="font-display text-2xl font-black text-[var(--orange)] tabular-nums">
-                          {featuredBundle.priceCoins.toLocaleString(numLocale)} QC
+
+                    <p className="text-sm text-[var(--muted)] font-medium mb-3">{bundleItem.description}</p>
+
+                    {bundleItem.includedItems?.length ? (
+                      <ul className="space-y-1.5 mb-3">
+                        {bundleItem.includedItems.map((line) => (
+                          <li key={line} className="flex gap-2 text-sm text-[var(--muted)] font-medium">
+                            <Icon name="Check" size="xs" className="mt-0.5 shrink-0 text-[var(--green)]" aria-hidden />
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+
+                    {bundleItem.marketing?.hook ? (
+                      <p className="text-sm font-semibold text-[var(--link-on-bg)] mb-2">{bundleItem.marketing.hook}</p>
+                    ) : null}
+
+                    {bundleItem.marketing?.compareAtCoins != null && bundleItem.marketing?.savingsCoins != null ? (
+                      <p className="text-sm text-[var(--muted)] mb-4">
+                        <span className="line-through tabular-nums text-[var(--subtle)]">
+                          {bundleItem.marketing.compareAtCoins.toLocaleString(numLocale)} QC
                         </span>
-                        {owns ? (
-                          <span className="text-sm font-black uppercase text-emerald-800">{t('owned')}</span>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={coinPurchaseSku === featuredBundle.sku}
-                            onClick={() => {
-                              if (!affordable) {
-                                setRechargeOpen(true);
-                                return;
-                              }
-                              void buyWithCoins(featuredBundle.sku);
-                            }}
-                            className={`btn btn-primary btn-md text-sm font-black transition-transform duration-150 hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100 ${
-                              !affordable && coinPurchaseSku !== featuredBundle.sku
-                                ? 'ring-2 ring-amber-400/80 ring-offset-2 ring-offset-amber-50'
-                                : ''
-                            }`}
-                            title={
-                              !affordable
-                                ? t('insufficientHint')
-                                : undefined
-                            }
-                          >
-                            {coinPurchaseSku === featuredBundle.sku ? '…' : t('bundleBuy')}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
+                        <span className="ml-2 font-black text-[var(--green)]">
+                          {t('economy', { n: bundleItem.marketing.savingsCoins.toLocaleString(numLocale) })}
+                        </span>
+                        <span className="text-[var(--subtle)] text-xs ml-1">{t('vsDetail')}</span>
+                      </p>
+                    ) : null}
+
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[color:var(--border-ui)]">
+                      <span className="font-display text-2xl font-black text-[var(--orange)] tabular-nums">
+                        {bundleItem.priceCoins.toLocaleString(numLocale)} QC
+                      </span>
+                      {owns ? (
+                        <span className="text-sm font-black uppercase text-emerald-800">{t('owned')}</span>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={coinPurchaseSku === bundleItem.sku}
+                          onClick={() => {
+                            if (!affordable) { setRechargeOpen(true); return; }
+                            void buyWithCoins(bundleItem.sku);
+                          }}
+                          className={`btn btn-primary btn-md text-sm font-black transition-transform duration-150 hover:scale-[1.03] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:hover:scale-100 ${
+                            !affordable && coinPurchaseSku !== bundleItem.sku
+                              ? 'ring-2 ring-amber-400/80 ring-offset-2 ring-offset-amber-50'
+                              : ''
+                          }`}
+                          title={!affordable ? t('insufficientHint') : undefined}
+                        >
+                          {coinPurchaseSku === bundleItem.sku ? '…' : t('bundleBuy')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              );
+            })() : null}
+
+            {/* ── Boosts XP ───────────────────────────────────────────────── */}
+            {boostItems.length > 0 && (
+              <section className="mb-10" aria-labelledby="shop-xp-heading">
+                <h2 id="shop-xp-heading" className="font-display font-black text-xl text-[var(--text)] mb-1">
+                  {t('sectionXp')}
+                </h2>
+                <p className="text-sm text-[var(--muted)] mb-4">
+                  Gagne plus d'XP à chaque quête complétée — les charges sont stockées et consommées automatiquement.
+                </p>
+                <ul className="grid gap-4 sm:grid-cols-2">{boostItems.map(renderCatalogCard)}</ul>
               </section>
-            ) : null}
+            )}
 
-            <section className="mb-10" aria-labelledby="shop-xp-heading">
-              <h2 id="shop-xp-heading" className="font-display font-black text-lg text-[var(--text)] mb-3">
-                {t('sectionXp')}
+            {/* ── Relances ────────────────────────────────────────────────── */}
+            {rerollItems.length > 0 && (
+              <section className="mb-10" aria-labelledby="shop-reroll-heading">
+                <h2 id="shop-reroll-heading" className="font-display font-black text-xl text-[var(--text)] mb-1">
+                  {t('sectionRerolls')}
+                </h2>
+                <p className="text-sm text-[var(--muted)] mb-4">
+                  La quête du jour ne te convient pas ? Échange-la contre une autre sans attendre le lendemain.
+                </p>
+                <ul className="grid gap-4 sm:grid-cols-2">{rerollItems.map(renderCatalogCard)}</ul>
+              </section>
+            )}
+
+            {/* ── Bientôt disponible ──────────────────────────────────────── */}
+            <section className="mb-10" aria-labelledby="shop-soon-heading">
+              <h2 id="shop-soon-heading" className="font-display font-black text-xl text-[var(--text)] mb-3">
+                Bientôt disponible
               </h2>
-              <ul className="grid gap-4 sm:grid-cols-2">{xpItems.map(renderCatalogCard)}</ul>
+              <ComingSoonCard />
             </section>
 
-            <section className="mb-10" aria-labelledby="shop-look-heading">
-              <h2 id="shop-look-heading" className="font-display font-black text-lg text-[var(--text)] mb-3">
-                {t('sectionLook')}
-              </h2>
-              <h3 className="text-xs font-black uppercase tracking-wider text-[var(--subtle)] mb-3">{t('sectionTitles')}</h3>
-              <ul className="grid gap-4 sm:grid-cols-2">{titleItems.map(renderCatalogCard)}</ul>
-            </section>
-
-            <section className="mb-10" aria-labelledby="shop-reroll-heading">
-              <h2 id="shop-reroll-heading" className="font-display font-black text-lg text-[var(--text)] mb-3">
-                {t('sectionRerolls')}
-              </h2>
-              <ul className="grid gap-4 sm:grid-cols-2">{rerollItems.map(renderCatalogCard)}</ul>
-            </section>
-
+            {/* ── Historique des transactions ──────────────────────────────── */}
             <section>
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <h2 className="text-xs font-black uppercase tracking-widest text-[var(--orange)]">
@@ -1104,13 +858,8 @@ function ShopPageInner() {
                       </div>
                       <div className="text-right">
                         {tx.coinsDelta != null ? (
-                          <span
-                            className={`font-black tabular-nums ${
-                              tx.coinsDelta >= 0 ? 'text-[var(--green)]' : 'text-[var(--orange)]'
-                            }`}
-                          >
-                            {tx.coinsDelta >= 0 ? '+' : ''}
-                            {tx.coinsDelta} QC
+                          <span className={`font-black tabular-nums ${tx.coinsDelta >= 0 ? 'text-[var(--green)]' : 'text-[var(--orange)]'}`}>
+                            {tx.coinsDelta >= 0 ? '+' : ''}{tx.coinsDelta} QC
                           </span>
                         ) : null}
                         {tx.amountCents > 0 ? (
@@ -1125,10 +874,7 @@ function ShopPageInner() {
                         ) : null}
                       </div>
                       <span className="text-xs text-[var(--subtle)] w-full font-medium">
-                        {new Date(tx.createdAt).toLocaleString(numLocale, {
-                          dateStyle: 'medium',
-                          timeStyle: 'short',
-                        })}
+                        {new Date(tx.createdAt).toLocaleString(numLocale, { dateStyle: 'medium', timeStyle: 'short' })}
                       </span>
                     </li>
                   ))}
@@ -1136,6 +882,7 @@ function ShopPageInner() {
               )}
             </section>
 
+            {/* ── Modale recharge ─────────────────────────────────────────── */}
             {rechargeOpen ? (
               <div
                 className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-4 sm:p-6"
@@ -1164,6 +911,7 @@ function ShopPageInner() {
               </div>
             ) : null}
 
+            {/* ── Modale info article ──────────────────────────────────────── */}
             {infoModal ? (
               <div
                 className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6"
@@ -1180,27 +928,27 @@ function ShopPageInner() {
                 <div className="quest-modal-panel relative z-10 w-full max-w-md overflow-hidden shadow-2xl">
                   <div className="quest-modal-panel-accent shrink-0" aria-hidden />
                   <div className="relative p-5 pt-4">
-                  <button
-                    type="button"
-                    className="absolute right-2 top-2 rounded-full p-2 text-[var(--subtle)] hover:bg-[var(--surface)]"
-                    onClick={() => setInfoModal(null)}
-                    aria-label={t('close')}
-                  >
-                    <Icon name="X" size="md" />
-                  </button>
-                  <h3 id="info-modal-title" className="font-display font-black text-lg text-[var(--text)] pr-8">
-                    {infoModal.title}
-                  </h3>
-                  <p className="mt-3 text-sm text-[var(--muted)] leading-relaxed whitespace-pre-wrap">
-                    {infoModal.body}
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm mt-5 w-full font-black"
-                    onClick={() => setInfoModal(null)}
-                  >
-                    {t('infoOk')}
-                  </button>
+                    <button
+                      type="button"
+                      className="absolute right-2 top-2 rounded-full p-2 text-[var(--subtle)] hover:bg-[var(--surface)]"
+                      onClick={() => setInfoModal(null)}
+                      aria-label={t('close')}
+                    >
+                      <Icon name="X" size="md" />
+                    </button>
+                    <h3 id="info-modal-title" className="font-display font-black text-lg text-[var(--text)] pr-8">
+                      {infoModal.title}
+                    </h3>
+                    <p className="mt-3 text-sm text-[var(--muted)] leading-relaxed whitespace-pre-wrap">
+                      {infoModal.body}
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm mt-5 w-full font-black"
+                      onClick={() => setInfoModal(null)}
+                    >
+                      {t('infoOk')}
+                    </button>
                   </div>
                 </div>
               </div>

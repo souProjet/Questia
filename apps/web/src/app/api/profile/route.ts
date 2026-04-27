@@ -96,7 +96,6 @@ export async function PATCH(request: NextRequest) {
   if (!profile) return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
 
   const ownedThemes = effectiveOwnedThemes(parseStringArray(profile.ownedThemes));
-  const ownedTitles = parseStringArray((profile as { ownedTitleIds?: unknown }).ownedTitleIds);
   const allowedThemes = new Set(getThemeIds());
   const allowedTitleIds = new Set(TITLE_IDS);
 
@@ -131,9 +130,6 @@ export async function PATCH(request: NextRequest) {
       const tid = String(body.equippedTitleId).trim();
       if (!allowedTitleIds.has(tid)) {
         return NextResponse.json({ error: 'Titre inconnu' }, { status: 400 });
-      }
-      if (!ownedTitles.includes(tid)) {
-        return NextResponse.json({ error: 'Tu ne possèdes pas ce titre' }, { status: 400 });
       }
       data.equippedTitleId = tid;
     }

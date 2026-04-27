@@ -9,8 +9,10 @@ import {
   Animated,
   Easing,
   Linking,
+  Modal,
+  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth, useUser } from '@clerk/expo';
 import {
@@ -19,13 +21,17 @@ import {
   getBadgeCatalogForUi,
   levelFromTotalXp,
   getTitleDefinition,
+  getThemeIds,
+  TITLES_REGISTRY,
   type ExplorerAxis,
   type RiskAxis,
   type EscalationPhase,
 } from '@questia/shared';
 import { colorWithAlpha, UiLucideIcon, type ThemePalette } from '@questia/ui';
+import { BlurView } from 'expo-blur';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
+import { GlassScrim } from '../../components/GlassScrim';
 import { hapticLight } from '../../lib/haptics';
 import { getProfileScreenStrings } from '../../lib/profileScreenStrings';
 import { elevationAndroidSafe } from '../../lib/elevationAndroid';
@@ -56,7 +62,108 @@ type ProfilePayload = {
   questDurationMinMinutes?: number;
   questDurationMaxMinutes?: number;
   heavyQuestPreference?: string;
+  shop?: {
+    activeThemeId: string;
+    equippedTitleId: string | null;
+  };
 };
+
+const TITLE_NONE = '__none__';
+
+type SelectOpt = { value: string; label: string };
+
+function AppearanceSelectSheet({
+  visible,
+  title,
+  options,
+  selectedValue,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  options: SelectOpt[];
+  selectedValue: string;
+  onSelect: (value: string) => void;
+  onClose: () => void;
+}) {
+  const { palette } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      statusBarTranslucent={Platform.OS === 'android'}
+      onRequestClose={onClose}
+    >
+      <View style={{ flex: 1 }}>
+        <GlassScrim
+          overlayColor={palette.overlay}
+          intensity={62}
+          tint="dark"
+          onPress={onClose}
+          accessibilityLabel="Fermer"
+        />
+        <View
+          pointerEvents="box-none"
+          style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}
+        >
+          <View
+            style={{
+              backgroundColor: colorWithAlpha(palette.card, 0.96),
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              paddingBottom: 24 + insets.bottom,
+              paddingTop: 16,
+              paddingHorizontal: 20,
+              maxHeight: 420,
+            }}
+          >
+            {Platform.OS !== 'web' ? (
+              <BlurView intensity={58} tint="light" style={StyleSheet.absoluteFillObject} />
+            ) : null}
+            <View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.card, 0.62), borderTopLeftRadius: 20, borderTopRightRadius: 20 }]}
+            />
+            <View style={{ width: 36, height: 4, backgroundColor: palette.muted, borderRadius: 2, alignSelf: 'center', marginBottom: 14 }} />
+            <Text style={{ fontSize: 15, fontWeight: '600', color: palette.text, marginBottom: 12, textAlign: 'center' }}>
+              {title}
+            </Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {options.map((o) => (
+                <Pressable
+                  key={o.value}
+                  onPress={() => { onSelect(o.value); onClose(); }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingVertical: 12,
+                    paddingHorizontal: 4,
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                    borderBottomColor: colorWithAlpha(palette.muted, 0.2),
+                  }}
+                >
+                  <Text style={{ fontSize: 14, color: o.value === selectedValue ? palette.cyan : palette.text }}>
+                    {o.label}
+                  </Text>
+                  {o.value === selectedValue ? (
+                    <Text style={{ color: palette.cyan, fontWeight: '700' }}>✓</Text>
+                  ) : null}
+                </Pressable>
+              ))}
+            </ScrollView>
+            <Pressable onPress={onClose} hitSlop={8} style={{ marginTop: 16, alignSelf: 'center' }}>
+              <Text style={{ color: palette.muted, fontSize: 14 }}>Fermer</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 export default function ProfileScreen() {
   const { locale: appLocale, setLocale } = useAppLocale();
@@ -66,7 +173,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { getToken, signOut } = useAuth();
   const { user } = useUser();
-  const { palette } = useAppTheme();
+  const { palette, refresh: refreshAppTheme } = useAppTheme();
   const styles = useMemo(() => createProfileStyles(palette), [palette]);
   const getTokenRef = useRef(getToken);
   useEffect(() => {
@@ -92,6 +199,11 @@ export default function ProfileScreen() {
   const [prefsSaving, setPrefsSaving] = useState(false);
   const [prefsMsg, setPrefsMsg] = useState<string | null>(null);
 
+  const [activeThemeId, setActiveThemeId] = useState('default');
+  const [equippedTitleId, setEquippedTitleId] = useState<string | null>(null);
+  const [appearSelectKind, setAppearSelectKind] = useState<null | 'theme' | 'title'>(null);
+  const [appearSaving, setAppearSaving] = useState(false);
+
   const barAnim = useRef(new Animated.Value(0)).current;
 
   const load = useCallback(async () => {
@@ -108,6 +220,10 @@ export default function ProfileScreen() {
       }
       const data = (await res.json()) as ProfilePayload;
       setProfile(data);
+      if (data.shop) {
+        setActiveThemeId(data.shop.activeThemeId ?? 'default');
+        setEquippedTitleId(data.shop.equippedTitleId ?? null);
+      }
       const c =
         data.reminderCadence === 'weekly' || data.reminderCadence === 'monthly'
           ? data.reminderCadence
@@ -195,6 +311,40 @@ export default function ProfileScreen() {
       setPrefsSaving(false);
     }
   }, [prefsCadence, prefsHeavyQuest, prefsDurMin, prefsDurMax, s]);
+
+  const saveAppearance = useCallback(async (patch: { activeThemeId?: string; equippedTitleId?: string | null }) => {
+    setAppearSaving(true);
+    try {
+      const token = await getTokenRef.current();
+      const res = await apiFetch(`${API_BASE_URL}/api/profile`, token, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) return;
+      const j = (await res.json()) as { shop?: { activeThemeId: string; equippedTitleId: string | null } };
+      if (j.shop) {
+        setActiveThemeId(j.shop.activeThemeId ?? 'default');
+        setEquippedTitleId(j.shop.equippedTitleId ?? null);
+        if (patch.activeThemeId != null) void refreshAppTheme();
+      }
+    } catch {
+      /* non bloquant */
+    } finally {
+      setAppearSaving(false);
+    }
+  }, [refreshAppTheme]);
+
+  const themeOptions = useMemo<SelectOpt[]>(() => {
+    return getThemeIds().map((id) => ({ value: id, label: s.themeLabel(id) }));
+  }, [s]);
+
+  const titleOptions = useMemo<SelectOpt[]>(() => {
+    const opts: SelectOpt[] = [{ value: TITLE_NONE, label: s.noTitle }];
+    for (const [id, def] of Object.entries(TITLES_REGISTRY)) {
+      opts.push({ value: id, label: def.label });
+    }
+    return opts;
+  }, [s]);
 
   const totalXp = profile?.totalXp ?? 0;
   const { level, xpIntoLevel, xpToNext, xpPerLevel } = levelFromTotalXp(totalXp);
@@ -401,6 +551,44 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
+          <Text style={styles.section}>{s.appearanceSection}</Text>
+          <View style={{ gap: 8, marginBottom: 4 }}>
+            <View style={[styles.levelCard, { padding: 14, gap: 10 }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={[styles.xpCaption, { color: palette.muted, fontSize: 12 }]}>{s.appearanceTheme}</Text>
+                <Pressable
+                  onPress={() => setAppearSelectKind('theme')}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={s.themeCurrentA11y(s.themeLabel(activeThemeId))}
+                  accessibilityHint={s.themeOpenHint}
+                >
+                  <Text style={{ fontSize: 14, color: palette.cyan, fontWeight: '600' }}>
+                    {s.themeLabel(activeThemeId)}
+                  </Text>
+                  <Text style={{ color: palette.muted, fontSize: 12 }}>▼</Text>
+                </Pressable>
+              </View>
+              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colorWithAlpha(palette.muted, 0.25) }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={[styles.xpCaption, { color: palette.muted, fontSize: 12 }]}>{s.appearanceTitle}</Text>
+                <Pressable
+                  onPress={() => setAppearSelectKind('title')}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={s.titleCurrentA11y(equippedTitleId ? (getTitleDefinition(equippedTitleId)?.label ?? equippedTitleId) : s.noTitle)}
+                  accessibilityHint={s.titleOpenHint}
+                  disabled={appearSaving}
+                >
+                  <Text style={{ fontSize: 14, color: palette.cyan, fontWeight: '600' }}>
+                    {equippedTitleId ? (getTitleDefinition(equippedTitleId)?.label ?? equippedTitleId) : s.noTitle}
+                  </Text>
+                  <Text style={{ color: palette.muted, fontSize: 12 }}>▼</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+
           <Text style={styles.section}>{s.prefsSection}</Text>
           <Text style={styles.prefsSub}>{s.prefsCadenceTitle}</Text>
           <View style={styles.localeRow}>
@@ -547,42 +735,47 @@ export default function ProfileScreen() {
           <Text style={styles.section}>{s.badgesTitle}</Text>
           <Text style={styles.hint}>{s.badgesHint}</Text>
 
-          <View style={styles.badgeGrid}>
+          <View style={styles.badgeList}>
             {badgeCatalog.map((b) => (
               <View
                 key={b.id}
                 style={[styles.badgeCard, b.unlocked ? styles.badgeCardUnlocked : styles.badgeCardLocked]}
               >
+                {/* Ligne icône + badge statut */}
                 <View style={styles.badgeTopRow}>
                   <View style={[styles.badgeIconWrap, !b.unlocked && styles.badgeIconWrapMuted]}>
-                    <UiLucideIcon name={b.placeholderIcon} size={26} color={palette.orange} />
+                    <UiLucideIcon name={b.placeholderIcon} size={22} color={palette.orange} />
                   </View>
-                  {b.unlocked ? (
-                    <View style={styles.badgePillUnlocked}>
-                      <Text style={styles.badgePillUnlockedText}>{s.unlocked}</Text>
+                  <View style={{ flex: 1, minWidth: 0, paddingLeft: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={[styles.badgeCat, b.unlocked ? styles.badgeCatUnlocked : styles.badgeCatLocked]}>
+                        {badgeCat[b.category]}
+                      </Text>
+                      {b.unlocked ? (
+                        <View style={styles.badgePillUnlocked}>
+                          <Text style={styles.badgePillUnlockedText}>{s.unlocked}</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.badgePillLocked}>
+                          <Text style={styles.badgePillLockedText}>{s.locked}</Text>
+                        </View>
+                      )}
                     </View>
-                  ) : (
-                    <View style={styles.badgePillLocked}>
-                      <Text style={styles.badgePillLockedText}>{s.locked}</Text>
-                    </View>
-                  )}
+                    <Text style={[styles.badgeName, !b.unlocked && styles.badgeNameMuted]}>{b.title}</Text>
+                    <Text style={[styles.badgeCrit, !b.unlocked && styles.badgeCritLocked]}>{b.criteria}</Text>
+                    {b.unlocked && b.unlockedAt ? (
+                      <Text style={styles.badgeDateUnlocked}>
+                        {new Date(b.unlockedAt).toLocaleDateString(dateLocale, {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </Text>
+                    ) : (
+                      <Text style={styles.badgeDate}>{s.objectiveInProgress}</Text>
+                    )}
+                  </View>
                 </View>
-                <Text style={[styles.badgeCat, b.unlocked ? styles.badgeCatUnlocked : styles.badgeCatLocked]}>
-                  {badgeCat[b.category]}
-                </Text>
-                <Text style={[styles.badgeName, !b.unlocked && styles.badgeNameMuted]}>{b.title}</Text>
-                <Text style={[styles.badgeCrit, !b.unlocked && styles.badgeCritLocked]}>{b.criteria}</Text>
-                {b.unlocked && b.unlockedAt ? (
-                  <Text style={styles.badgeDateUnlocked}>
-                    {new Date(b.unlockedAt).toLocaleDateString(dateLocale, {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </Text>
-                ) : (
-                  <Text style={styles.badgeDate}>{s.objectiveInProgress}</Text>
-                )}
               </View>
             ))}
           </View>
@@ -621,6 +814,23 @@ export default function ProfileScreen() {
           </Pressable>
         </ScrollView>
       )}
+
+      <AppearanceSelectSheet
+        visible={appearSelectKind === 'theme'}
+        title={s.selectThemeTitle}
+        options={themeOptions}
+        selectedValue={activeThemeId}
+        onSelect={(v) => { void saveAppearance({ activeThemeId: v }); }}
+        onClose={() => setAppearSelectKind(null)}
+      />
+      <AppearanceSelectSheet
+        visible={appearSelectKind === 'title'}
+        title={s.selectTitleTitle}
+        options={titleOptions}
+        selectedValue={equippedTitleId ?? TITLE_NONE}
+        onSelect={(v) => { void saveAppearance({ equippedTitleId: v === TITLE_NONE ? null : v }); }}
+        onClose={() => setAppearSelectKind(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -778,54 +988,74 @@ function createProfileStyles(p: ThemePalette) {
     prefsSaveBtnText: { fontSize: 15, fontWeight: '900', color: '#fff' },
     prefsMsg: { marginTop: 10, fontSize: 13, fontWeight: '700' },
 
-    badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    badgeCard: { width: '47%', minWidth: 140, borderRadius: 18, padding: 14 },
+    badgeList: { gap: 10 },
+    badgeCard: { borderRadius: 18, padding: 14 },
     badgeCardUnlocked: {
-      backgroundColor: p.card, borderWidth: 2, borderColor: colorWithAlpha(p.gold, 0.75),
-      shadowColor: p.orange, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: elev(4),
+      backgroundColor: p.card,
+      borderWidth: 2,
+      borderColor: colorWithAlpha(p.gold ?? p.orange, 0.6),
+      shadowColor: p.orange,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 12,
+      elevation: elev(3),
     },
     badgeCardLocked: {
-      backgroundColor: p.surface, borderWidth: 2, borderStyle: 'dashed', borderColor: p.border, opacity: 0.95,
+      backgroundColor: p.surface,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: colorWithAlpha(p.muted, 0.35),
+      opacity: 0.72,
     },
-    badgeTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+    badgeTopRow: { flexDirection: 'row', alignItems: 'flex-start' },
     badgeIconWrap: {
-      width: 40,
-      height: 40,
-      borderRadius: 12,
+      width: 44,
+      height: 44,
+      borderRadius: 14,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colorWithAlpha(p.orange, 0.1),
+      backgroundColor: colorWithAlpha(p.orange, 0.12),
       borderWidth: 1,
       borderColor: colorWithAlpha(p.orange, 0.22),
+      flexShrink: 0,
     },
-    badgeIconWrapMuted: { opacity: 0.45 },
+    badgeIconWrapMuted: { opacity: 0.4 },
     badgePillUnlocked: {
-      backgroundColor: colorWithAlpha(p.green, 0.2), paddingHorizontal: 8, paddingVertical: 3,
-      borderRadius: 999, borderWidth: 1, borderColor: colorWithAlpha(p.green, 0.45),
+      paddingHorizontal: 8, paddingVertical: 3,
+      borderRadius: 999, borderWidth: 1,
+      borderColor: colorWithAlpha(p.green, 0.45),
+      backgroundColor: colorWithAlpha(p.green, 0.15),
     },
-    badgePillUnlockedText: { fontSize: 8, fontWeight: '900', color: p.green, letterSpacing: 0.6 },
+    badgePillUnlockedText: { fontSize: 8, fontWeight: '900', color: p.green, letterSpacing: 0.6, textTransform: 'uppercase' },
     badgePillLocked: {
-      backgroundColor: colorWithAlpha(p.text, 0.08), paddingHorizontal: 8, paddingVertical: 3,
-      borderRadius: 999, borderWidth: 1, borderColor: p.border,
+      paddingHorizontal: 8, paddingVertical: 3,
+      borderRadius: 999, borderWidth: 1,
+      borderColor: colorWithAlpha(p.muted, 0.3),
+      backgroundColor: colorWithAlpha(p.muted, 0.08),
     },
-    badgePillLockedText: { fontSize: 8, fontWeight: '900', color: p.muted, letterSpacing: 0.6 },
+    badgePillLockedText: { fontSize: 8, fontWeight: '900', color: p.muted, letterSpacing: 0.6, textTransform: 'uppercase' },
     badgeCat: {
       fontSize: 9, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase',
-      marginBottom: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3,
+      paddingHorizontal: 7, paddingVertical: 2,
       borderRadius: 999, overflow: 'hidden',
     },
     badgeCatUnlocked: {
       color: p.orange,
-      backgroundColor: colorWithAlpha(p.gold, 0.14),
+      backgroundColor: colorWithAlpha(p.gold ?? p.orange, 0.14),
       borderWidth: 1,
-      borderColor: colorWithAlpha(p.gold, 0.45),
+      borderColor: colorWithAlpha(p.gold ?? p.orange, 0.38),
     },
-    badgeCatLocked: { color: '#64748b', backgroundColor: 'rgba(255,255,255,0.5)', borderWidth: 1, borderColor: 'rgba(148,163,184,0.45)' },
-    badgeName: { fontSize: 14, fontWeight: '900', color: C.text, marginBottom: 4 },
-    badgeNameMuted: { color: p.subtle },
-    badgeCrit: { fontSize: 11, color: C.muted, fontWeight: '600', marginBottom: 8, lineHeight: 16 },
-    badgeCritLocked: { color: p.subtle },
-    badgeDate: { fontSize: 10, color: p.subtle, fontWeight: '600' },
+    badgeCatLocked: {
+      color: C.muted,
+      backgroundColor: colorWithAlpha(p.muted, 0.1),
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.muted, 0.25),
+    },
+    badgeName: { fontSize: 14, fontWeight: '900', color: C.text, marginBottom: 3 },
+    badgeNameMuted: { color: p.muted },
+    badgeCrit: { fontSize: 11, color: C.muted, fontWeight: '500', marginBottom: 6, lineHeight: 16 },
+    badgeCritLocked: { color: p.muted },
+    badgeDate: { fontSize: 10, color: p.muted, fontWeight: '600' },
     badgeDateUnlocked: { fontSize: 10, color: p.green, fontWeight: '800' },
 
     infoCard: {

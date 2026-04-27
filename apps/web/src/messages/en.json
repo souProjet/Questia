@@ -483,7 +483,16 @@
     "prefsHeavyHint": "Outdoor trips or “schedule ahead” quests (social or long-form pace). This gently steers archetype selection and model instructions.",
     "prefsHeavyLow": "Rarely",
     "prefsHeavyBalanced": "Balanced",
-    "prefsHeavyHigh": "Often"
+    "prefsHeavyHigh": "Often",
+    "appearanceTitle": "Appearance",
+    "appearanceSub": "Theme and title — applied instantly in the app.",
+    "appearanceTheme": "Active theme",
+    "appearanceTitleEquip": "Title on profile",
+    "themeDefault": "Questia (light)",
+    "themeMidnight": "Northern Night",
+    "themeAurora": "Aurora",
+    "themeParchment": "Parchment",
+    "noTitle": "No title"
   },
   "AppHistory": {
     "eyebrow": "Journal",
