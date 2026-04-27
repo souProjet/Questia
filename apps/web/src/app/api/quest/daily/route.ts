@@ -57,7 +57,7 @@ import { findArchetypeById } from '@/lib/quest-taxonomy/map-prisma';
 export const dynamic = 'force-dynamic';
 
 /** Fenêtre d'historique injectée au moteur (sélection + résumé pour le LLM). */
-const HISTORY_WINDOW_LOGS = 14;
+const HISTORY_WINDOW_LOGS = 28;
 /** Profondeur d'historique narrée au LLM (pour la variété stylistique). */
 const HISTORY_BRIEF_DEPTH = 5;
 

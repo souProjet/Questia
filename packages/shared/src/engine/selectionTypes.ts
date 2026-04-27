@@ -96,4 +96,4 @@ export const DEFAULT_SCORE_WEIGHTS: ScoreWeights = Object.freeze({
 export const DEFAULT_CANDIDATE_POOL_SIZE = 5;
 
 /** Nombre de jours pendant lesquels un archétype servi est ignoré. */
-export const DEFAULT_RECENT_EXCLUSION_DAYS = 7;
+export const DEFAULT_RECENT_EXCLUSION_DAYS = 14;

@@ -7,18 +7,19 @@ import type { ScoringQuestLog } from './selectionTypes';
  *  - 0 : très saturée (plusieurs occurrences récentes que l'user n'a pas appréciées)
  *
  * Particularité importante : la pénalité est **pondérée par le statut**.
- *   - completed → 0 (l'user a aimé, ne pas le punir d'aimer)
+ *   - completed → 0.12 (pénalité douce pour éviter que l'user boucle sur la même famille)
  *   - accepted  → 0.3
  *   - pending   → 0.5
  *   - rejected  → 1.0
  *   - abandoned → 0.7
  *   - replaced  → 0.6
  *
- * Ainsi un utilisateur qui complète régulièrement la même famille de quête ne se voit
- * PAS détourné de cette famille (problème majeur de l'ancien algorithme).
+ * La pénalité douce sur `completed` introduit une légère pression vers la rotation
+ * des catégories, tout en laissant les favoris revenir régulièrement (le score
+ * d'affinité compense facilement 0.12 × recency sur le moyen terme).
  */
 const STATUS_REJECTION_WEIGHT: Record<ScoringQuestLog['status'], number> = {
-  completed: 0,
+  completed: 0.12,
   accepted: 0.3,
   pending: 0.5,
   abandoned: 0.7,
