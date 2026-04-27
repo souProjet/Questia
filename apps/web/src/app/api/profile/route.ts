@@ -33,6 +33,7 @@ function shopPayload(profile: {
   ownedTitleIds?: unknown;
   equippedTitleId?: string | null;
   xpBonusCharges?: number | null;
+  ownedQuestPackIds?: unknown;
 }) {
   const ownedTitles = parseStringArray(profile.ownedTitleIds);
   let equipped = profile.equippedTitleId ?? null;
@@ -46,6 +47,7 @@ function shopPayload(profile: {
     ownedTitleIds: ownedTitles,
     equippedTitleId: equipped,
     xpBonusCharges: profile.xpBonusCharges ?? 0,
+    ownedQuestPackIds: parseStringArray(profile.ownedQuestPackIds),
   };
 }
 

@@ -27,6 +27,9 @@ export async function applyGrantsToProfile(
   let bonusRerollCredits = profile.bonusRerollCredits ?? 0;
   let titles = parseStringArray((profile as { ownedTitleIds?: unknown }).ownedTitleIds);
   let xpBonusCharges = (profile as { xpBonusCharges?: number | null }).xpBonusCharges ?? 0;
+  let questPacks = parseStringArray(
+    (profile as { ownedQuestPackIds?: unknown }).ownedQuestPackIds,
+  );
 
   for (const entry of entries) {
     const g = entry.grants;
@@ -42,6 +45,9 @@ export async function applyGrantsToProfile(
     if (g.xpBonusCharges && g.xpBonusCharges > 0) {
       xpBonusCharges += g.xpBonusCharges;
     }
+    if (g.questPackIds?.length) {
+      questPacks = mergeUnique(questPacks, g.questPackIds);
+    }
   }
 
   const allowed = new Set(getThemeIds());
@@ -53,6 +59,7 @@ export async function applyGrantsToProfile(
     bonusRerollCredits,
     ownedTitleIds: titles as unknown as Prisma.InputJsonValue,
     xpBonusCharges,
+    ownedQuestPackIds: questPacks as unknown as Prisma.InputJsonValue,
   };
 
   const ownedSet = new Set(themes);

@@ -1,6 +1,37 @@
 import type { AppLocale, PersonalityVector } from '@questia/shared';
-import { hasExhibitedSignal, PERSONALITY_KEYS } from '@questia/shared';
+import {
+  hasExhibitedSignal,
+  PERSONALITY_KEYS,
+  QUEST_PACKS_REGISTRY,
+} from '@questia/shared';
 import type { GenerationProfile } from './types';
+
+/**
+ * Construit la consigne « packs actifs » pour le LLM.
+ * Les packs cohabitent : on liste leurs hints, le LLM choisit ce qui matche
+ * naturellement le candidat retenu (jamais forcer un lieu/ambiance qui jure).
+ */
+function buildQuestPacksGuidance(
+  ownedPackIds: string[] | undefined,
+  locale: AppLocale,
+): string | null {
+  if (!ownedPackIds || ownedPackIds.length === 0) return null;
+  const packs = ownedPackIds
+    .map((id) => QUEST_PACKS_REGISTRY[id])
+    .filter((p): p is NonNullable<typeof p> => Boolean(p));
+  if (packs.length === 0) return null;
+  const hints = packs.map((p) => `• ${locale === 'en' ? p.promptHintEn : p.promptHintFr}`);
+  if (locale === 'en') {
+    return [
+      `- Active quest packs (user-owned, weave them in *when natural*; never force one if it clashes with the chosen archetype):`,
+      ...hints,
+    ].join('\n');
+  }
+  return [
+    `- Packs de quêtes actifs (possédés par l'utilisateur·rice, les intégrer *quand c'est naturel* ; ne jamais en forcer un qui jure avec l'archétype choisi) :`,
+    ...hints,
+  ].join('\n');
+}
 
 const TRAIT_LABEL_FR: Record<string, string> = {
   openness: 'curiosité / ouverture',
@@ -164,6 +195,8 @@ export function buildProfileBrief(profile: GenerationProfile, locale: AppLocale)
     if (profile.refinementContext) {
       lines.push(`- Stated preferences (do not cite the source): ${profile.refinementContext}`);
     }
+    const packGuidanceEn = buildQuestPacksGuidance(profile.ownedQuestPackIds, locale);
+    if (packGuidanceEn) lines.push(packGuidanceEn);
     return lines.join('\n');
   }
 
@@ -180,5 +213,7 @@ export function buildProfileBrief(profile: GenerationProfile, locale: AppLocale)
   if (profile.refinementContext) {
     lines.push(`- Préférences exprimées (ne pas citer la source) : ${profile.refinementContext}`);
   }
+  const packGuidance = buildQuestPacksGuidance(profile.ownedQuestPackIds, locale);
+  if (packGuidance) lines.push(packGuidance);
   return lines.join('\n');
 }

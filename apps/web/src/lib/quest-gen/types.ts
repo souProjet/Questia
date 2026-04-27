@@ -48,6 +48,11 @@ export interface GenerationProfile {
   refinementContext: string | null;
   /** Fréquence souhaitée pour quêtes déplacement / à organiser (extérieur ou planifié). */
   heavyQuestPreference?: HeavyQuestPreference;
+  /**
+   * Packs de quêtes possédés (ids QUEST_PACKS_REGISTRY). Utilisés pour injecter
+   * leurs `promptHint` dans le brief envoyé au LLM (ambiance / lieu / posture).
+   */
+  ownedQuestPackIds?: string[];
 }
 
 export interface GenerationContext {

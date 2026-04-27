@@ -47,11 +47,13 @@ export function catalogItemFullyOwned(
   shop: {
     ownedThemes?: string[];
     ownedTitleIds?: string[];
+    ownedQuestPackIds?: string[];
   },
   coinPurchasedSkus: Set<string>,
 ): boolean {
   const ownedThemeIds = themeSetFromOwned(shop.ownedThemes);
   const ownedTitles = new Set(shop.ownedTitleIds ?? []);
+  const ownedQuestPacks = new Set(shop.ownedQuestPackIds ?? []);
 
   if (item.kind === 'reroll_pack' || item.kind === 'xp_booster') return false;
 
@@ -65,6 +67,10 @@ export function catalogItemFullyOwned(
 
   if (item.kind === 'title') {
     return item.grants.titles?.every((t) => ownedTitles.has(t)) ?? false;
+  }
+
+  if (item.kind === 'quest_pack') {
+    return item.grants.questPackIds?.every((p) => ownedQuestPacks.has(p)) ?? false;
   }
   return false;
 }

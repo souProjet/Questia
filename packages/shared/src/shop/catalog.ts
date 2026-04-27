@@ -9,8 +9,9 @@
  */
 import { XP_SHOP_BONUS_PER_CHARGE } from './constants';
 import type { ShopMarketingMeta } from './marketing';
+import type { QuestPackKind } from './questPacks';
 
-export type ShopItemKind = 'reroll_pack' | 'bundle' | 'title' | 'xp_booster';
+export type ShopItemKind = 'reroll_pack' | 'bundle' | 'title' | 'xp_booster' | 'quest_pack';
 
 export interface ShopCatalogEntry {
   sku: string;
@@ -27,6 +28,8 @@ export interface ShopCatalogEntry {
     titles?: string[];
     /** +XP_SHOP_BONUS_PER_CHARGE XP par quête validée, jusqu'à épuisement */
     xpBonusCharges?: number;
+    /** ids présents dans QUEST_PACKS_REGISTRY (achat unique, type bundle) */
+    questPackIds?: string[];
   };
   /** Mise en avant, économies bundle, etc. */
   marketing?: ShopMarketingMeta;
@@ -34,6 +37,8 @@ export interface ShopCatalogEntry {
   includedItems?: string[];
   /** Texte détaillé pour le bouton ℹ (modale / alerte) */
   contentsDetail?: string;
+  /** Pour `kind: 'quest_pack'` : sous-catégorisation UI (vibe/lifestyle/location). */
+  questPackKind?: QuestPackKind;
 }
 
 /** Ré-export utile pour l'UI (info bulle) */
@@ -117,6 +122,259 @@ export const SHOP_CATALOG: ShopCatalogEntry[] = [
       savingsCoins: 100,
       compareAtCoins: 700,
     },
+  },
+
+  // ── Packs de quêtes — Ambiances (vibes) ────────────────────────────────
+  {
+    sku: 'pack_couple',
+    kind: 'quest_pack',
+    questPackKind: 'vibe',
+    name: 'Pack Couple',
+    description:
+      "Oriente l'IA vers des quêtes à vivre à deux : petits gestes complices, sorties, rituels relationnels — sans niaiserie.",
+    priceCoins: 500,
+    icon: 'Heart',
+    grants: { questPackIds: ['pack_couple'] },
+    includedItems: [
+      "Quêtes ancrées dans la relation (à deux ou en duo)",
+      "Boost catégoriel permanent (vulnérabilité relationnelle, empathie)",
+      "Achat unique — actif tant que tu le veux dans la boutique",
+    ],
+    contentsDetail:
+      "Ce pack ajoute un biais durable au moteur de sélection : davantage de quêtes type « rituel partagé », « micro-attention » ou « sortie pensée pour deux ». Tu peux le combiner avec d'autres packs (Nocturne, Gastronomie…). Désactivable à venir dans le profil.",
+    marketing: { badge: 'new', hook: 'Pour le quotidien des duos.' },
+  },
+  {
+    sku: 'pack_ose',
+    kind: 'quest_pack',
+    questPackKind: 'vibe',
+    name: 'Pack Osé',
+    description:
+      "Pour pousser un cran plus loin sans déraper : geste audacieux, prise de parole, mini-performance.",
+    priceCoins: 500,
+    icon: 'Flame',
+    grants: { questPackIds: ['pack_ose'] },
+    includedItems: [
+      "Boost vers les quêtes à inconfort visible (mais sain)",
+      "Conserve les garde-fous sécurité du moteur",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "« Osé » ne veut pas dire « stupide » : le pack pondère vers des quêtes où tu fais quelque chose de visible (parler, montrer, oser un geste) tout en respectant les règles de sécurité de Questia.",
+    marketing: { badge: 'new', hook: 'Un cran au-dessus.' },
+  },
+  {
+    sku: 'pack_rencontres',
+    kind: 'quest_pack',
+    questPackKind: 'vibe',
+    name: 'Pack Rencontres',
+    description:
+      "Briser la glace, créer le déclic. Plus de quêtes qui ouvrent une vraie porte vers les autres.",
+    priceCoins: 500,
+    icon: 'Sparkles',
+    grants: { questPackIds: ['pack_rencontres'] },
+    includedItems: [
+      "Plus de sociabilité exploratoire et d'échanges sincères",
+      "Pas de drague forcée — qualité de l'échange avant la quantité",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "Tu reçois plus souvent des quêtes qui ouvrent un échange : un compliment honnête, une question décalée, un sujet sortant des banalités. Compatible Nocturne / Paris / Gastronomie.",
+    marketing: { badge: 'new' },
+  },
+  {
+    sku: 'pack_nocturne',
+    kind: 'quest_pack',
+    questPackKind: 'vibe',
+    name: 'Pack Nocturne',
+    description:
+      "Quand la ville change de peau après la nuit tombée — quêtes qui s'allument plutôt en soirée.",
+    priceCoins: 500,
+    icon: 'Moon',
+    grants: { questPackIds: ['pack_nocturne'] },
+    includedItems: [
+      "Boost « après le coucher du soleil »",
+      "Mix introspection urbaine + micro-aventure",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "Le moteur favorise les archétypes qui se prêtent au soir : marche éclairée, observation urbaine, rituel nocturne, sortie tardive. Le LLM reçoit aussi la consigne d'orienter le récit après le coucher du soleil.",
+    marketing: { badge: 'new' },
+  },
+  {
+    sku: 'pack_piment',
+    kind: 'quest_pack',
+    questPackKind: 'vibe',
+    name: 'Pack Piment',
+    description:
+      "Un soupçon de provocation pour pimenter la journée — micro-performance publique, voix qui se pose.",
+    priceCoins: 500,
+    icon: 'Zap',
+    grants: { questPackIds: ['pack_piment'] },
+    includedItems: [
+      "Boost vers l'introspection publique et l'inconfort visible",
+      "Toujours sous garde-fous (jamais transgresser autrui)",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "Le pack pousse vers des quêtes un peu piquantes : parler à voix haute, demander quelque chose d'inhabituel, décaler le regard public. Aucune quête ne te demandera de mettre quelqu'un en difficulté.",
+    marketing: { badge: 'new' },
+  },
+
+  // ── Packs de quêtes — Style de vie ─────────────────────────────────────
+  {
+    sku: 'pack_solo_absolu',
+    kind: 'quest_pack',
+    questPackKind: 'lifestyle',
+    name: 'Pack Solo absolu',
+    description:
+      "Pour les périodes où tu veux être seul·e sans culpabiliser — quêtes introspectives, sans interaction sociale.",
+    priceCoins: 500,
+    icon: 'User',
+    grants: { questPackIds: ['pack_solo_absolu'] },
+    includedItems: [
+      "Aucune quête à contrainte sociale (jamais imposée)",
+      "Boost privation sensorielle / discipline asynchrone / détox",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "Le moteur évite les quêtes qui exigent d'aller voir quelqu'un et privilégie celles que tu peux faire entièrement seul·e. Idéal pour des semaines plus introverties ou des périodes calmes.",
+    marketing: { badge: 'new' },
+  },
+  {
+    sku: 'pack_gastronomie',
+    kind: 'quest_pack',
+    questPackKind: 'lifestyle',
+    name: 'Pack Gastronomie',
+    description:
+      "Manger autrement : produit, marché, geste, lieu. Le goût comme terrain de quête.",
+    priceCoins: 500,
+    icon: 'UtensilsCrossed',
+    grants: { questPackIds: ['pack_gastronomie'] },
+    includedItems: [
+      "Plus de quêtes ancrées « bouche, marché, cuisine »",
+      "Compatible avec un pack lieu (Lyon, Marseille…)",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "Le pack ajoute un biais vers des quêtes alimentaires (produit, lieu, geste) sans transformer Questia en application nutrition. Le LLM reçoit la consigne de privilégier goût, geste et mémoire — pas un cours.",
+    marketing: { badge: 'new' },
+  },
+  {
+    sku: 'pack_slow_life',
+    kind: 'quest_pack',
+    questPackKind: 'lifestyle',
+    name: 'Pack Slow life',
+    description:
+      "Ralentir, sentir, respirer. Des quêtes courtes, lentes, attentives — quand tu veux décompresser.",
+    priceCoins: 500,
+    icon: 'Leaf',
+    grants: { questPackIds: ['pack_slow_life'] },
+    includedItems: [
+      "Boost privation sensorielle / détox dopaminergique",
+      "Pas de course contre la montre",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "Le moteur oriente vers des micro-rituels lents (boisson chaude, balade lente, silence court) plutôt que vers des défis intenses. Idéal pour les périodes chargées où tu veux rester sur de petites victoires apaisantes.",
+    marketing: { badge: 'new' },
+  },
+  {
+    sku: 'pack_social_amis',
+    kind: 'quest_pack',
+    questPackKind: 'lifestyle',
+    name: 'Pack Social & amis',
+    description:
+      "Renforcer les liens qui comptent : message, attention concrète, retrouvailles.",
+    priceCoins: 500,
+    icon: 'Users',
+    grants: { questPackIds: ['pack_social_amis'] },
+    includedItems: [
+      "Boost vers les quêtes sociales et empathiques",
+      "Idéal si tu veux entretenir un cercle de proches",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "Plus de quêtes type « écris à quelqu'un que tu n'as pas vu depuis 3 mois », « propose un café cette semaine », « fais une attention concrète » — pas du scrolling de feed, du lien réel.",
+    marketing: { badge: 'new' },
+  },
+
+  // ── Packs de quêtes — Lieux ────────────────────────────────────────────
+  {
+    sku: 'pack_paris',
+    kind: 'quest_pack',
+    questPackKind: 'location',
+    name: 'Pack Paris',
+    description:
+      "Ancre tes quêtes dans Paris : arrondissements, rives, métro, détails vrais — pas de cliché touristique.",
+    priceCoins: 450,
+    icon: 'MapPin',
+    grants: { questPackIds: ['pack_paris'] },
+    includedItems: [
+      "Plus de quêtes situées dans Paris quand le contexte le permet",
+      "Détail concret (arrondissement, rive, ligne de métro)",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "Quand le GPS et la météo le permettent, le LLM reçoit une consigne d'ancrage à Paris : un arrondissement, une rive, un café réel. Pas de filtre dur — si tu n'es pas à Paris ce jour-là, la quête s'adapte.",
+    marketing: { badge: 'new' },
+  },
+  {
+    sku: 'pack_lyon',
+    kind: 'quest_pack',
+    questPackKind: 'location',
+    name: 'Pack Lyon',
+    description:
+      "Entre Saône et Rhône, traboules et terrasses : tes quêtes prennent racine à Lyon.",
+    priceCoins: 450,
+    icon: 'MapPin',
+    grants: { questPackIds: ['pack_lyon'] },
+    includedItems: [
+      "Plus de quêtes ancrées Lyon (Presqu'île, Croix-Rousse…)",
+      "Détails concrets (traboules, quais)",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "Quand pertinent, la quête se situe à Lyon avec un détail vrai (Presqu'île, Croix-Rousse, traboules, quais). Compatible avec d'autres packs (Gastronomie, Couple, Nocturne…).",
+    marketing: { badge: 'new' },
+  },
+  {
+    sku: 'pack_nantes',
+    kind: 'quest_pack',
+    questPackKind: 'location',
+    name: 'Pack Nantes',
+    description:
+      "Île, machines, Loire : Nantes se prête au jeu. Quêtes ancrées dans les quartiers vivants.",
+    priceCoins: 450,
+    icon: 'MapPin',
+    grants: { questPackIds: ['pack_nantes'] },
+    includedItems: [
+      "Plus de quêtes ancrées Nantes (Île, Bouffay, Erdre…)",
+      "Détails concrets",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "La quête s'ancre à Nantes quand c'est pertinent — Île de Nantes, quartier Bouffay, bords d'Erdre — avec un détail vrai. Pas de filtre dur si tu n'y es pas.",
+    marketing: { badge: 'new' },
+  },
+  {
+    sku: 'pack_marseille',
+    kind: 'quest_pack',
+    questPackKind: 'location',
+    name: 'Pack Marseille',
+    description:
+      "Calanques, Vieux-Port, mistral : la ville donne le ton à tes quêtes.",
+    priceCoins: 450,
+    icon: 'MapPin',
+    grants: { questPackIds: ['pack_marseille'] },
+    includedItems: [
+      "Plus de quêtes ancrées Marseille (Vieux-Port, Panier, calanques…)",
+      "Détails concrets",
+      "Achat unique",
+    ],
+    contentsDetail:
+      "La quête se situe à Marseille avec un détail réel (Vieux-Port, Panier, calanques, corniche) quand le contexte s'y prête. Mix idéal avec Gastronomie, Solo absolu ou Slow life.",
+    marketing: { badge: 'new' },
   },
 ];
 

@@ -8,14 +8,18 @@ import { prisma } from '@/lib/db';
 import { parseStringArray } from '@/lib/shop/parse';
 
 function isFullyOwned(
-  profile: { ownedThemes: unknown; ownedTitleIds?: unknown },
+  profile: { ownedThemes: unknown; ownedTitleIds?: unknown; ownedQuestPackIds?: unknown },
   item: ShopCatalogEntry,
 ): boolean {
   if (item.kind === 'reroll_pack' || item.kind === 'xp_booster') return false;
   const titles = parseStringArray(profile.ownedTitleIds);
+  const questPacks = parseStringArray(profile.ownedQuestPackIds);
 
   if (item.kind === 'title') {
     return item.grants.titles?.every((t) => titles.includes(t)) ?? false;
+  }
+  if (item.kind === 'quest_pack') {
+    return item.grants.questPackIds?.every((p) => questPacks.includes(p)) ?? false;
   }
   return false;
 }

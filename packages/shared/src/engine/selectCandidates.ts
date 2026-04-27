@@ -107,8 +107,11 @@ export function selectCandidates(
     const phaseFit = computePhaseFit(archetype, profile.phase, scoringVector);
     const freshness = computeFreshnessScore(archetype, profile.recentLogs, taxonomyById);
     const refinementBias = profile.refinementBias[archetype.category] ?? 0;
-    // Refinement est dans [-0.14, +0.14]. On le centre à 0.5 pour cohabiter avec les autres scores.
-    const refinement = Math.max(0, Math.min(1, 0.5 + refinementBias * 3));
+    const packBias = profile.questPackBias?.[archetype.category] ?? 0;
+    // Refinement est dans [-0.14, +0.14] ; questPackBias saturé à ±0.18 côté shop.
+    // On les additionne puis on saturait à ±0.30 avant de centrer à 0.5.
+    const combinedBias = Math.max(-0.3, Math.min(0.3, refinementBias + packBias));
+    const refinement = Math.max(0, Math.min(1, 0.5 + combinedBias * 3));
 
     const baseTotal =
       affinity * weights.affinity +

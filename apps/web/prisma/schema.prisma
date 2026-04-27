@@ -137,6 +137,8 @@ model Profile {
   equippedTitleId       String?         @map("equipped_title_id")
   /** Charges bonus XP boutique (consommées à chaque quête validée) */
   xpBonusCharges        Int             @default(0) @map("xp_bonus_charges")
+  /** Packs de quêtes possédés (ids QUEST_PACKS_REGISTRY — JSON string[]) */
+  ownedQuestPackIds     Json            @default("[]") @map("owned_quest_pack_ids")
   /** Rappel push (app mobile) pour la quête du jour */
   reminderPushEnabled   Boolean         @default(false) @map("reminder_push_enabled")
   /** Rappel par e-mail */

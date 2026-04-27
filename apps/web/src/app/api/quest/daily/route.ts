@@ -14,6 +14,7 @@ import {
   refinementAnswersToCategoryBias,
   parseValidRefinementAnswers,
   buildRefinementContextForPrompt,
+  questPackBiasFromOwned,
   isValidReportDeferredDate,
   isValidQuestDateIso,
   getQuestCalendarDateNow,
@@ -334,6 +335,11 @@ export async function GET(request: NextRequest) {
   const refinementBias = refinementAnswersToCategoryBias(storedRefinementAnswers);
   const refinementContext = buildRefinementContextForPrompt(storedRefinementAnswers);
 
+  const ownedQuestPackIds = parseStringArray(
+    (profile as { ownedQuestPackIds?: unknown }).ownedQuestPackIds,
+  );
+  const questPackBias = questPackBiasFromOwned(ownedQuestPackIds);
+
   // Exclusions cumulées (relances du jour)
   const lastQuestDateStr =
     profile.lastQuestDate == null ? null : String(profile.lastQuestDate).slice(0, 10);
@@ -361,6 +367,7 @@ export async function GET(request: NextRequest) {
     day: profile.currentDay,
     sociability,
     refinementBias,
+    questPackBias,
     recentLogs: scoringLogs,
     hasUserLocation: context.hasUserLocation,
     isOutdoorFriendly: context.isOutdoorFriendly,
@@ -432,6 +439,7 @@ export async function GET(request: NextRequest) {
       sociability,
       refinementContext,
       heavyQuestPreference: parseHeavyQuestPreference(profile.heavyQuestPreference),
+      ownedQuestPackIds,
     },
     context: {
       questDateIso: today,

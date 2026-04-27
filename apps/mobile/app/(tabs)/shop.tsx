@@ -33,6 +33,7 @@ import {
   AnalyticsEvent,
   type ShopCatalogEntry,
   type ShopMarketingBadge,
+  type QuestPackKind,
 } from '@questia/shared';
 import { colorWithAlpha, shopBalanceGradient, UiLucideIcon, type ThemePalette } from '@questia/ui';
 import { AuraTabShell } from '../../components/AuraTabShell';
@@ -57,6 +58,7 @@ type ProfileShop = {
   bonusRerollCredits: number;
   ownedTitleIds?: string[];
   xpBonusCharges: number;
+  ownedQuestPackIds?: string[];
 };
 
 type ShopFlash = { message: string; kind: 'success' | 'error' | 'info' };
@@ -80,6 +82,7 @@ function kindOrder(kind: ShopCatalogEntry['kind']): number {
     xp_booster: 1,
     reroll_pack: 2,
     bundle: 3,
+    quest_pack: 4,
   };
   return order[kind] ?? 9;
 }
@@ -218,7 +221,7 @@ export default function ShopScreen() {
   );
   const coinPackReference = coinPacksSorted[0];
 
-  const { featuredBundle, xpItems, titleItems, rerollItems } = useMemo(() => {
+  const { featuredBundle, xpItems, titleItems, rerollItems, questPackItems } = useMemo(() => {
     const bundle = items.find((i) => i.kind === 'bundle');
     const rest = items.filter((i) => i.kind !== 'bundle');
     return {
@@ -226,8 +229,15 @@ export default function ShopScreen() {
       xpItems: rest.filter((i) => i.kind === 'xp_booster'),
       titleItems: rest.filter((i) => i.kind === 'title'),
       rerollItems: rest.filter((i) => i.kind === 'reroll_pack'),
+      questPackItems: rest.filter((i) => i.kind === 'quest_pack'),
     };
   }, [items]);
+
+  const [questPackFilter, setQuestPackFilter] = useState<QuestPackKind | 'all'>('all');
+  const filteredQuestPacks = useMemo(() => {
+    if (questPackFilter === 'all') return questPackItems;
+    return questPackItems.filter((p) => p.questPackKind === questPackFilter);
+  }, [questPackItems, questPackFilter]);
 
   const [shop, setShop] = useState<ProfileShop | null>(null);
   const [transactions, setTransactions] = useState<TxRow[]>([]);
@@ -903,74 +913,51 @@ export default function ShopScreen() {
               {rerollItems.map(renderCatalogCard)}
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.h2}>{appLocale === 'en' ? 'Coming soon' : 'Bientôt disponible'}</Text>
-              <View style={styles.comingSoonCard}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <View style={styles.comingSoonIcon}>
-                    <UiLucideIcon name="Sparkles" size={22} color={palette.cyan} />
-                  </View>
-                  <View style={styles.comingSoonBadge}>
-                    <UiLucideIcon name="Clock" size={11} color={palette.cyan} />
-                    <Text style={styles.comingSoonBadgeText}>
-                      {appLocale === 'en' ? 'COMING SOON' : 'BIENTÔT'}
-                    </Text>
-                  </View>
+            {questPackItems.length > 0 ? (
+              <View style={styles.section}>
+                <Text style={styles.h2}>{s.sectionQuestPacks}</Text>
+                <Text style={styles.sectionSub}>{s.questPacksIntro}</Text>
+
+                <View style={styles.packFilterRow}>
+                  {(
+                    [
+                      { v: 'all' as const, label: s.questPackKindAll, icon: null },
+                      { v: 'vibe' as const, label: s.questPackKindVibe, icon: 'Sparkles' as const },
+                      { v: 'lifestyle' as const, label: s.questPackKindLifestyle, icon: 'Leaf' as const },
+                      { v: 'location' as const, label: s.questPackKindLocation, icon: 'MapPin' as const },
+                    ]
+                  ).map((opt) => {
+                    const active = questPackFilter === opt.v;
+                    return (
+                      <Pressable
+                        key={opt.v}
+                        onPress={() => setQuestPackFilter(opt.v)}
+                        style={[styles.packFilterChip, active && styles.packFilterChipActive]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                      >
+                        {opt.icon ? (
+                          <UiLucideIcon
+                            name={opt.icon}
+                            size={11}
+                            color={active ? '#fff' : palette.muted}
+                          />
+                        ) : null}
+                        <Text style={[styles.packFilterChipText, active && styles.packFilterChipTextActive]}>
+                          {opt.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
 
-                <Text style={styles.comingSoonTitle}>
-                  {appLocale === 'en' ? 'Themed quest packs' : 'Packs de quêtes thématiques'}
-                </Text>
-                <Text style={styles.comingSoonDesc}>
-                  {appLocale === 'en'
-                    ? 'Packs by vibe (couple, spicy, night out…), location (Paris, Lyon…) or lifestyle (solo, slow life, social…).'
-                    : 'Des packs par ambiance (couple, osé, nocturne…), par lieu (Paris, Lyon…) ou style de vie (solo, slow life, social…).'}
-                </Text>
-
-                <View style={styles.comingSoonTags}>
-                  {(appLocale === 'en'
-                    ? [
-                        { icon: 'Heart' as const,           label: 'Couple' },
-                        { icon: 'Flame' as const,           label: 'Spicy' },
-                        { icon: 'Sparkles' as const,        label: 'Dating' },
-                        { icon: 'Moon' as const,            label: 'Night out' },
-                        { icon: 'User' as const,            label: 'Solo' },
-                        { icon: 'Zap' as const,             label: 'Daring' },
-                        { icon: 'UtensilsCrossed' as const, label: 'Gastro' },
-                        { icon: 'Leaf' as const,            label: 'Slow life' },
-                        { icon: 'Users' as const,           label: 'Social' },
-                        { icon: 'MapPin' as const,          label: 'Paris' },
-                        { icon: 'MapPin' as const,          label: 'Nantes' },
-                        { icon: 'MapPin' as const,          label: 'Lyon' },
-                      ]
-                    : [
-                        { icon: 'Heart' as const,           label: 'Couple' },
-                        { icon: 'Flame' as const,           label: 'Osé' },
-                        { icon: 'Sparkles' as const,        label: 'Rencontres' },
-                        { icon: 'Moon' as const,            label: 'Nocturne' },
-                        { icon: 'User' as const,            label: 'Solo absolu' },
-                        { icon: 'Zap' as const,             label: 'Piment' },
-                        { icon: 'UtensilsCrossed' as const, label: 'Gastronomie' },
-                        { icon: 'Leaf' as const,            label: 'Slow life' },
-                        { icon: 'Users' as const,           label: 'Social & amis' },
-                        { icon: 'MapPin' as const,          label: 'Paris' },
-                        { icon: 'MapPin' as const,          label: 'Nantes' },
-                        { icon: 'MapPin' as const,          label: 'Lyon' },
-                      ]
-                  ).map((tag) => (
-                    <View key={tag.label} style={styles.comingSoonTag}>
-                      <UiLucideIcon name={tag.icon} size={11} color={palette.cyan} />
-                      <Text style={styles.comingSoonTagText}>{tag.label}</Text>
-                    </View>
-                  ))}
-                  <View style={[styles.comingSoonTag, { opacity: 0.55 }]}>
-                    <Text style={[styles.comingSoonTagText, { fontStyle: 'italic' }]}>
-                      {appLocale === 'en' ? '& more…' : 'et plus…'}
-                    </Text>
-                  </View>
-                </View>
+                {filteredQuestPacks.length === 0 ? (
+                  <Text style={styles.emptyTx}>{s.questPacksEmpty}</Text>
+                ) : (
+                  filteredQuestPacks.map(renderCatalogCard)
+                )}
               </View>
-            </View>
+            ) : null}
 
             <View style={styles.section}>
               <View style={styles.journalHead}>
@@ -1436,6 +1423,37 @@ function createShopStyles(p: ThemePalette) {
     borderColor: colorWithAlpha(p.cyan, 0.35),
     backgroundColor: colorWithAlpha(p.cyan, 0.06),
     padding: 16,
+  },
+  packFilterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  packFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: p.divider,
+    backgroundColor: p.card,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  packFilterChipActive: {
+    backgroundColor: p.cyan,
+    borderColor: p.cyan,
+  },
+  packFilterChipText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: p.muted,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  packFilterChipTextActive: {
+    color: '#fff',
   },
   comingSoonIcon: {
     width: 40,

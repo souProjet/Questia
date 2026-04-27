@@ -30,6 +30,11 @@ export interface ProfileSnapshot {
   sociability: SociabilityLevel | null;
   /** Biais issu du questionnaire de raffinement (positif = favorise). */
   refinementBias: Partial<Record<PsychologicalCategory, number>>;
+  /**
+   * Biais issu des packs de quêtes possédés (saturé côté `questPackBiasFromOwned`).
+   * Cohabite avec `refinementBias` : les deux s'additionnent dans le scoring.
+   */
+  questPackBias?: Partial<Record<PsychologicalCategory, number>>;
   /** Logs récents (du plus récent au plus ancien). */
   recentLogs: ScoringQuestLog[];
   /** True si l'utilisateur a accepté de partager sa position GPS. */

@@ -18,6 +18,7 @@ import {
   type ShopCatalogEntry,
   type CoinPackEntry,
   type ShopMarketingBadge,
+  type QuestPackKind,
 } from '@questia/shared';
 import { AnalyticsEvent } from '@/lib/analytics/events';
 import { trackAnalyticsEvent } from '@/lib/analytics/track';
@@ -197,6 +198,7 @@ type ProfileShop = {
   xpBonusCharges: number;
   ownedThemes?: string[];
   ownedTitleIds?: string[];
+  ownedQuestPackIds?: string[];
 };
 
 type TxRow = {
@@ -212,65 +214,31 @@ type TxRow = {
   createdAt: string;
 };
 
-/* ─── Carte "Bientôt disponible" ──────────────────────────────────────────── */
+/* ─── Filtres packs de quêtes (vibe / lifestyle / location) ───────────────── */
 
-function ComingSoonCard() {
-  const tags: { icon: string; label: string; cls: string }[] = [
-    { icon: 'Heart',           label: 'Couple',        cls: 'border-rose-200/70 bg-rose-50/80 text-rose-700' },
-    { icon: 'Flame',           label: 'Osé',           cls: 'border-orange-200/70 bg-orange-50/80 text-orange-700' },
-    { icon: 'Sparkles',        label: 'Rencontres',    cls: 'border-rose-200/70 bg-rose-50/80 text-rose-700' },
-    { icon: 'Moon',            label: 'Nocturne',      cls: 'border-indigo-200/70 bg-indigo-50/80 text-indigo-700' },
-    { icon: 'User',            label: 'Solo absolu',   cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
-    { icon: 'Zap',             label: 'Piment',        cls: 'border-red-200/70 bg-red-50/80 text-red-700' },
-    { icon: 'UtensilsCrossed', label: 'Gastronomie',   cls: 'border-amber-200/70 bg-amber-50/80 text-amber-800' },
-    { icon: 'Leaf',            label: 'Slow life',     cls: 'border-emerald-200/70 bg-emerald-50/80 text-emerald-700' },
-    { icon: 'Users',           label: 'Social & amis', cls: 'border-sky-200/70 bg-sky-50/80 text-sky-700' },
-    { icon: 'MapPin',          label: 'Paris',         cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
-    { icon: 'MapPin',          label: 'Lyon',          cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
-    { icon: 'MapPin',          label: 'Nantes',        cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
-    { icon: 'MapPin',          label: 'Marseille',     cls: 'border-violet-200/70 bg-violet-50/80 text-violet-800' },
-  ];
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-violet-200/80 bg-gradient-to-br from-violet-50/60 via-white to-rose-50/40 p-5 sm:p-6">
-      <div className="absolute right-4 top-4 opacity-[0.07] pointer-events-none select-none" aria-hidden>
-        <Icon name="Sparkles" size="2xl" className="text-violet-500 h-20 w-20" />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 ring-1 ring-violet-200/80" aria-hidden>
-          <Icon name="Backpack" size="md" className="text-violet-700" />
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-300/60 bg-violet-100 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-violet-700">
-          <Icon name="Clock" size="xs" className="shrink-0" aria-hidden />
-          Bientôt
-        </span>
-      </div>
-
-      <p className="font-display font-black text-lg text-[var(--text)] leading-snug">
-        Packs de quêtes thématiques
-      </p>
-      <p className="mt-2 text-sm text-[var(--muted)] font-medium leading-relaxed max-w-lg">
-        Des packs ciblés par <strong className="text-[var(--text)] font-bold">ambiance</strong> (couple, nocturne, osé…), par <strong className="text-[var(--text)] font-bold">lieu</strong> (Paris, Nantes…) ou par <strong className="text-[var(--text)] font-bold">style de vie</strong> (solo, slow life, social…). Moins d'aléatoire, exactement ce dont tu as envie.
-      </p>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {tags.map((tag) => (
-          <span
-            key={tag.label}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${tag.cls}`}
-          >
-            <Icon name={tag.icon} size="xs" className="shrink-0" aria-hidden />
-            {tag.label}
-          </span>
-        ))}
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-200/50 bg-white/60 px-2.5 py-1 text-xs font-semibold text-violet-500 italic">
-          et bien d'autres…
-        </span>
-      </div>
-    </div>
-  );
-}
+const PACK_KIND_META: Record<
+  QuestPackKind,
+  { fr: string; en: string; icon: string; color: string }
+> = {
+  vibe: {
+    fr: 'Ambiances',
+    en: 'Vibes',
+    icon: 'Sparkles',
+    color: 'border-rose-200 bg-rose-50/70 text-rose-800',
+  },
+  lifestyle: {
+    fr: 'Style de vie',
+    en: 'Lifestyle',
+    icon: 'Leaf',
+    color: 'border-emerald-200 bg-emerald-50/70 text-emerald-800',
+  },
+  location: {
+    fr: 'Lieux',
+    en: 'Locations',
+    icon: 'MapPin',
+    color: 'border-violet-200 bg-violet-50/70 text-violet-800',
+  },
+};
 
 /* ─── Page principale ─────────────────────────────────────────────────────── */
 
@@ -287,11 +255,18 @@ function ShopPageInner() {
   );
   const coinPackReference = coinPacksSorted[0];
 
-  const { bundleItem, boostItems, rerollItems } = useMemo(() => ({
+  const { bundleItem, boostItems, rerollItems, questPackItems } = useMemo(() => ({
     bundleItem: SHOP_CATALOG.find((i) => i.kind === 'bundle'),
     boostItems: SHOP_CATALOG.filter((i) => i.kind === 'xp_booster'),
     rerollItems: SHOP_CATALOG.filter((i) => i.kind === 'reroll_pack'),
+    questPackItems: SHOP_CATALOG.filter((i) => i.kind === 'quest_pack'),
   }), []);
+
+  const [questPackFilter, setQuestPackFilter] = useState<QuestPackKind | 'all'>('all');
+  const filteredQuestPacks = useMemo(() => {
+    if (questPackFilter === 'all') return questPackItems;
+    return questPackItems.filter((p) => p.questPackKind === questPackFilter);
+  }, [questPackItems, questPackFilter]);
 
   const [shop, setShop] = useState<ProfileShop | null>(null);
   const [transactions, setTransactions] = useState<TxRow[]>([]);
@@ -823,13 +798,68 @@ function ShopPageInner() {
               </section>
             )}
 
-            {/* ── Bientôt disponible ──────────────────────────────────────── */}
-            <section className="mb-10" aria-labelledby="shop-soon-heading">
-              <h2 id="shop-soon-heading" className="font-display font-black text-xl text-[var(--text)] mb-3">
-                Bientôt disponible
-              </h2>
-              <ComingSoonCard />
-            </section>
+            {/* ── Packs de quêtes thématiques ─────────────────────────────── */}
+            {questPackItems.length > 0 && (
+              <section className="mb-10" aria-labelledby="shop-packs-heading">
+                <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2
+                      id="shop-packs-heading"
+                      className="font-display font-black text-xl text-[var(--text)] flex items-center gap-2"
+                    >
+                      <Icon name="Backpack" size="md" className="text-violet-700" aria-hidden />
+                      {locale === 'en' ? 'Themed quest packs' : 'Packs de quêtes thématiques'}
+                    </h2>
+                    <p className="mt-1 text-sm text-[var(--muted)] max-w-2xl">
+                      {locale === 'en'
+                        ? 'Permanently bias the quest engine and the AI narration toward a vibe, a lifestyle, or a city. Stack as many as you like — they cohabit.'
+                        : "Oriente durablement le moteur et le récit IA vers une ambiance, un style de vie ou une ville. Plusieurs packs cohabitent."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {(['all', 'vibe', 'lifestyle', 'location'] as const).map((k) => {
+                    const isActive = questPackFilter === k;
+                    const label =
+                      k === 'all'
+                        ? locale === 'en'
+                          ? 'All'
+                          : 'Tous'
+                        : locale === 'en'
+                          ? PACK_KIND_META[k].en
+                          : PACK_KIND_META[k].fr;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setQuestPackFilter(k)}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-wide transition-colors ${
+                          isActive
+                            ? 'border-violet-400 bg-violet-600 text-white shadow-sm'
+                            : 'border-[color:var(--border-ui)] bg-[var(--card)] text-[var(--muted)] hover:bg-[var(--surface)]'
+                        }`}
+                      >
+                        {k !== 'all' ? (
+                          <Icon name={PACK_KIND_META[k].icon} size="xs" aria-hidden />
+                        ) : null}
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {filteredQuestPacks.length === 0 ? (
+                  <p className="text-sm text-[var(--subtle)] italic">
+                    {locale === 'en' ? 'No pack in this category yet.' : 'Aucun pack dans cette catégorie pour le moment.'}
+                  </p>
+                ) : (
+                  <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {filteredQuestPacks.map(renderCatalogCard)}
+                  </ul>
+                )}
+              </section>
+            )}
 
             {/* ── Historique des transactions ──────────────────────────────── */}
             <section>

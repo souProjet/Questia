@@ -23,6 +23,7 @@ export * from './shop/coinPacks';
 export * from './shop/marketing';
 export * from './shop/titles';
 export * from './shop/constants';
+export * from './shop/questPacks';
 export * from './profileRefinement';
 export * from './deepLinks';
 export * from './calendarDate';

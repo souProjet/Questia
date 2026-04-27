@@ -53,6 +53,13 @@ export type ShopScreenStrings = {
   sectionThemes: string;
   sectionTitles: string;
   sectionRerolls: string;
+  sectionQuestPacks: string;
+  questPacksIntro: string;
+  questPackKindAll: string;
+  questPackKindVibe: string;
+  questPackKindLifestyle: string;
+  questPackKindLocation: string;
+  questPacksEmpty: string;
   txJournal: string;
   txHistoryLink: string;
   txEmpty: string;
@@ -122,6 +129,8 @@ function frStrings(): ShopScreenStrings {
           return 'Relances';
         case 'bundle':
           return 'Bundle';
+        case 'quest_pack':
+          return 'Pack quêtes';
         default:
           return '';
       }
@@ -163,6 +172,14 @@ function frStrings(): ShopScreenStrings {
     sectionThemes: 'Thèmes',
     sectionTitles: 'Titres',
     sectionRerolls: 'Relances',
+    sectionQuestPacks: 'Packs de quêtes',
+    questPacksIntro:
+      "Oriente le moteur vers une ambiance, un style de vie ou une ville. Plusieurs packs cohabitent.",
+    questPackKindAll: 'Tous',
+    questPackKindVibe: 'Ambiances',
+    questPackKindLifestyle: 'Style de vie',
+    questPackKindLocation: 'Lieux',
+    questPacksEmpty: 'Aucun pack dans cette catégorie pour le moment.',
     txJournal: 'Journal des transactions',
     txHistoryLink: 'Historique détaillé',
     txEmpty: "Aucune opération pour l'instant.",
@@ -218,6 +235,8 @@ function enStrings(): ShopScreenStrings {
           return 'Rerolls';
         case 'bundle':
           return 'Bundle';
+        case 'quest_pack':
+          return 'Quest pack';
         default:
           return '';
       }
@@ -259,6 +278,14 @@ function enStrings(): ShopScreenStrings {
     sectionThemes: 'Themes',
     sectionTitles: 'Titles',
     sectionRerolls: 'Rerolls',
+    sectionQuestPacks: 'Quest packs',
+    questPacksIntro:
+      'Steer the engine toward a vibe, a lifestyle or a city. Multiple packs cohabit.',
+    questPackKindAll: 'All',
+    questPackKindVibe: 'Vibes',
+    questPackKindLifestyle: 'Lifestyle',
+    questPackKindLocation: 'Locations',
+    questPacksEmpty: 'No pack in this category yet.',
     txJournal: 'Transaction log',
     txHistoryLink: 'Full history',
     txEmpty: 'No transactions yet.',
