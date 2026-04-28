@@ -20,7 +20,8 @@ describe('syncPushRemindersWithServer', () => {
   });
 
   it('ne fait rien sans jeton Clerk', async () => {
-    await syncPushRemindersWithServer(async () => null);
+    const ok = await syncPushRemindersWithServer(async () => null);
+    expect(ok).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -29,7 +30,8 @@ describe('syncPushRemindersWithServer', () => {
       .mockResolvedValueOnce({ ok: true } as Response)
       .mockResolvedValueOnce({ ok: true } as Response);
 
-    await syncPushRemindersWithServer(async () => 'clerk-jwt');
+    const ok = await syncPushRemindersWithServer(async () => 'clerk-jwt');
+    expect(ok).toBe(true);
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const pushCall = fetchMock.mock.calls[0];
@@ -50,8 +52,8 @@ describe('syncPushRemindersWithServer', () => {
   it("n'écrit pas en AsyncStorage si l'enregistrement push-token échoue", async () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 500 } as Response);
 
-    await syncPushRemindersWithServer(async () => 'clerk-jwt');
-
+    const ok = await syncPushRemindersWithServer(async () => 'clerk-jwt');
+    expect(ok).toBe(false);
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
   });
 });

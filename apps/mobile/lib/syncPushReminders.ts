@@ -19,13 +19,14 @@ function deviceTimeZoneIana(): string | null {
 /**
  * Demande la permission système si besoin, enregistre le jeton Expo et active les rappels push côté profil.
  * Aucune UI Questia — uniquement les dialogues natifs.
+ * @returns true si le jeton a bien été enregistré côté API (`/api/notifications/push-token`).
  */
-export async function syncPushRemindersWithServer(getToken: () => Promise<string | null>): Promise<void> {
+export async function syncPushRemindersWithServer(getToken: () => Promise<string | null>): Promise<boolean> {
   const authToken = await getToken();
-  if (!authToken) return;
+  if (!authToken) return false;
 
   const expoToken = await registerForExpoPushTokenAsync();
-  if (!expoToken) return;
+  if (!expoToken) return false;
 
   const reg = await fetch(`${API_BASE_URL}/api/notifications/push-token`, {
     method: 'POST',
@@ -35,7 +36,7 @@ export async function syncPushRemindersWithServer(getToken: () => Promise<string
     },
     body: JSON.stringify({ token: expoToken, platform: Platform.OS }),
   });
-  if (!reg.ok) return;
+  if (!reg.ok) return false;
 
   await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, expoToken);
 
@@ -51,4 +52,6 @@ export async function syncPushRemindersWithServer(getToken: () => Promise<string
     },
     body: JSON.stringify(body),
   });
+
+  return true;
 }

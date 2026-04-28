@@ -29,7 +29,7 @@ describe('POST /api/shop/purchase', () => {
     const res = await POST(
       new Request('http://localhost/api/shop/purchase', {
         method: 'POST',
-        body: JSON.stringify({ sku: 'title_scout' }),
+        body: JSON.stringify({ sku: 'xp_booster_5' }),
       }),
     );
     expect(res.status).toBe(401);
@@ -81,13 +81,13 @@ describe('POST /api/shop/purchase', () => {
     const res = await POST(
       new Request('http://localhost/api/shop/purchase', {
         method: 'POST',
-        body: JSON.stringify({ sku: 'title_scout' }),
+        body: JSON.stringify({ sku: 'xp_booster_5' }),
       }),
     );
     expect(res.status).toBe(404);
   });
 
-  it('200 achat titre', async () => {
+  it('200 achat xp_booster', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'u1' } as never);
     prismaMock.$transaction.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) =>
       cb({
@@ -110,7 +110,7 @@ describe('POST /api/shop/purchase', () => {
     const res = await POST(
       new Request('http://localhost/api/shop/purchase', {
         method: 'POST',
-        body: JSON.stringify({ sku: 'title_scout' }),
+        body: JSON.stringify({ sku: 'xp_booster_5' }),
       }),
     );
     expect(res.status).toBe(200);
