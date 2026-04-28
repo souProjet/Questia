@@ -357,6 +357,7 @@ export default function HistoryScreen() {
           ListHeaderComponent={
             <>
               <View style={styles.filterPanelOuter}>
+                <View style={styles.filterPanelClip}>
                 <View importantForAccessibility="no">
                   <LinearGradient
                     colors={[palette.cyan, palette.orange, palette.green]}
@@ -459,12 +460,14 @@ export default function HistoryScreen() {
                     ))}
                   </ScrollView>
                 </View>
+                </View>
               </View>
               <Text style={styles.count}>{questCountLabel}</Text>
             </>
           }
           renderItem={({ item: q }) => (
             <View style={styles.questCardOuter}>
+              <View style={styles.questCardClip}>
               <View importantForAccessibility="no">
                 <LinearGradient
                   colors={[palette.cyan, palette.orange, palette.green]}
@@ -510,6 +513,7 @@ export default function HistoryScreen() {
                   <Text style={styles.missionText}>{q.mission}</Text>
                 </View>
                 {q.hook ? <Text style={styles.hook}>{q.hook}</Text> : null}
+              </View>
               </View>
             </View>
           )}
@@ -558,6 +562,7 @@ export default function HistoryScreen() {
           ListHeaderComponent={
             <>
               <View style={styles.filterPanelOuter}>
+                <View style={styles.filterPanelClip}>
                 <View importantForAccessibility="no">
                   <LinearGradient
                     colors={[palette.cyan, palette.orange, palette.green]}
@@ -665,6 +670,7 @@ export default function HistoryScreen() {
                       </Pressable>
                     ))}
                   </ScrollView>
+                </View>
                 </View>
               </View>
               <Text style={styles.count}>{txCountLabel}</Text>
@@ -803,7 +809,6 @@ function createStyles(p: ThemePalette) {
 
     filterPanelOuter: {
       borderRadius: 24,
-      overflow: 'hidden',
       borderWidth: 2,
       borderColor: p.borderCyan,
       backgroundColor: p.card,
@@ -813,6 +818,10 @@ function createStyles(p: ThemePalette) {
       shadowRadius: 22,
       shadowOffset: { width: 0, height: 10 },
       elevation: elev(5),
+    },
+    filterPanelClip: {
+      borderRadius: 22,
+      overflow: 'hidden',
     },
     filterPanelStripe: { height: 4, width: '100%' },
     filterPanelInner: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 16 },
@@ -892,7 +901,6 @@ function createStyles(p: ThemePalette) {
 
     questCardOuter: {
       borderRadius: 22,
-      overflow: 'hidden',
       marginBottom: 16,
       borderWidth: 1,
       borderColor: colorWithAlpha(p.orange, 0.22),
@@ -902,6 +910,10 @@ function createStyles(p: ThemePalette) {
       shadowRadius: 20,
       shadowOffset: { width: 0, height: 8 },
       elevation: elev(4),
+    },
+    questCardClip: {
+      borderRadius: 21,
+      overflow: 'hidden',
     },
     questCardStripe: { height: 4, width: '100%' },
     questCardInner: { padding: 16 },

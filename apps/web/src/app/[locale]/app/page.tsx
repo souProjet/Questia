@@ -24,6 +24,7 @@ import {
   QUEST_LOADER_DAY_STORAGE_KEY,
   getQuestCalendarDateNow,
   QUESTIA_SHOP_GRANTS_UPDATED,
+  getQuestPack,
 } from '@questia/shared';
 import { AnalyticsEvent } from '@/lib/analytics/events';
 import { questAnalyticsId, trackAnalyticsEvent } from '@/lib/analytics/track';
@@ -101,6 +102,8 @@ interface DailyQuest {
     questions?: RefinementQuestionUi[];
     consentNotice?: string;
   };
+  /** Packs de quêtes achetés — accès parcours depuis l’accueil. */
+  ownedQuestPackIds?: string[];
 }
 
 function cloneDailyQuestSnapshot(q: DailyQuest): DailyQuest {
@@ -775,6 +778,22 @@ function AppPageContent() {
   const questPace = quest?.questPace ?? 'instant';
   const isPlannedQuest = questPace === 'planned';
 
+  const ownedPacksChips = useMemo(() => {
+    const ids = quest?.ownedQuestPackIds;
+    if (!ids?.length) return [];
+    return ids
+      .map((id) => {
+        const meta = getQuestPack(id);
+        if (!meta) return null;
+        return {
+          id,
+          label: appLocale === 'en' ? meta.labelEn : meta.label,
+          icon: meta.icon,
+        };
+      })
+      .filter((x): x is { id: string; label: string; icon: string } => x != null);
+  }, [quest?.ownedQuestPackIds, appLocale]);
+
   /** Glisser sur la carte (pointeur / tactile) */
   const [questSwipeOffset, setQuestSwipeOffset] = useState({ x: 0, y: 0 });
   const [questSwipeDragging, setQuestSwipeDragging] = useState(false);
@@ -1152,15 +1171,50 @@ function AppPageContent() {
           </div>
         ) : null}
 
+        {ownedPacksChips.length > 0 ? (
+          <section
+            className="mb-3 w-full min-w-0"
+            aria-label={t('ownedPacksSectionA11y')}
+          >
+            {/** Une seule ligne : libellé court + défilement horizontal (mobile web inclus). */}
+            <div className="flex w-full min-w-0 items-center gap-2">
+              <div
+                className="flex shrink-0 items-center gap-1 text-[var(--muted)]"
+                aria-hidden
+              >
+                <Icon name="Compass" size="xs" className="text-[var(--violet)] opacity-95" />
+                <span className="max-w-[4.5rem] truncate text-[9px] font-extrabold uppercase leading-none tracking-[0.1em] sm:max-w-none">
+                  {t('ownedPacksEyebrow')}
+                </span>
+              </div>
+              <div className="min-h-[40px] min-w-0 flex-1 overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
+                <div className="flex w-max items-center gap-1.5 py-1 pr-1">
+                  {ownedPacksChips.map(({ id, label, icon }) => (
+                    <Link
+                      key={id}
+                      href={`/app/parcours/${id}?from=home`}
+                      className="inline-flex max-w-[11.5rem] shrink-0 items-center gap-1.5 rounded-full border border-[color:color-mix(in_srgb,var(--violet)_38%,var(--border-ui))] bg-[color-mix(in_srgb,var(--violet)_10%,var(--card))] px-2.5 py-1.5 text-left transition hover:border-[color:color-mix(in_srgb,var(--violet)_52%,var(--border-ui))] hover:bg-[color-mix(in_srgb,var(--violet)_16%,var(--card))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 active:opacity-90 sm:max-w-[13rem] sm:py-1"
+                      aria-label={t('ownedPackOpenA11y', { name: label })}
+                    >
+                      <Icon name={icon} size="xs" className="shrink-0 text-[var(--violet)]" />
+                      <span className="min-w-0 truncate text-xs font-bold text-[var(--text)]">{label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         {bannerError && (
           <div
             role="alert"
-            className="mb-4 w-full max-w-md rounded-2xl border border-red-200 bg-red-50/95 px-4 py-3 text-center text-sm font-semibold text-red-900 shadow-sm"
+            className="shop-flash-error mb-4 w-full max-w-md rounded-2xl px-4 py-3 text-center text-sm font-semibold text-[var(--text)] shadow-sm"
           >
             {bannerError}
             <button
               type="button"
-              className="ml-2 underline decoration-red-400 underline-offset-2"
+              className="ml-2 underline decoration-[color:color-mix(in_srgb,var(--red)_55%,transparent)] underline-offset-2"
               onClick={() => setBannerError(null)}
             >
               {t('bannerDismiss')}

@@ -348,7 +348,7 @@ function HistoryPageInner() {
         </nav>
 
         {loadError ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50/80 px-4 py-4 text-sm font-semibold text-red-900">
+          <div className="shop-flash-error rounded-2xl px-4 py-4 text-sm font-semibold text-[var(--text)]">
             {loadError}
           </div>
         ) : null}

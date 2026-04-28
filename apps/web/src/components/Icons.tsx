@@ -87,6 +87,10 @@ import {
   X,
   Search,
   Backpack,
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
+  PlayCircle,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -207,6 +211,10 @@ const UI_ICONS: Record<string, LucideIcon> = {
   X,
   Search,
   Backpack,
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
+  PlayCircle,
 };
 
 export type IconName = keyof typeof UI_ICONS | keyof typeof QUEST_ICONS | keyof typeof WEATHER_ICONS;

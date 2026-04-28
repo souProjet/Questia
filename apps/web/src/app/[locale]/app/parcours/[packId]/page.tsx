@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Navbar } from '@/components/Navbar';
@@ -36,6 +37,17 @@ interface CompletePayload {
 
 function pickLocale<T extends { fr: string; en: string }>(loc: Locale, value: T): string {
   return loc === 'en' ? value.en : value.fr;
+}
+
+/** Query `?from=home|shop` — sinon retour hub `/app` sans promettre la boutique. */
+function parcoursBackLink(from: string | null, loc: Locale): { href: string; label: string } {
+  if (from === 'home') {
+    return { href: '/app', label: loc === 'en' ? 'Back home' : "Retour à l'accueil" };
+  }
+  if (from === 'shop') {
+    return { href: '/app/shop', label: loc === 'en' ? 'Back to shop' : 'Retour boutique' };
+  }
+  return { href: '/app', label: loc === 'en' ? 'Back' : 'Retour' };
 }
 
 function chapterStatusBadge(
@@ -290,6 +302,9 @@ export default function ParcoursPage({ params }: RouteParams) {
   const { packId } = use(params);
   const localeStr = useLocale();
   const loc: Locale = localeStr === 'en' ? 'en' : 'fr';
+  const searchParams = useSearchParams();
+  const fromQuery = searchParams.get('from');
+  const backNav = useMemo(() => parcoursBackLink(fromQuery, loc), [fromQuery, loc]);
   const arcStatic = useMemo(() => getQuestPackArc(packId), [packId]);
   const packMeta = useMemo(() => getQuestPack(packId), [packId]);
   const [data, setData] = useState<FetchedArc | null>(null);
@@ -382,11 +397,11 @@ export default function ParcoursPage({ params }: RouteParams) {
       <div className="min-h-screen bg-adventure">
         <Navbar />
         <main className="relative z-10 mx-auto max-w-3xl px-4 pt-24 pb-24">
-          <p className="rounded-xl bg-rose-50 p-4 text-sm font-bold text-rose-800 ring-1 ring-rose-200">
+          <p className="shop-flash-error rounded-xl p-4 text-sm font-bold text-[var(--text)]">
             {loc === 'en' ? 'Unknown pack.' : 'Pack inconnu.'}
           </p>
-          <Link href="/app/shop" className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-violet-700 hover:underline">
-            <Icon name="ChevronLeft" size="xs" /> {loc === 'en' ? 'Back to shop' : 'Retour boutique'}
+          <Link href={backNav.href} className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-violet-700 hover:underline">
+            <Icon name="ChevronLeft" size="xs" /> {backNav.label}
           </Link>
         </main>
       </div>
@@ -398,11 +413,11 @@ export default function ParcoursPage({ params }: RouteParams) {
       <Navbar />
       <main className="relative z-10 mx-auto max-w-2xl px-4 pt-24 pb-28">
         <Link
-          href="/app/shop"
+          href={backNav.href}
           className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--link-on-bg)] transition hover:underline"
         >
           <Icon name="ChevronLeft" size="xs" />
-          {loc === 'en' ? 'Back to shop' : 'Retour boutique'}
+          {backNav.label}
         </Link>
 
         <header className="app-app-hero-band p-6 sm:p-7">
@@ -469,7 +484,7 @@ export default function ParcoursPage({ params }: RouteParams) {
           </p>
         ) : null}
         {error ? (
-          <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-800">
+          <p className="shop-flash-error mt-4 rounded-xl px-4 py-3 text-sm font-bold text-[var(--text)]">
             {error}
           </p>
         ) : null}

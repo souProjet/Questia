@@ -4,6 +4,7 @@ import {
   getShopItem,
   getThemeIds,
   XP_SHOP_BONUS_PER_CHARGE,
+  type ShopCatalogEntry,
 } from './catalog';
 import {
   hasAllPermanentBundleGrants,
@@ -30,8 +31,8 @@ describe('catalog', () => {
 describe('bundleOwnership', () => {
   const bundle = SHOP_CATALOG.find((c) => c.kind === 'bundle')!;
   it('hasAllPermanentBundleGrants false si non bundle', () => {
-    const title = SHOP_CATALOG.find((c) => c.kind === 'title')!;
-    expect(hasAllPermanentBundleGrants(title, [], [])).toBe(false);
+    const nonBundle = SHOP_CATALOG.find((c) => c.kind === 'xp_booster')!;
+    expect(hasAllPermanentBundleGrants(nonBundle, [], [])).toBe(false);
   });
   it('hasAllPermanentBundleGrants quand tout est possédé', () => {
     expect(
@@ -64,14 +65,18 @@ describe('bundleOwnership', () => {
     };
     expect(catalogItemFullyOwned(bundle, shop, new Set([bundle.sku]))).toBe(true);
   });
-  it('catalogItemFullyOwned — title', () => {
-    const titleItem = SHOP_CATALOG.find((c) => c.kind === 'title' && c.grants.titles?.length === 1)!;
+  it('catalogItemFullyOwned — title (entrée hors catalogue, kind encore supporté)', () => {
+    const titleItem: ShopCatalogEntry = {
+      sku: 'test_title_unit',
+      kind: 'title',
+      name: 'Titre test',
+      description: '',
+      priceCoins: 1,
+      icon: 'Award',
+      grants: { titles: ['scout'] },
+    };
     expect(
-      catalogItemFullyOwned(
-        titleItem,
-        { ownedTitleIds: titleItem.grants.titles },
-        new Set(),
-      ),
+      catalogItemFullyOwned(titleItem, { ownedTitleIds: titleItem.grants.titles }, new Set()),
     ).toBe(true);
   });
 });

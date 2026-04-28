@@ -12,8 +12,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { colorWithAlpha, UiLucideIcon, type ThemePalette } from '@questia/ui';
+import { elevationAndroidSafe } from '../lib/elevationAndroid';
 import { useAppTheme } from '../contexts/AppThemeContext';
 import { GlassScrim } from './GlassScrim';
+import { getModalSheetGlass, getScrimGlass } from '../lib/themeModalChrome';
 
 type Option = { id: string; label: string };
 export type RefinementQuestionUi = {
@@ -32,19 +34,26 @@ function makeStyles(p: ThemePalette) {
       position: 'relative',
       justifyContent: 'flex-end',
     },
-    sheet: {
+    /** Ombre / bordure : pas de dégradé ni `overflow: hidden` (Android). */
+    sheetShadow: {
       zIndex: 1,
       maxHeight: '90%',
       borderTopLeftRadius: 26,
       borderTopRightRadius: 26,
-      overflow: 'hidden',
       borderWidth: 2,
       borderColor: 'rgba(253, 186, 116, 0.45)',
       shadowColor: '#c2410c',
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.12,
       shadowRadius: 24,
-      elevation: 12,
+      elevation: elevationAndroidSafe(12),
+    },
+    sheetClip: {
+      overflow: 'hidden',
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      flex: 1,
+      maxHeight: '100%',
     },
     sheetGradient: {
       paddingHorizontal: 20,
@@ -263,8 +272,10 @@ function RefinementSheet({
   getToken: () => Promise<string | null>;
   onDone: () => void;
 }) {
-  const { palette } = useAppTheme();
+  const { palette, themeId } = useAppTheme();
   const styles = useMemo(() => makeStyles(palette), [palette]);
+  const sheetGlass = useMemo(() => getModalSheetGlass(themeId), [themeId]);
+  const scrimGlass = useMemo(() => getScrimGlass(themeId), [themeId]);
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [consent, setConsent] = useState(false);
@@ -353,14 +364,26 @@ function RefinementSheet({
   return (
     <Modal visible={visible} animationType="slide" transparent statusBarTranslucent>
       <View style={styles.backdrop}>
-        <GlassScrim overlayColor={palette.overlay} intensity={56} tint="dark" />
-        <View style={styles.sheet}>
+        <GlassScrim
+          overlayColor={palette.overlay}
+          intensity={scrimGlass.intensity}
+          tint={scrimGlass.tint}
+        />
+        <View style={styles.sheetShadow}>
+          <View style={styles.sheetClip}>
           {Platform.OS !== 'web' ? (
-            <BlurView intensity={46} tint="light" style={StyleSheet.absoluteFillObject} />
+            <BlurView
+              intensity={sheetGlass.sheetBlurIntensity}
+              tint={sheetGlass.sheetBlurTint}
+              style={StyleSheet.absoluteFillObject}
+            />
           ) : null}
           <View
             pointerEvents="none"
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.card, 0.56) }]}
+            style={[
+              StyleSheet.absoluteFillObject,
+              { backgroundColor: colorWithAlpha(palette.card, sheetGlass.sheetVeilAlpha) },
+            ]}
           />
           <LinearGradient
             colors={['#134e4a', '#1c3d38', '#0f7669']}
@@ -508,6 +531,7 @@ function RefinementSheet({
               </View>
             </View>
           </LinearGradient>
+          </View>
         </View>
       </View>
     </Modal>

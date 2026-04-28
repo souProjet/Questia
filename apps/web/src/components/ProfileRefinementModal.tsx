@@ -243,7 +243,7 @@ export function ProfileRefinementModal({
             )}
 
             {error ? (
-              <p className="text-sm text-red-600 mt-4 text-center font-medium" role="alert">
+              <p className="text-sm text-[var(--red)] mt-4 text-center font-medium" role="alert">
                 {error}
               </p>
             ) : null}

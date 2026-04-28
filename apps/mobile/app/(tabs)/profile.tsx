@@ -33,6 +33,7 @@ import { BlurView } from 'expo-blur';
 import { useAppLocale } from '../../contexts/AppLocaleContext';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { GlassScrim } from '../../components/GlassScrim';
+import { getModalSheetGlass, getScrimGlass } from '../../lib/themeModalChrome';
 import { hapticLight } from '../../lib/haptics';
 import { getProfileScreenStrings } from '../../lib/profileScreenStrings';
 import { elevationAndroidSafe } from '../../lib/elevationAndroid';
@@ -88,8 +89,10 @@ function AppearanceSelectSheet({
   onSelect: (value: string) => void;
   onClose: () => void;
 }) {
-  const { palette } = useAppTheme();
+  const { palette, themeId } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const sheetGlass = useMemo(() => getModalSheetGlass(themeId), [themeId]);
+  const scrimGlass = useMemo(() => getScrimGlass(themeId), [themeId]);
   return (
     <Modal
       visible={visible}
@@ -101,8 +104,8 @@ function AppearanceSelectSheet({
       <View style={{ flex: 1 }}>
         <GlassScrim
           overlayColor={palette.overlay}
-          intensity={62}
-          tint="dark"
+          intensity={scrimGlass.intensity}
+          tint={scrimGlass.tint}
           onPress={onClose}
           accessibilityLabel="Fermer"
         />
@@ -112,21 +115,33 @@ function AppearanceSelectSheet({
         >
           <View
             style={{
-              backgroundColor: colorWithAlpha(palette.card, 0.96),
+              backgroundColor: 'transparent',
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               paddingBottom: 24 + insets.bottom,
               paddingTop: 16,
               paddingHorizontal: 20,
               maxHeight: 420,
+              overflow: 'hidden',
             }}
           >
             {Platform.OS !== 'web' ? (
-              <BlurView intensity={58} tint="light" style={StyleSheet.absoluteFillObject} />
+              <BlurView
+                intensity={sheetGlass.sheetBlurIntensity}
+                tint={sheetGlass.sheetBlurTint}
+                style={StyleSheet.absoluteFillObject}
+              />
             ) : null}
             <View
               pointerEvents="none"
-              style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.card, 0.62), borderTopLeftRadius: 20, borderTopRightRadius: 20 }]}
+              style={[
+                StyleSheet.absoluteFillObject,
+                {
+                  backgroundColor: colorWithAlpha(palette.card, sheetGlass.sheetVeilAlpha),
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                },
+              ]}
             />
             <View style={{ width: 36, height: 4, backgroundColor: palette.muted, borderRadius: 2, alignSelf: 'center', marginBottom: 14 }} />
             <Text style={{ fontSize: 15, fontWeight: '600', color: palette.text, marginBottom: 12, textAlign: 'center' }}>
@@ -174,8 +189,9 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { getToken, signOut } = useAuth();
   const { user } = useUser();
-  const { palette, refresh: refreshAppTheme } = useAppTheme();
-  const styles = useMemo(() => createProfileStyles(palette), [palette]);
+  const { palette, themeId, refresh: refreshAppTheme } = useAppTheme();
+  const isThemed = themeId !== 'default';
+  const styles = useMemo(() => createProfileStyles(palette, themeId), [palette, themeId]);
   const getTokenRef = useRef(getToken);
   useEffect(() => {
     getTokenRef.current = getToken;
@@ -727,7 +743,7 @@ export default function ProfileScreen() {
             <Text
               style={[
                 styles.prefsMsg,
-                prefsMsg === s.prefsErr ? { color: '#f87171' } : { color: palette.green },
+                prefsMsg === s.prefsErr ? { color: isThemed ? '#fecaca' : '#991b1b' } : { color: palette.green },
               ]}
             >
               {prefsMsg}
@@ -838,8 +854,9 @@ export default function ProfileScreen() {
   );
 }
 
-function createProfileStyles(p: ThemePalette) {
+function createProfileStyles(p: ThemePalette, themeId: string) {
   const elev = elevationAndroidSafe;
+  const isThemed = themeId !== 'default';
   const C = {
     bg: p.bg,
     card: p.card,
@@ -862,7 +879,7 @@ function createProfileStyles(p: ThemePalette) {
     topTitleCenter: { flex: 1, textAlign: 'center' },
 
     center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12 },
-    err: { color: '#f87171', textAlign: 'center', fontWeight: '600' },
+    err: { color: isThemed ? '#fecaca' : '#991b1b', textAlign: 'center', fontWeight: '600' },
     retry: { backgroundColor: C.accent, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 },
     retryText: { color: '#fff', fontWeight: '800' },
     scroll: { padding: 20, paddingBottom: 40 },

@@ -13,7 +13,7 @@ import {
   DeviceEventEmitter,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/expo';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +26,7 @@ import {
   AnalyticsEvent,
   questAnalyticsId,
   QUESTIA_SHOP_GRANTS_UPDATED,
+  getQuestPack,
 } from '@questia/shared';
 import {
   colorWithAlpha,
@@ -41,6 +42,7 @@ import { getHomeDashboardStrings } from '../../lib/homeDashboardStrings';
 import { useAppTheme } from '../../contexts/AppThemeContext';
 import { QuestRewardOverlay, type QuestRewardPayload } from '../../components/QuestRewardOverlay';
 import { GlassScrim } from '../../components/GlassScrim';
+import { getScrimGlass } from '../../lib/themeModalChrome';
 import ProfileRefinementSheet, { type RefinementQuestionUi } from '../../components/ProfileRefinementSheet';
 import { QuestHomeLoading } from '../../components/QuestHomeLoading';
 import { QuestSwipeCard } from '../../components/QuestSwipeCard';
@@ -101,6 +103,7 @@ interface DailyQuest {
     questions?: RefinementQuestionUi[];
     consentNotice?: string;
   };
+  ownedQuestPackIds?: string[];
 }
 
 function cloneDailyQuestSnapshot(q: DailyQuest): DailyQuest {
@@ -130,8 +133,9 @@ function SafetySheet({ quest, onConfirm, onClose }: {
   onConfirm: () => void;
   onClose: () => void;
 }) {
-  const { palette } = useAppTheme();
+  const { palette, themeId } = useAppTheme();
   const sheet = useMemo(() => buildSafetySheetStyles(palette), [palette]);
+  const scrimGlass = useMemo(() => getScrimGlass(themeId), [themeId]);
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const rules = [
     "Je reste dans des lieux publics et accessibles.",
@@ -146,7 +150,13 @@ function SafetySheet({ quest, onConfirm, onClose }: {
 
   return (
     <View style={sheet.overlay}>
-      <GlassScrim overlayColor={palette.overlay} intensity={48} tint="dark" onPress={onClose} accessibilityLabel="Fermer" />
+      <GlassScrim
+        overlayColor={palette.overlay}
+        intensity={scrimGlass.intensity}
+        tint={scrimGlass.tint}
+        onPress={onClose}
+        accessibilityLabel="Fermer"
+      />
       <View style={sheet.container}>
         <View style={sheet.handle} />
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -723,6 +733,24 @@ export default function DashboardScreen() {
 
   const { palette, themeId, personality } = useAppTheme();
   const styles = useMemo(() => buildDashboardStyles(palette, themeId), [palette, themeId]);
+  const scrimGlass = useMemo(() => getScrimGlass(themeId), [themeId]);
+  const safeInsets = useSafeAreaInsets();
+
+  const ownedPacksChips = useMemo(() => {
+    const ids = quest?.ownedQuestPackIds;
+    if (!ids?.length) return [];
+    return ids
+      .map((id) => {
+        const meta = getQuestPack(id);
+        if (!meta) return null;
+        return {
+          id,
+          label: appLocale === 'en' ? meta.labelEn : meta.label,
+          icon: meta.icon,
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x != null);
+  }, [quest?.ownedQuestPackIds, appLocale]);
 
   const swipeStrings = useMemo(() => ({
     swipeAccept: homeUi.swipeAccept,
@@ -836,6 +864,45 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
+        {ownedPacksChips.length > 0 ? (
+          <View
+            style={styles.ownedPacksRow}
+            accessibilityRole="summary"
+            accessibilityLabel={homeUi.ownedPacksSectionA11y}
+          >
+            <View style={styles.ownedPacksLabelCol}>
+              <UiLucideIcon name="Compass" size={14} color={palette.cyan} strokeWidth={2.2} />
+              <Text style={styles.ownedPacksEyebrow} numberOfLines={1}>
+                {homeUi.ownedPacksEyebrow}
+              </Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.ownedPacksScroll}
+              contentContainerStyle={[
+                styles.ownedPacksScrollContent,
+                { paddingRight: 12 + safeInsets.right },
+              ]}
+            >
+              {ownedPacksChips.map((chip) => (
+                <Pressable
+                  key={chip.id}
+                  onPress={() => router.push(`/parcours/${chip.id}?from=home` as never)}
+                  style={({ pressed }) => [styles.ownedPackChip, pressed && { opacity: 0.88 }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={homeUi.ownedPackA11y(chip.label)}
+                >
+                  <UiLucideIcon name={chip.icon} size={15} color={palette.cyan} strokeWidth={2.2} />
+                  <Text style={styles.ownedPackChipLabel} numberOfLines={1}>
+                    {chip.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+
         {/* Erreur inline */}
         {quest && error ? (
           <View style={styles.inlineErrorBanner}>
@@ -901,7 +968,11 @@ export default function DashboardScreen() {
         {/* Modal report */}
         <Modal visible={showReportModal} transparent animationType="fade" onRequestClose={() => setShowReportModal(false)}>
           <View style={styles.modalBackdrop}>
-            <GlassScrim overlayColor={palette.overlay} intensity={52} tint="dark" />
+            <GlassScrim
+              overlayColor={palette.overlay}
+              intensity={scrimGlass.intensity}
+              tint={scrimGlass.tint}
+            />
             <View style={styles.modalBackdropInner}>
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>{reportUi.reportModalTitle}</Text>
@@ -940,7 +1011,11 @@ export default function DashboardScreen() {
         {/* Modal abandon */}
         <Modal visible={showAbandonModal} transparent animationType="fade" onRequestClose={() => setShowAbandonModal(false)}>
           <View style={styles.modalBackdrop}>
-            <GlassScrim overlayColor={palette.overlay} intensity={52} tint="dark" />
+            <GlassScrim
+              overlayColor={palette.overlay}
+              intensity={scrimGlass.intensity}
+              tint={scrimGlass.tint}
+            />
             <View style={styles.modalBackdropInner}>
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>{homeUi.abandonCta} ?</Text>
@@ -961,7 +1036,11 @@ export default function DashboardScreen() {
         {/* Modal reroll confirm */}
         <Modal visible={showRerollConfirm} transparent animationType="fade" onRequestClose={() => setShowRerollConfirm(false)}>
           <View style={styles.modalBackdrop}>
-            <GlassScrim overlayColor={palette.overlay} intensity={52} tint="dark" />
+            <GlassScrim
+              overlayColor={palette.overlay}
+              intensity={scrimGlass.intensity}
+              tint={scrimGlass.tint}
+            />
             <View style={styles.modalBackdropInner}>
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>{homeUi.rerollConfirmTitle}</Text>
@@ -1062,13 +1141,23 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
       paddingVertical: 10,
       borderRadius: 14,
       borderWidth: 1,
-      borderColor: 'rgba(248,113,113,0.45)',
-      backgroundColor: 'rgba(254,242,242,0.95)',
+      borderColor: isThemed ? colorWithAlpha('#f87171', 0.42) : 'rgba(248,113,113,0.45)',
+      backgroundColor: isThemed ? colorWithAlpha('#f87171', 0.12) : 'rgba(254,242,242,0.95)',
     },
-    inlineErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#991b1b' },
-    inlineErrorDismiss: { fontSize: 13, fontWeight: '800', color: '#991b1b', textDecorationLine: 'underline' },
+    inlineErrorText: {
+      flex: 1,
+      fontSize: 13,
+      fontWeight: '600',
+      color: isThemed ? '#fecaca' : '#991b1b',
+    },
+    inlineErrorDismiss: {
+      fontSize: 13,
+      fontWeight: '800',
+      color: isThemed ? '#fecaca' : '#991b1b',
+      textDecorationLine: 'underline',
+    },
     errorBox: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
-    errorText: { color: '#f87171', fontSize: 14, textAlign: 'center' },
+    errorText: { color: isThemed ? '#fecaca' : '#991b1b', fontSize: 14, textAlign: 'center' },
     retryBtn: { backgroundColor: C.accent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12 },
     retryText: { color: '#fff', fontWeight: '700', fontSize: 15 },
     signOutOutlineBtn: {
@@ -1076,10 +1165,10 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
       paddingHorizontal: 24,
       borderRadius: 12,
       borderWidth: 1.5,
-      borderColor: 'rgba(248,113,113,0.55)',
+      borderColor: isThemed ? colorWithAlpha('#f87171', 0.42) : 'rgba(248,113,113,0.55)',
       backgroundColor: 'transparent',
     },
-    signOutOutlineText: { color: '#fca5a5', fontWeight: '700', fontSize: 15 },
+    signOutOutlineText: { color: isThemed ? '#fecaca' : '#991b1b', fontWeight: '700', fontSize: 15 },
     rerollBtnDisabled: { opacity: 0.42 },
     onboardingOverlay: {
       position: 'absolute',
@@ -1129,6 +1218,8 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
       borderRadius: 20,
       padding: 20,
       maxHeight: '88%',
+      borderWidth: 1,
+      borderColor: colorWithAlpha(isThemed ? p.cyan : p.borderCyan, isThemed ? 0.26 : 0.32),
     },
     modalTitle: { fontSize: 18, fontWeight: '900', color: p.text, marginBottom: 8 },
     modalBody: { fontSize: 14, color: p.muted, lineHeight: 20, marginBottom: 12 },
@@ -1177,6 +1268,56 @@ function buildDashboardStyles(p: ThemePalette, themeId: string) {
       alignItems: 'center',
     },
     modalBtnAbandonText: { fontWeight: '900', color: p.text },
+    /** Une ligne : libellé fixe + scroll horizontal (petits écrans). */
+    ownedPacksRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 6,
+      paddingHorizontal: 20,
+      gap: 8,
+      minHeight: 40,
+    },
+    ownedPacksLabelCol: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      maxWidth: 88,
+      flexShrink: 0,
+    },
+    ownedPacksEyebrow: {
+      flexShrink: 1,
+      fontSize: 9,
+      fontWeight: '800',
+      letterSpacing: 0.8,
+      color: p.muted,
+      textTransform: 'uppercase',
+    },
+    ownedPacksScroll: { flex: 1, minWidth: 0, maxHeight: 44 },
+    ownedPacksScrollContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 2,
+    },
+    ownedPackChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      minHeight: 36,
+      maxWidth: 200,
+      paddingVertical: 7,
+      paddingHorizontal: 11,
+      marginRight: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colorWithAlpha(p.cyan, isThemed ? 0.4 : 0.28),
+      backgroundColor: colorWithAlpha(p.cyan, isThemed ? 0.11 : 0.07),
+    },
+    ownedPackChipLabel: {
+      flexShrink: 1,
+      fontSize: 12,
+      fontWeight: '800',
+      color: p.text,
+    },
   });
 }
 

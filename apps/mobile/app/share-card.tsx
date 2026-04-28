@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   Modal,
+  Platform,
   useWindowDimensions,
   Share,
 } from 'react-native';
@@ -36,6 +37,7 @@ import {
   type ThemePalette,
 } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
+import { getScrimGlass } from '../lib/themeModalChrome';
 import { GlassScrim } from '../components/GlassScrim';
 import { useAppLocale } from '../contexts/AppLocaleContext';
 import { hapticLight, hapticMedium } from '../lib/haptics';
@@ -84,9 +86,13 @@ interface DailyQuest {
 
 import { API_BASE_URL, apiFetch } from '../lib/api';
 
-/** Thèmes où l’ombre Android + `overflow: hidden` sur un `LinearGradient` crée des artefacts (carrés). */
+/**
+ * Chrome « plat » : pas d'élévation / ombre sur le même nœud qu'un `LinearGradient` + `overflow: hidden`.
+ * Sur Android c'est répandu sur tous les thèmes ; sur iOS surtout Minuit / Aurore / Parchemin.
+ */
 function useFlatShareChrome(themeId: string): boolean {
-  return themeId === 'midnight' || themeId === 'aurora';
+  if (Platform.OS === 'android') return true;
+  return themeId === 'midnight' || themeId === 'aurora' || themeId === 'parchment';
 }
 
 export default function ShareCardScreen() {
@@ -130,6 +136,7 @@ export default function ShareCardScreen() {
     [themeId, palette],
   );
   const flatChrome = useFlatShareChrome(themeId);
+  const photoSheetScrim = useMemo(() => getScrimGlass(themeId), [themeId]);
   /** Voile sur la prévisualisation carte — lisibilité sur fonds sombres (export). */
   const cardPreviewOverlayPhoto = useMemo(
     () =>
@@ -904,8 +911,8 @@ export default function ShareCardScreen() {
       <View style={styles.photoSheetRoot} accessibilityViewIsModal>
         <GlassScrim
           overlayColor={palette.overlay}
-          intensity={52}
-          tint="dark"
+          intensity={photoSheetScrim.intensity}
+          tint={photoSheetScrim.tint}
           onPress={() => setPhotoSheetOpen(false)}
           accessibilityLabel="Fermer"
         />

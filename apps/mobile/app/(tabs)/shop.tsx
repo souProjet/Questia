@@ -45,6 +45,7 @@ import { isExpoWebBrowserNativeAvailable, maybeCompleteAuthSession } from '../..
 import * as Linking from 'expo-linking';
 import { trackMobileEvent } from '../../lib/analytics/track';
 import { GlassScrim } from '../../components/GlassScrim';
+import { getModalSheetGlass, getScrimGlass } from '../../lib/themeModalChrome';
 
 import { API_BASE_URL, apiFetch } from '../../lib/api';
 
@@ -108,9 +109,11 @@ function SelectSheet({
   closeLabel: string;
   closeA11y: string;
 }) {
-  const { palette } = useAppTheme();
+  const { palette, themeId } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const styles = useMemo(() => createShopStyles(palette), [palette]);
+  const styles = useMemo(() => createShopStyles(palette, themeId), [palette, themeId]);
+  const sheetGlass = useMemo(() => getModalSheetGlass(themeId), [themeId]);
+  const scrimGlass = useMemo(() => getScrimGlass(themeId), [themeId]);
   return (
     <Modal
       visible={visible}
@@ -122,19 +125,27 @@ function SelectSheet({
       <View style={styles.modalRoot}>
         <GlassScrim
           overlayColor={palette.overlay}
-          intensity={62}
-          tint="dark"
+          intensity={scrimGlass.intensity}
+          tint={scrimGlass.tint}
           onPress={onClose}
           accessibilityLabel={closeA11y}
         />
         <View pointerEvents="box-none" style={styles.modalSheetWrap}>
-          <View style={[styles.modalSheet, styles.selectSheetSheet, { paddingBottom: 28 + insets.bottom }]}>
+          <View style={[styles.modalSheetChrome, styles.modalSheetSelect, { paddingBottom: 28 + insets.bottom }]}>
+            <View style={[styles.modalSheetClip, styles.selectSheetSheet]}>
             {Platform.OS !== 'web' ? (
-              <BlurView intensity={58} tint="light" style={StyleSheet.absoluteFillObject} />
+              <BlurView
+                intensity={sheetGlass.sheetBlurIntensity}
+                tint={sheetGlass.sheetBlurTint}
+                style={StyleSheet.absoluteFillObject}
+              />
             ) : null}
             <View
               pointerEvents="none"
-              style={[StyleSheet.absoluteFillObject, { backgroundColor: colorWithAlpha(palette.card, 0.62) }]}
+              style={[
+                StyleSheet.absoluteFillObject,
+                { backgroundColor: colorWithAlpha(palette.card, sheetGlass.sheetVeilAlpha) },
+              ]}
             />
             <View style={styles.selectSheetHandle} accessibilityRole="none" />
             <Text style={styles.selectSheetTitle}>{title}</Text>
@@ -167,6 +178,7 @@ function SelectSheet({
             <Pressable style={styles.modalCancel} onPress={onClose} hitSlop={8}>
               <Text style={styles.modalCancelText}>{closeLabel}</Text>
             </Pressable>
+            </View>
           </View>
         </View>
       </View>
@@ -183,8 +195,8 @@ const BADGE_BG: Record<ShopMarketingBadge, string> = {
 };
 
 function MarketingBadgeRN({ badge, label }: { badge: ShopMarketingBadge; label: string }) {
-  const { palette } = useAppTheme();
-  const styles = useMemo(() => createShopStyles(palette), [palette]);
+  const { palette, themeId } = useAppTheme();
+  const styles = useMemo(() => createShopStyles(palette, themeId), [palette, themeId]);
   return (
     <View style={[styles.badgePill, { backgroundColor: BADGE_BG[badge] }]}>
       <Text style={styles.badgePillText}>{label}</Text>
@@ -203,9 +215,11 @@ export default function ShopScreen() {
   const { locale: appLocale } = useAppLocale();
   const s = useMemo(() => getShopScreenStrings(appLocale), [appLocale]);
   const { palette, themeId, refresh: refreshAppTheme } = useAppTheme();
-  const styles = useMemo(() => createShopStyles(palette), [palette]);
+  const styles = useMemo(() => createShopStyles(palette, themeId), [palette, themeId]);
   const insets = useSafeAreaInsets();
   const balanceGradientColors = useMemo(() => shopBalanceGradient(themeId, palette), [themeId, palette]);
+  const shopScrimGlass = useMemo(() => getScrimGlass(themeId), [themeId]);
+  const rechargeSheetGlass = useMemo(() => getModalSheetGlass(themeId), [themeId]);
   const { getToken } = useAuth();
   const getTokenRef = useRef(getToken);
   useEffect(() => {
@@ -662,7 +676,7 @@ export default function ShopScreen() {
                   hapticLight();
                   const pid = item.grants.questPackIds?.[0];
                   if (pid) {
-                    router.push(`/parcours/${pid}` as never);
+                    router.push(`/parcours/${pid}?from=shop` as never);
                   }
                 }}
               >
@@ -783,15 +797,16 @@ export default function ShopScreen() {
         {shop && !error ? (
           <>
             <View style={styles.balanceCardOuter}>
-              <LinearGradient
-                colors={balanceGradientColors}
-                locations={[0, 0.42, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-              />
-              <View style={styles.balanceCardPadding}>
+              <View style={styles.balanceCardInner}>
+                <LinearGradient
+                  colors={balanceGradientColors}
+                  locations={[0, 0.42, 1]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                  pointerEvents="none"
+                />
+                <View style={styles.balanceCardPadding}>
                 <View style={styles.balanceRow}>
                 <Pressable
                   style={({ pressed }) => [styles.balanceTap, pressed && styles.balanceTapPressed]}
@@ -819,6 +834,7 @@ export default function ShopScreen() {
                 >
                   <Text style={styles.balanceCtaText}>{s.addQc}</Text>
                 </Pressable>
+                </View>
                 </View>
               </View>
             </View>
@@ -1040,13 +1056,28 @@ export default function ShopScreen() {
           <View style={styles.modalRoot}>
             <GlassScrim
               overlayColor={palette.overlay}
-              intensity={55}
-              tint="dark"
+              intensity={shopScrimGlass.intensity}
+              tint={shopScrimGlass.tint}
               onPress={() => setRechargeModalVisible(false)}
               accessibilityLabel={s.closeA11y}
             />
             <View pointerEvents="box-none" style={styles.modalSheetWrap}>
-              <View style={[styles.modalSheet, styles.rechargeModalSheet, { paddingBottom: 16 + insets.bottom }]}>
+              <View style={[styles.modalSheetChrome, styles.modalSheetRecharge, { paddingBottom: 16 + insets.bottom }]}>
+                <View style={[styles.modalSheetClip, styles.rechargeModalClip]}>
+                {Platform.OS !== 'web' ? (
+                  <BlurView
+                    intensity={rechargeSheetGlass.sheetBlurIntensity}
+                    tint={rechargeSheetGlass.sheetBlurTint}
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                ) : null}
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    { backgroundColor: colorWithAlpha(palette.card, rechargeSheetGlass.sheetVeilAlpha) },
+                  ]}
+                />
                 {/* — En-tête — */}
                 <View style={styles.rechargeSheetHandle} />
                 <View style={styles.rechargeModalHeaderTop}>
@@ -1172,6 +1203,7 @@ export default function ShopScreen() {
                   })}
                   <Text style={styles.rechargeModalFooterTxt}>{s.rechargeFooter}</Text>
                 </ScrollView>
+                </View>
               </View>
             </View>
           </View>
@@ -1183,8 +1215,9 @@ export default function ShopScreen() {
   );
 }
 
-function createShopStyles(p: ThemePalette) {
+function createShopStyles(p: ThemePalette, themeId: string) {
   const elev = elevationAndroidSafe;
+  const isThemed = themeId !== 'default';
   const C = {
     bg: p.bg,
     card: p.card,
@@ -1221,8 +1254,8 @@ function createShopStyles(p: ThemePalette) {
     borderColor: 'rgba(16,185,129,0.4)',
   },
   bannerError: {
-    backgroundColor: 'rgba(248,113,113,0.12)',
-    borderColor: 'rgba(220,38,38,0.35)',
+    backgroundColor: isThemed ? colorWithAlpha('#f87171', 0.12) : 'rgba(254,242,242,0.95)',
+    borderColor: isThemed ? colorWithAlpha('#f87171', 0.42) : 'rgba(248,113,113,0.45)',
   },
   bannerInfo: {
     backgroundColor: 'rgba(251,191,36,0.14)',
@@ -1230,10 +1263,10 @@ function createShopStyles(p: ThemePalette) {
   },
   bannerText: { fontSize: 13, fontWeight: '600' },
   bannerTextSuccess: { color: p.green },
-  bannerTextError: { color: '#f87171' },
+  bannerTextError: { color: isThemed ? '#fecaca' : '#991b1b' },
   bannerTextInfo: { color: p.linkOnBg },
   errBox: { marginBottom: 12 },
-  errText: { color: '#f87171', fontWeight: '600', marginBottom: 8 },
+  errText: { color: isThemed ? '#fecaca' : '#991b1b', fontWeight: '600', marginBottom: 8 },
   retry: {
     alignSelf: 'flex-start',
     backgroundColor: C.accent,
@@ -1242,19 +1275,23 @@ function createShopStyles(p: ThemePalette) {
     borderRadius: 12,
   },
   retryText: { color: '#fff', fontWeight: '800' },
-  /** Dégradé en absoluteFill dans la View — évite les artefacts carrés (ombre + LinearGradient). */
+  /** Ombre sur l'extérieur ; clip + dégradé dans `balanceCardInner` (évite artefacts Android). */
   balanceCardOuter: {
     position: 'relative',
     borderRadius: 24,
     borderWidth: 2,
     borderColor: 'rgba(252, 211, 77, 0.75)',
     marginBottom: 16,
-    overflow: 'hidden',
     shadowColor: '#b45309',
     shadowOpacity: 0.12,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: elev(4),
+  },
+  balanceCardInner: {
+    position: 'relative',
+    borderRadius: 22,
+    overflow: 'hidden',
   },
   balanceCardPadding: {
     paddingVertical: 18,
@@ -1741,26 +1778,32 @@ function createShopStyles(p: ThemePalette) {
     flex: 1,
     justifyContent: 'flex-end',
   },
-  modalSheet: {
+  /** Ombre / élévation : pas d’`overflow: 'hidden'` ici (évite artefacts Android). */
+  modalSheetChrome: {
     backgroundColor: 'transparent',
-    overflow: 'hidden',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '78%',
-    paddingBottom: 28,
-    paddingHorizontal: 16,
     zIndex: 2,
     elevation: elev(8),
     shadowColor: p.text,
     shadowOpacity: 0.22,
     shadowRadius: 12,
   },
-  rechargeModalSheet: {
+  modalSheetSelect: {
+    maxHeight: '78%',
+  },
+  modalSheetRecharge: {
     maxHeight: '88%',
+  },
+  modalSheetClip: {
+    overflow: 'hidden',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    backgroundColor: 'transparent',
+  },
+  rechargeModalClip: {
     paddingHorizontal: 0,
     paddingTop: 0,
-    overflow: 'hidden',
-    backgroundColor: p.card,
   },
   rechargeSheetHandle: {
     alignSelf: 'center',
@@ -1894,7 +1937,7 @@ function createShopStyles(p: ThemePalette) {
   /** Feuille des selects (thème, titre) — cartes arrondies, pas de liste à traits. */
   selectSheetSheet: {
     paddingTop: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   selectSheetHandle: {
     alignSelf: 'center',

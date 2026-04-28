@@ -235,8 +235,8 @@ export default function ProfilePage() {
   const toggleBtn = (active: boolean) =>
     `rounded-xl border px-3 py-2 text-sm font-bold transition-colors ${
       active
-        ? 'border-[color:var(--cyan)] bg-cyan-50 text-cyan-950 ring-1 ring-cyan-400/40'
-        : 'border-[color:var(--border-ui)] bg-[var(--surface)] text-[var(--text)] hover:border-cyan-400/50'
+        ? 'border-[color:var(--cyan)] bg-[color:color-mix(in_srgb,var(--cyan)_14%,var(--surface))] text-[var(--text)] ring-1 ring-[color:color-mix(in_srgb,var(--cyan)_32%,transparent)]'
+        : 'border-[color:var(--border-ui)] bg-[var(--surface)] text-[var(--text)] hover:border-[color:color-mix(in_srgb,var(--cyan)_45%,var(--border-ui))]'
     }`;
 
   return (
@@ -257,7 +257,7 @@ export default function ProfilePage() {
         </div>
 
         {error && (
-          <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900 mb-6">
+          <p className="shop-flash-error rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--text)] mb-6">
             {error}
           </p>
         )}
@@ -533,12 +533,12 @@ export default function ProfilePage() {
                     type="button"
                     onClick={() => void handleSavePrefs()}
                     disabled={prefsSaving}
-                    className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/50 bg-cyan-50/80 px-4 py-2.5 text-sm font-bold text-cyan-900 hover:bg-cyan-100 disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-2 rounded-xl border border-[color:color-mix(in_srgb,var(--cyan)_45%,var(--border-ui))] bg-[color:color-mix(in_srgb,var(--cyan)_10%,var(--surface))] px-4 py-2.5 text-sm font-bold text-[var(--cyan)] hover:bg-[color:color-mix(in_srgb,var(--cyan)_16%,var(--surface))] disabled:opacity-50 transition-colors"
                   >
                     {prefsSaving ? t('prefsSaving') : t('prefsSave')}
                   </button>
                   {prefsMsg && (
-                    <span className={`text-sm font-semibold ${prefsMsg === t('prefsSaved') ? 'text-emerald-700' : 'text-red-700'}`}>
+                    <span className={`text-sm font-semibold ${prefsMsg === t('prefsSaved') ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
                       {prefsMsg}
                     </span>
                   )}
@@ -566,7 +566,7 @@ export default function ProfilePage() {
                       <Link
                         key={l.href}
                         href={l.href}
-                        className="flex items-center gap-2 rounded-xl border border-[color:var(--border-ui)] bg-[var(--surface)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] hover:border-cyan-400/50 hover:bg-cyan-50/60 transition-colors"
+                        className="flex items-center gap-2 rounded-xl border border-[color:var(--border-ui)] bg-[var(--surface)] px-3 py-2.5 text-sm font-semibold text-[var(--text)] hover:border-[color:color-mix(in_srgb,var(--cyan)_45%,var(--border-ui))] hover:bg-[color:color-mix(in_srgb,var(--cyan)_8%,var(--surface))] transition-colors"
                       >
                         <Icon name={l.icon} size="sm" className="text-[var(--muted)] shrink-0" aria-hidden />
                         {l.label}
@@ -583,7 +583,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={() => void handleExport()}
                     disabled={exporting}
-                    className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/50 bg-cyan-50/80 px-4 py-2.5 text-sm font-bold text-cyan-900 hover:bg-cyan-100 hover:border-cyan-500/70 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-xl border border-[color:color-mix(in_srgb,var(--cyan)_45%,var(--border-ui))] bg-[color:color-mix(in_srgb,var(--cyan)_10%,var(--surface))] px-4 py-2.5 text-sm font-bold text-[var(--cyan)] hover:bg-[color:color-mix(in_srgb,var(--cyan)_16%,var(--surface))] hover:border-[color:color-mix(in_srgb,var(--cyan)_55%,var(--border-ui))] transition-colors disabled:opacity-50"
                   >
                     <Icon name="Download" size="sm" className="shrink-0" aria-hidden />
                     {exporting ? t('exportPreparing') : t('exportCta')}
@@ -591,17 +591,17 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Suppression */}
-                <div className="p-5 sm:p-6 bg-red-50/40">
+                <div className="p-5 sm:p-6 rounded-2xl border border-[color:color-mix(in_srgb,var(--red)_42%,var(--border-ui-strong))] bg-[color:color-mix(in_srgb,var(--red)_10%,var(--card))]">
                   <div className="flex items-start gap-3 mb-3">
-                    <Icon name="AlertTriangle" size="md" className="shrink-0 text-red-600 mt-0.5" aria-hidden />
+                    <Icon name="AlertTriangle" size="md" className="shrink-0 text-[var(--red)] mt-0.5" aria-hidden />
                     <div>
-                      <p className="font-bold text-red-900 text-sm">{t('deleteTitle')}</p>
-                      <p className="text-sm text-red-800/75 mt-1 leading-relaxed">
-                        {t('deleteBodyText')} <strong>{t('deleteBodyStrong')}</strong>
+                      <p className="font-bold text-[var(--text)] text-sm">{t('deleteTitle')}</p>
+                      <p className="text-sm text-[var(--muted)] mt-1 leading-relaxed">
+                        {t('deleteBodyText')} <strong className="text-[var(--text)]">{t('deleteBodyStrong')}</strong>
                       </p>
                     </div>
                   </div>
-                  <label htmlFor="delete-confirm" className="block text-xs font-bold text-red-900/70 mb-1.5">
+                  <label htmlFor="delete-confirm" className="block text-xs font-bold text-[var(--subtle)] mb-1.5">
                     {t('deleteTypeLabel', { word: t('deleteWord') })}
                   </label>
                   <input
@@ -610,17 +610,17 @@ export default function ProfilePage() {
                     value={deleteConfirm}
                     onChange={(e) => setDeleteConfirm(e.target.value)}
                     placeholder={t('deletePlaceholder')}
-                    className="w-full max-w-xs rounded-lg border border-red-300/80 bg-white px-3 py-2 text-sm font-semibold text-red-900 placeholder:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-400/40 mb-3"
+                    className="w-full max-w-xs rounded-lg border border-[color:color-mix(in_srgb,var(--red)_35%,var(--border-ui))] bg-[var(--input-bg)] px-3 py-2 text-sm font-semibold text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--red)_40%,transparent)] mb-3"
                     autoComplete="off"
                   />
                   {deleteError && (
-                    <p className="text-sm font-semibold text-red-700 mb-2" role="alert">{deleteError}</p>
+                    <p className="text-sm font-semibold text-[var(--red)] mb-2" role="alert">{deleteError}</p>
                   )}
                   <button
                     type="button"
                     onClick={() => void handleDeleteAccount()}
                     disabled={deleting || deleteConfirm !== t('deleteWord')}
-                    className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="rounded-xl bg-[var(--red)] px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {deleting ? t('deleteDeleting') : t('deleteCta')}
                   </button>

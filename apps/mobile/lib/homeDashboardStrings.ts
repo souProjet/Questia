@@ -67,6 +67,10 @@ export type HomeDashboardStrings = {
   mapNoGeocodeBody: string;
   mapRendezvous: string;
   mapUserHere: string;
+  /** Rangée « packs possédés » sous l’en-tête accueil */
+  ownedPacksEyebrow: string;
+  ownedPacksSectionA11y: string;
+  ownedPackA11y: (name: string) => string;
 };
 
 function fr(): HomeDashboardStrings {
@@ -141,6 +145,9 @@ function fr(): HomeDashboardStrings {
       "Le lieu n'a pas pu être placé sur la carte. Ouvre Google Maps pour t'orienter.",
     mapRendezvous: 'Rendez-vous',
     mapUserHere: 'Ta position (approx.)',
+    ownedPacksEyebrow: 'Parcours',
+    ownedPacksSectionA11y: 'Parcours possédés — faire défiler',
+    ownedPackA11y: (name) => `Ouvrir le parcours ${name}`,
   };
 }
 
@@ -213,6 +220,9 @@ function en(): HomeDashboardStrings {
     mapNoGeocodeBody: "We couldn't place this on the map. Open Google Maps to find your way.",
     mapRendezvous: 'Meet-up',
     mapUserHere: 'Your position (approx.)',
+    ownedPacksEyebrow: 'Paths',
+    ownedPacksSectionA11y: 'Owned paths — scroll sideways',
+    ownedPackA11y: (name) => `Open journey ${name}`,
   };
 }
 

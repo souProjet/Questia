@@ -27,7 +27,7 @@ const TRAITS: TraitConfig[] = [
     descLow: 'Concret, habitudes stables',
     descHigh: 'Curieux, imaginatif, créatif',
     Icon: Compass,
-    accentClass: 'text-violet-600',
+    accentClass: 'text-[var(--violet)]',
   },
   {
     key: 'conscientiousness',
@@ -35,7 +35,7 @@ const TRAITS: TraitConfig[] = [
     descLow: 'Flexible, spontané',
     descHigh: 'Rigoureux, organisé',
     Icon: Shield,
-    accentClass: 'text-blue-600',
+    accentClass: 'text-[var(--cyan)]',
   },
   {
     key: 'extraversion',
@@ -43,7 +43,7 @@ const TRAITS: TraitConfig[] = [
     descLow: 'Solitaire, introverti',
     descHigh: 'Social, expressif, énergique',
     Icon: Zap,
-    accentClass: 'text-orange-600',
+    accentClass: 'text-[var(--orange)]',
   },
   {
     key: 'agreeableness',
@@ -51,7 +51,7 @@ const TRAITS: TraitConfig[] = [
     descLow: 'Direct, compétitif',
     descHigh: 'Bienveillant, coopératif',
     Icon: Heart,
-    accentClass: 'text-emerald-600',
+    accentClass: 'text-[var(--green)]',
   },
   {
     key: 'emotionalStability',
@@ -59,7 +59,7 @@ const TRAITS: TraitConfig[] = [
     descLow: 'Réactif, intense',
     descHigh: 'Serein, équilibré',
     Icon: Wind,
-    accentClass: 'text-amber-600',
+    accentClass: 'text-[var(--gold)]',
   },
   {
     key: 'thrillSeeking',
@@ -67,7 +67,7 @@ const TRAITS: TraitConfig[] = [
     descLow: 'Prudent, confort assuré',
     descHigh: 'Adrénaline, prises de risque',
     Icon: Flame,
-    accentClass: 'text-red-600',
+    accentClass: 'text-[var(--red)]',
   },
   {
     key: 'boredomSusceptibility',
@@ -75,7 +75,7 @@ const TRAITS: TraitConfig[] = [
     descLow: 'Patient, routine acceptable',
     descHigh: 'S\'ennuie vite, cherche la nouveauté',
     Icon: Sparkles,
-    accentClass: 'text-cyan-600',
+    accentClass: 'text-[var(--cyan)]',
   },
 ];
 

@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -50,6 +51,25 @@ function pickLocale<T extends { fr: string; en: string }>(loc: Locale, value: T)
   return loc === 'en' ? value.en : value.fr;
 }
 
+function parseParcoursFrom(raw: string | string[] | undefined): 'home' | 'shop' | null {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (v === 'home' || v === 'shop') return v;
+  return null;
+}
+
+function parcoursBackAction(
+  from: 'home' | 'shop' | null,
+  loc: Locale,
+): { label: string; path: '/home' | '/shop' } {
+  if (from === 'home') {
+    return { path: '/home', label: loc === 'en' ? 'Back home' : "Retour à l'accueil" };
+  }
+  if (from === 'shop') {
+    return { path: '/shop', label: loc === 'en' ? 'Back to shop' : 'Retour boutique' };
+  }
+  return { path: '/home', label: loc === 'en' ? 'Back' : 'Retour' };
+}
+
 function durationLabel(min: number): string {
   if (min < 60) return `${min} min`;
   return `~${Math.round(min / 60)} h`;
@@ -57,10 +77,15 @@ function durationLabel(min: number): string {
 
 export default function ParcoursScreen() {
   const router = useRouter();
-  const { packId: rawPackId } = useLocalSearchParams<{ packId: string | string[] }>();
+  const { packId: rawPackId, from: rawFrom } = useLocalSearchParams<{
+    packId: string | string[];
+    from?: string | string[];
+  }>();
   const packId = Array.isArray(rawPackId) ? rawPackId[0] : (rawPackId ?? '');
   const { locale: appLocale } = useAppLocale();
   const loc: Locale = appLocale === 'en' ? 'en' : 'fr';
+  const fromSource = useMemo(() => parseParcoursFrom(rawFrom), [rawFrom]);
+  const backNav = useMemo(() => parcoursBackAction(fromSource, loc), [fromSource, loc]);
   const { palette, themeId } = useAppTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const backdropColors = useMemo(
@@ -77,6 +102,10 @@ export default function ParcoursScreen() {
     [palette],
   );
   const { getToken } = useAuth();
+  const getTokenRef = useRef(getToken);
+  useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
 
   const arcStatic = useMemo(() => getQuestPackArc(packId), [packId]);
   const packMeta = useMemo(() => getQuestPack(packId), [packId]);
@@ -93,7 +122,7 @@ export default function ParcoursScreen() {
     setLoading(true);
     setError(null);
     try {
-      const token = await getToken();
+      const token = await getTokenRef.current();
       const res = await apiFetch(`${API_BASE_URL}/api/quest/pack/${packId}`, token);
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
@@ -106,18 +135,20 @@ export default function ParcoursScreen() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, packId]);
+  }, [packId]);
 
   useEffect(() => {
+    if (!packId) return;
+    if (!getQuestPackArc(packId) || !getQuestPack(packId)) return;
     void refresh();
-  }, [refresh]);
+  }, [packId, refresh]);
 
   const handleComplete = useCallback(
     async (slotKey: string) => {
       if (busy) return;
       setBusy(true);
       try {
-        const token = await getToken();
+        const token = await getTokenRef.current();
         const res = await apiFetch(`${API_BASE_URL}/api/quest/pack/${packId}`, token, {
           method: 'POST',
           body: JSON.stringify({ slotKey }),
@@ -142,7 +173,7 @@ export default function ParcoursScreen() {
         setBusy(false);
       }
     },
-    [busy, getToken, loc, packId],
+    [busy, loc, packId],
   );
 
   const findSlot = useCallback(
@@ -184,10 +215,8 @@ export default function ParcoursScreen() {
         <SafeAreaView style={styles.safeTransparent} edges={['top', 'left', 'right']}>
           <View style={styles.center}>
             <Text style={styles.errText}>{loc === 'en' ? 'Unknown pack.' : 'Pack inconnu.'}</Text>
-            <Pressable style={styles.backBtn} onPress={() => router.back()}>
-              <Text style={styles.backBtnText}>
-                {loc === 'en' ? 'Back' : 'Retour'}
-              </Text>
+            <Pressable style={styles.backBtn} onPress={() => router.push(backNav.path as never)}>
+              <Text style={styles.backBtnText}>{backNav.label}</Text>
             </Pressable>
           </View>
         </SafeAreaView>
@@ -212,23 +241,31 @@ export default function ParcoursScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Pressable
           style={styles.backRow}
-          onPress={() => router.back()}
+          onPress={() => router.push(backNav.path as never)}
           hitSlop={8}
         >
           <UiLucideIcon name="ChevronLeft" size={16} color={palette.linkOnBg} />
-          <Text style={styles.backText}>
-            {loc === 'en' ? 'Back to shop' : 'Retour boutique'}
-          </Text>
+          <Text style={styles.backText}>{backNav.label}</Text>
         </Pressable>
 
-        <View style={styles.heroShell}>
-          <LinearGradient
-            colors={heroGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.heroRow}>
+        {/**
+         * Android : ne pas combiner elevation + overflow:hidden + LinearGradient sur le même nœud
+         * (bandes / fond carré). Enveloppe externe = ombre / bordure ; interne = clip + dégradé.
+         */}
+        <View
+          style={[
+            styles.heroShellOuter,
+            Platform.OS === 'android' && styles.heroShellOuterFlatChrome,
+          ]}
+        >
+          <View style={styles.heroShellInner}>
+            <LinearGradient
+              colors={heroGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.heroRow}>
             <View style={styles.heroIconBubble}>
               <UiLucideIcon name={packMeta.icon} size={28} color={palette.cyan} />
             </View>
@@ -253,6 +290,7 @@ export default function ParcoursScreen() {
           </View>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${pct}%` }]} />
+          </View>
           </View>
         </View>
 
@@ -612,19 +650,28 @@ function createStyles(p: ThemePalette) {
       marginTop: 4,
     },
 
-    heroShell: {
-      position: 'relative',
+    heroShellOuter: {
       borderRadius: 26,
-      padding: 18,
       marginBottom: 16,
-      overflow: 'hidden',
       borderWidth: 2,
       borderColor: colorWithAlpha(p.orange, 0.38),
+      backgroundColor: p.card,
       shadowColor: p.orange,
       shadowOpacity: 0.14,
       shadowRadius: 18,
       shadowOffset: { width: 0, height: 10 },
       elevation: 6,
+    },
+    heroShellOuterFlatChrome: {
+      elevation: 0,
+      shadowOpacity: 0,
+      shadowRadius: 0,
+    },
+    heroShellInner: {
+      position: 'relative',
+      borderRadius: 24,
+      overflow: 'hidden',
+      padding: 18,
     },
     heroRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
     heroIconBubble: {

@@ -216,28 +216,10 @@ type TxRow = {
 
 /* ─── Filtres packs de quêtes (vibe / lifestyle / location) ───────────────── */
 
-const PACK_KIND_META: Record<
-  QuestPackKind,
-  { fr: string; en: string; icon: string; color: string }
-> = {
-  vibe: {
-    fr: 'Ambiances',
-    en: 'Vibes',
-    icon: 'Sparkles',
-    color: 'border-rose-200 bg-rose-50/70 text-rose-800',
-  },
-  lifestyle: {
-    fr: 'Style de vie',
-    en: 'Lifestyle',
-    icon: 'Leaf',
-    color: 'border-emerald-200 bg-emerald-50/70 text-emerald-800',
-  },
-  location: {
-    fr: 'Lieux',
-    en: 'Locations',
-    icon: 'MapPin',
-    color: 'border-violet-200 bg-violet-50/70 text-violet-800',
-  },
+const PACK_KIND_META: Record<QuestPackKind, { fr: string; en: string; icon: string }> = {
+  vibe: { fr: 'Ambiances', en: 'Vibes', icon: 'Sparkles' },
+  lifestyle: { fr: 'Style de vie', en: 'Lifestyle', icon: 'Leaf' },
+  location: { fr: 'Lieux', en: 'Locations', icon: 'MapPin' },
 };
 
 /* ─── Page principale ─────────────────────────────────────────────────────── */
@@ -517,7 +499,7 @@ function ShopPageInner() {
           {owns ? (
             item.kind === 'quest_pack' && item.grants.questPackIds?.[0] ? (
               <Link
-                href={`/app/parcours/${item.grants.questPackIds[0]}`}
+                href={`/app/parcours/${item.grants.questPackIds[0]}?from=shop`}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition-transform hover:scale-[1.03] active:scale-95"
               >
                 <Icon name="Compass" size="xs" aria-hidden />
@@ -575,7 +557,7 @@ function ShopPageInner() {
         ) : null}
 
         {error && (
-          <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900">
+          <p className="shop-flash-error rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--text)]">
             {error}
           </p>
         )}
@@ -817,7 +799,7 @@ function ShopPageInner() {
                       id="shop-packs-heading"
                       className="font-display font-black text-xl text-[var(--text)] flex items-center gap-2"
                     >
-                      <Icon name="Backpack" size="md" className="text-violet-700" aria-hidden />
+                      <Icon name="Backpack" size="md" className="text-[var(--violet)]" aria-hidden />
                       {locale === 'en' ? 'Themed quest packs' : 'Packs de quêtes thématiques'}
                     </h2>
                     <p className="mt-1 text-sm text-[var(--muted)] max-w-2xl">
@@ -846,7 +828,7 @@ function ShopPageInner() {
                         onClick={() => setQuestPackFilter(k)}
                         className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-wide transition-colors ${
                           isActive
-                            ? 'border-violet-400 bg-violet-600 text-white shadow-sm'
+                            ? 'border-[color:var(--cyan)] bg-[color:color-mix(in_srgb,var(--cyan)_18%,var(--card))] text-[var(--text)] shadow-sm ring-1 ring-[color:color-mix(in_srgb,var(--cyan)_28%,transparent)]'
                             : 'border-[color:var(--border-ui)] bg-[var(--card)] text-[var(--muted)] hover:bg-[var(--surface)]'
                         }`}
                       >

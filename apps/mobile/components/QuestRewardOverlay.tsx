@@ -11,6 +11,7 @@ import {
   AccessibilityInfo,
   ScrollView,
 } from 'react-native';
+import { elevationAndroidSafe } from '../lib/elevationAndroid';
 import { GlassScrim } from './GlassScrim';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { DisplayBadge, XpBreakdown } from '@questia/shared';
@@ -29,6 +30,7 @@ import {
   UiLucideIcon,
 } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
+import { getScrimGlass } from '../lib/themeModalChrome';
 import { useAppLocale } from '../contexts/AppLocaleContext';
 import { getHomeDashboardStrings } from '../lib/homeDashboardStrings';
 
@@ -71,6 +73,7 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
     [themeId, palette],
   );
   const styles = useMemo(() => buildRewardStyles(palette, themeId), [palette, themeId]);
+  const scrimGlass = useMemo(() => getScrimGlass(themeId), [themeId]);
 
   const scale = useRef(new Animated.Value(0.82)).current;
   const xpPop = useRef(new Animated.Value(0)).current;
@@ -232,7 +235,11 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onContinue}>
       <View style={styles.backdrop}>
-        <GlassScrim overlayColor={palette.overlay} intensity={58} tint="dark" />
+        <GlassScrim
+          overlayColor={palette.overlay}
+          intensity={scrimGlass.intensity}
+          tint={scrimGlass.tint}
+        />
         <Animated.View
           pointerEvents="none"
           style={[
@@ -291,12 +298,17 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
         <Animated.View
           style={[styles.cardWrap, { maxHeight: CARD_MAX_H, transform: [{ scale }, { translateX: shakeX }] }]}
         >
-          <LinearGradient
-            colors={rewardCardGrad}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.card}
-          >
+          {/**
+           * Coque sans dégradé : porte l'ombre / l'élévation. Le `LinearGradient` reste à l'intérieur
+           * avec `overflow: hidden` uniquement — évite les artefacts Android (dégradé + elevation).
+           */}
+          <View style={styles.cardShadowShell}>
+            <LinearGradient
+              colors={rewardCardGrad}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.cardGradientRoot}
+            >
             <View style={styles.cardHero}>
               <Text style={styles.kicker}>{rewardUi.completedTitle}</Text>
 
@@ -407,7 +419,8 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
                 <Text style={styles.ctaText}>Continuer →</Text>
               </LinearGradient>
             </Pressable>
-          </LinearGradient>
+            </LinearGradient>
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -450,16 +463,20 @@ function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) 
       maxWidth: Math.min(SCREEN_W - 28, 400),
       alignSelf: 'center',
     },
-    card: {
+    cardShadowShell: {
       borderRadius: 24,
-      padding: 0,
-      borderWidth: 2,
-      borderColor: colorWithAlpha(p.orange, 0.42),
+      alignSelf: 'stretch',
       shadowColor: p.orange,
       shadowOffset: { width: 0, height: 14 },
       shadowOpacity: 0.4,
       shadowRadius: 28,
-      elevation: 14,
+      elevation: elevationAndroidSafe(14),
+    },
+    cardGradientRoot: {
+      borderRadius: 24,
+      padding: 0,
+      borderWidth: 2,
+      borderColor: colorWithAlpha(p.orange, 0.42),
       overflow: 'hidden',
     },
     cardHero: {

@@ -23,6 +23,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { questDisplayEmoji, questFamilyLabel, type AppLocale, type PersonalityVector } from '@questia/shared';
 import { colorWithAlpha, questCardFaceGradient, computeAuraCardBlobs, UiLucideIcon, type ThemePalette } from '@questia/ui';
+import { elevationAndroidSafe } from '../lib/elevationAndroid';
 import { hapticSuccess, hapticWarning } from '../lib/haptics';
 import { useQuestCardDeviceTilt } from '../lib/useQuestCardDeviceTilt';
 import { QuestDestinationMapWebView } from './QuestDestinationMapWebView';
@@ -443,7 +444,7 @@ export function QuestSwipeCard({
     <View style={[styles.cardContainer, { height: cardHeight }]}>
       <Animated.View
         style={[
-          styles.card,
+          styles.cardShell,
           {
             backgroundColor: p.card,
             borderColor: isCompleted
@@ -456,6 +457,7 @@ export function QuestSwipeCard({
           cardAnimStyle,
         ]}
       >
+        <View style={styles.cardClip}>
         {Platform.OS !== 'web' ? (
           <BlurView
             pointerEvents="none"
@@ -591,6 +593,7 @@ export function QuestSwipeCard({
           </View>
         ) : null}
         </View>
+        </View>
       </Animated.View>
     </View>
   );
@@ -602,17 +605,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  card: {
+  /** Ombre / bordure : pas de `overflow: hidden` ici (Android + dégradé sous-jacent). */
+  cardShell: {
     width: '92%',
     maxWidth: 420,
     borderRadius: 28,
     borderWidth: 2,
-    overflow: 'hidden',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.26,
     shadowRadius: 36,
-    elevation: 14,
+    elevation: elevationAndroidSafe(14),
     flex: 1,
+  },
+  cardClip: {
+    flex: 1,
+    borderRadius: 26,
+    overflow: 'hidden',
   },
   cardFaceGradient: {
     ...StyleSheet.absoluteFillObject,
@@ -911,7 +919,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     zIndex: 20,
-    elevation: 20,
   },
   completedTitle: {
     fontSize: 18,
