@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Icon } from '@/components/Icons';
 import { BADGE_DEFINITIONS, getThemeIds, TITLE_IDS } from '@questia/shared';
 import type { OverviewJson } from './adminOverviewTypes';
+import type { InAppAnnouncementPayload, InAppAnnouncementPlatform } from '@questia/shared';
 
 const THEME_IDS = getThemeIds();
 
@@ -51,6 +52,22 @@ const AXE_RISQUE_FR: Record<string, string> = {
   cautious: 'Prudent',
   risktaker: 'Audacieux',
 };
+
+function isoToDatetimeLocalValue(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function datetimeLocalToIso(s: string): string | null {
+  const t = s.trim();
+  if (!t) return null;
+  const ms = Date.parse(t);
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms).toISOString();
+}
 
 const inputClass =
   'min-w-0 flex-1 rounded-xl border-2 border-[color:color-mix(in_srgb,var(--cyan)_42%,transparent)] bg-white px-3 py-2.5 text-sm font-semibold text-[var(--text)] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/40';
@@ -118,6 +135,19 @@ export default function AdminConsoleClient() {
   const [globalBroadcastConfirm, setGlobalBroadcastConfirm] = useState(false);
   const [broadcastBusy, setBroadcastBusy] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState<string | null>(null);
+
+  const [annBusy, setAnnBusy] = useState(false);
+  const [annMsg, setAnnMsg] = useState<string | null>(null);
+  const [annEnabled, setAnnEnabled] = useState(true);
+  const [annTitle, setAnnTitle] = useState('');
+  const [annBody, setAnnBody] = useState('');
+  const [annStartsAtLocal, setAnnStartsAtLocal] = useState('');
+  const [annEndsAtLocal, setAnnEndsAtLocal] = useState('');
+  const [annPlatWeb, setAnnPlatWeb] = useState(true);
+  const [annPlatIos, setAnnPlatIos] = useState(true);
+  const [annPlatAndroid, setAnnPlatAndroid] = useState(true);
+  const [annRenewId, setAnnRenewId] = useState(false);
+  const [annLoadedId, setAnnLoadedId] = useState<string | null>(null);
 
   const textareaClass = `${inputClass} min-h-[88px] resize-y font-mono text-xs`;
 
@@ -268,6 +298,78 @@ export default function AdminConsoleClient() {
       setBroadcastMsg(e instanceof Error ? e.message : 'Erreur');
     } finally {
       setBroadcastBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch('/api/admin/announcement', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((j: { announcement: InAppAnnouncementPayload | null }) => {
+        if (cancelled) return;
+        const a = j.announcement;
+        if (!a) {
+          setAnnLoadedId(null);
+          return;
+        }
+        setAnnLoadedId(a.id);
+        setAnnEnabled(a.enabled);
+        setAnnTitle(a.title);
+        setAnnBody(a.body);
+        setAnnStartsAtLocal(isoToDatetimeLocalValue(a.startsAt ?? undefined));
+        setAnnEndsAtLocal(isoToDatetimeLocalValue(a.endsAt ?? undefined));
+        const pl = a.platforms;
+        if (!pl || pl.length === 0) {
+          setAnnPlatWeb(true);
+          setAnnPlatIos(true);
+          setAnnPlatAndroid(true);
+        } else {
+          setAnnPlatWeb(pl.includes('web'));
+          setAnnPlatIos(pl.includes('ios'));
+          setAnnPlatAndroid(pl.includes('android'));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const saveAnnouncement = async () => {
+    setAnnBusy(true);
+    setAnnMsg(null);
+    try {
+      let platforms: InAppAnnouncementPlatform[] | null = null;
+      if (!annPlatWeb || !annPlatIos || !annPlatAndroid) {
+        const parts: InAppAnnouncementPlatform[] = [];
+        if (annPlatWeb) parts.push('web');
+        if (annPlatIos) parts.push('ios');
+        if (annPlatAndroid) parts.push('android');
+        platforms = parts.length ? parts : null;
+      }
+      const res = await fetch('/api/admin/announcement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enabled: annEnabled,
+          title: annTitle.trim(),
+          body: annBody,
+          startsAt: datetimeLocalToIso(annStartsAtLocal),
+          endsAt: datetimeLocalToIso(annEndsAtLocal),
+          platforms,
+          renewId: annRenewId,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((j as { error?: string }).error ?? `Réponse serveur ${res.status}`);
+      setAnnMsg(JSON.stringify(j, null, 2));
+      setAnnRenewId(false);
+      const saved = (j as { announcement?: InAppAnnouncementPayload }).announcement;
+      if (saved?.id) setAnnLoadedId(saved.id);
+    } catch (e) {
+      setAnnMsg(e instanceof Error ? e.message : 'Erreur');
+    } finally {
+      setAnnBusy(false);
     }
   };
 
@@ -625,7 +727,129 @@ export default function AdminConsoleClient() {
         </div>
 
         {d.snapshotScope === 'self' ? (
-          <div className="mt-8 rounded-2xl border-2 border-red-300/50 bg-gradient-to-br from-red-50/90 via-white to-amber-50/50 p-4 sm:p-5">
+          <>
+            <div className="mt-8 rounded-2xl border-2 border-violet-300/50 bg-gradient-to-br from-violet-50/95 via-white to-cyan-50/40 p-4 sm:p-5">
+              <h3 className="font-display text-base font-black text-violet-950">
+                Annonce modale (app web + mobile)
+              </h3>
+              <p className="mt-1 text-xs font-semibold text-violet-900/85">
+                Une modale s’affiche une fois par identifiant d’annonce à l’ouverture de l’espace connecté (web) ou au
+                lancement de l’app (mobile). Cocher « Nouvel ID » pour forcer l’affichage chez tout le monde après une
+                mise à jour.
+              </p>
+              {annLoadedId ? (
+                <p className="mt-2 font-mono text-[11px] font-semibold text-violet-800/80">
+                  ID courant : {annLoadedId}
+                </p>
+              ) : null}
+              <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm font-bold text-violet-950">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-violet-600"
+                  checked={annEnabled}
+                  onChange={(e) => setAnnEnabled(e.target.checked)}
+                />
+                Annonce active
+              </label>
+              <label className="mt-3 block text-xs font-bold text-[var(--on-cream-muted)]">
+                Titre
+                <input
+                  className={`${inputClass} mt-1 w-full`}
+                  value={annTitle}
+                  onChange={(e) => setAnnTitle(e.target.value)}
+                  maxLength={200}
+                  placeholder="Ex. Nouveautés Questia"
+                />
+              </label>
+              <label className="mt-3 block text-xs font-bold text-[var(--on-cream-muted)]">
+                Corps (texte brut, retours à la ligne conservés)
+                <textarea
+                  className={`${textareaClass} mt-1 w-full`}
+                  value={annBody}
+                  onChange={(e) => setAnnBody(e.target.value)}
+                  maxLength={20000}
+                  rows={6}
+                  placeholder="Décris les changements ou l’info à partager…"
+                />
+              </label>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Début (optionnel, heure locale)
+                  <input
+                    type="datetime-local"
+                    className={`${inputClass} mt-1 w-full`}
+                    value={annStartsAtLocal}
+                    onChange={(e) => setAnnStartsAtLocal(e.target.value)}
+                  />
+                </label>
+                <label className="block text-xs font-bold text-[var(--on-cream-muted)]">
+                  Fin (optionnel)
+                  <input
+                    type="datetime-local"
+                    className={`${inputClass} mt-1 w-full`}
+                    value={annEndsAtLocal}
+                    onChange={(e) => setAnnEndsAtLocal(e.target.value)}
+                  />
+                </label>
+              </div>
+              <p className="mt-3 text-xs font-bold text-violet-900/80">Plateformes</p>
+              <div className="mt-2 flex flex-wrap gap-4">
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-violet-950">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-violet-600"
+                    checked={annPlatWeb}
+                    onChange={(e) => setAnnPlatWeb(e.target.checked)}
+                  />
+                  Web
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-violet-950">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-violet-600"
+                    checked={annPlatIos}
+                    onChange={(e) => setAnnPlatIos(e.target.checked)}
+                  />
+                  iOS
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-violet-950">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-violet-600"
+                    checked={annPlatAndroid}
+                    onChange={(e) => setAnnPlatAndroid(e.target.checked)}
+                  />
+                  Android
+                </label>
+              </div>
+              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-violet-200/80 bg-white/80 p-3 text-sm font-bold text-violet-950">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 shrink-0 accent-violet-600"
+                  checked={annRenewId}
+                  onChange={(e) => setAnnRenewId(e.target.checked)}
+                />
+                <span>
+                  Générer un <strong>nouvel ID</strong> — tout le monde reverra la modale (nouvelle « version » de
+                  l’annonce).
+                </span>
+              </label>
+              <button
+                type="button"
+                disabled={annBusy || godBusy || broadcastBusy}
+                onClick={() => void saveAnnouncement()}
+                className="btn btn-md mt-4 w-full border-2 border-violet-400/70 bg-violet-600 font-black text-white hover:bg-violet-700 sm:w-auto"
+              >
+                Enregistrer l’annonce
+              </button>
+              {annMsg ? (
+                <pre className="mt-4 max-h-48 overflow-auto rounded-xl border border-violet-200/60 bg-black/5 p-3 text-xs font-mono text-violet-950">
+                  {annMsg}
+                </pre>
+              ) : null}
+            </div>
+
+            <div className="mt-8 rounded-2xl border-2 border-red-300/50 bg-gradient-to-br from-red-50/90 via-white to-amber-50/50 p-4 sm:p-5">
             <h3 className="font-display text-base font-black text-red-900">Diffusion globale (tous les comptes)</h3>
             <p className="mt-1 text-xs font-semibold text-red-900/80">
               Push : chaque jeton Expo distinct en base (~{d.pushDevicesCount} appareils). E-mail : une lettre par
@@ -712,6 +936,7 @@ export default function AdminConsoleClient() {
               </pre>
             ) : null}
           </div>
+          </>
         ) : null}
 
         {d.snapshotScope === 'target' || d.snapshotScope === 'self' ? (

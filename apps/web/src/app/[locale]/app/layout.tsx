@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
+import { InAppAnnouncementGate } from '@/components/InAppAnnouncementGate';
 
 /** Espace connecté : pas d'indexation (déjà exclu par robots.txt, renforcé ici). */
 export const metadata: Metadata = {
@@ -21,5 +22,10 @@ export default async function AppShellLayout({
     redirect(`${prefix}/sign-in`);
   }
 
-  return children;
+  return (
+    <>
+      <InAppAnnouncementGate />
+      {children}
+    </>
+  );
 }

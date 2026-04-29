@@ -32,6 +32,7 @@ export * from './profilePreferences';
 export * from './questLoadingMessages';
 export * from './analytics/events';
 export * from './analytics/questId';
+export * from './inAppAnnouncement';
 export {
   QUEST_ARCHETYPES_SEED,
   QUEST_ARCHETYPES_SEED_FALLBACK_ID,

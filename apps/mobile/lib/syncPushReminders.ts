@@ -22,11 +22,13 @@ function deviceTimeZoneIana(): string | null {
  * @returns true si le jeton a bien été enregistré côté API (`/api/notifications/push-token`).
  */
 export async function syncPushRemindersWithServer(getToken: () => Promise<string | null>): Promise<boolean> {
-  const authToken = await getToken();
-  if (!authToken) return false;
-
+  /** Permission + jeton Expo en premier : sinon si `getToken()` est encore null (Clerk pas prêt),
+   *  on sortait avant toute demande système → pas de dialogue, notifications « off » dans les réglages. */
   const expoToken = await registerForExpoPushTokenAsync();
   if (!expoToken) return false;
+
+  const authToken = await getToken();
+  if (!authToken) return false;
 
   const reg = await fetch(`${API_BASE_URL}/api/notifications/push-token`, {
     method: 'POST',

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { registerForExpoPushTokenAsync } from './pushNotifications';
 import { syncPushRemindersWithServer } from './syncPushReminders';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -19,9 +20,10 @@ describe('syncPushRemindersWithServer', () => {
     global.fetch = fetchMock as unknown as typeof fetch;
   });
 
-  it('ne fait rien sans jeton Clerk', async () => {
+  it('ne fait rien sans jeton Clerk mais demande quand même le jeton Expo (permission système)', async () => {
     const ok = await syncPushRemindersWithServer(async () => null);
     expect(ok).toBe(false);
+    expect(jest.mocked(registerForExpoPushTokenAsync)).toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

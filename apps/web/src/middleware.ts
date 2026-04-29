@@ -8,6 +8,7 @@ const intlMiddleware = createMiddleware(routing);
 const isPublicApiRoute = createRouteMatcher([
   '/api/quest(.*)',
   '/api/profile',
+  '/api/announcement(.*)',
   '/api/notifications(.*)',
   '/api/webhooks(.*)',
   '/api/cron(.*)',
