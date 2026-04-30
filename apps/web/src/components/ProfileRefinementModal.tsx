@@ -108,7 +108,7 @@ export function ProfileRefinementModal({
     >
       <div className="quest-modal-backdrop absolute inset-0 cursor-default" aria-hidden />
       <div
-        className="quest-modal-panel relative z-10 flex max-h-[min(88vh,640px)] w-full max-w-lg flex-col overflow-hidden motion-safe:animate-fade-up-slow motion-reduce:animate-none"
+        className="quest-modal-panel relative z-10 flex max-h-[min(88vh,640px)] w-full max-w-lg flex-col overflow-hidden motion-safe:animate-modal-fade-slow motion-reduce:animate-none"
       >
         <div className="quest-modal-panel-accent h-1.5" />
 
@@ -164,7 +164,7 @@ export function ProfileRefinementModal({
             {!isConsentStep && currentQuestion ? (
               <div
                 key={currentQuestion.id}
-                className="motion-safe:animate-fade-up motion-reduce:animate-none rounded-2xl p-4 sm:p-5 border border-[var(--border-ui)] bg-gradient-to-br from-white/95 via-white/90 to-cyan-50/35 shadow-[inset_0_1px_0_rgba(255,255,255,.9)]"
+                className="motion-safe:animate-modal-fade motion-reduce:animate-none rounded-2xl p-4 sm:p-5 border border-[var(--border-ui)] bg-gradient-to-br from-white/95 via-white/90 to-cyan-50/35 shadow-[inset_0_1px_0_rgba(255,255,255,.9)]"
               >
                 <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-cyan-800/80 bg-cyan-100/70 px-2 py-0.5 rounded-full border border-cyan-200/40 mb-3">
                   Question {step + 1}
@@ -217,7 +217,7 @@ export function ProfileRefinementModal({
             ) : (
               <div
                 key="consent"
-                className="motion-safe:animate-fade-up motion-reduce:animate-none rounded-2xl p-5 sm:p-6 border border-[var(--border-ui)] bg-gradient-to-br from-white/95 to-cyan-50/25"
+                className="motion-safe:animate-modal-fade motion-reduce:animate-none rounded-2xl p-5 sm:p-6 border border-[var(--border-ui)] bg-gradient-to-br from-white/95 to-cyan-50/25"
               >
                 <div className="text-center mb-4">
                   <span className="inline-flex justify-center" aria-hidden>

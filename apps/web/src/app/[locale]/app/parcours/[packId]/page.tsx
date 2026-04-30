@@ -173,7 +173,7 @@ function SlotModal({
       role="presentation"
     >
       <div
-        className="quest-modal-sheet flex max-h-[min(90vh,760px)] w-full max-w-xl flex-col overflow-hidden sm:max-h-[min(88vh,720px)]"
+        className="quest-modal-sheet relative z-10 flex max-h-[min(90vh,760px)] w-full max-w-xl flex-col overflow-hidden sm:max-h-[min(88vh,720px)] motion-safe:animate-modal-fade motion-reduce:animate-none"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal

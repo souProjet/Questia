@@ -210,7 +210,7 @@ export function QuestXpCelebration({
         <div className="relative z-[1] p-7">
           <p
             id="xp-celebration-title"
-            className="text-center font-display text-sm font-black tracking-tight text-cyan-900 motion-safe:animate-fade-up motion-reduce:opacity-100 [animation-delay:60ms] [animation-fill-mode:backwards]"
+            className="text-center font-display text-sm font-black tracking-tight text-cyan-900 motion-safe:animate-modal-fade motion-reduce:opacity-100 [animation-delay:60ms] [animation-fill-mode:backwards]"
           >
             {t('completedTitle')}
           </p>
@@ -250,7 +250,7 @@ export function QuestXpCelebration({
           </p>
 
           <div
-            className="mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50/90 to-white/90 px-4 py-3 shadow-sm motion-safe:animate-fade-up motion-reduce:opacity-100 [animation-delay:160ms] [animation-fill-mode:backwards]"
+            className="mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50/90 to-white/90 px-4 py-3 shadow-sm motion-safe:animate-modal-fade motion-reduce:opacity-100 [animation-delay:160ms] [animation-fill-mode:backwards]"
             role="group"
             aria-label="Progression dans le niveau actuel"
           >
@@ -278,7 +278,7 @@ export function QuestXpCelebration({
             </p>
           </div>
 
-          <div className="mt-5 motion-safe:animate-fade-up motion-reduce:opacity-100 [animation-delay:200ms] [animation-fill-mode:backwards]">
+          <div className="mt-5 motion-safe:animate-modal-fade motion-reduce:opacity-100 [animation-delay:200ms] [animation-fill-mode:backwards]">
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-cyan-900">Comment ces XP sont calculés</p>
             <ul className="mt-3 space-y-2.5">
               {breakdownRows.map((row) => (
@@ -300,7 +300,7 @@ export function QuestXpCelebration({
 
           {badgesUnlocked.length > 0 ? (
             <div className="mt-5 space-y-3">
-              <p className="text-xs font-black uppercase tracking-wider text-orange-600 motion-safe:animate-fade-up motion-reduce:opacity-100 [animation-delay:240ms] [animation-fill-mode:backwards]">
+              <p className="text-xs font-black uppercase tracking-wider text-orange-600 motion-safe:animate-modal-fade motion-reduce:opacity-100 [animation-delay:240ms] [animation-fill-mode:backwards]">
                 Nouveaux badges
               </p>
               <ul className="space-y-2">
@@ -332,7 +332,7 @@ export function QuestXpCelebration({
 
           <button
             type="button"
-            className="btn btn-cta btn-lg mt-6 w-full text-base font-black motion-safe:animate-fade-up motion-reduce:opacity-100 [animation-delay:420ms] [animation-fill-mode:backwards]"
+            className="btn btn-cta btn-lg mt-6 w-full text-base font-black motion-safe:animate-modal-fade motion-reduce:opacity-100 [animation-delay:420ms] [animation-fill-mode:backwards]"
             onClick={() => {
               onContinue();
               onOpenChange(false);

@@ -23,10 +23,11 @@ const config: Config = {
         'fade-in': 'fadeIn 0.5s ease-out',
         'fade-up': 'fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fade-up-slow': 'fadeUpSlow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
+        /** Modales / sheets / tiroir : opacité seule (évite voile mobile translateY + backdrop-filter). */
+        'modal-fade': 'modalFade 0.38s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'modal-fade-slow': 'modalFade 0.58s cubic-bezier(0.22, 1, 0.36, 1) both',
         'quest-card-enter': 'questCardEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fadeIn': 'fadeIn 0.35s ease-out',
-        /** Entrée de page (template racine) — discret */
-        'page-enter': 'pageEnter 0.4s cubic-bezier(0.22, 1, 0.36, 1) both',
         /** Étapes onboarding : un peu plus de relief que fadeIn */
         'onboarding-step': 'onboardingStep 0.48s cubic-bezier(0.22, 1, 0.36, 1) both',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -69,10 +70,6 @@ const config: Config = {
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        pageEnter: {
-          '0%': { opacity: '0', transform: 'translateY(12px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         onboardingStep: {
@@ -141,9 +138,14 @@ const config: Config = {
           '35%': { opacity: '0.38' },
           '100%': { opacity: '0' },
         },
+        /** Avant : scale + translateY — sur mobile, voile / overlay qui « glisse » avec le verre. */
         shopModalIn: {
-          '0%': { opacity: '0', transform: 'scale(0.92) translateY(20px)' },
-          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        modalFade: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
         shopCardBump: {
           '0%': { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(251, 191, 36, 0.5)' },

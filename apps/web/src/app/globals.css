@@ -142,18 +142,6 @@
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    /**
-     * Fond en profondeur : léger dégradé + halos très doux (teintes du thème).
-     * Sans variation derrière les panneaux, `backdrop-filter` est presque invisible — on croit qu’il n’y a pas de verre.
-     */
-    background-color: var(--bg);
-    background-image:
-      radial-gradient(ellipse 110% 58% at 8% -6%,   color-mix(in srgb, var(--violet) 22%, transparent) 0%, transparent 52%),
-      radial-gradient(ellipse  90% 52% at 96% 14%,  color-mix(in srgb, var(--orange) 16%, transparent) 0%, transparent 48%),
-      radial-gradient(ellipse  72% 42% at 48% 102%, color-mix(in srgb, var(--gold)   12%, transparent) 0%, transparent 44%),
-      linear-gradient(180deg, var(--surface) 0%, var(--bg) 38%, var(--bg) 100%);
-    /* Pas de `background-attachment: fixed` ici : avec `backdrop-filter` sur la navbar / cartes,
-       Chrome et Firefox peuvent ne plus composer le flou correctement (fond « mort »). */
   }
 
   /**
@@ -347,12 +335,37 @@
 
   /* Landing / shell app : mêmes halos que `body` pour que le verre (navbar, cartes) ait du grain à flouter */
   .bg-adventure {
-    background-color: var(--bg);
-    background-image:
-      radial-gradient(ellipse 110% 58% at 8% -6%, color-mix(in srgb, var(--violet) 22%, transparent) 0%, transparent 52%),
-      radial-gradient(ellipse 90% 52% at 96% 14%, color-mix(in srgb, var(--orange) 16%, transparent) 0%, transparent 48%),
-      radial-gradient(ellipse 72% 42% at 48% 102%, color-mix(in srgb, var(--gold) 12%, transparent) 0%, transparent 44%),
-      linear-gradient(180deg, var(--surface) 0%, var(--bg) 42%, var(--bg) 100%);
+  }
+
+  /**
+   * Halo décoratif au-dessus du hero (landing). En thème clair : tons pierre/ambre.
+   * En Minuit : accents du thème + flou plus serré — sinon pierre/ambre + blur 44px = voile clair énorme.
+   */
+  .landing-hero-ambient-glow {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, #d6d3d1 35%, transparent),
+      color-mix(in srgb, #fef3c7 12%, transparent),
+      transparent
+    );
+    filter: blur(2.75rem);
+  }
+  html[data-theme="midnight"] .landing-hero-ambient-glow {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--violet) 14%, transparent),
+      color-mix(in srgb, var(--orange) 7%, transparent),
+      transparent
+    );
+    filter: blur(1.75rem);
+  }
+
+  /** Pied de page marketing : évite bg-white/50 sur fond sombre (bandeau « givré » géant). */
+  .landing-footer {
+    border-top: 1px solid color-mix(in srgb, var(--text) 10%, var(--border-ui-strong));
+    background: color-mix(in srgb, var(--card) 68%, transparent);
+    backdrop-filter: blur(10px) saturate(var(--glass-sat-subtle));
+    -webkit-backdrop-filter: blur(10px) saturate(var(--glass-sat-subtle));
   }
 
   /* Bandes de section : tons neutres + léger flou (moins « palette arc-en-ciel »). */

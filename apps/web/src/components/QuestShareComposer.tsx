@@ -976,8 +976,8 @@ export function QuestShareComposer({
 
   const backdropActive = sheetActive;
   const sheetTransform = backdropActive
-    ? 'translate-y-0 opacity-100 scale-100 md:translate-y-0 md:scale-100'
-    : 'translate-y-[108%] opacity-0 md:translate-y-10 md:scale-[0.94]';
+    ? 'opacity-100'
+    : 'opacity-0';
 
   return (
     <div
@@ -995,7 +995,7 @@ export function QuestShareComposer({
       />
 
       <div
-        className={`pointer-events-none relative z-10 mx-auto flex min-h-0 w-full max-w-md max-h-full flex-1 flex-col justify-end px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.25rem,env(safe-area-inset-top))] md:max-h-none md:flex-none md:px-0 md:pb-0 md:pt-0 transition-[transform,opacity] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:!translate-y-0 motion-reduce:!scale-100 motion-reduce:!opacity-100 motion-reduce:!transition-none ${sheetTransform}`}
+        className={`pointer-events-none relative z-10 mx-auto flex min-h-0 w-full max-w-md max-h-full flex-1 flex-col justify-end px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.25rem,env(safe-area-inset-top))] md:max-h-none md:flex-none md:px-0 md:pb-0 md:pt-0 transition-opacity duration-[320ms] ease-out motion-reduce:!opacity-100 motion-reduce:!transition-none ${sheetTransform}`}
       >
         <div className="pointer-events-auto">{panel}</div>
       </div>

@@ -279,8 +279,9 @@ export function Navbar() {
           />
           <div
             id={panelId}
-            className={`navbar-mobile-drawer fixed inset-y-0 right-0 z-[101] flex w-[min(100%,19rem)] max-w-[calc(100vw-2.5rem)] flex-col md:hidden transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-75 motion-reduce:ease-out will-change-transform pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] ${
-              drawerReady ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+            aria-hidden={!drawerReady}
+            className={`navbar-mobile-drawer fixed inset-y-0 right-0 z-[101] flex w-[min(100%,19rem)] max-w-[calc(100vw-2.5rem)] flex-col md:hidden transition-opacity duration-300 ease-out motion-reduce:duration-75 motion-reduce:ease-out pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] ${
+              drawerReady ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             role="dialog"
             aria-modal="true"

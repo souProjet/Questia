@@ -947,7 +947,7 @@ function ShopPageInner() {
                   aria-label={t('close')}
                   onClick={() => setInfoModal(null)}
                 />
-                <div className="quest-modal-panel relative z-10 w-full max-w-md overflow-hidden shadow-2xl">
+                <div className="quest-modal-panel relative z-10 w-full max-w-md overflow-hidden shadow-2xl motion-safe:animate-modal-fade motion-reduce:animate-none">
                   <div className="quest-modal-panel-accent shrink-0" aria-hidden />
                   <div className="relative p-5 pt-4">
                     <button

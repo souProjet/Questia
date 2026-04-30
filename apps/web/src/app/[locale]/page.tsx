@@ -80,7 +80,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <div className="min-h-screen bg-adventure relative overflow-x-hidden">
       <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden>
-        <div className="absolute -top-28 left-1/2 w-[min(100rem,200%)] max-w-none -translate-x-1/2 h-[min(38vh,24rem)] rounded-[100%] bg-gradient-to-b from-stone-200/35 via-amber-100/12 to-transparent blur-[2.75rem] motion-safe:animate-glow-soft opacity-50 motion-reduce:animate-none motion-reduce:opacity-35" />
+        <div
+          className="landing-hero-ambient-glow absolute -top-28 left-1/2 w-[min(100rem,200%)] max-w-none -translate-x-1/2 h-[min(38vh,24rem)] rounded-[100%] motion-safe:animate-glow-soft opacity-50 motion-reduce:animate-none motion-reduce:opacity-35"
+          aria-hidden
+        />
       </div>
 
       <div className="relative z-10">
@@ -406,71 +409,71 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
         </main>
 
-      <footer className="border-t border-slate-200/80 bg-white/50 backdrop-blur-sm">
+      <footer className="landing-footer">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 sm:px-6 py-10 sm:py-12 md:py-14">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8 sm:gap-10 md:gap-12">
             <div className="max-w-sm">
               <div className="flex items-center gap-3">
                 <QuestiaLogo variant="footer" />
-                <p className="font-display font-black text-lg tracking-tight text-slate-900">Questia</p>
+                <p className="font-display font-black text-lg tracking-tight text-[var(--text)]">Questia</p>
               </div>
-              <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">
                 {t('footer.tagline')}
               </p>
             </div>
             <nav
-              className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-row md:flex-wrap gap-x-4 gap-y-2.5 md:gap-x-6 md:gap-y-3 text-sm font-semibold text-slate-600 min-w-0"
+              className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-row md:flex-wrap gap-x-4 gap-y-2.5 md:gap-x-6 md:gap-y-3 text-sm font-semibold text-[var(--muted)] min-w-0"
               aria-label={t('footer.navLabel')}
             >
               {storesReady ? (
                 <>
-                  <a href="#hero-examples" className="hover:text-slate-900 transition-colors">
+                  <a href="#hero-examples" className="hover:text-[var(--text)] transition-colors">
                     {t('footer.examples')}
                   </a>
-                  <a href="#how" className="hover:text-slate-900 transition-colors">
+                  <a href="#how" className="hover:text-[var(--text)] transition-colors">
                     {t('footer.how')}
                   </a>
                 </>
               ) : (
                 <>
-                  <a href="#how" className="hover:text-slate-900 transition-colors">
+                  <a href="#how" className="hover:text-[var(--text)] transition-colors">
                     {t('footer.how')}
                   </a>
-                  <a href="#hero-examples" className="hover:text-slate-900 transition-colors">
+                  <a href="#hero-examples" className="hover:text-[var(--text)] transition-colors">
                     {t('footer.examples')}
                   </a>
                 </>
               )}
-              <a href="#telecharger" className="hover:text-slate-900 transition-colors">
+              <a href="#telecharger" className="hover:text-[var(--text)] transition-colors">
                 {storesReady ? t('footer.download') : t('footer.downloadWeb')}
               </a>
-              <a href="#faq" className="hover:text-slate-900 transition-colors">
+              <a href="#faq" className="hover:text-[var(--text)] transition-colors">
                 {t('footer.faq')}
               </a>
-              <Link href="/generation-quetes" className="hover:text-slate-900 transition-colors">
+              <Link href="/generation-quetes" className="hover:text-[var(--text)] transition-colors">
                 {t('footer.questGeneration')}
               </Link>
-              <Link href="/sign-in" className="hover:text-slate-900 transition-colors">
+              <Link href="/sign-in" className="hover:text-[var(--text)] transition-colors">
                 {t('footer.signIn')}
               </Link>
-              <Link href="/legal/confidentialite" className="hover:text-slate-900 transition-colors">
+              <Link href="/legal/confidentialite" className="hover:text-[var(--text)] transition-colors">
                 {t('footer.privacy')}
               </Link>
-              <Link href="/legal/mentions-legales" className="hover:text-slate-900 transition-colors">
+              <Link href="/legal/mentions-legales" className="hover:text-[var(--text)] transition-colors">
                 {t('footer.legal')}
               </Link>
-              <Link href="/legal/cgu" className="hover:text-slate-900 transition-colors">
+              <Link href="/legal/cgu" className="hover:text-[var(--text)] transition-colors">
                 {t('footer.terms')}
               </Link>
-              <Link href="/legal/cgv" className="hover:text-slate-900 transition-colors">
+              <Link href="/legal/cgv" className="hover:text-[var(--text)] transition-colors">
                 {t('footer.sales')}
               </Link>
-              <Link href="/legal/bien-etre" className="hover:text-slate-900 transition-colors">
+              <Link href="/legal/bien-etre" className="hover:text-[var(--text)] transition-colors">
                 {t('footer.wellbeing')}
               </Link>
             </nav>
           </div>
-          <p className="mt-10 pt-8 border-t border-slate-200/80 text-center text-xs text-slate-500">
+          <p className="mt-10 pt-8 border-t border-[color-mix(in_srgb,var(--text)_10%,transparent)] text-center text-xs text-[var(--subtle)]">
             {t('footer.copyright', { year: new Date().getFullYear() })}
           </p>
         </div>
