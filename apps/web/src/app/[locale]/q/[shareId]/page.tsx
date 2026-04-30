@@ -36,7 +36,7 @@ export async function generateMetadata({
   const { locale, shareId } = await params;
   const log = await loadSharedQuest(shareId);
   if (!log || log.status !== 'completed') {
-    return { title: 'Questia' };
+    return { title: 'Questia', robots: { index: false, follow: false } };
   }
   const title = `${log.generatedTitle} | Questia`;
   const description =
@@ -61,7 +61,8 @@ export async function generateMetadata({
       title,
       description,
     },
-    robots: { index: true, follow: true },
+    /** Pages UGC très courtes : ne pas les faire indexer (risque spam / contenu de faible qualité aux yeux de Google). */
+    robots: { index: false, follow: true },
   };
 }
 
