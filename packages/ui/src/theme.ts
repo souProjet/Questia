@@ -36,6 +36,7 @@ export {
   heroBandGradient,
   shopBalanceGradient,
   questSliderEmbeddedGradient,
+  questRewardModalCardGradient,
   shareScreenPhotoAddGradient,
   missionBlockGradient,
   questDayStripGradient,

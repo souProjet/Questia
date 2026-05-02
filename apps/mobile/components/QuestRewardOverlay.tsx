@@ -12,7 +12,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { elevationAndroidSafe } from '../lib/elevationAndroid';
-import { GlassScrim } from './GlassScrim';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { DisplayBadge, XpBreakdown } from '@questia/shared';
 import {
@@ -23,14 +22,14 @@ import {
 } from '@questia/shared';
 import {
   colorWithAlpha,
-  questSliderEmbeddedGradient,
+  questRewardModalCardGradient,
   themePanelMuted,
   themePanelText,
+  themeUsesLightStatusBar,
   type ThemePalette,
   UiLucideIcon,
 } from '@questia/ui';
 import { useAppTheme } from '../contexts/AppThemeContext';
-import { getScrimGlass } from '../lib/themeModalChrome';
 import { useAppLocale } from '../contexts/AppLocaleContext';
 import { getHomeDashboardStrings } from '../lib/homeDashboardStrings';
 
@@ -69,11 +68,16 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
   const { locale } = useAppLocale();
   const rewardUi = useMemo(() => getHomeDashboardStrings(locale), [locale]);
   const rewardCardGrad = useMemo(
-    () => questSliderEmbeddedGradient(themeId, palette),
+    () => questRewardModalCardGradient(themeId, palette),
     [themeId, palette],
   );
   const styles = useMemo(() => buildRewardStyles(palette, themeId), [palette, themeId]);
-  const scrimGlass = useMemo(() => getScrimGlass(themeId), [themeId]);
+
+  /** Voile fort : masque l’accueil (carte quête, textes…) pour que la modale XP reste lisible. */
+  const rewardBackdropVeil = useMemo(() => {
+    const id = themeId ?? 'default';
+    return themeUsesLightStatusBar(id) ? 'rgba(0,0,0,0.9)' : 'rgba(16, 14, 12, 0.9)';
+  }, [themeId]);
 
   const scale = useRef(new Animated.Value(0.82)).current;
   const xpPop = useRef(new Animated.Value(0)).current;
@@ -235,17 +239,16 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onContinue}>
       <View style={styles.backdrop}>
-        <GlassScrim
-          overlayColor={palette.overlay}
-          intensity={scrimGlass.intensity}
-          tint={scrimGlass.tint}
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: rewardBackdropVeil }]}
         />
         <Animated.View
           pointerEvents="none"
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor: colorWithAlpha(palette.gold, 0.36),
+              backgroundColor: colorWithAlpha(palette.gold, 0.22),
               opacity: flash,
             },
           ]}
@@ -369,7 +372,7 @@ export function QuestRewardOverlay({ visible, payload, onContinue }: Props) {
             </View>
 
             <ScrollView
-              style={{ maxHeight: SCROLL_MAX_H }}
+              style={[styles.cardScrollArea, { maxHeight: SCROLL_MAX_H }]}
               contentContainerStyle={styles.cardScrollContent}
               showsVerticalScrollIndicator
               bounces
@@ -478,11 +481,17 @@ function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) 
       borderWidth: 2,
       borderColor: colorWithAlpha(p.orange, 0.42),
       overflow: 'hidden',
+      /** Filet sous le dégradé (anti-alias / coins). */
+      backgroundColor: themeId === 'midnight' ? p.card : p.cardCream,
     },
     cardHero: {
       paddingHorizontal: 16,
       paddingTop: 16,
       paddingBottom: 4,
+      backgroundColor: themeId === 'midnight' ? p.card : p.cardCream,
+    },
+    cardScrollArea: {
+      backgroundColor: themeId === 'midnight' ? p.card : p.cardCream,
     },
     cardScrollContent: {
       paddingHorizontal: 16,
@@ -496,10 +505,7 @@ function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) 
       borderColor: colorWithAlpha(p.gold, 0.55),
       paddingVertical: 8,
       paddingHorizontal: 12,
-      backgroundColor:
-        themeId && themeId !== 'default'
-          ? colorWithAlpha(p.surface, 0.96)
-          : colorWithAlpha(p.cardCream, 0.95),
+      backgroundColor: themeId === 'midnight' ? p.surface : p.inputBg,
       alignItems: 'center',
     },
     levelKicker: {
@@ -555,7 +561,7 @@ function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) 
       borderWidth: 1,
       borderColor: colorWithAlpha(p.cyan, 0.4),
       padding: 10,
-      backgroundColor: colorWithAlpha(p.cyan, 0.07),
+      backgroundColor: themeId === 'midnight' ? p.surface : p.inputBg,
     },
     progressHeader: {
       flexDirection: 'row',
@@ -588,7 +594,7 @@ function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) 
       color: panelMuted,
     },
     rulesBox: {
-      backgroundColor: themeId && themeId !== 'default' ? p.card : p.cardCream,
+      backgroundColor: themeId === 'midnight' ? p.surface : p.inputBg,
       borderRadius: 14,
       padding: 10,
       borderWidth: 1,
@@ -613,7 +619,7 @@ function buildRewardStyles(p: ThemePalette, themeId: string | null | undefined) 
       borderRadius: 10,
       borderWidth: 1,
       borderColor: colorWithAlpha(p.cyan, 0.28),
-      backgroundColor: colorWithAlpha(p.card, themeId && themeId !== 'default' ? 0.88 : 0.94),
+      backgroundColor: themeId === 'midnight' ? p.card : p.inputBg,
     },
     ruleCardLabel: {
       fontSize: 11,

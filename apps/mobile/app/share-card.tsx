@@ -435,6 +435,35 @@ export default function ShareCardScreen() {
   const shareFooterLine =
     shareLocale === 'en' ? `${first} · Quest complete` : `${first} · Quête accomplie`;
 
+  const shareSheetUi = useMemo(
+    () =>
+      shareLocale === 'en'
+        ? {
+            optionalHint: 'Optional — export or share below, then tap Done.',
+            exportImage: 'Export image',
+            linkCta: 'Copy or share web link',
+            linkBusy: 'Preparing link…',
+            done: 'Done',
+            homeCta: 'Home',
+            homeA11y: 'Back to home',
+          }
+        : {
+            optionalHint: "Optionnel — exporte ou partage ci-dessous, puis touche « Terminé ».",
+            exportImage: "Exporter l'image",
+            linkCta: 'Copier ou envoyer le lien web',
+            linkBusy: 'Préparation du lien…',
+            done: 'Terminé',
+            homeCta: 'Accueil',
+            homeA11y: "Revenir à l'accueil",
+          },
+    [shareLocale],
+  );
+
+  const goHome = useCallback(() => {
+    hapticLight();
+    router.replace('/home');
+  }, [router]);
+
   const photoSheetInner = (
     <>
       <View style={styles.photoSheetHandle} accessibilityElementsHidden />
@@ -499,8 +528,8 @@ export default function ShareCardScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.centered}>
           <Text style={styles.err}>{error ?? 'Erreur'}</Text>
-          <Pressable style={styles.primaryBtn} onPress={() => router.replace('/home')}>
-            <Text style={styles.primaryBtnText}>Retour</Text>
+          <Pressable style={styles.primaryBtn} onPress={goHome}>
+            <Text style={styles.primaryBtnText}>{shareSheetUi.homeCta}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -511,8 +540,14 @@ export default function ShareCardScreen() {
     <>
     <SafeAreaView style={styles.safe}>
       <View style={[styles.topBar, { paddingHorizontal: compact ? 10 : 16 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={{ flexShrink: 0 }}>
-          <Text style={styles.back}>← Retour</Text>
+        <Pressable
+          onPress={goHome}
+          hitSlop={12}
+          style={{ flexShrink: 0 }}
+          accessibilityRole="button"
+          accessibilityLabel={shareSheetUi.homeA11y}
+        >
+          <Text style={styles.back}>{shareSheetUi.homeCta}</Text>
         </Pressable>
         <Text style={styles.topTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
           Carte à partager
@@ -862,6 +897,8 @@ export default function ShareCardScreen() {
           </View>
         </View>
 
+        <Text style={styles.sectionHint}>{shareSheetUi.optionalHint}</Text>
+
         <Pressable
           onPress={() => void shareImage()}
           disabled={exporting}
@@ -881,7 +918,7 @@ export default function ShareCardScreen() {
             {exporting ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={styles.shareBtnText}>Partager ou enregistrer</Text>
+              <Text style={styles.shareBtnText}>{shareSheetUi.exportImage}</Text>
             )}
           </LinearGradient>
         </Pressable>
@@ -895,8 +932,20 @@ export default function ShareCardScreen() {
           ]}
         >
           <Text style={styles.linkBtnText}>
-            {sharingLink ? 'Partage du lien...' : 'Partager le lien unique'}
+            {sharingLink ? shareSheetUi.linkBusy : shareSheetUi.linkCta}
           </Text>
+        </Pressable>
+        <Pressable
+          onPress={goHome}
+          style={({ pressed }) => [
+            styles.primaryBtn,
+            styles.shareDoneBtn,
+            pressed && styles.shareDoneBtnPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={shareSheetUi.done}
+        >
+          <Text style={styles.primaryBtnText}>{shareSheetUi.done}</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -975,11 +1024,14 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
     textTransform: 'uppercase',
   },
   sectionHint: {
-    fontSize: 10,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 17,
     color: p.muted,
-    opacity: 0.9,
-    marginBottom: 10,
+    opacity: 0.95,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '600',
+    paddingHorizontal: 4,
   },
   bgRow: { marginBottom: 16 },
   bgChip: {
@@ -1468,5 +1520,14 @@ function createShareStyles(p: ThemePalette, themeId: string, cardScale: number) 
     borderRadius: 14,
   },
   primaryBtnText: { color: '#ffffff', fontWeight: '800', fontSize: 15 },
+  shareDoneBtn: {
+    marginTop: 18,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+  },
+  shareDoneBtnPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
   });
 }

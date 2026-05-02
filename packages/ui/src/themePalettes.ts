@@ -178,6 +178,24 @@ export function questSliderEmbeddedGradient(themeId: string | null | undefined, 
 }
 
 /**
+ * Fond de la modale « quête validée / XP » (mobile) : stops **100 % opaques**.
+ * `questSliderEmbeddedGradient` laisse transparaître or / cyan sur les bords : au-dessus d’un
+ * `BlurView` (scrim), ça produit un rendu vitré / « à moitié à travers » très disgracieux (RN).
+ */
+export function questRewardModalCardGradient(themeId: string | null | undefined, p: ThemePalette): [string, string, string] {
+  if (themeId === 'midnight') {
+    return ['#3d3834', p.card, '#1c1917'];
+  }
+  if (themeId === 'aurora') {
+    return ['#fff7ed', p.cardCream, '#ecfdf5'];
+  }
+  if (themeId === 'parchment') {
+    return ['#fef9c3', p.cardCream, '#f7fee7'];
+  }
+  return ['#fff7ed', p.cardCream, '#ecfeff'];
+}
+
+/**
  * Bloc « Ajouter une photo » (écran carte à partager) — sur minuit / aurore, dégradé plus doux
  * pour limiter le banding Android ; sur l’app, éviter elevation+overflow sur le même nœud que le gradient.
  */

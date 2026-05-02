@@ -141,6 +141,7 @@ export function QuestXpCelebration({
       <button
         type="button"
         className="quest-modal-backdrop absolute inset-0 cursor-pointer motion-safe:animate-fadeIn motion-reduce:animate-none"
+        style={{ background: 'rgba(12, 10, 9, 0.88)' }}
         aria-label="Fermer"
         onClick={() => onOpenChange(false)}
       />
@@ -153,7 +154,7 @@ export function QuestXpCelebration({
       ) : null}
       <div className="motion-safe:animate-quest-modal-shake motion-reduce:animate-none relative z-[60] flex w-full max-w-md justify-center">
         <div
-          className="relative w-full overflow-hidden rounded-3xl border-2 border-orange-300/50 bg-gradient-to-br from-amber-50 via-white to-cyan-50 shadow-[0_24px_80px_-12px_rgba(249,115,22,.42),0_0_0_1px_rgba(255,255,255,0.5)_inset] motion-safe:animate-quest-modal-pop motion-reduce:animate-none"
+          className="relative isolate w-full overflow-hidden rounded-3xl border-2 border-orange-300/50 bg-gradient-to-br from-amber-50 via-white to-cyan-50 shadow-[0_24px_80px_-12px_rgba(249,115,22,.42),0_0_0_1px_rgba(255,255,255,0.5)_inset] motion-safe:animate-quest-modal-pop motion-reduce:animate-none"
           role="dialog"
           aria-modal="true"
           aria-labelledby="xp-celebration-title"
@@ -217,7 +218,7 @@ export function QuestXpCelebration({
 
           {levelInfo.leveledUp ? (
             <div
-              className="relative mt-4 flex flex-col items-center justify-center rounded-2xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-100/90 via-white to-cyan-50/90 px-4 py-4 text-center shadow-[0_8px_30px_-8px_rgba(251,191,36,0.45)] motion-safe:animate-level-banner-in motion-reduce:animate-none [animation-delay:90ms] [animation-fill-mode:backwards]"
+              className="relative mt-4 flex flex-col items-center justify-center rounded-2xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-100 via-white to-cyan-50 px-4 py-4 text-center shadow-[0_8px_30px_-8px_rgba(251,191,36,0.45)] motion-safe:animate-level-banner-in motion-reduce:animate-none [animation-delay:90ms] [animation-fill-mode:backwards]"
             >
               <span className="text-[11px] font-black uppercase tracking-[0.25em] text-amber-800">Niveau atteint</span>
               <p className="mt-1 font-display text-4xl font-black tabular-nums tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 via-amber-500 to-orange-600 drop-shadow-sm motion-safe:animate-xp-number-pop motion-reduce:animate-none [animation-delay:180ms] [animation-fill-mode:backwards]">
@@ -250,7 +251,7 @@ export function QuestXpCelebration({
           </p>
 
           <div
-            className="mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50/90 to-white/90 px-4 py-3 shadow-sm motion-safe:animate-modal-fade motion-reduce:opacity-100 [animation-delay:160ms] [animation-fill-mode:backwards]"
+            className="mt-5 rounded-2xl border border-cyan-300/45 bg-gradient-to-r from-cyan-50 to-white px-4 py-3 shadow-sm motion-safe:animate-modal-fade motion-reduce:opacity-100 [animation-delay:160ms] [animation-fill-mode:backwards]"
             role="group"
             aria-label="Progression dans le niveau actuel"
           >
@@ -284,7 +285,7 @@ export function QuestXpCelebration({
               {breakdownRows.map((row) => (
                 <li
                   key={row.key}
-                  className="rounded-xl border border-cyan-200/60 bg-white/85 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
+                  className="rounded-xl border border-cyan-200/60 bg-white px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
                     <span className="text-[11px] font-black uppercase tracking-wide text-cyan-900/90">{row.label}</span>
@@ -307,14 +308,14 @@ export function QuestXpCelebration({
                 {badgesUnlocked.map((b, i) => (
                   <li
                     key={b.id}
-                    className="flex gap-3 rounded-2xl border border-orange-200/60 bg-gradient-to-r from-cyan-50/50 to-amber-50/50 p-3 shadow-sm motion-safe:animate-badge-reveal motion-reduce:opacity-100"
+                    className="flex gap-3 rounded-2xl border border-orange-200/60 bg-gradient-to-r from-cyan-50 to-amber-50 p-3 shadow-sm motion-safe:animate-badge-reveal motion-reduce:opacity-100"
                     style={{
                       animationDelay: reducedMotion ? '0ms' : `${280 + i * 95}ms`,
                       animationFillMode: 'backwards',
                     }}
                   >
                     <span
-                      className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-cyan-100 shadow-inner ring-2 ring-amber-300/50 ring-offset-2 ring-offset-white/90 motion-safe:animate-xp-number-pop motion-reduce:animate-none"
+                      className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-cyan-100 shadow-inner ring-2 ring-amber-300/50 ring-offset-2 ring-offset-white motion-safe:animate-xp-number-pop motion-reduce:animate-none"
                       style={{ animationDelay: reducedMotion ? '0ms' : `${300 + i * 95}ms` }}
                       aria-hidden
                     >

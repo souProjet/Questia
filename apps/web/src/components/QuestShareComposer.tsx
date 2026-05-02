@@ -490,6 +490,33 @@ export function QuestShareComposer({
   const background = getQuestShareBackgroundById(bgId);
   const fallbackWebUrl = buildWebAppQuestUrl(siteUrl);
 
+  const sheetUi =
+    shareLocale === 'en'
+      ? {
+          optionalHint: 'Optional — export or share below, then tap Done.',
+          exportImage: 'Export image',
+          exportImageBusy: '…',
+          linkCta: 'Copy or share web link',
+          linkBusy: 'Preparing link…',
+          linkCopied: 'Link copied',
+          linkShared: 'Link shared',
+          linkError: 'Could not share link',
+          done: 'Done',
+          closeOverlay: 'Close',
+        }
+      : {
+          optionalHint: "Optionnel — exporte ou partage ci-dessous, puis touche « Terminé ».",
+          exportImage: "Exporter l'image",
+          exportImageBusy: '…',
+          linkCta: 'Copier ou envoyer le lien web',
+          linkBusy: 'Préparation du lien…',
+          linkCopied: 'Lien copié',
+          linkShared: 'Lien partagé',
+          linkError: 'Impossible de partager le lien',
+          done: 'Terminé',
+          closeOverlay: 'Fermer',
+        };
+
   useLayoutEffect(() => {
     if (open) {
       if (closeTimeoutRef.current) {
@@ -907,6 +934,7 @@ export function QuestShareComposer({
         </div>
 
         <div className="flex flex-col gap-3">
+          <p className="px-0.5 text-center text-xs font-semibold leading-relaxed text-slate-500">{sheetUi.optionalHint}</p>
           <button
             type="button"
             className="w-full overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 py-4 text-base font-black text-white shadow-[0_12px_32px_-8px_rgba(249,115,22,0.55),inset_0_1px_0_rgba(255,255,255,0.25)] transition-all duration-300 enabled:hover:brightness-105 enabled:hover:shadow-[0_16px_40px_-8px_rgba(249,115,22,0.6)] enabled:active:scale-[0.99] disabled:opacity-60 motion-safe:hover:scale-[1.01]"
@@ -915,11 +943,11 @@ export function QuestShareComposer({
           >
             <span className="flex items-center justify-center gap-2">
               {exporting ? (
-                '…'
+                sheetUi.exportImageBusy
               ) : (
                 <>
-                  <Icon name="Share2" size="sm" className="opacity-95" />
-                  Partager ou enregistrer l'image
+                  <Icon name="Download" size="sm" className="opacity-95" />
+                  {sheetUi.exportImage}
                 </>
               )}
             </span>
@@ -931,21 +959,21 @@ export function QuestShareComposer({
             onClick={() => void shareLink()}
           >
             {sharingLink
-              ? 'Partage du lien...'
+              ? sheetUi.linkBusy
               : linkFeedback === 'copied'
-                ? 'Lien copie'
+                ? sheetUi.linkCopied
                 : linkFeedback === 'shared'
-                  ? 'Lien partage'
+                  ? sheetUi.linkShared
                   : linkFeedback === 'error'
-                    ? 'Impossible de partager le lien'
-                    : 'Partager le lien unique'}
+                    ? sheetUi.linkError
+                    : sheetUi.linkCta}
           </button>
           <button
             type="button"
-            className="w-full rounded-xl py-3 text-sm font-bold text-[var(--subtle)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text)]"
+            className="w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-cyan-700 py-4 text-base font-black text-white shadow-[0_10px_28px_-8px_rgba(8,145,178,0.45),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-200 hover:brightness-105 enabled:active:scale-[0.99]"
             onClick={() => onOpenChange(false)}
           >
-            Fermer
+            {sheetUi.done}
           </button>
         </div>
       </div>
@@ -990,7 +1018,7 @@ export function QuestShareComposer({
         className={`quest-modal-backdrop absolute inset-0 z-0 h-full w-full cursor-pointer border-0 transition-opacity duration-300 ease-out motion-reduce:transition-none ${
           backdropActive ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
-        aria-label="Fermer"
+        aria-label={sheetUi.closeOverlay}
         onClick={() => onOpenChange(false)}
       />
 
