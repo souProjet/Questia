@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import type { PersonalityVector, QuestCandidate } from '@questia/shared';
-import { TEST_QUEST_TAXONOMY, selectCandidates } from '@questia/shared';
+import type { PersonalityVector } from '@questia/shared';
+import { TEST_QUEST_TAXONOMY, buildQuestParameters } from '@questia/shared';
 import { buildSystemPrompt, buildUserPrompt } from './buildPrompt';
 import { buildProfileBrief } from './buildProfileBrief';
 import { buildHistoryBrief } from './buildHistoryBrief';
-import { buildCandidatesBrief } from './buildCandidatesBrief';
+import { buildCreativeConstraints } from './buildCreativeConstraints';
 import { validateGenerated, clampToOneSentence } from './validation';
 import { parseGeneratedJson } from './parse';
 import { buildFallbackQuest } from './fallback';
-import type { GenerationProfile, QuestGenInput } from './types';
+import type { GenerationProfile, ParsedGenerationBody, QuestGenInput } from './types';
 
 const NEUTRAL: PersonalityVector = {
   openness: 0.5,
@@ -46,22 +46,32 @@ function buildProfile(over: Partial<GenerationProfile> = {}): GenerationProfile 
 }
 
 function buildInput(over: Partial<QuestGenInput> = {}): QuestGenInput {
-  const result = selectCandidates(TEST_QUEST_TAXONOMY, {
-    declaredPersonality: NEUTRAL,
-    exhibitedPersonality: NEUTRAL,
-    congruenceDelta: 0.1,
-    phase: 'expansion',
-    day: 5,
-    sociability: 'balanced',
-    refinementBias: {},
-    recentLogs: [],
-    hasUserLocation: true,
-    isOutdoorFriendly: true,
-    instantOnly: false,
-    excludeArchetypeIds: [],
-  });
+  const built = buildQuestParameters(
+    TEST_QUEST_TAXONOMY,
+    {
+      declaredPersonality: NEUTRAL,
+      exhibitedPersonality: NEUTRAL,
+      congruenceDelta: 0.1,
+      phase: 'expansion',
+      day: 5,
+      sociability: 'balanced',
+      refinementBias: {},
+      recentLogs: [],
+      hasUserLocation: true,
+      isOutdoorFriendly: true,
+      instantOnly: false,
+      excludeArchetypeIds: [],
+    },
+    {
+      questDurationMinMinutes: 5,
+      questDurationMaxMinutes: 1440,
+      selectionSeed: 'test-input-seed',
+    },
+  );
+  if (!built) throw new Error('buildQuestParameters failed in test');
   return {
-    candidates: result.candidates,
+    taxonomy: TEST_QUEST_TAXONOMY,
+    questParameters: built.params,
     profile: buildProfile(),
     context: {
       questDateIso: '2025-04-19',
@@ -154,13 +164,13 @@ describe('buildHistoryBrief', () => {
   });
 });
 
-describe('buildCandidatesBrief', () => {
-  it('lists candidates with engine reasons and ids', () => {
+describe('buildCreativeConstraints', () => {
+  it('lists creative brief with primary category and inspirations', () => {
     const input = buildInput();
-    const txt = buildCandidatesBrief(input.candidates, 'fr');
-    expect(txt).toContain('archetypeId=');
-    expect(txt).toContain('total=');
-    expect(txt).toMatch(/intent:/);
+    const txt = buildCreativeConstraints(input.questParameters, 'fr', input.context.questDateIso);
+    expect(txt).toContain('CONSIGNE CRÉATIVE');
+    expect(txt).toContain(input.questParameters.primaryCategory);
+    expect(txt).toMatch(/Étincelles taxonomie/i);
   });
 });
 
@@ -179,14 +189,14 @@ describe('buildSystemPrompt', () => {
 });
 
 describe('buildUserPrompt', () => {
-  it('includes profile, history, candidates, and city when GPS is on', () => {
+  it('includes profile, history, creative brief, and city when GPS is on', () => {
     const input = buildInput();
     const prompt = buildUserPrompt(input);
     expect(prompt).toContain('PROFIL UTILISATEUR');
-    expect(prompt).toContain('CANDIDATS');
+    expect(prompt).toContain('CONSIGNE CRÉATIVE');
     expect(prompt).toContain('HISTORIQUE');
     expect(prompt).toContain('Lyon');
-    expect(prompt).toContain('archetypeId');
+    expect(prompt).toContain('psychologicalCategory');
   });
 
   it('forbids city mention when no GPS', () => {
@@ -258,12 +268,13 @@ describe('clampToOneSentence', () => {
 });
 
 describe('parseGeneratedJson', () => {
-  const archetype = TEST_QUEST_TAXONOMY[1]; // public_introspection (indoor-ish)
-  const map = new Map([[archetype.id, archetype]]);
+  const archetype = TEST_QUEST_TAXONOMY[1]!;
+  const defaultDur = 30;
 
   it('parses a well-formed JSON', () => {
     const raw = JSON.stringify({
-      archetypeId: archetype.id,
+      psychologicalCategory: archetype.category,
+      requiresSocial: false,
       icon: 'Coffee',
       title: 'Le Dîner Suspendu',
       mission: 'Va dîner seul·e dans un restaurant à Lyon, téléphone éteint.',
@@ -276,38 +287,39 @@ describe('parseGeneratedJson', () => {
       selectionReason: 'profil introspectif aujourd\'hui',
       selfFitScore: 78,
     });
-    const parsed = parseGeneratedJson(raw, map, false);
-    expect(parsed.archetypeId).toBe(archetype.id);
+    const parsed = parseGeneratedJson(raw, false, defaultDur);
+    expect(parsed.psychologicalCategory).toBe(archetype.category);
     expect(parsed.icon).toBe('Coffee');
     expect(parsed.selfFitScore).toBe(78);
-    expect(parsed.wasFallback).toBe(false);
   });
 
-  it('throws if archetypeId is missing', () => {
+  it('throws if psychologicalCategory is missing', () => {
     const raw = JSON.stringify({ icon: 'Coffee', title: 'x', mission: 'y', hook: 'z' });
-    expect(() => parseGeneratedJson(raw, map, false)).toThrow();
+    expect(() => parseGeneratedJson(raw, false, defaultDur)).toThrow();
   });
 
   it('falls back to Target icon when icon is invalid', () => {
     const raw = JSON.stringify({
-      archetypeId: archetype.id,
+      psychologicalCategory: archetype.category,
+      requiresSocial: false,
       icon: 'NotAnIcon',
       title: 'A title',
       mission: 'Do something concrete now.',
       hook: 'Just go.',
     });
-    const parsed = parseGeneratedJson(raw, map, false);
+    const parsed = parseGeneratedJson(raw, false, defaultDur);
     expect(parsed.icon).toBe('Target');
   });
 });
 
 describe('validateGenerated', () => {
-  const archetype = TEST_QUEST_TAXONOMY[1];
-  const candidateIds = [archetype.id];
+  const archetype = TEST_QUEST_TAXONOMY[1]!;
+  const engineCat = archetype.category;
 
-  function valid() {
+  function valid(): ParsedGenerationBody {
     return {
-      archetypeId: archetype.id,
+      psychologicalCategory: engineCat,
+      requiresSocial: false,
       icon: 'Coffee',
       title: 'Le Dîner Suspendu',
       mission: 'Va dîner seul·e dans un restaurant à Lyon, téléphone éteint.',
@@ -319,25 +331,23 @@ describe('validateGenerated', () => {
       destinationQuery: null,
       selectionReason: null,
       selfFitScore: null,
-      wasFallback: false,
-    } as const;
+    };
   }
 
   it('accepts a valid quest', () => {
-    const r = validateGenerated({ ...valid() }, candidateIds, archetype, 'fr', 'Lyon', false);
+    const r = validateGenerated(valid(), engineCat, 'fr', 'Lyon', false);
     expect(r.ok).toBe(true);
   });
 
-  it('rejects archetypeId not in candidates', () => {
-    const r = validateGenerated({ ...valid(), archetypeId: 999 }, candidateIds, archetype, 'fr', 'Lyon', false);
+  it('rejects psychologicalCategory mismatch', () => {
+    const r = validateGenerated({ ...valid(), psychologicalCategory: 'spatial_adventure' }, engineCat, 'fr', 'Lyon', false);
     expect(r.ok).toBe(false);
   });
 
   it('rejects multi-sentence mission', () => {
     const r = validateGenerated(
       { ...valid(), mission: 'Va à Lyon. Ensuite mange.' },
-      candidateIds,
-      archetype,
+      engineCat,
       'fr',
       'Lyon',
       false,
@@ -348,8 +358,7 @@ describe('validateGenerated', () => {
   it('rejects too long mission', () => {
     const r = validateGenerated(
       { ...valid(), mission: 'a'.repeat(400) + ' à Lyon' },
-      candidateIds,
-      archetype,
+      engineCat,
       'fr',
       'Lyon',
       false,
@@ -360,8 +369,7 @@ describe('validateGenerated', () => {
   it('rejects vague mission about life', () => {
     const r = validateGenerated(
       { ...valid(), mission: 'Réfléchis à ta vie depuis Lyon.' },
-      candidateIds,
-      archetype,
+      engineCat,
       'fr',
       'Lyon',
       false,
@@ -372,8 +380,7 @@ describe('validateGenerated', () => {
   it('requires city mention if city is real', () => {
     const r = validateGenerated(
       { ...valid(), mission: 'Va dîner seul·e dans un restaurant calme, téléphone éteint.' },
-      candidateIds,
-      archetype,
+      engineCat,
       'fr',
       'Lyon',
       false,
@@ -386,14 +393,13 @@ describe('validateGenerated', () => {
     const r = validateGenerated(
       {
         ...valid(),
-        archetypeId: outdoorArch.id,
+        psychologicalCategory: outdoorArch.category,
         isOutdoor: true,
         destinationLabel: '',
         destinationQuery: '',
         mission: 'Va marcher dans le parc proche à Lyon.',
       },
-      [outdoorArch.id],
-      outdoorArch,
+      outdoorArch.category,
       'fr',
       'Lyon',
       true,
@@ -403,11 +409,18 @@ describe('validateGenerated', () => {
 });
 
 describe('buildFallbackQuest', () => {
-  it('builds a fallback from the top candidate', () => {
+  it('builds a fallback from the primary category pool', () => {
     const input = buildInput();
-    const fb = buildFallbackQuest(input.candidates[0], 'fr', input.context);
+    const fb = buildFallbackQuest(
+      input.questParameters.fallbackArchetypePool,
+      input.taxonomy,
+      input.questParameters.primaryCategory,
+      'fr',
+      input.context,
+      input.generationSeed,
+    );
     expect(fb.wasFallback).toBe(true);
-    expect(fb.archetypeId).toBe(input.candidates[0].archetype.id);
+    expect(fb.psychologicalCategory).toBe(input.questParameters.primaryCategory);
     expect(fb.title.length).toBeGreaterThan(0);
     expect(fb.mission.length).toBeGreaterThan(0);
   });
@@ -419,5 +432,4 @@ void buildInput;
 void TEST_QUEST_TAXONOMY;
 void HOMEBODY_CAUTIOUS;
 void NEUTRAL;
-void selectCandidates;
-void ({} as QuestCandidate);
+void buildQuestParameters;

@@ -12,3 +12,10 @@ export function promptSeedIndex(seed: string, salt: string, modulo: number): num
   }
   return (h >>> 0) % modulo;
 }
+
+/** Tirage déterministe reproductible (fallback taxonomie, archétype « stats »). */
+export function pickDeterministicFromPool<T>(items: readonly T[], seed: string, salt: string): T | null {
+  if (items.length === 0) return null;
+  const idx = promptSeedIndex(seed, salt, items.length);
+  return items[idx]!;
+}

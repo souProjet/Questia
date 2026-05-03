@@ -7,7 +7,7 @@ import {
   computeArchetypeFeedbackPenalty,
   computeFreshnessScore,
 } from './freshness';
-import { selectCandidates } from './selectCandidates';
+import { buildQuestParameters } from './selectCandidates';
 import type { ProfileSnapshot, ScoringQuestLog } from './selectionTypes';
 
 const NEUTRAL_VECTOR: PersonalityVector = {
@@ -195,46 +195,49 @@ describe('computeArchetypeFeedbackPenalty', () => {
   });
 });
 
-describe('selectCandidates', () => {
-  it('returns up to poolSize candidates', () => {
-    const result = selectCandidates(TEST_QUEST_TAXONOMY, buildProfile(), { poolSize: 3 });
-    expect(result.candidates.length).toBeLessThanOrEqual(3);
-    expect(result.candidates.length).toBeGreaterThan(0);
+describe('buildQuestParameters', () => {
+  const baseOpts = {
+    questDurationMinMinutes: 5,
+    questDurationMaxMinutes: 1440,
+  };
+
+  it('returns primary category and champion in that category', () => {
+    const result = buildQuestParameters(TEST_QUEST_TAXONOMY, buildProfile(), baseOpts);
+    expect(result).not.toBeNull();
+    const { params } = result!;
+    expect(params.primaryChampion.archetype.category).toBe(params.primaryCategory);
+    expect(params.themeInspirations.length).toBeGreaterThan(0);
+    expect(params.fallbackArchetypePool.every((a) => a.category === params.primaryCategory)).toBe(true);
   });
 
-  it('orders candidates by descending total score', () => {
-    const result = selectCandidates(TEST_QUEST_TAXONOMY, buildProfile(), { poolSize: 5 });
-    for (let i = 1; i < result.candidates.length; i++) {
-      expect(result.candidates[i - 1].score.total).toBeGreaterThanOrEqual(
-        result.candidates[i].score.total - 0.001,
-      );
-    }
-  });
-
-  it('excludes outdoor archetypes when location is not available', () => {
-    const result = selectCandidates(
+  it('excludes outdoor archetypes from scoring when location is not available', () => {
+    const result = buildQuestParameters(
       TEST_QUEST_TAXONOMY,
       buildProfile({ hasUserLocation: false, isOutdoorFriendly: false }),
+      baseOpts,
     );
-    for (const c of result.candidates) {
+    expect(result).not.toBeNull();
+    for (const c of result!.params.allScored) {
       expect(c.archetype.requiresOutdoor).toBe(false);
     }
   });
 
-  it('heavyQuestPreference low pénalise les archétypes déplacement / à organiser', () => {
+  it('heavyQuestPreference low lowers score for travel/planned-heavy archetypes vs balanced', () => {
     const tax = TEST_QUEST_TAXONOMY;
     const seed = 'heavy-pref-test';
-    const balanced = selectCandidates(tax, buildProfile(), { poolSize: 30, selectionSeed: seed });
-    const lowPref = selectCandidates(tax, buildProfile({ heavyQuestPreference: 'low' }), {
-      poolSize: 30,
+    const balanced = buildQuestParameters(tax, buildProfile(), { ...baseOpts, selectionSeed: seed });
+    const lowPref = buildQuestParameters(tax, buildProfile({ heavyQuestPreference: 'low' }), {
+      ...baseOpts,
       selectionSeed: seed,
     });
+    expect(balanced).not.toBeNull();
+    expect(lowPref).not.toBeNull();
     const heavyId = 1;
     const lightId = 9;
-    const tBalHeavy = balanced.allScored.find((c) => c.archetype.id === heavyId)?.score.total;
-    const tLowHeavy = lowPref.allScored.find((c) => c.archetype.id === heavyId)?.score.total;
-    const tBalLight = balanced.allScored.find((c) => c.archetype.id === lightId)?.score.total;
-    const tLowLight = lowPref.allScored.find((c) => c.archetype.id === lightId)?.score.total;
+    const tBalHeavy = balanced!.params.allScored.find((c) => c.archetype.id === heavyId)?.score.total;
+    const tLowHeavy = lowPref!.params.allScored.find((c) => c.archetype.id === heavyId)?.score.total;
+    const tBalLight = balanced!.params.allScored.find((c) => c.archetype.id === lightId)?.score.total;
+    const tLowLight = lowPref!.params.allScored.find((c) => c.archetype.id === lightId)?.score.total;
     expect(tBalHeavy).toBeDefined();
     expect(tLowHeavy).toBeDefined();
     expect(tLowHeavy!).toBeLessThan(tBalHeavy!);
@@ -242,54 +245,61 @@ describe('selectCandidates', () => {
   });
 
   it('excludes planned archetypes in instantOnly mode', () => {
-    const result = selectCandidates(
+    const result = buildQuestParameters(
       TEST_QUEST_TAXONOMY,
       buildProfile({ instantOnly: true }),
+      baseOpts,
     );
-    for (const c of result.candidates) {
+    expect(result).not.toBeNull();
+    for (const c of result!.params.allScored) {
       expect(c.archetype.questPace).toBe('instant');
     }
   });
 
   it('excludes archetypes in excludeArchetypeIds', () => {
     const excludedId = TEST_QUEST_TAXONOMY[0].id;
-    const result = selectCandidates(
+    const result = buildQuestParameters(
       TEST_QUEST_TAXONOMY,
       buildProfile({ excludeArchetypeIds: [excludedId] }),
+      baseOpts,
     );
-    expect(result.candidates.find((c) => c.archetype.id === excludedId)).toBeUndefined();
+    expect(result!.params.allScored.find((c) => c.archetype.id === excludedId)).toBeUndefined();
   });
 
   it('excludes recently served archetypes within window', () => {
     const recentId = TEST_QUEST_TAXONOMY[0].id;
-    const result = selectCandidates(
+    const result = buildQuestParameters(
       TEST_QUEST_TAXONOMY,
       buildProfile({
         recentLogs: [
           { archetypeId: recentId, status: 'completed', questDate: '2025-04-18' },
         ],
       }),
-      { todayIso: '2025-04-19', recentExclusionDays: 7 },
+      { ...baseOpts, todayIso: '2025-04-19', recentExclusionDays: 7 },
     );
-    expect(result.candidates.find((c) => c.archetype.id === recentId)).toBeUndefined();
+    expect(result!.params.allScored.find((c) => c.archetype.id === recentId)).toBeUndefined();
   });
 
-  it('respects refinement bias', () => {
+  it('respects refinement bias on primary category', () => {
     const taxWithFamily = TEST_QUEST_TAXONOMY.filter(
       (q) => q.category === 'sensory_deprivation' || q.category === 'spatial_adventure',
     );
     if (taxWithFamily.length < 2) return;
-    const biased = selectCandidates(taxWithFamily, buildProfile({
-      refinementBias: { sensory_deprivation: 0.14 },
-    }));
-    const top = biased.candidates[0];
-    expect(top.archetype.category).toBe('sensory_deprivation');
+    const result = buildQuestParameters(
+      taxWithFamily,
+      buildProfile({
+        refinementBias: { sensory_deprivation: 0.14 },
+      }),
+      baseOpts,
+    );
+    expect(result!.params.primaryCategory).toBe('sensory_deprivation');
   });
 
-  it('produces stable ordering with the same seed', () => {
+  it('produces stable primary category ordering with the same seed', () => {
     const seed = 'user42:2025-04-19';
-    const a = selectCandidates(TEST_QUEST_TAXONOMY, buildProfile(), { selectionSeed: seed });
-    const b = selectCandidates(TEST_QUEST_TAXONOMY, buildProfile(), { selectionSeed: seed });
-    expect(a.candidates.map((c) => c.archetype.id)).toEqual(b.candidates.map((c) => c.archetype.id));
+    const a = buildQuestParameters(TEST_QUEST_TAXONOMY, buildProfile(), { ...baseOpts, selectionSeed: seed });
+    const b = buildQuestParameters(TEST_QUEST_TAXONOMY, buildProfile(), { ...baseOpts, selectionSeed: seed });
+    expect(a!.params.primaryCategory).toBe(b!.params.primaryCategory);
+    expect(a!.params.rankedCategories).toEqual(b!.params.rankedCategories);
   });
 });

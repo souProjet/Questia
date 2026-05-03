@@ -1,4 +1,4 @@
-import type { AppLocale, QuestModel } from '@questia/shared';
+import type { AppLocale, PsychologicalCategory } from '@questia/shared';
 import {
   HOOK_MAX_WORDS,
   HOOK_MIN_CHARS,
@@ -7,7 +7,7 @@ import {
   QUEST_ICON_ALLOWLIST,
   TITLE_MAX_CHARS,
   TITLE_MIN_CHARS,
-  type GeneratedQuest,
+  type ParsedGenerationBody,
 } from './types';
 
 /**
@@ -25,21 +25,20 @@ const META_FR = ['ton toi de demain', 'le toi du futur', "le toi d'après", 'ton
 const META_EN = ['your future self', 'your tomorrow self', 'the you of next year'];
 
 export function validateGenerated(
-  parsed: GeneratedQuest,
-  candidateIds: number[],
-  archetype: QuestModel | null,
+  parsed: ParsedGenerationBody,
+  enginePrimaryCategory: PsychologicalCategory,
   locale: AppLocale,
   contextCity: string | null,
   computedIsOutdoor: boolean,
 ): ValidationResult {
   const en = locale === 'en';
 
-  if (!candidateIds.includes(parsed.archetypeId)) {
+  if (parsed.psychologicalCategory !== enginePrimaryCategory) {
     return {
       ok: false,
       reason: en
-        ? `archetypeId ${parsed.archetypeId} not in candidate list ${candidateIds.join(', ')}`
-        : `archetypeId ${parsed.archetypeId} absent de la liste candidate ${candidateIds.join(', ')}`,
+        ? `psychologicalCategory must be "${enginePrimaryCategory}" (engine brief)`
+        : `psychologicalCategory doit être "${enginePrimaryCategory}" (consigne moteur)`,
     };
   }
 
@@ -150,8 +149,8 @@ export function validateGenerated(
     }
   }
 
-  // Social consistency
-  if (archetype?.requiresSocial) {
+  // Social consistency — flag explicite LLM
+  if (parsed.requiresSocial) {
     const socialHints =
       /inconnu|quelqu'un|une personne|un proche|appelle|parle|discute|rencontre|écris|message|voisin|sms|texto|invite|compliment|serveur|commerçant|collègue|ami|famille|conversation|discuter avec|parler à|stranger|someone|call |talk |chat |meet |write |message|neighbor|neighbour|text |invite|compliment|server|shopkeeper|colleague|friend|family|conversation|speak with|talk to/i;
     if (!socialHints.test(mission)) {

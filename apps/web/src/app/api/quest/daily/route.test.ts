@@ -15,6 +15,8 @@ import { GET, POST } from './route';
 vi.mock('@/lib/quest-gen/generateQuest', () => ({
   generateDailyQuest: vi.fn().mockResolvedValue({
     archetypeId: 1,
+    psychologicalCategory: 'spatial_adventure',
+    requiresSocial: false,
     icon: 'Target',
     title: 'Titre',
     mission: 'Mission',

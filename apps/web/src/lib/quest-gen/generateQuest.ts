@@ -1,7 +1,7 @@
 'use server';
 
 import OpenAI from 'openai';
-import type { QuestModel } from '@questia/shared';
+import { pickArchetypeIdForCategoryStorage } from '@questia/shared';
 import { logStructured, logStructuredError } from '../observability';
 import { buildSystemPrompt, buildUserPrompt } from './buildPrompt';
 import { buildFallbackQuest } from './fallback';
@@ -25,23 +25,13 @@ function modelIgnoresSampling(model: string): boolean {
 }
 
 /**
- * Pipeline LLM-first : un seul appel OpenAI qui CHOISIT l'archétype et RÉDIGE la quête.
- * Le moteur algorithmique a déjà fourni un dossier de candidats ; le LLM tranche et écrit.
- *
- * En cas d'échec (JSON invalide, validation refusée), on retry une fois avec l'erreur en hint,
- * puis on tombe sur le fallback (taxonomie + hook déterministe).
+ * Pipeline full-gen : le LLM invente la quête à partir des contraintes moteur + contexte,
+ * sans choisir un archétype listé. Un archétype taxonomie est résolu ensuite pour la BDD / stats.
  */
 export async function generateDailyQuest(input: QuestGenInput): Promise<GeneratedQuest> {
-  if (input.candidates.length === 0) {
-    throw new Error('quest-gen: no candidates provided');
-  }
-
-  const { locale, context } = input;
-  const candidateIds = input.candidates.map((c) => c.archetype.id);
-  const archetypesById = new Map<number, QuestModel>(
-    input.candidates.map((c) => [c.archetype.id, c.archetype]),
-  );
+  const { locale, context, questParameters, taxonomy } = input;
   const computedIsOutdoor = context.hasUserLocation && context.isOutdoorFriendly;
+  const defaultDurationMinutes = questParameters.idealDurationMinutes;
 
   const system = buildSystemPrompt(locale);
   let repairHint: string | null = null;
@@ -80,9 +70,9 @@ export async function generateDailyQuest(input: QuestGenInput): Promise<Generate
         continue;
       }
 
-      let parsed: GeneratedQuest;
+      let parsedBody;
       try {
-        parsed = parseGeneratedJson(raw, archetypesById, computedIsOutdoor);
+        parsedBody = parseGeneratedJson(raw, computedIsOutdoor, defaultDurationMinutes);
       } catch (err) {
         repairHint = err instanceof Error ? err.message : 'invalid JSON';
         logStructured({
@@ -96,16 +86,13 @@ export async function generateDailyQuest(input: QuestGenInput): Promise<Generate
         continue;
       }
 
-      // Sauvetage doux : ville absente → on l'ajoute (avant validation)
       if (context.hasUserLocation && context.city) {
-        parsed.mission = ensureCityInMission(parsed.mission, context.city);
+        parsedBody.mission = ensureCityInMission(parsedBody.mission, context.city);
       }
 
-      const archetype = archetypesById.get(parsed.archetypeId) ?? null;
       const validation = validateGenerated(
-        parsed,
-        candidateIds,
-        archetype,
+        parsedBody,
+        questParameters.primaryCategory,
         locale,
         context.hasUserLocation ? context.city : null,
         computedIsOutdoor,
@@ -121,12 +108,25 @@ export async function generateDailyQuest(input: QuestGenInput): Promise<Generate
           meta: {
             model: MODEL,
             attempt: attempt + 1,
-            archetypeId: parsed.archetypeId,
+            category: parsedBody.psychologicalCategory,
             repairHint,
           },
         });
         continue;
       }
+
+      const storedArchetype = pickArchetypeIdForCategoryStorage(
+        questParameters.fallbackArchetypePool,
+        taxonomy,
+        parsedBody.psychologicalCategory,
+        input.generationSeed,
+      );
+
+      const parsed: GeneratedQuest = {
+        ...parsedBody,
+        archetypeId: storedArchetype.id,
+        wasFallback: false,
+      };
 
       logStructured({
         domain: 'ai',
@@ -138,6 +138,7 @@ export async function generateDailyQuest(input: QuestGenInput): Promise<Generate
           model: MODEL,
           attempt: attempt + 1,
           archetypeId: parsed.archetypeId,
+          category: parsed.psychologicalCategory,
           isOutdoor: parsed.isOutdoor,
           selfFitScore: parsed.selfFitScore,
           promptTokens: u?.prompt_tokens,
@@ -158,8 +159,6 @@ export async function generateDailyQuest(input: QuestGenInput): Promise<Generate
     }
   }
 
-  // Fallback : top candidate + texte canon + hook déterministe
-  const top = input.candidates[0];
   logStructured({
     domain: 'ai',
     operation: 'quest-gen.call',
@@ -168,9 +167,17 @@ export async function generateDailyQuest(input: QuestGenInput): Promise<Generate
     meta: {
       model: MODEL,
       attempts: MAX_ATTEMPTS,
-      archetypeId: top.archetype.id,
+      category: questParameters.primaryCategory,
       lastRepairHint: repairHint ?? undefined,
     },
   });
-  return buildFallbackQuest(top, locale, context);
+
+  return buildFallbackQuest(
+    questParameters.fallbackArchetypePool,
+    taxonomy,
+    questParameters.primaryCategory,
+    locale,
+    context,
+    input.generationSeed,
+  );
 }

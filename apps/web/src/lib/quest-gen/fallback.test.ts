@@ -1,21 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { QuestCandidate, QuestModel } from '@questia/shared';
+import type { QuestModel } from '@questia/shared';
 import { TEST_QUEST_TAXONOMY } from '@questia/shared';
 import { buildFallbackQuest } from './fallback';
-
-function candidateFromArchetype(archetype: QuestModel): QuestCandidate {
-  return {
-    archetype,
-    score: {
-      affinity: 1,
-      phaseFit: 1,
-      freshness: 1,
-      refinement: 0.5,
-      total: 1,
-    },
-    reason: 'test',
-  };
-}
 
 describe('buildFallbackQuest', () => {
   const baseCtx = {
@@ -28,9 +14,11 @@ describe('buildFallbackQuest', () => {
     const seen = new Set<string>();
     for (const archetype of TEST_QUEST_TAXONOMY) {
       seen.add(archetype.category);
-      const q = buildFallbackQuest(candidateFromArchetype(archetype), 'fr', baseCtx);
+      const pool = TEST_QUEST_TAXONOMY.filter((a) => a.category === archetype.category);
+      const q = buildFallbackQuest(pool, TEST_QUEST_TAXONOMY, archetype.category, 'fr', baseCtx, 'test');
       expect(q.icon).toBeTruthy();
       expect(q.wasFallback).toBe(true);
+      expect(q.psychologicalCategory).toBe(archetype.category);
       expect(q.title.length).toBeGreaterThan(0);
     }
     expect(seen.size).toBeGreaterThanOrEqual(8);
@@ -38,7 +26,8 @@ describe('buildFallbackQuest', () => {
 
   it('locale en : hook et consignes extérieur', () => {
     const outdoor = TEST_QUEST_TAXONOMY.find((a) => a.requiresOutdoor) ?? TEST_QUEST_TAXONOMY[0]!;
-    const q = buildFallbackQuest(candidateFromArchetype(outdoor), 'en', baseCtx);
+    const pool = TEST_QUEST_TAXONOMY.filter((a) => a.category === outdoor.category);
+    const q = buildFallbackQuest(pool, TEST_QUEST_TAXONOMY, outdoor.category, 'en', baseCtx, 'en');
     if (outdoor.requiresOutdoor) {
       expect(q.isOutdoor).toBe(true);
       expect(q.safetyNote).toMatch(/public/i);
@@ -47,20 +36,21 @@ describe('buildFallbackQuest', () => {
 
   it('sans conditions extérieur : isOutdoor false et pas de consigne', () => {
     const outdoorArch = TEST_QUEST_TAXONOMY.find((a) => a.requiresOutdoor) ?? TEST_QUEST_TAXONOMY[0]!;
-    const q = buildFallbackQuest(candidateFromArchetype(outdoorArch), 'fr', {
+    const pool = TEST_QUEST_TAXONOMY.filter((a) => a.category === outdoorArch.category);
+    const q = buildFallbackQuest(pool, TEST_QUEST_TAXONOMY, outdoorArch.category, 'fr', {
       ...baseCtx,
       hasUserLocation: false,
-    });
+    }, 'x');
     expect(q.isOutdoor).toBe(false);
     expect(q.safetyNote).toBeNull();
   });
 
-  it('catégorie inconnue → icône Target par défaut', () => {
+  it('icône Target par défaut pour catégorie hors switch', () => {
     const weird = {
       ...TEST_QUEST_TAXONOMY[0]!,
-      category: 'not-a-real-category' as QuestModel['category'],
+      category: 'not-a-real' as QuestModel['category'],
     };
-    const q = buildFallbackQuest(candidateFromArchetype(weird), 'fr', baseCtx);
+    const q = buildFallbackQuest([weird], [weird], weird.category, 'fr', baseCtx, 'weird');
     expect(q.icon).toBe('Target');
   });
 });

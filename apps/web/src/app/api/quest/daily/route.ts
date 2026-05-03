@@ -22,7 +22,8 @@ import {
   softUpdateDeclaredPersonality,
   DAILY_FREE_REROLLS,
   DEFAULT_RECENT_EXCLUSION_DAYS,
-  selectCandidates,
+  buildQuestParameters,
+  buildEmergencyQuestParameters,
   isValidSociabilityLevel,
   clampQuestDurationBounds,
   parseHeavyQuestPreference,
@@ -32,11 +33,12 @@ import type {
   AppLocale,
   EscalationPhase,
   ExplorerAxis,
-  RiskAxis,
   PersonalityVector,
   ProfileSnapshot,
   QuestLog,
   QuestModel,
+  QuestParameters,
+  RiskAxis,
   ScoringQuestLog,
   SociabilityLevel,
 } from '@questia/shared';
@@ -378,15 +380,22 @@ export async function GET(request: NextRequest) {
     excludeArchetypeIds: extraExclude,
   };
 
-  const selection = selectCandidates(taxonomy, snapshot, {
-    poolSize: 5,
-    recentExclusionDays: DEFAULT_RECENT_EXCLUSION_DAYS,
-    selectionSeed: `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${isReroll ? 'reroll' : 'first'}`,
+  const durationBounds = clampQuestDurationBounds(
+    profile.questDurationMinMinutes ?? 5,
+    profile.questDurationMaxMinutes ?? 1440,
+  );
+
+  const selectionSeed = `${profile.id}:${today}:${effectivePhase}:${profile.currentDay}:${isReroll ? 'reroll' : 'first'}`;
+  const built = buildQuestParameters(taxonomy, snapshot, {
+    selectionSeed,
     todayIso: today,
+    recentExclusionDays: DEFAULT_RECENT_EXCLUSION_DAYS,
+    questDurationMinMinutes: durationBounds.questDurationMinMinutes,
+    questDurationMaxMinutes: durationBounds.questDurationMaxMinutes,
   });
 
-  // Filet de sécurité : si tous les filtres durs ont vidé la liste, on se rabat sur le fallback ou le top global.
-  if (selection.candidates.length === 0) {
+  let questParameters: QuestParameters;
+  if (!built) {
     const fb =
       findArchetypeById(taxonomy, fallbackDefault) ??
       taxonomy[0];
@@ -396,24 +405,16 @@ export async function GET(request: NextRequest) {
         { status: 503 },
       );
     }
-    selection.candidates.push({
-      archetype: fb,
-      score: { affinity: 0.5, phaseFit: 0.5, freshness: 1, refinement: 0.5, total: 0.5 },
-      reason: 'last-resort fallback',
-    });
+    questParameters = buildEmergencyQuestParameters(
+      taxonomy,
+      fb,
+      snapshot,
+      durationBounds.questDurationMinMinutes,
+      durationBounds.questDurationMaxMinutes,
+    );
+  } else {
+    questParameters = built.params;
   }
-
-  const durationBounds = clampQuestDurationBounds(
-    profile.questDurationMinMinutes ?? 5,
-    profile.questDurationMaxMinutes ?? 1440,
-  );
-  const durationFiltered = selection.candidates.filter(
-    (c) =>
-      c.archetype.minimumDurationMinutes >= durationBounds.questDurationMinMinutes &&
-      c.archetype.minimumDurationMinutes <= durationBounds.questDurationMaxMinutes,
-  );
-  const candidatesForGen =
-    durationFiltered.length > 0 ? durationFiltered : selection.candidates;
 
   // Brief historique pour le LLM (5 dernières quêtes, statut + texte)
   const historyBrief: GenerationHistoryItem[] = recentLogRows
@@ -429,7 +430,8 @@ export async function GET(request: NextRequest) {
     }));
 
   const generated = await generateDailyQuest({
-    candidates: candidatesForGen,
+    taxonomy,
+    questParameters,
     profile: {
       declaredPersonality,
       exhibitedPersonality,
@@ -457,7 +459,7 @@ export async function GET(request: NextRequest) {
     },
     history: historyBrief,
     locale: questLocale,
-    generationSeed: `${profile.id}:${today}:${effectivePhase}:${isReroll ? 'reroll' : 'first'}`,
+    generationSeed: selectionSeed,
     isReroll,
     substitutedInstantAfterDefer: instantOnly,
   });

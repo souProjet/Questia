@@ -1,4 +1,5 @@
 import type {
+  ComfortLevel,
   EscalationPhase,
   PersonalityVector,
   PsychologicalCategory,
@@ -80,6 +81,32 @@ export interface QuestCandidate {
   score: CandidateScore;
   /** Raison principale (1 ligne) — exposée à l'IA pour orientation. */
   reason: string;
+}
+
+/**
+ * Sortie du moteur « full-gen » : contraintes créatives du jour (plus de top-N d'archétypes).
+ * La taxonomie sert d'inspiration (thèmes) et de pool de fallback déterministe.
+ */
+export interface QuestParameters {
+  primaryCategory: PsychologicalCategory;
+  /** Autres familles bien classées après la primaire (ordre décroissant). */
+  secondaryCategories: PsychologicalCategory[];
+  /** Intensité / zone de confort cible (phase + profil). */
+  targetComfort: ComfortLevel;
+  /** Durée cible en minutes (bornes profil + phase). */
+  idealDurationMinutes: number;
+  /** Quelques entrées taxonomie pour inspiration uniquement (titres / concepts courts). */
+  themeInspirations: QuestModel[];
+  /** Archétypes éligibles pour tirage de secours dans la famille du jour. */
+  fallbackArchetypePool: QuestModel[];
+  /** Meilleur archétype scoré dans la catégorie primaire (référence, XP, debug). */
+  primaryChampion: QuestCandidate;
+  /** Ordre des familles par score (la primaire en tête). */
+  rankedCategories: PsychologicalCategory[];
+  /** Tous les archétypes scorés après filtres durs (diagnostic). */
+  allScored: QuestCandidate[];
+  saturatedCategories: PsychologicalCategory[];
+  excludedReasons: Map<number, string>;
 }
 
 /** Pondération entre les composantes du score final. La somme doit faire 1. */

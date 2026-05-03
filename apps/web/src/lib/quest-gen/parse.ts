@@ -1,23 +1,28 @@
-import type { QuestModel } from '@questia/shared';
+import { isValidPsychologicalCategory } from '@questia/shared';
 import { clampToOneSentence } from './validation';
-import { QUEST_ICON_ALLOWLIST, type GeneratedQuest } from './types';
+import { QUEST_ICON_ALLOWLIST, type ParsedGenerationBody } from './types';
 
 /**
  * Parse + normalise la réponse JSON brute du LLM.
- * Renvoie un GeneratedQuest brut (encore à valider) ou jette si le JSON est totalement HS.
+ * Renvoie un corps de quête (sans archetypeId — résolu côté serveur pour les stats).
  */
 export function parseGeneratedJson(
   raw: string,
-  archetypesById: Map<number, QuestModel>,
   computedIsOutdoor: boolean,
-): GeneratedQuest {
+  defaultDurationMinutes: number,
+): ParsedGenerationBody {
   const data = JSON.parse(raw) as Record<string, unknown>;
 
-  const archetypeId = toNumber(data.archetypeId);
-  if (archetypeId === null) {
-    throw new Error('archetypeId missing or not a number');
+  const catRaw = typeof data.psychologicalCategory === 'string' ? data.psychologicalCategory.trim() : '';
+  if (!isValidPsychologicalCategory(catRaw)) {
+    throw new Error(
+      catRaw
+        ? `psychologicalCategory invalide: ${catRaw}`
+        : 'psychologicalCategory missing or invalid',
+    );
   }
-  const archetype = archetypesById.get(archetypeId);
+
+  const requiresSocial = data.requiresSocial === true;
 
   const iconRaw = typeof data.icon === 'string' ? data.icon.trim() : '';
   const icon = QUEST_ICON_ALLOWLIST.has(iconRaw) ? iconRaw : 'Target';
@@ -27,7 +32,7 @@ export function parseGeneratedJson(
   const mission = clampToOneSentence(missionRaw);
   const hook = (typeof data.hook === 'string' ? data.hook : '').trim();
   const duration = (typeof data.duration === 'string' ? data.duration : '').trim()
-    || (archetype ? `${archetype.minimumDurationMinutes} min` : '30 min');
+    || `${defaultDurationMinutes} min`;
 
   const isOutdoorRaw = data.isOutdoor;
   const isOutdoor = computedIsOutdoor && isOutdoorRaw === true;
@@ -49,7 +54,8 @@ export function parseGeneratedJson(
   const selfFitScore = toNumber(data.selfFitScore);
 
   return {
-    archetypeId,
+    psychologicalCategory: catRaw,
+    requiresSocial,
     icon,
     title,
     mission,
@@ -61,7 +67,6 @@ export function parseGeneratedJson(
     destinationQuery,
     selectionReason,
     selfFitScore: selfFitScore !== null ? Math.max(0, Math.min(100, selfFitScore)) : null,
-    wasFallback: false,
   };
 }
 

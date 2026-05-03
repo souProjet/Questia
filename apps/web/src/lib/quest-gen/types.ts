@@ -4,21 +4,23 @@ import type {
   ExplorerAxis,
   HeavyQuestPreference,
   PersonalityVector,
-  QuestCandidate,
+  PsychologicalCategory,
+  QuestModel,
+  QuestParameters,
   RiskAxis,
   SociabilityLevel,
 } from '@questia/shared';
 
 /**
- * Tout ce que la pipeline LLM-first reçoit pour générer la quête du jour.
+ * Tout ce que la pipeline « full-gen » reçoit pour inventer la quête du jour.
  *
- * Le LLM choisit lui-même le meilleur candidat et le rédige : pas de pré-décision
- * par l'algorithme. L'algorithme propose simplement un dossier de candidature
- * (top-N) et de la matière contextuelle riche.
+ * Le moteur (`buildQuestParameters`) fournit contraintes + exemples d'inspiration taxonomie ;
+ * le LLM crée une quête originale (sans choisir un archétype imposé).
  */
 export interface QuestGenInput {
-  /** Top-N candidats (avec scores et raison) — l'IA choisit le plus pertinent. */
-  candidates: QuestCandidate[];
+  /** Taxonomie courante (fallback + association stats). */
+  taxonomy: QuestModel[];
+  questParameters: QuestParameters;
   /** Snapshot du profil utilisateur pour la génération. */
   profile: GenerationProfile;
   /** Contexte du jour (date, météo, lieu). */
@@ -82,10 +84,14 @@ export interface GenerationHistoryItem {
   questDate: string | null;
 }
 
-/** Output structuré du LLM, après parsing + validation. */
+/** Output structuré du LLM, après parsing + validation + résolution stats. */
 export interface GeneratedQuest {
-  /** Archétype choisi par le LLM (doit être dans la liste de candidats). */
+  /** Archétype taxonomie utilisé pour stats / congruence / persistence (famille du jour). */
   archetypeId: number;
+  /** Famille psychologique (doit correspondre à la consigne moteur). */
+  psychologicalCategory: PsychologicalCategory;
+  /** Si la mission implique une interaction sociale réelle. */
+  requiresSocial: boolean;
   icon: string;
   title: string;
   /** Une seule phrase, action concrète. */
@@ -105,6 +111,9 @@ export interface GeneratedQuest {
   /** True si la pipeline a dû fallback sur le template archétype. */
   wasFallback: boolean;
 }
+
+/** Réponse LLM parsée, avant résolution d'un `archetypeId` taxonomie pour la BDD. */
+export type ParsedGenerationBody = Omit<GeneratedQuest, 'archetypeId' | 'wasFallback'>;
 
 /** Liste blanche des icônes Lucide acceptées (gardée du système précédent). */
 export const QUEST_ICON_ALLOWLIST = new Set([

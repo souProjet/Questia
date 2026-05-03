@@ -6,7 +6,7 @@ import {
 } from './congruence';
 import { getEffectivePhase } from './escalation';
 import { FULL_QUEST_TAXONOMY } from '../test-fixtures/fullTaxonomy';
-import { selectCandidates } from './selectCandidates';
+import { buildQuestParameters } from './selectCandidates';
 import type { ProfileSnapshot, ScoringQuestLog } from './selectionTypes';
 
 type Persona = {
@@ -121,11 +121,12 @@ function pickTop(
     instantOnly: false,
     excludeArchetypeIds: recentIds,
   };
-  const sel = selectCandidates(FULL_QUEST_TAXONOMY, snapshot, {
-    poolSize: 1,
+  const built = buildQuestParameters(FULL_QUEST_TAXONOMY, snapshot, {
     selectionSeed: seed,
+    questDurationMinMinutes: 5,
+    questDurationMaxMinutes: 1440,
   });
-  return sel.candidates[0]?.archetype ?? null;
+  return built?.params.primaryChampion.archetype ?? null;
 }
 
 function logsToScoring(logs: QuestLog[]): ScoringQuestLog[] {

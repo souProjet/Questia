@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  buildEmergencyQuestParameters,
+  buildQuestParameters,
   computeExhibitedPersonality,
   computeCongruenceDelta,
   getEffectivePhase,
-  selectCandidates,
   isValidSociabilityLevel,
 } from '@questia/shared';
 import type {
@@ -69,18 +70,24 @@ export async function POST(request: NextRequest) {
       excludeArchetypeIds: recentForExclude,
     };
 
-    const selection = selectCandidates(taxonomy, snapshot, {
-      poolSize: 1,
+    const built = buildQuestParameters(taxonomy, snapshot, {
+      questDurationMinMinutes: 5,
+      questDurationMaxMinutes: 1440,
+      selectionSeed: 'debug',
     });
-
-    const quest = selection.candidates[0]?.archetype ?? null;
+    if (!taxonomy.length) {
+      return NextResponse.json({ error: 'Empty taxonomy' }, { status: 500 });
+    }
+    const params =
+      built?.params ??
+      buildEmergencyQuestParameters(taxonomy, taxonomy[0]!, snapshot, 5, 1440);
 
     return NextResponse.json({
-      quest,
+      quest: params.primaryChampion.archetype,
       phase,
       congruenceDelta: delta,
       exhibitedPersonality: exhibited,
-      candidates: selection.candidates,
+      questParameters: params,
     });
   } catch {
     return NextResponse.json(

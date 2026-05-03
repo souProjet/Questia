@@ -1,15 +1,17 @@
-import type { QuestModel } from '../types';
+import type { EscalationPhase, PersonalityVector, PsychologicalCategory, QuestModel } from '../types';
 import { archetypeNeedsTravelOrPlanning } from '../constants/quests';
+import { computeGentleness } from './congruence';
 import { computeAffinityScore } from './affinity';
-import { computeArchetypeFeedbackPenalty, computeFreshnessScore } from './freshness';
-import { computePhaseFit } from './phaseFit';
+import { computeArchetypeFeedbackPenalty, computeFreshnessScore, listSaturatedCategories } from './freshness';
+import { computePhaseFit, computeTargetComfortLevel } from './phaseFit';
+import { promptSeedIndex, pickDeterministicFromPool } from './promptSeed';
 import {
-  DEFAULT_CANDIDATE_POOL_SIZE,
   DEFAULT_RECENT_EXCLUSION_DAYS,
   DEFAULT_SCORE_WEIGHTS,
   type CandidateScore,
   type ProfileSnapshot,
   type QuestCandidate,
+  type QuestParameters,
   type ScoreWeights,
   type ScoringQuestLog,
 } from './selectionTypes';
@@ -26,44 +28,46 @@ function heavyQuestScoreMultiplier(
   return 1;
 }
 
-export interface SelectCandidatesOptions {
-  /** Nombre max de candidats retenus (défaut : 5). */
-  poolSize?: number;
-  /** Pondération des composantes du score (défaut : DEFAULT_SCORE_WEIGHTS). */
-  weights?: ScoreWeights;
+export interface BuildQuestParametersOptions {
+  /** Graine déterministe pour départages stables (catégories / inspiration). */
+  selectionSeed?: string;
+  /** Date du jour (ISO YYYY-MM-DD) pour la fenêtre d'exclusion d'archétypes servis. */
+  todayIso?: string;
   /** Fenêtre d'exclusion (jours) pour les archétypes récemment servis (défaut : 7). */
   recentExclusionDays?: number;
-  /** Graine déterministe pour le départage des ex-aequo (stable par jour/utilisateur). */
-  selectionSeed?: string;
-  /** Date du jour (ISO YYYY-MM-DD) pour calculer la fenêtre d'exclusion. */
-  todayIso?: string;
+  /** Pondération des composantes du score (défaut : DEFAULT_SCORE_WEIGHTS). */
+  weights?: ScoreWeights;
+  /** Nombre d'exemples taxonomie à proposer au LLM comme simple inspiration (défaut : 3). */
+  themeInspirationCount?: number;
+  /** Borne basse durée quête (minutes) — profil utilisateur. */
+  questDurationMinMinutes: number;
+  /** Borne haute durée quête (minutes) — profil utilisateur. */
+  questDurationMaxMinutes: number;
 }
 
-export interface SelectCandidatesResult {
-  /** Top-N candidats triés par score décroissant. */
-  candidates: QuestCandidate[];
-  /** Tous les candidats scorés (pour debug). */
-  allScored: QuestCandidate[];
-  /** Catégories filtrées par les hard filters (pour debug). */
-  excludedReasons: Map<number, string>;
+export interface BuildQuestParametersResult {
+  params: QuestParameters;
+  /** Candidats scorés après filtre dur « durée dans les bornes » quand il reste au moins un résultat. */
+  scoredForAggregation: QuestCandidate[];
 }
 
 /**
- * Sélection : pure, déterministe, transparente.
+ * Moteur de contexte : déduit famille psychologique cible, intensité, durée idéale,
+ * exemples d'inspiration taxonomie et pool de fallback — sans imposer un archétype au LLM.
  *
- *  1. Filtres durs (exclusions, outdoor sans météo, social déféré, instantOnly, fraîcheur récente)
- *  2. Score doux pondéré (affinity + phaseFit + freshness + refinement) avec pénalité feedback explicite
- *  3. Top-N candidats (défaut N=5) — l'IA fera le choix final + rédaction
- *  4. Tie-break stable via seed (sinon par id pour reproductibilité tests)
+ * Le scoring par archétype (affinity, phaseFit, freshness, refinement) sert à **classer les familles**
+ * ; le champion d'une famille est l'archétype le mieux noté dans cette famille.
  */
-export function selectCandidates(
+export function buildQuestParameters(
   taxonomy: QuestModel[],
   profile: ProfileSnapshot,
-  options: SelectCandidatesOptions = {},
-): SelectCandidatesResult {
-  const poolSize = Math.max(1, options.poolSize ?? DEFAULT_CANDIDATE_POOL_SIZE);
+  options: BuildQuestParametersOptions,
+): BuildQuestParametersResult | null {
   const weights = options.weights ?? DEFAULT_SCORE_WEIGHTS;
   const recentDays = options.recentExclusionDays ?? DEFAULT_RECENT_EXCLUSION_DAYS;
+  const themeN = Math.max(1, options.themeInspirationCount ?? 3);
+  const dMin = Math.max(1, options.questDurationMinMinutes);
+  const dMax = Math.max(dMin, options.questDurationMaxMinutes);
 
   const taxonomyById = new Map<number, QuestModel>(taxonomy.map((q) => [q.id, q]));
 
@@ -76,12 +80,9 @@ export function selectCandidates(
   const excludedReasons = new Map<number, string>();
   const scored: QuestCandidate[] = [];
 
-  // Vecteur utilisé pour le scoring (mélange déclaré + observé, simple)
-  // On utilise le déclaré comme base et on laisse computeAffinityScore mélanger l'observé.
   const scoringVector = profile.declaredPersonality;
 
   for (const archetype of taxonomy) {
-    // ── Filtres durs ──────────────────────────────────────────────────────
     if (profile.excludeArchetypeIds.includes(archetype.id)) {
       excludedReasons.set(archetype.id, 'reroll-excluded');
       continue;
@@ -99,7 +100,6 @@ export function selectCandidates(
       continue;
     }
 
-    // ── Score doux ────────────────────────────────────────────────────────
     const affinity = computeAffinityScore(scoringVector, archetype, {
       exhibited: profile.exhibitedPersonality,
       exhibitedWeight: phaseExhibitedWeight(profile),
@@ -108,8 +108,6 @@ export function selectCandidates(
     const freshness = computeFreshnessScore(archetype, profile.recentLogs, taxonomyById);
     const refinementBias = profile.refinementBias[archetype.category] ?? 0;
     const packBias = profile.questPackBias?.[archetype.category] ?? 0;
-    // Refinement est dans [-0.14, +0.14] ; questPackBias saturé à ±0.18 côté shop.
-    // On les additionne puis on saturait à ±0.30 avant de centrer à 0.5.
     const combinedBias = Math.max(-0.3, Math.min(0.3, refinementBias + packBias));
     const refinement = Math.max(0, Math.min(1, 0.5 + combinedBias * 3));
 
@@ -131,65 +129,145 @@ export function selectCandidates(
     });
   }
 
-  // Tri principal par score décroissant ; tie-break stable
+  if (scored.length === 0) {
+    return null;
+  }
+
+  // Comme la route API : si des archétypes matchent les bornes de durée profil, on restreint.
+  const durationFiltered = scored.filter(
+    (c) =>
+      c.archetype.minimumDurationMinutes >= dMin && c.archetype.minimumDurationMinutes <= dMax,
+  );
+  const scoredForAggregation = durationFiltered.length > 0 ? durationFiltered : scored;
+
   const seed = options.selectionSeed ?? '';
-  scored.sort((a, b) => {
-    const diff = b.score.total - a.score.total;
+
+  // Champion par famille psychologique
+  const championByCategory = new Map<PsychologicalCategory, QuestCandidate>();
+  for (const c of scoredForAggregation) {
+    const cat = c.archetype.category;
+    const prev = championByCategory.get(cat);
+    if (!prev || c.score.total > prev.score.total) {
+      championByCategory.set(cat, c);
+    }
+  }
+
+  const categoryRows = [...championByCategory.entries()].map(([category, champion]) => ({
+    category,
+    champion,
+  }));
+
+  categoryRows.sort((a, b) => {
+    const diff = b.champion.score.total - a.champion.score.total;
     if (Math.abs(diff) > 0.001) return diff;
     if (seed) {
-      const ja = stableJitter(seed, a.archetype.id);
-      const jb = stableJitter(seed, b.archetype.id);
+      const ja = stableJitter(seed, a.category);
+      const jb = stableJitter(seed, b.category);
       if (ja !== jb) return jb - ja;
     }
-    return a.archetype.id - b.archetype.id;
+    return a.category.localeCompare(b.category);
   });
 
-  // Diversité catégorielle : un pool de 5 ne doit pas contenir 4 archétypes de la
-  // même catégorie (sinon le LLM choisit dans un quasi-mono-choix et l'user sent
-  // la répétition). On autorise au plus `MAX_PER_CATEGORY` par catégorie dans le
-  // top-N, en basculant les suivants plus bas (sans les retirer).
-  const diversifiedPool = pickDiversePool(scored, poolSize, MAX_PER_CATEGORY);
+  const primary = categoryRows[0];
+  if (!primary) return null;
 
-  return {
-    candidates: diversifiedPool,
+  const rankedCategories = categoryRows.map((r) => r.category);
+  const secondaryCategories = rankedCategories.slice(1, 4);
+
+  const primaryCategory = primary.category;
+  const primaryChampion = primary.champion;
+
+  const targetComfort = computeTargetComfortLevel(profile.phase, scoringVector);
+  const idealDurationMinutes = computeIdealDurationMinutes(profile.phase, dMin, dMax, scoringVector);
+
+  const inPrimary = scoredForAggregation
+    .filter((c) => c.archetype.category === primaryCategory)
+    .sort((a, b) => {
+      const diff = b.score.total - a.score.total;
+      if (Math.abs(diff) > 0.001) return diff;
+      if (seed) {
+        const ja = stableJitter(seed, a.archetype.id);
+        const jb = stableJitter(seed, b.archetype.id);
+        if (ja !== jb) return jb - ja;
+      }
+      return a.archetype.id - b.archetype.id;
+    });
+
+  const themeInspirations = pickThemeInspirations(inPrimary, themeN, seed);
+
+  const fallbackArchetypePool = inPrimary.map((c) => c.archetype);
+
+  const saturatedCategories = listSaturatedCategories(profile.recentLogs, taxonomyById);
+
+  const params: QuestParameters = {
+    primaryCategory,
+    secondaryCategories,
+    targetComfort,
+    idealDurationMinutes,
+    themeInspirations,
+    fallbackArchetypePool,
+    primaryChampion,
+    rankedCategories,
     allScored: scored,
+    saturatedCategories,
     excludedReasons,
   };
+
+  return { params, scoredForAggregation };
 }
 
-/** Max d'archétypes d'une même catégorie dans le pool final (garantit diversité). */
-const MAX_PER_CATEGORY = 2;
-
-function pickDiversePool(
-  sortedScored: QuestCandidate[],
-  size: number,
-  maxPerCat: number,
-): QuestCandidate[] {
-  const picked: QuestCandidate[] = [];
-  const leftover: QuestCandidate[] = [];
-  const perCat = new Map<string, number>();
-  for (const c of sortedScored) {
-    const cat = c.archetype.category;
-    const count = perCat.get(cat) ?? 0;
-    if (picked.length < size && count < maxPerCat) {
-      picked.push(c);
-      perCat.set(cat, count + 1);
-    } else {
-      leftover.push(c);
+function pickThemeInspirations(
+  sortedInPrimary: QuestCandidate[],
+  n: number,
+  seed: string,
+): QuestModel[] {
+  const out: QuestModel[] = [];
+  const seen = new Set<number>();
+  for (const c of sortedInPrimary) {
+    if (out.length >= n) break;
+    if (seen.has(c.archetype.id)) continue;
+    seen.add(c.archetype.id);
+    out.push(c.archetype);
+  }
+  if (out.length >= n || sortedInPrimary.length === 0) return out.slice(0, n);
+  // Rare : pas assez de variantes — compléter avec jitter stable sur toute la liste triée
+  let k = 0;
+  while (out.length < n && k < sortedInPrimary.length * 3) {
+    const idx =
+      seed.length === 0
+        ? out.length % sortedInPrimary.length
+        : promptSeedIndex(`${seed}|theme`, `${k}`, sortedInPrimary.length);
+    const arch = sortedInPrimary[idx]!.archetype;
+    if (!seen.has(arch.id)) {
+      seen.add(arch.id);
+      out.push(arch);
     }
+    k++;
   }
-  // Si on n'a pas atteint `size` à cause du plafond (ex. pool très petit, une seule
-  // catégorie qui match), on complète avec les leftover pour garantir la taille.
-  while (picked.length < size && leftover.length) {
-    picked.push(leftover.shift()!);
-  }
-  return picked;
+  return out.slice(0, n);
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+function computeIdealDurationMinutes(
+  phase: EscalationPhase,
+  dMin: number,
+  dMax: number,
+  scoringVector: PersonalityVector,
+): number {
+  const mid = (dMin + dMax) / 2;
+  const gentleness = computeGentleness(scoringVector);
+  let t = mid;
+  if (phase === 'calibration') {
+    t = dMin + (mid - dMin) * (0.35 + gentleness * 0.28);
+  } else if (phase === 'rupture') {
+    t = mid + (dMax - mid) * (0.38 + (1 - gentleness) * 0.32);
+  } else {
+    t = mid + (dMax - dMin) * (gentleness - 0.5) * 0.12;
+  }
+  const rounded = Math.round(t / 5) * 5;
+  return Math.max(dMin, Math.min(dMax, rounded));
+}
 
 function phaseExhibitedWeight(profile: ProfileSnapshot): number {
-  // En calibration on s'appuie surtout sur le déclaré ; en rupture on fait plus confiance à l'observé.
   switch (profile.phase) {
     case 'calibration':
       return 0.2;
@@ -207,7 +285,6 @@ function collectRecentlyServedIds(
 ): Set<number> {
   const out = new Set<number>();
   if (!todayIso) {
-    // Sans date de référence, on prend les N derniers logs (proxy)
     for (const log of logs.slice(0, windowDays)) out.add(log.archetypeId);
     return out;
   }
@@ -223,8 +300,7 @@ function collectRecentlyServedIds(
   return out;
 }
 
-function stableJitter(seed: string, id: number): number {
-  // FNV-1a léger, suffisant pour départager les ex-aequo
+function stableJitter(seed: string, id: string | number): number {
   let h = 2166136261 >>> 0;
   const input = `${seed}|${id}`;
   for (let i = 0; i < input.length; i++) {
@@ -243,4 +319,65 @@ function buildReason(score: CandidateScore, archetype: QuestModel): string {
   if (score.refinement >= 0.65) parts.push('matches stated preferences');
   if (parts.length === 0) parts.push('balanced choice');
   return `${parts.join(', ')} (${archetype.category})`;
+}
+
+/**
+ * Pour la persistance et les stats (congruence), associe une entrée taxonomie réelle
+ * à la famille choisie — tirage déterministe dans le pool du jour.
+ */
+export function pickArchetypeIdForCategoryStorage(
+  pool: QuestModel[],
+  taxonomy: QuestModel[],
+  category: PsychologicalCategory,
+  seed: string,
+): QuestModel {
+  const scoped = pool.filter((a) => a.category === category);
+  const source = scoped.length > 0 ? scoped : taxonomy.filter((a) => a.category === category);
+  const pick = pickDeterministicFromPool(source, seed, 'stats-arch');
+  if (pick) return pick;
+  const fallback = taxonomy[0];
+  if (!fallback) throw new Error('quest-engine: empty taxonomy');
+  return fallback;
+}
+
+/**
+ * Si tous les filtres durs ont vidé le moteur, construit des paramètres minimaux
+ * à partir d'un archétype de secours (taxonomie).
+ */
+export function buildEmergencyQuestParameters(
+  taxonomy: QuestModel[],
+  archetype: QuestModel,
+  profile: ProfileSnapshot,
+  durationMin: number,
+  durationMax: number,
+): QuestParameters {
+  const dMin = Math.max(1, durationMin);
+  const dMax = Math.max(dMin, durationMax);
+  const pool = taxonomy.filter((a) => a.category === archetype.category);
+  const fallbackPool = pool.length > 0 ? pool : [archetype];
+  const themeInspirations = fallbackPool.slice(0, Math.min(3, fallbackPool.length));
+  const neutralScore: CandidateScore = {
+    affinity: 0.5,
+    phaseFit: 0.5,
+    freshness: 1,
+    refinement: 0.5,
+    total: 0.5,
+  };
+  return {
+    primaryCategory: archetype.category,
+    secondaryCategories: [],
+    targetComfort: computeTargetComfortLevel(profile.phase, profile.declaredPersonality),
+    idealDurationMinutes: computeIdealDurationMinutes(profile.phase, dMin, dMax, profile.declaredPersonality),
+    themeInspirations,
+    fallbackArchetypePool: fallbackPool,
+    primaryChampion: {
+      archetype,
+      score: neutralScore,
+      reason: 'emergency taxonomy fallback',
+    },
+    rankedCategories: [archetype.category],
+    allScored: [],
+    saturatedCategories: [],
+    excludedReasons: new Map(),
+  };
 }

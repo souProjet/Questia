@@ -2,6 +2,20 @@ import type { ComfortLevel, EscalationPhase, PersonalityVector, QuestModel } fro
 import { computeGentleness } from './congruence';
 
 /**
+ * Niveau de confort / intensité cible pour la consigne créative (phase d'escalade + douceur du profil).
+ * Complète `computePhaseFit` (qui score des archétypes) en donnant une étiquette pour le prompt LLM.
+ */
+export function computeTargetComfortLevel(
+  phase: EscalationPhase,
+  scoringVector: PersonalityVector,
+): ComfortLevel {
+  const g = computeGentleness(scoringVector);
+  if (phase === 'calibration') return g > 0.58 ? 'low' : 'moderate';
+  if (phase === 'expansion') return g > 0.52 ? 'moderate' : 'high';
+  return g > 0.48 ? 'high' : 'extreme';
+}
+
+/**
  * Adéquation entre la phase et l'intensité de l'archétype.
  * Score dans [0, 1] où 1 = parfaitement calibré pour la phase.
  *

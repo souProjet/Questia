@@ -2,7 +2,7 @@ export * from './types';
 export * from './buildPrompt';
 export * from './buildProfileBrief';
 export * from './buildHistoryBrief';
-export * from './buildCandidatesBrief';
+export * from './buildCreativeConstraints';
 export * from './validation';
 export * from './parse';
 export * from './fallback';

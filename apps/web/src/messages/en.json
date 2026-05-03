@@ -23,14 +23,14 @@
   },
   "QuestGenerationPage": {
     "metaTitle": "How are my quests generated? | Questia",
-    "metaDescription": "See the full journey: profile, history, today’s context, archetype choice, AI writing, and safety checks — explained in plain language.",
+    "metaDescription": "See the full journey: profile, history, today’s context, engine constraints (family, intensity, duration), open-ended AI generation, and safety checks — explained in plain language.",
     "backHome": "← Home",
     "kicker": "Behind the scenes",
     "title": "How are your quests generated?",
     "lead": "Every morning, a mission shaped for you: this flow walks from your onboarding answers to the quest you see in the app — with a spark of creativity and guardrails that keep you safe.",
     "diagramAria": "Steps in the quest generation journey",
     "flowPhaseMemory": "Profile & memory",
-    "flowPhaseIntent": "Context & choices",
+    "flowPhaseIntent": "Context & constraints",
     "flowPhaseDelivery": "Writing & safeguards",
     "schematicPipeline": "Pipeline",
     "schematicBoxProfile": "Profile",
@@ -38,7 +38,7 @@
     "schematicBoxQuest": "Quest",
     "stepsLoadError": "We couldn't load the journey steps. Refresh the page or switch language and back.",
     "noteTitle": "What to remember",
-    "noteBody": "Nothing is pure randomness: the engine blends your profile, your history, and the day ahead. AI writes the words; Questia enforces safety, clarity, and respect for your pace.",
+    "noteBody": "Nothing is pure randomness: the engine blends your profile, your history, and the day ahead, then sets today’s trajectory (quest family, intensity, duration). AI writes the words from there; Questia enforces safety, clarity, and respect for your pace.",
     "privacyNote": "You won’t see clinical labels: copy talks about tendencies and rhythm, not diagnosis. Data is used to personalize the experience, as described in our privacy policy.",
     "privacyLink": "Privacy policy",
     "stepsList": [
@@ -67,20 +67,16 @@
         "body": "Weather, city, and — if you enable location — whether an outdoor outing makes sense today. When it fits the mission, we may suggest a public place on the map."
       },
       {
-        "title": "Archetype choice",
-        "body": "From a taxonomy of quest families, the engine picks the best match for your blended profile, phase, weather constraints, and recent quests — so you don’t get the same template on repeat."
+        "title": "Engine constraints (family, intensity, duration)",
+        "body": "The engine still scores quest families (affinity, phase, freshness, preferences), then picks today’s family, a target intensity, and an ideal duration — using weather, place, and history. The taxonomy is inspiration only: a few short examples may appear in the brief, not a template to copy."
       },
       {
-        "title": "A dash of diversity",
-        "body": "When several archetypes tie, a stable draw (tied to you and the date) prevents always landing on the same storyline. Creative angles for wording follow the same idea."
+        "title": "Open-ended AI generation",
+        "body": "A language model invents the title, hook, and mission from those constraints and today’s context. It’s no longer picking from a list of archetypes: the quest is written for you in a warm narrator voice, with safety, clarity, no medical or dangerous advice, and respect for your language."
       },
       {
-        "title": "AI writing",
-        "body": "A language model drafts title, hook, and mission in a warm narrator voice. Prompts embed safety, clarity, no medical or dangerous instructions, and respect for your chosen language."
-      },
-      {
-        "title": "Server-side quality checks",
-        "body": "Automatic rules validate the mission: one actionable sentence, no forbidden content, outdoor place consistency when needed, city mention when GPS is on. If it fails, we retry or fall back to a safe template."
+        "title": "Quality checks & stats anchor",
+        "body": "Automatic rules validate the mission: one actionable sentence, no forbidden content, outdoor place consistency when needed, city mention when GPS is on. A taxonomy id is then attached behind the scenes for the engine’s memory — the copy stays fully creative. If validation fails, we retry or fall back to a safe taxonomy entry."
       },
       {
         "title": "Your quest for the day, delivered",

@@ -89,3 +89,10 @@ export function questFamilyLabel(category: string | undefined | null, locale: Ap
   const map = locale === 'en' ? QUEST_CATEGORY_LABEL_EN : QUEST_CATEGORY_LABEL_FR;
   return k in map ? map[k] : null;
 }
+
+/** Liste exhaustive des familles psychologiques (validation JSON LLM, stats). */
+export const ALL_PSYCHOLOGICAL_CATEGORIES = Object.keys(QUEST_CATEGORY_LABEL_FR) as PsychologicalCategory[];
+
+export function isValidPsychologicalCategory(value: string): value is PsychologicalCategory {
+  return value in QUEST_CATEGORY_LABEL_FR;
+}

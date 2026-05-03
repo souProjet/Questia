@@ -23,14 +23,14 @@
   },
   "QuestGenerationPage": {
     "metaTitle": "Comment sont générées mes quêtes ? | Questia",
-    "metaDescription": "Découvre le parcours complet : profil, historique, contexte du jour, choix d'archétype, intelligence artificielle et garde-fous — sans jargon technique.",
+    "metaDescription": "Découvre le parcours complet : profil, historique, contexte du jour, contraintes du moteur (famille, intensité, durée), création IA libre et garde-fous — sans jargon technique.",
     "backHome": "← Accueil",
     "kicker": "Sous le capot",
     "title": "Comment sont générées tes quêtes ?",
     "lead": "Chaque matin, une mission pensée pour toi : ce schéma raconte tout le voyage, de tes réponses d'onboarding jusqu'à la quête affichée dans l'app — avec un peu de magie et beaucoup de règles pour te protéger.",
     "diagramAria": "Étapes du parcours de génération d'une quête",
     "flowPhaseMemory": "Profil & mémoire",
-    "flowPhaseIntent": "Contexte & choix",
+    "flowPhaseIntent": "Contexte & contraintes",
     "flowPhaseDelivery": "Texte & garde-fous",
     "schematicPipeline": "Pipeline",
     "schematicBoxProfile": "Profil",
@@ -38,7 +38,7 @@
     "schematicBoxQuest": "Quête",
     "stepsLoadError": "Impossible d'afficher les étapes du parcours. Recharge la page ou change de langue puis reviens.",
     "noteTitle": "Ce que tu peux retenir",
-    "noteBody": "Rien n'est tiré au hasard pur : le moteur combine ton profil, ton historique et le jour qui commence. L'IA rédige les mots ; Questia garde la main sur la sécurité, la clarté et le respect de ton rythme.",
+    "noteBody": "Rien n'est tiré au hasard pur : le moteur combine ton profil, ton historique et le jour qui commence, puis impose une trajectoire du jour (famille de quête, intensité, durée). L'IA invente les mots à partir de là ; Questia garde la main sur la sécurité, la clarté et le respect de ton rythme.",
     "privacyNote": "Aucune étiquette clinique ne t'est affichée : les textes parlent de tendances et de rythme, pas de diagnostic. Les données servent à personnaliser l'expérience, comme décrit dans notre politique de confidentialité.",
     "privacyLink": "Politique de confidentialité",
     "stepsList": [
@@ -67,20 +67,16 @@
         "body": "Météo, ville, et si tu actives la localisation : le moteur sait si une sortie extérieure a du sens aujourd'hui — et peut proposer un lieu public sur la carte lorsque c'est cohérent avec la mission."
       },
       {
-        "title": "Choix de l'archétype",
-        "body": "Parmi une taxonomie de familles de quêtes, le moteur sélectionne celle qui colle le mieux à ton profil mélangé, à la phase, aux contraintes météo et aux quêtes récentes — pour éviter la répétition mécanique."
+        "title": "Contraintes du moteur (famille, intensité, durée)",
+        "body": "Le moteur score les familles de quêtes comme avant (affinité, phase, fraîcheur, préférences), puis retient une famille du jour, une intensité cible et une durée idéale — avec météo, lieu et historique. La taxonomie sert d'inspiration : quelques exemples courts peuvent être cités dans la consigne, sans imposer un modèle à copier."
       },
       {
-        "title": "Une pincée de diversité",
-        "body": "Quand plusieurs archétypes sont aussi bons les uns que les autres, un tirage stable (lié à toi et à la date) évite de retomber toujours sur le même scénario. Même logique pour les angles créatifs du texte."
+        "title": "Création libre par intelligence artificielle",
+        "body": "Un modèle de langage invente titre, accroche et mission à partir de ces contraintes et du contexte du jour. Ce n'est plus un choix dans une liste d'archétypes : la quête est rédigée pour toi, dans un ton narrateur complice, avec sécurité, clarté, interdiction de conseils médicaux ou dangereux, et respect de la langue choisie."
       },
       {
-        "title": "Rédaction par intelligence artificielle",
-        "body": "Un modèle de langage compose titre, accroche et mission dans un ton narrateur complice. Les consignes incluent sécurité, clarté, interdiction de conseils médicaux ou dangereux, et respect de la langue choisie."
-      },
-      {
-        "title": "Contrôle qualité côté serveur",
-        "body": "Des règles automatiques vérifient la mission : une phrase actionnable, pas de contenu interdit, cohérence lieu extérieur si besoin, présence de la ville quand le GPS est activé. Sinon, nouvelle tentative ou repli sur un texte de secours sûr."
+        "title": "Contrôle qualité et ancrage stats",
+        "body": "Des règles automatiques vérifient la mission : une phrase actionnable, pas de contenu interdit, cohérence lieu extérieur si besoin, présence de la ville quand le GPS est activé. Un identifiant taxonomie est ensuite associé en coulisse pour la mémoire du moteur — le texte reste entièrement créatif. Sinon, nouvelle tentative ou repli sur une entrée sûre de la taxonomie."
       },
       {
         "title": "Ta quête du jour, livrée",

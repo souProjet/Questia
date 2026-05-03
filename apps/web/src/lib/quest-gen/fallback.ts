@@ -1,9 +1,13 @@
-import type { AppLocale, QuestCandidate, QuestModel } from '@questia/shared';
-import { promptSeedIndex, questLocalizedText } from '@questia/shared';
+import type { AppLocale, PsychologicalCategory, QuestModel } from '@questia/shared';
+import {
+  pickDeterministicFromPool,
+  promptSeedIndex,
+  questLocalizedText,
+} from '@questia/shared';
 import { clampToOneSentence } from './validation';
 import type { GeneratedQuest } from './types';
 
-/** Hooks de secours stables (sélection déterministe par jour + archétype). */
+/** Hooks de secours stables (sélection déterministe par jour + famille). */
 const FALLBACK_HOOKS_FR: string[] = [
   "Aujourd'hui, un petit pas suffit à ouvrir une porte.",
   'La curiosité est un muscle : fais une série.',
@@ -36,21 +40,35 @@ function pickHook(seed: string, locale: AppLocale): string {
 }
 
 /**
- * Quête de secours : utilise le top candidate, son texte canon (paraphrasé),
- * un hook déterministe. Préférable à un échec dur.
+ * Quête de secours : tirage déterministe dans la taxonomie (famille du jour),
+ * texte canon + hook stable.
  */
 export function buildFallbackQuest(
-  topCandidate: QuestCandidate,
+  fallbackArchetypePool: QuestModel[],
+  taxonomy: QuestModel[],
+  primaryCategory: PsychologicalCategory,
   locale: AppLocale,
   context: { questDateIso: string; hasUserLocation: boolean; isOutdoorFriendly: boolean },
+  seed: string,
 ): GeneratedQuest {
-  const archetype = topCandidate.archetype;
+  const scoped = fallbackArchetypePool.filter((a) => a.category === primaryCategory);
+  const pool = scoped.length > 0 ? scoped : taxonomy.filter((a) => a.category === primaryCategory);
+  const archetype =
+    pickDeterministicFromPool(pool, `${seed}|fb`, 'fallback-archetype') ??
+    taxonomy.find((a) => a.category === primaryCategory) ??
+    taxonomy[0];
+  if (!archetype) {
+    throw new Error('quest-gen: fallback taxonomy empty');
+  }
+
   const localized = questLocalizedText(archetype, locale);
   const computedIsOutdoor =
     archetype.requiresOutdoor && context.hasUserLocation && context.isOutdoorFriendly;
-  const hookSeed = `${context.questDateIso}|${archetype.id}`;
+  const hookSeed = `${context.questDateIso}|${archetype.id}|fb`;
   return {
     archetypeId: archetype.id,
+    psychologicalCategory: primaryCategory,
+    requiresSocial: archetype.requiresSocial,
     icon: defaultIconForArchetype(archetype),
     title: localized.title,
     mission: clampToOneSentence(localized.description),
