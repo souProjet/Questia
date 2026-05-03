@@ -29,12 +29,16 @@ export default defineConfig({
         'apps/web/src/lib/quest-gen/generateQuest.ts',
         'apps/web/src/lib/quest-gen/index.ts',
       ],
+      /**
+       * Cibles : 95 % lignes/fonctions. Les branches restent difficiles sans tests
+       * d’intégration lourds sur `quest/daily` et le seed (milliers de lignes).
+       * Dernière mesure : ~94 % lignes / ~97 % fonctions / ~77 % branches.
+       */
       thresholds: {
-        lines: 85,
-        /** ~91 % avec le périmètre actuel (routes pack, auraColors, helpers shop partiels, etc.) */
-        functions: 90,
-        branches: 60,
-        statements: 85,
+        lines: 94,
+        statements: 94,
+        functions: 95,
+        branches: 76,
       },
     },
   },

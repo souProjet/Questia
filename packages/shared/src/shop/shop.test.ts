@@ -14,6 +14,12 @@ import {
 import { COIN_PACKS, getCoinPack } from './coinPacks';
 import { bonusPercentVsPack, questCoinsPerEuro } from './marketing';
 import { getTitleDefinition, TITLE_IDS } from './titles';
+import {
+  getQuestPack,
+  listQuestPacksByKind,
+  questPackBiasFromOwned,
+  questPackLabels,
+} from './questPacks';
 
 describe('catalog', () => {
   it('expose des SKU uniques', () => {
@@ -65,6 +71,22 @@ describe('bundleOwnership', () => {
     };
     expect(catalogItemFullyOwned(bundle, shop, new Set([bundle.sku]))).toBe(true);
   });
+  it('catalogItemFullyOwned — quest_pack quand tous les ids sont possédés', () => {
+    const packItem = SHOP_CATALOG.find((c) => c.kind === 'quest_pack')!;
+    const ids = packItem.grants.questPackIds ?? [];
+    expect(ids.length).toBeGreaterThan(0);
+    expect(
+      catalogItemFullyOwned(packItem, { ownedQuestPackIds: [...ids] }, new Set()),
+    ).toBe(true);
+  });
+  it('catalogItemFullyOwned — quest_pack incomplet', () => {
+    const packItem = SHOP_CATALOG.find((c) => c.kind === 'quest_pack')!;
+    const ids = packItem.grants.questPackIds ?? [];
+    if (ids.length < 2) return;
+    expect(catalogItemFullyOwned(packItem, { ownedQuestPackIds: [ids[0]!] }, new Set())).toBe(
+      false,
+    );
+  });
   it('catalogItemFullyOwned — title (entrée hors catalogue, kind encore supporté)', () => {
     const titleItem: ShopCatalogEntry = {
       sku: 'test_title_unit',
@@ -104,5 +126,33 @@ describe('titles', () => {
     expect(TITLE_IDS.length).toBeGreaterThan(0);
     expect(getTitleDefinition('scout')?.icon).toBeDefined();
     expect(getTitleDefinition('zzz')).toBeUndefined();
+  });
+});
+
+describe('questPacks helpers', () => {
+  it('getQuestPack et listQuestPacksByKind', () => {
+    expect(getQuestPack('__none__')).toBeUndefined();
+    expect(getQuestPack('pack_couple')?.kind).toBe('vibe');
+    const vibes = listQuestPacksByKind('vibe');
+    expect(vibes.length).toBeGreaterThan(0);
+    expect(vibes.every((p) => p.kind === 'vibe')).toBe(true);
+  });
+
+  it('questPackBiasFromOwned cumule et borne', () => {
+    expect(questPackBiasFromOwned(undefined)).toEqual({});
+    expect(questPackBiasFromOwned([])).toEqual({});
+    const bias = questPackBiasFromOwned(['pack_couple', 'pack_couple', 'unknown_pack']);
+    expect(Object.keys(bias).length).toBeGreaterThan(0);
+    for (const v of Object.values(bias)) {
+      expect(Math.abs(v!)).toBeLessThanOrEqual(0.18);
+    }
+  });
+
+  it('questPackLabels selon locale', () => {
+    expect(questPackLabels(undefined, 'fr')).toEqual([]);
+    const fr = questPackLabels(['pack_couple'], 'fr');
+    const en = questPackLabels(['pack_couple'], 'en');
+    expect(fr[0]).toContain('Couple');
+    expect(en[0]).toMatch(/couple/i);
   });
 });
