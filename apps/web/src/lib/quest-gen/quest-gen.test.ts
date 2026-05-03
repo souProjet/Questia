@@ -177,6 +177,29 @@ describe('buildCreativeConstraints', () => {
     expect(txt).toContain(input.questParameters.primaryCategory);
     expect(txt).toMatch(/Étincelles taxonomie/i);
   });
+
+  it('EN brief + tronque les descriptions longues (…)', () => {
+    const input = buildInput();
+    const base = input.questParameters.themeInspirations[0]!;
+    const longFr = 'Mot '.repeat(90);
+    const longEn = 'Word '.repeat(90);
+    const themed = [
+      {
+        ...base,
+        description: longFr,
+        descriptionEn: longEn,
+      },
+    ];
+    const txt = buildCreativeConstraints(
+      { ...input.questParameters, themeInspirations: themed },
+      'en',
+      input.context,
+      buildProfile().phase,
+    );
+    expect(txt).toContain('CREATIVE BRIEF');
+    expect(txt).toContain('…');
+    expect(txt).toContain('Taxonomy theme sparks');
+  });
 });
 
 describe('buildSystemPrompt', () => {
@@ -254,6 +277,50 @@ describe('buildUserPrompt', () => {
     expect(buildUserPrompt(input)).toContain('20');
     expect(buildUserPrompt(input)).toContain('90');
     expect(buildUserPrompt(input)).toMatch(/DURÉE DE QUÊTE|QUEST DURATION/);
+  });
+
+  it('prompt EN complet (GPS, schéma, règles)', () => {
+    const input = buildInput({ locale: 'en' });
+    const prompt = buildUserPrompt(input);
+    expect(prompt).toContain('Create today\'s quest');
+    expect(prompt).toContain('USER PROFILE');
+    expect(prompt).toMatch(/City: Lyon/);
+    expect(prompt).toContain('ENVIRONMENTAL COHERENCE');
+    expect(prompt).toContain('Do NOT require spending money');
+  });
+
+  it('prompt EN sans GPS', () => {
+    const input = buildInput({
+      locale: 'en',
+      context: {
+        questDateIso: '2025-04-19',
+        city: 'Paris',
+        country: 'France',
+        weatherDescription: 'clear',
+        weatherIcon: 'Sun',
+        temp: 20,
+        isOutdoorFriendly: true,
+        hasUserLocation: false,
+        questDurationMinMinutes: 5,
+        questDurationMaxMinutes: 120,
+      },
+    });
+    const prompt = buildUserPrompt(input);
+    expect(prompt).toMatch(/not shared — DO NOT name a city/i);
+    expect(prompt).toMatch(/No city\/place names \(no GPS\)/);
+  });
+
+  it('prompt EN mode reroll + après report + repair', () => {
+    const input = buildInput({
+      locale: 'en',
+      isReroll: true,
+      substitutedInstantAfterDefer: true,
+    });
+    const prompt = buildUserPrompt(input, 'invalid icon');
+    expect(prompt).toContain('MODE: REROLL');
+    expect(prompt).toContain('MODE: AFTER DEFER');
+    expect(prompt).toContain('REPAIR REQUESTED');
+    expect(prompt).toContain('invalid icon');
   });
 });
 

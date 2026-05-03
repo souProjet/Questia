@@ -20,4 +20,10 @@ describe('buildEnvironmentalBrief', () => {
     expect(s).toMatch(/Sunday/i);
     expect(s).toContain('No mandatory purchase');
   });
+
+  it('samedi EN : consigne vendredi/samedi soir', () => {
+    const s = buildEnvironmentalBrief('2024-01-06', 'en');
+    expect(s).toMatch(/Saturday/i);
+    expect(s).toMatch(/Friday \/ Saturday|Friday\/Saturday/i);
+  });
 });
