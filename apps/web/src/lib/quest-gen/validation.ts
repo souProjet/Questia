@@ -1,4 +1,4 @@
-import type { AppLocale, PsychologicalCategory } from '@questia/shared';
+import type { AppLocale, PsychologicalCategory, QuestModel } from '@questia/shared';
 import {
   HOOK_MAX_WORDS,
   HOOK_MIN_CHARS,
@@ -23,6 +23,57 @@ const VAGUE_FR = ['réfléchis à ta vie', 'médite sur ta vie', 'prends le temp
 const VAGUE_EN = ['reflect on your life', 'meditate on your life', 'take time to think about your life'];
 const META_FR = ['ton toi de demain', 'le toi du futur', "le toi d'après", 'ton autre toi'];
 const META_EN = ['your future self', 'your tomorrow self', 'the you of next year'];
+
+/** Indice d'une mission qui impose un achat (à rejeter côté validation). */
+function hasMandatoryPurchaseWording(text: string, locale: AppLocale): boolean {
+  const t = text.toLowerCase();
+  if (locale === 'en') {
+    return (
+      /\bmandatory\s+purchase\b/i.test(t) ||
+      /\brequired\s+purchase\b/i.test(t) ||
+      /\bminimum\s+spend\s+(?:required|mandatory)\b/i.test(t) ||
+      /\byou\s+must\s+(?:buy|purchase)\s+(?:at least|something|an item|goods)\b/i.test(t) ||
+      /\bmust\s+buy\s+(?:something|at least|goods|an item)\b/i.test(t)
+    );
+  }
+  return (
+    /achat\s+obligatoire/i.test(t) ||
+    /obligation\s+d['']?acheter/i.test(t) ||
+    /tu\s+dois\s+forcément\s+acheter/i.test(t) ||
+    /vous\s+devez\s+obligatoirement\s+acheter/i.test(t) ||
+    /dépense\s+obligatoire/i.test(t) ||
+    /minimum\s+(?:d['']?)?achat/i.test(t)
+  );
+}
+
+/**
+ * Vérifie que l'archétype résolu pour la BDD appartient bien à la taxonomie et à la famille attendue.
+ */
+export function validateResolvedArchetype(
+  archetype: QuestModel,
+  expectedCategory: PsychologicalCategory,
+  taxonomyIds: Set<number>,
+  locale: AppLocale,
+): ValidationResult {
+  const en = locale === 'en';
+  if (!taxonomyIds.has(archetype.id)) {
+    return {
+      ok: false,
+      reason: en
+        ? 'resolved archetype id is not in the current taxonomy'
+        : "l'identifiant d'archétype résolu n'appartient pas à la taxonomie courante",
+    };
+  }
+  if (archetype.category !== expectedCategory) {
+    return {
+      ok: false,
+      reason: en
+        ? `resolved archetype category "${archetype.category}" does not match engine family "${expectedCategory}"`
+        : `catégorie de l'archétype résolu "${archetype.category}" ≠ famille moteur "${expectedCategory}"`,
+    };
+  }
+  return { ok: true };
+}
 
 export function validateGenerated(
   parsed: ParsedGenerationBody,
@@ -116,6 +167,16 @@ export function validateGenerated(
     }
   }
 
+  const combinedEconomyCheck = `${parsed.title}\n${parsed.mission}\n${parsed.hook}`;
+  if (hasMandatoryPurchaseWording(combinedEconomyCheck, locale)) {
+    return {
+      ok: false,
+      reason: en
+        ? 'mission must not require spending money (no mandatory purchase)'
+        : 'mission sans achat obligatoire ni dépense minimale imposée',
+    };
+  }
+
   const hook = parsed.hook.trim();
   if (hook.length < HOOK_MIN_CHARS) {
     return { ok: false, reason: en ? 'hook too short' : 'hook trop court' };
@@ -157,8 +218,8 @@ export function validateGenerated(
       return {
         ok: false,
         reason: en
-          ? 'archetype needs explicit social interaction in the mission'
-          : "l'archétype implique du social : la mission doit l'évoquer",
+          ? 'requiresSocial=true needs explicit social interaction in the mission'
+          : 'requiresSocial=true : la mission doit évoquer une interaction sociale réelle',
       };
     }
   }

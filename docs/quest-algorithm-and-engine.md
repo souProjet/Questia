@@ -18,6 +18,7 @@ déterministe** ; le LLM n’est plus contraint par un archétype pré-sélectio
 | **Moteur de contexte** | Score par archétype → champion **par famille psychologique** → primaire + inspirations | `engine/{affinity,phaseFit,freshness,selectCandidates}.ts` (`buildQuestParameters`) |
 | **Contexte jour** | Météo, ville, GPS → autorise/interdit l’extérieur | `getQuestContext` (`apps/web/src/lib/actions/weather.ts`) |
 | **Pipeline IA full-gen** | Prompt dynamique (profil, météo, date, contraintes moteur) → JSON créatif | `apps/web/src/lib/quest-gen/` |
+| **Cohérence temporelle (LLM)** | Jour de la semaine, dimanche vs week-end, faisabilité sociale | `buildEnvironmentalBrief.ts` |
 | **Fallback taxonomie** | Tirage déterministe dans la famille du jour si l’API LLM échoue | `apps/web/src/lib/quest-gen/fallback.ts` |
 | **Tirages déterministes** | Hash stable pour reproductibilité | `packages/shared/src/engine/promptSeed.ts` |
 
@@ -30,9 +31,10 @@ déterministe** ; le LLM n’est plus contraint par un archétype pré-sélectio
 | Phase | `packages/shared/src/engine/phaseFit.ts` | `computeTargetComfortLevel` |
 | Seeds | `packages/shared/src/engine/promptSeed.ts` | `pickDeterministicFromPool` |
 | Constantes | `packages/shared/src/constants/quests.ts` | `ALL_PSYCHOLOGICAL_CATEGORIES`, `isValidPsychologicalCategory` |
-| Prompt | `apps/web/src/lib/quest-gen/buildCreativeConstraints.ts` | Consignes créatives (remplace l’ancien brief candidats) |
+| Prompt | `apps/web/src/lib/quest-gen/buildCreativeConstraints.ts` | Consignes + snapshot météo / ville / phase |
+| Prompt | `apps/web/src/lib/quest-gen/buildEnvironmentalBrief.ts` | **Cohérence temporelle** (jour de la semaine, dimanche, vendredi/samedi, pas d’achat forcé) |
 | Prompt | `apps/web/src/lib/quest-gen/buildPrompt.ts` | System / user prompts full-gen |
-| Parse / validation | `apps/web/src/lib/quest-gen/parse.ts`, `validation.ts` | `psychologicalCategory` + `requiresSocial`, plus de liste d’`archetypeId` candidats |
+| Parse / validation | `apps/web/src/lib/quest-gen/parse.ts`, `validation.ts` | `psychologicalCategory`, anti–achat obligatoire, `validateResolvedArchetype` |
 | Génération | `apps/web/src/lib/quest-gen/generateQuest.ts` | Résolution `archetypeId` stats post-parse |
 | API | `apps/web/src/app/api/quest/daily/route.ts` | Orchestration `buildQuestParameters` → `generateDailyQuest` |
 
@@ -128,8 +130,17 @@ Approche **création libre** : un appel OpenAI produit une quête **originale** 
 | `buildSystemPrompt(locale)` | `buildPrompt.ts` | Voix créative, pas de liste d’archétypes |
 | `buildProfileBrief(profile)` | personnalité + phase + écart + raffinement | inchangé conceptuellement |
 | `buildHistoryBrief(history)` | anti-répétition | inchangé |
-| `buildCreativeConstraints(params)` | **contraintes du jour** : famille, intensité, durée cible, 3 étincelles taxonomie, jour de la semaine | remplace l’ancien `buildCandidatesBrief` |
+| `buildCreativeConstraints(...)` | **contraintes du jour** : instantané météo/ville/phase, famille, intensité, durée, étincelles taxonomie | inclut `EscalationPhase` |
+| `buildEnvironmentalBrief(iso, locale)` | **cohérence temporelle & réalité sociale** : jour de la semaine obligatoire ; dimanche vs vendredi/samedi ; pas d’achat forcé | injecté après le brief créatif dans `buildUserPrompt` |
 | `buildUserPrompt(...)` | date, météo, ville, modes reroll/report, schéma JSON avec `psychologicalCategory` **figée** au primaire moteur | le LLM doit respecter cette famille |
+
+### 6.1 bis `buildEnvironmentalBrief` — cohérence temporelle
+
+En complément du snapshot dans `buildCreativeConstraints`, ce bloc impose au modèle :
+
+- d’ancrer la quête dans le **jour calendaire** et la **réalité sociale** habituelle ;
+- d’adapter **dimanche** (commerces, administration, cadres « sortie nocturne bondée ») vs **vendredi/samedi** (social du soir plus plausible) ;
+- d’éviter tout **achat obligatoire** (doublon avec les règles `validateGenerated`).
 
 ### 6.2 Sortie JSON et persistance
 
@@ -158,7 +169,8 @@ créativité du texte.
 1. Appel OpenAI.
 2. `parseGeneratedJson(raw, computedIsOutdoor, defaultDurationMinutes)` — JSON + `psychologicalCategory` valide.
 3. `ensureCityInMission` si besoin.
-4. `validateGenerated(parsed, enginePrimaryCategory, locale, city, isOutdoor)` — titres / mission / hook dans les limites UI, cohérence social/outdoor.
+4. `validateGenerated(...)` — titres / mission / hook dans les limites UI, cohérence social/outdoor, anti–**achat obligatoire**, catégorie = famille moteur.
+5. `pickArchetypeIdForCategoryStorage` puis **`validateResolvedArchetype`** — l’`archetypeId` résolu existe dans la taxonomie et sa famille correspond à `psychologicalCategory`.
 
 Échec → retry avec `repairHint`.
 

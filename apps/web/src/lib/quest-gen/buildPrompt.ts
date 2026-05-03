@@ -1,6 +1,7 @@
 import type { AppLocale } from '@questia/shared';
 import { QUEST_SYSTEM_GUARDRAILS, QUEST_SYSTEM_GUARDRAILS_EN, QUEST_SYSTEM_LANG_FR } from '../ai/promptGuardrails';
 import { buildCreativeConstraints } from './buildCreativeConstraints';
+import { buildEnvironmentalBrief } from './buildEnvironmentalBrief';
 import { buildHistoryBrief } from './buildHistoryBrief';
 import { buildProfileBrief } from './buildProfileBrief';
 import { QUEST_ICON_ALLOWLIST, type QuestGenInput } from './types';
@@ -44,7 +45,8 @@ export function buildUserPrompt(input: QuestGenInput, repairHint: string | null 
   const { profile, context, questParameters, history, locale, generationSeed } = input;
   const profileBrief = buildProfileBrief(profile, locale);
   const historyBrief = buildHistoryBrief(history, locale);
-  const creativeBrief = buildCreativeConstraints(questParameters, locale, context.questDateIso);
+  const creativeBrief = buildCreativeConstraints(questParameters, locale, context, profile.phase);
+  const environmentalBrief = buildEnvironmentalBrief(context.questDateIso, locale);
 
   const expectedCategory = questParameters.primaryCategory;
 
@@ -99,6 +101,8 @@ ${historyBrief}
 
 ${creativeBrief}
 
+${environmentalBrief}
+
 YOUR JOB:
 1. Invent a completely NEW quest (do not pick from a candidate list — there is none).
 2. Set "psychologicalCategory" EXACTLY to "${expectedCategory}" (required).
@@ -129,6 +133,7 @@ ABSOLUTE RULES:
 - isOutdoor=true requires destinationLabel + destinationQuery (and is only allowed when weather is OK and GPS is shared).
 - If requiresSocial=true, the mission must explicitly involve talking / meeting / messaging someone real.
 - Never invent a future-self ("the you of tomorrow"), never moralize, never give medical/therapy advice.
+- Do NOT require spending money (no mandatory purchase, minimum spend, or paywall framing).
 - Stay in the user's language (English).`;
   }
 
@@ -145,6 +150,8 @@ ${profileBrief}
 ${historyBrief}
 
 ${creativeBrief}
+
+${environmentalBrief}
 
 TON TRAVAIL :
 1. Invente une quête ENTIÈREMENT nouvelle (aucune liste de candidats — il n'y en a pas).
@@ -176,5 +183,6 @@ RÈGLES ABSOLUES :
 - isOutdoor=true exige destinationLabel + destinationQuery (et n'est autorisé que si la météo est OK et le GPS partagé).
 - Si requiresSocial=true, la mission doit évoquer explicitement parole / rencontre / message à quelqu'un de réel.
 - Pas d'« autre toi » du futur, pas de moralisation, pas de conseil médical ou thérapeutique.
+- Aucun **achat obligatoire** ni dépense minimale imposée (protège le portefeuille).
 - Reste dans la langue de l'utilisateur (français).`;
 }

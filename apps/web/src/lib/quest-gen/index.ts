@@ -3,6 +3,7 @@ export * from './buildPrompt';
 export * from './buildProfileBrief';
 export * from './buildHistoryBrief';
 export * from './buildCreativeConstraints';
+export * from './buildEnvironmentalBrief';
 export * from './validation';
 export * from './parse';
 export * from './fallback';

@@ -6,7 +6,7 @@ import { logStructured, logStructuredError } from '../observability';
 import { buildSystemPrompt, buildUserPrompt } from './buildPrompt';
 import { buildFallbackQuest } from './fallback';
 import { ensureCityInMission, parseGeneratedJson } from './parse';
-import { validateGenerated } from './validation';
+import { validateGenerated, validateResolvedArchetype } from './validation';
 import type { GeneratedQuest, QuestGenInput } from './types';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
@@ -121,6 +121,31 @@ export async function generateDailyQuest(input: QuestGenInput): Promise<Generate
         parsedBody.psychologicalCategory,
         input.generationSeed,
       );
+
+      const taxIds = new Set(taxonomy.map((q) => q.id));
+      const archOk = validateResolvedArchetype(
+        storedArchetype,
+        parsedBody.psychologicalCategory,
+        taxIds,
+        locale,
+      );
+      if (!archOk.ok) {
+        repairHint = archOk.reason;
+        logStructured({
+          domain: 'ai',
+          operation: 'quest-gen.validate',
+          level: 'warn',
+          outcome: 'miss',
+          durationMs,
+          meta: {
+            model: MODEL,
+            attempt: attempt + 1,
+            category: parsedBody.psychologicalCategory,
+            repairHint,
+          },
+        });
+        continue;
+      }
 
       const parsed: GeneratedQuest = {
         ...parsedBody,

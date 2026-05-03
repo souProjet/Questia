@@ -167,7 +167,12 @@ describe('buildHistoryBrief', () => {
 describe('buildCreativeConstraints', () => {
   it('lists creative brief with primary category and inspirations', () => {
     const input = buildInput();
-    const txt = buildCreativeConstraints(input.questParameters, 'fr', input.context.questDateIso);
+    const txt = buildCreativeConstraints(
+      input.questParameters,
+      'fr',
+      input.context,
+      buildProfile().phase,
+    );
     expect(txt).toContain('CONSIGNE CRÉATIVE');
     expect(txt).toContain(input.questParameters.primaryCategory);
     expect(txt).toMatch(/Étincelles taxonomie/i);

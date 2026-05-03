@@ -55,6 +55,18 @@ describe('validateGenerated — branches complémentaires', () => {
     expect(r.ok).toBe(false);
   });
 
+  it('rejette une formulation d\'achat obligatoire', () => {
+    const r = validateGenerated(
+      v({ mission: 'Effectue un achat obligatoire de plus de 10 € à Lyon pour valider la quête.' }),
+      engineCat,
+      'fr',
+      'Lyon',
+      false,
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toMatch(/achat|dépense|money/i);
+  });
+
   it('messages EN pour psychologicalCategory différent du moteur', () => {
     const r = validateGenerated(v({ psychologicalCategory: 'spatial_adventure' }), engineCat, 'en', null, false);
     expect(r.ok).toBe(false);
